@@ -20,3 +20,5 @@ buildNumber.properties
 .idea/
 *.iml
 *.iws
+
+.env

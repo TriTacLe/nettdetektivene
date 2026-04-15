@@ -4,11 +4,8 @@ services:
     container_name: nd-db
     restart: unless-stopped
     command: --log-bin-trust-function-creators=1
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DB}
-      MYSQL_USER: ${MYSQL_USR}
-      MYSQL_PASSWORD: ${MYSQL_PWD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - ../.env
     ports:
       - "3306:3306"
     volumes:
@@ -28,10 +25,12 @@ services:
       dockerfile: Dockerfile
     container_name: nd-backend
     restart: on-failure
+    env_file:
+      - ../.env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DB}?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USR}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PWD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SERVER_PORT: 8080
     ports:
       - "8080:8080"
