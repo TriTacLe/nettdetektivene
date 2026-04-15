@@ -1,35 +1,49 @@
 services:
-  db:
-    build:
-      context: .
-      dockerfile: docker/db/Dockerfile
-    container_name: nettdetektivene-db
-    env_file:
-      - .env
+  mysql:
+    image: mysql:8.0
+    container_name: nd-db
+    restart: unless-stopped
+    command: --log-bin-trust-function-creators=1
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USR}
+      MYSQL_PASSWORD: ${MYSQL_PWD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - nettdetektivene_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+    networks:
+      - nd-network
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nettdetektivene-backend
-    env_file:
-      - .env
+    container_name: nd-backend
+    restart: on-failure
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DB}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USR}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PWD}
+      SERVER_PORT: 8080
     ports:
       - "8080:8080"
     depends_on:
-      db:
+      mysql:
         condition: service_healthy
-    restart: unless-stopped
+    networks:
+      - nd-network
 
 volumes:
   nettdetektivene_mysql_data:
+
+networks:
+  nd-network:
+    driver: bridge
