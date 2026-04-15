@@ -1,13 +1,16 @@
 package ntnu.no.backend.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.auth.AuthResponseDTO;
 import ntnu.no.backend.dto.auth.LoginRequestDTO;
 import ntnu.no.backend.dto.auth.RegisterRequestDTO;
 import ntnu.no.backend.mapper.UserMapper;
 import ntnu.no.backend.model.LocalCredential;
+import ntnu.no.backend.model.Role;
 import ntnu.no.backend.model.User;
 import ntnu.no.backend.repository.LocalCredentialRepository;
+import ntnu.no.backend.repository.RoleRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.exception.EmailAlreadyExistsException;
 import ntnu.no.backend.security.JWTUtil;
@@ -34,6 +37,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JWTUtil jwtUtil;
+  private final RoleRepository roleRepository;
 
 
   @Transactional
@@ -42,7 +46,11 @@ public class AuthService {
       throw new EmailAlreadyExistsException(dto.getEmail());
     }
 
+    Role studentRole = roleRepository.findByRoleName("student")
+      .orElseThrow(() -> new EntityNotFoundException("student role not found"));
+
     User user = UserMapper.toEntity(dto);
+    user.getRoles().add(studentRole);
     userRepository.save(user);
 
     LocalCredential credential = LocalCredential.builder()
@@ -56,12 +64,11 @@ public class AuthService {
       .build();
   }
 
-
+  @Transactional(readOnly = true)
   public AuthResponseDTO login(LoginRequestDTO dto) {
     authenticationManager.authenticate(
       new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
     );
-
     User user = userRepository.findByEmail(dto.getEmail())
       .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + dto.getEmail()));
 

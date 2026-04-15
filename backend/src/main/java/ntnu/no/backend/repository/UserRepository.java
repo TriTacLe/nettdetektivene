@@ -1,6 +1,7 @@
 package ntnu.no.backend.repository;
 
 import ntnu.no.backend.model.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -22,6 +23,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
    * @param email the email address used to search a user
    * @return a {@link Optional} containing the user with the specified email
    */
+  @EntityGraph(attributePaths = {"roles", "localCredential"})
   Optional<User> findByEmail(String email);
 
   /**
