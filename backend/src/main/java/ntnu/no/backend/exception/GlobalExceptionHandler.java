@@ -36,12 +36,12 @@ public class GlobalExceptionHandler {
    * Handles registration attempt with an already registered email
    *
    * @param e the exception thrown when email already exists
-   * @return 409 Conflict with error message
+   * @return 409 Conflict with generic error message
    */
   @ExceptionHandler(EmailAlreadyExistsException.class)
   public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException e) {
     logger.warn(e.getMessage());
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already in use");
   }
 
   /**
