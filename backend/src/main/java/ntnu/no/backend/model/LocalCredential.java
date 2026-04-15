@@ -53,9 +53,9 @@ public class LocalCredential {
   private boolean mustChangePw = false;
 
   /**
-   * Timestamp of the last password change. Null if password has never been changed.
+   * Timestamp of the last password change.
    */
-  @Column(name = "last_changed_at")
+  @Column(name = "last_changed_at", nullable = false)
   private LocalDateTime lastChangedAt;
 
   /**
@@ -86,12 +86,14 @@ public class LocalCredential {
   private LocalDateTime updatedAt;
 
   /**
-   * Sets {@code createdAt} and {@code updatedAt} before the entity is first persisted.
+   * Sets {@code createdAt}, {@code updatedAt} and {@code lastChangedAt} before
+   * the entity is first persisted.
    */
   @PrePersist
   protected void onCreate() {
     createdAt = LocalDateTime.now();
     updatedAt = LocalDateTime.now();
+    lastChangedAt = LocalDateTime.now();
   }
 
   /**
