@@ -11,7 +11,7 @@ on:
       - "frontend/**"
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ntnu-runners
     defaults:
       run:
         working-directory: frontend
