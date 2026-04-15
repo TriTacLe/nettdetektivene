@@ -129,4 +129,25 @@ public class User extends BaseEntity implements UserDetails {
   public String getUsername() {
     return email;
   }
+
+  /**
+   * Whether the user account is enabled
+   *
+   * @return {@link #isActive}
+   */
+  @Override
+  public boolean isEnabled() {
+    return isActive;
+  }
+
+  /**
+   * Whether the user account is non locked, or locked
+   *
+   * @return {@code true} if the account is not locked, {@code} false otherwise
+   */
+  @Override
+  public boolean isAccountNonLocked() {
+    return localCredential == null || localCredential.getLockedUntil() == null
+      || localCredential.getLockedUntil().isBefore(LocalDateTime.now());
+  }
 }
