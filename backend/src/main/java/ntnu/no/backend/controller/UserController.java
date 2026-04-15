@@ -65,7 +65,7 @@ public class UserController {
   @ApiResponse(responseCode = "400", description = "Invalid input")
   @ApiResponse(responseCode = "401", description = "Not authenticated")
   @ApiResponse(responseCode = "403", description = "Not authorized")
-  @PreAuthorize("hasAuthority('ROLE_TEACHER')")
+  @PreAuthorize("hasAuthority('instructor')")
   @PatchMapping("/{id}")
   public ResponseEntity<UserResponseDTO> updateUserById(@PathVariable UUID id,
                                                         @Valid @RequestBody UserUpdateDTO dto) {
