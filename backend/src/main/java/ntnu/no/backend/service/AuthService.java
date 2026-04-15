@@ -56,7 +56,7 @@ public class AuthService {
       .build();
   }
 
-
+  @Transactional(readOnly = true)
   public AuthResponseDTO login(LoginRequestDTO dto) {
     authenticationManager.authenticate(
       new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
