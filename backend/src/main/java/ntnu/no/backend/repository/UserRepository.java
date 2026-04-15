@@ -1,0 +1,34 @@
+package ntnu.no.backend.repository;
+
+import ntnu.no.backend.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * //TODO fill in
+ *
+ * @author norakirknes
+ * @version 0.1
+ * @since 0.1
+ * @see User
+ */
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+  /**
+   * Retrieves a user identified by a specific email address.
+   *
+   * @param email the email address used to search a user
+   * @return a {@link Optional} containing the user with the specified email
+   */
+  Optional<User> findByEmail(String email);
+
+  /**
+   * Check whether a user with a specific email exists
+   *
+   * @param email the email address to check if a user exists by
+   * @return {@code true} if a user by that email address exists, {@code false} otherwise
+   */
+  boolean existsByEmail(String email);
+}
