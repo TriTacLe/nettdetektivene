@@ -1,7 +1,6 @@
 package ntnu.no.backend.shared;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 /**
  * Generic response wrapper ensuring all endpoints return a consistent JSON structure.
@@ -12,13 +11,7 @@ import lombok.Getter;
  * @version 0.1
  * @since 0.1
  */
-@Getter
-@AllArgsConstructor
-public class ApiResponse<T> {
-
-  private final boolean success;
-  private final String message;
-  private final T data;
+public record ApiResponse<T>(boolean success, String message, T data) {
 
   public static <T> ApiResponse<T> ok(String message, T data) {
     return new ApiResponse<>(true, message, data);
