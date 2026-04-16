@@ -1,6 +1,7 @@
 package ntnu.no.backend.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import ntnu.no.backend.shared.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Global exception handler mapping service exceptions to HTTP responses.
  *
- * @author norakirknes
+ * @author norakirknes, tri
  * @version 0.1
  * @since 0.1
  * @see EmailAlreadyExistsException
@@ -40,9 +41,9 @@ public class GlobalExceptionHandler {
    * @return 409 Conflict with generic error message
    */
   @ExceptionHandler(EmailAlreadyExistsException.class)
-  public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException e) {
+  public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyExists(EmailAlreadyExistsException e) {
     logger.warn(e.getMessage());
-    return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already in use");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error("Email already in use"));
   }
 
   /**
@@ -52,9 +53,9 @@ public class GlobalExceptionHandler {
    * @return a 404 Not Found with error message
    */
   @ExceptionHandler(EntityNotFoundException.class)
-  public ResponseEntity<String> handleNotFound(EntityNotFoundException e) {
+  public ResponseEntity<ApiResponse<Void>> handleNotFound(EntityNotFoundException e) {
     logger.warn(e.getMessage());
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage()));
   }
 
   /**
@@ -64,9 +65,9 @@ public class GlobalExceptionHandler {
    * @return 401 Unauthorized with generic message
    */
   @ExceptionHandler(BadCredentialsException.class)
-  public ResponseEntity<String> handleBadCredentials(BadCredentialsException e) {
+  public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException e) {
     logger.warn("Failed login attempt");
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid email or password"));
   }
 
   /**
@@ -76,8 +77,8 @@ public class GlobalExceptionHandler {
    * @return 403 Forbidden
    */
   @ExceptionHandler(DisabledException.class)
-  public ResponseEntity<String> handleDisabled(DisabledException e) {
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account is disabled");
+  public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException e) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Account is disabled"));
   }
 
   /**
@@ -87,8 +88,8 @@ public class GlobalExceptionHandler {
    * @return 403 Forbidden
    */
   @ExceptionHandler(LockedException.class)
-  public ResponseEntity<String> handleLocked(LockedException e) {
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account is locked");
+  public ResponseEntity<ApiResponse<Void>> handleLocked(LockedException e) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Account is locked"));
   }
 
   /**
@@ -98,9 +99,9 @@ public class GlobalExceptionHandler {
    * @return 401 Unauthorized with generic error message
    */
   @ExceptionHandler(RefreshTokenException.class)
-  public ResponseEntity<String> handleRefreshToken(RefreshTokenException e) {
+  public ResponseEntity<ApiResponse<Void>> handleRefreshToken(RefreshTokenException e) {
     logger.warn(e.getMessage());
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid refresh token"));
   }
 
   /**
@@ -110,10 +111,10 @@ public class GlobalExceptionHandler {
    * @return 400 Bad Request with separated field errors
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<String> handleValidation(MethodArgumentNotValidException e) {
+  public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
     String errors = e.getBindingResult().getFieldErrors().stream()
       .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
       .collect(Collectors.joining(", "));
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(errors));
   }
 }

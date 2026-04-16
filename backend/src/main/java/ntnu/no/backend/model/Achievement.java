@@ -1,5 +1,6 @@
 package ntnu.no.backend.model;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
+@AttributeOverride(name = "id", column = @Column(name="achievement_id"))
 public class Achievement extends BaseEntity {
 
   /**
