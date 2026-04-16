@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.enums.TaskType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -29,7 +30,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "task")
-@AttributeOverride(name = "id", column = @Column(name = "task_id", updatable = false, nullable = false))
+@AttributeOverride(name = "id", column = @Column(name = "task_id"))
 @Getter
 @Setter
 @NoArgsConstructor
