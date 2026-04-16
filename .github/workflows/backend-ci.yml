@@ -15,16 +15,16 @@ jobs:
   test:
     runs-on: ntnu-runners
     services:
-    #      mysql:
-    #        image: mysql:8.4
-    #        env:
-    #          MYSQL_DATABASE:
-    #          MYSQL_ROOT_PASSWORD: root
-    #          MYSQL_USER: test_user
-    #          MYSQL_PASSWORD: test_pass
-    #        ports:
-    #          - 3306:3306
-    #
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: db
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_pass
+        ports:
+          - 3306:3306
+
     steps:
       - uses: actions/checkout@v4
 
