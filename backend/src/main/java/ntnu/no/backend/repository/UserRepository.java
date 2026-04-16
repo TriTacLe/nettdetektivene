@@ -3,13 +3,14 @@ package ntnu.no.backend.repository;
 import ntnu.no.backend.model.auth.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * //TODO fill in
+ * Repository for {@link User} entities
  *
  * @author norakirknes
  * @version 0.1
@@ -18,6 +19,16 @@ import java.util.UUID;
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
+
+  /**
+   * Retrieves a user by their unique identifier, eagerly loading roles and local credentials.
+   *
+   * @param id the UUID of the user to retrieve
+   * @return an {@link Optional} containing the user with the specified id, or empty if not found
+   */
+  @NonNull
+  @EntityGraph(attributePaths = {"roles", "localCredential"})
+  Optional<User> findById(@NonNull UUID id);
 
   /**
    * Retrieves a user identified by a specific email address.

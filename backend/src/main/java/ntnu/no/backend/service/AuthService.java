@@ -10,6 +10,7 @@ import ntnu.no.backend.model.auth.LocalCredential;
 import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.LocalCredentialRepository;
+import ntnu.no.backend.repository.RefreshTokenRepository;
 import ntnu.no.backend.repository.RoleRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.exception.EmailAlreadyExistsException;
@@ -39,6 +40,7 @@ public class AuthService {
   private final JWTUtil jwtUtil;
   private final RoleRepository roleRepository;
   private final RefreshTokenService refreshTokenService;
+  private final RefreshTokenRepository refreshTokenRepository;
 
 
   @Transactional
@@ -76,7 +78,8 @@ public class AuthService {
       new UsernamePasswordAuthenticationToken(email, dto.getPassword())
     );
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + dto.getEmail()));
+      .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + email));
+    refreshTokenRepository.deleteByUser(user);
 
     return AuthResponseDTO.builder()
       .token(jwtUtil.generateToken(user))

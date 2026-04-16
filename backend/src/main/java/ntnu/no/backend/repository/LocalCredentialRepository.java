@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
+ * Repository for {@link LocalCredential} entities
  *
  * @author norakirknes
  * @version 0.1

@@ -7,6 +7,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Repository for {@link RefreshToken} entities
+ *
+ * @author norakirknes
+ * @version 0.1
+ * @since 0.1
+ * @see RefreshToken
+ */
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
