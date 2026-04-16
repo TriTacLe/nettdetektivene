@@ -1,3 +1,4 @@
+# runs full stack. Parses env inline. spring-boot-docker-compose deps picks up automatically this file when run the app from backend/ dir.
 services:
   mysql:
     image: mysql:8.0

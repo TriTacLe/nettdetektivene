@@ -1,3 +1,58 @@
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE - IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr/
+.idea_modules/
+out/
+.claude
+
+
+# IDE - VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# IDE - Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# IDE - NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Java / Maven / Spring Boot (Backend)
+# Compiled class files
+*.class
+
+# Package Files
+*.jar
+*.war
+*.ear
+*.nar
+
+# Maven
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -7,22 +62,145 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-# https://github.com/takari/maven-wrapper#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.jar
 
-# Eclipse m2e generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
+# Maven Wrapper
+mvnw
+mvnw.cmd
 
-# IntelliJ IDEA
-.idea/
-*.iml
-*.iws
+# Spring Boot
+HELP.md
+spring-boot-*.pid
+spring-boot-*.port
+
+# Gradle (if ever added)
+.gradle
+build/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# Node.js / Vue.js / Vite (Frontend)
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+frontend/.vscode
+
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.tgz
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache
+.eslintcache
+.stylelintcache
+.parcel-cache
+.cache/
+.npm
+
+# Vite
+*.timestamp-*-*.mjs
+
+# Testing
+# Test outputs
+coverage/
+.nyc_output
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Vitest
+__screenshots__/
+
+# Playwright (if ever added)
+test-results/
+playwright-report/
+playwright/.cache/
+
+# JUnit / Surefire reports
+backend/target/surefire-reports/
+backend/target/failsafe-reports/
+
+# Docker
+# Docker volumes (if stored locally)
+docker-volumes/
+*.volume
+
+# Environment & Secrets
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Secrets
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Spring Boot local configs with sensitive data
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-dev.properties
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application-prod.properties
+backend/src/main/resources/application-prod.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+
+# Misc
+# Local configuration files
+*.local
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Backup files
+*.bak
+*.backup
 
 # backend
 backend/backend.iml
 
 
 .env
+

@@ -1,3 +1,4 @@
+# for backend dev only. parses env directly. runs services mysql + backend
 services:
   mysql:
     image: mysql:8.0
