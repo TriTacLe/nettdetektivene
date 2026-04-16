@@ -75,7 +75,7 @@ FOR EACH ROW
 BEGIN
     DECLARE v_achievement_id CHAR(36) DEFAULT NULL;
 
-    IF NEW.mys_status = 'approved' AND OLD.mys_status <> 'approved' THEN
+    IF NEW.mys_status = 'APPROVED' AND OLD.mys_status <> 'APPROVED' THEN
 
         INSERT INTO notification
             (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)

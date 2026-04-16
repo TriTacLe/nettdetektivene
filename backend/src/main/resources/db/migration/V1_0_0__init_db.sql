@@ -161,7 +161,7 @@ CREATE TABLE classroom_student
     is_allowed                  TINYINT(1) NOT NULL DEFAULT 0,
 
     requested_display_name      VARCHAR(255) NULL,
-    name_change_status          ENUM('none', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'none',
+    name_change_status          ENUM('NONE', 'PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'NONE',
     name_change_requested_at    DATETIME NULL,
     name_change_reviewed_by     CHAR(36) NULL,
     name_change_reviewed_at     DATETIME NULL,
@@ -185,13 +185,13 @@ CREATE TABLE task
     task_id        CHAR(36)         NOT NULL PRIMARY KEY,
     title          VARCHAR(255)     NOT NULL,
     task_type      ENUM(
-                        'news',
-                        'photo',
-                        'email',
-                        'password',
-                        'marketplace',
-                        'social',
-                        'boss'
+                        'NEWS',
+                        'PHOTO',
+                        'EMAIL',
+                        'PASSWORD',
+                        'MARKETPLACE',
+                        'SOCIAL',
+                        'BOSS'
                     ) NOT NULL,
     stop_location  VARCHAR(100)     NULL,
     difficulty     TINYINT UNSIGNED NOT NULL DEFAULT 1,
@@ -313,7 +313,7 @@ CREATE TABLE mystery_submission
     submitted_by   CHAR(36)         NOT NULL,
     mys_desc       TEXT             NOT NULL,
     attachment_url VARCHAR(500)     NULL,
-    mys_status     ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    mys_status     ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
     reviewed_by    CHAR(36)         NULL,
     reviewed_at    DATETIME         NULL,
     is_featured    TINYINT(1)       NOT NULL DEFAULT 0,

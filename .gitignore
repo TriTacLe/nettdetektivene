@@ -21,4 +21,8 @@ buildNumber.properties
 *.iml
 *.iws
 
+# backend
+backend/backend.iml
+
+
 .env

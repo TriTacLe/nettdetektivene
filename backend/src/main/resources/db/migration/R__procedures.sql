@@ -87,7 +87,7 @@ BEGIN
 
     UPDATE classroom_student
     SET requested_display_name   = p_requested_display_name,
-        name_change_status       = 'pending',
+        name_change_status       = 'PENDING',
         name_change_requested_at = NOW(),
         name_change_reviewed_by  = NULL,
         name_change_reviewed_at  = NULL
@@ -131,7 +131,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Student is not enrolled in a classroom.';
     END IF;
 
-    IF v_pending_status <> 'pending' THEN
+    IF v_pending_status <> 'PENDING' THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'There is no pending display name change request for this student.';
     END IF;
@@ -147,17 +147,17 @@ BEGIN
             SET MESSAGE_TEXT = 'Teacher is not assigned to this classroom.';
     END IF;
 
-    IF p_decision = 'approved' THEN
+    IF p_decision = 'APPROVED' THEN
         UPDATE classroom_student
         SET display_name            = requested_display_name,
-            name_change_status      = 'approved',
+            name_change_status      = 'APPROVED',
             name_change_reviewed_by = p_teacher_user_id,
             name_change_reviewed_at = NOW()
         WHERE user_id = p_student_user_id;
 
-    ELSEIF p_decision = 'rejected' THEN
+    ELSEIF p_decision = 'REJECTED' THEN
         UPDATE classroom_student
-        SET name_change_status      = 'rejected',
+        SET name_change_status      = 'REJECTED',
             name_change_reviewed_by = p_teacher_user_id,
             name_change_reviewed_at = NOW()
         WHERE user_id = p_student_user_id;
