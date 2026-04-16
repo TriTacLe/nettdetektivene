@@ -18,6 +18,7 @@ import org.springframework.security.core.GrantedAuthority;
  */
 @Entity
 @Table(name = "role")
+@AttributeOverride(name = "id", column = @Column(name = "role_id", updatable = false, nullable = false))
 @Getter
 @Setter
 @NoArgsConstructor

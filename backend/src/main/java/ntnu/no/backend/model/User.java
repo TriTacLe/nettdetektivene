@@ -25,6 +25,7 @@ import java.util.List;
  */
 @Entity
 @Table(name = "app_user")
+@AttributeOverride(name = "id", column = @Column(name = "user_id", updatable = false, nullable = false))
 @Getter
 @Setter
 @NoArgsConstructor
