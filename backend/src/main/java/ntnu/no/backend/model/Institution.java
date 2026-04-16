@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @Table(name = "institution")
 @AllArgsConstructor
 @NoArgsConstructor
-@AttributeOverride(name="id", column = @Column(name = "institution_id", updatable = false, nullable = false))
+@AttributeOverride(name="id", column = @Column(name = "institution_id"))
 @Setter
 @Getter
 @SuperBuilder

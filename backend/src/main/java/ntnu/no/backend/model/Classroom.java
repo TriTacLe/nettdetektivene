@@ -15,6 +15,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+
+import ntnu.no.backend.model.auth.User;
 import java.time.LocalDateTime;
 
 /**
@@ -29,7 +31,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @SuperBuilder
-@AttributeOverride(name="id", column = @Column(name = "classroom_id", updatable = false, nullable = false))
+@AttributeOverride(name="id", column = @Column(name = "classroom_id"))
 public class Classroom extends BaseEntity{
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -39,7 +41,7 @@ public class Classroom extends BaseEntity{
   @Column(nullable = false)
   private String title;
 
-  @Column(name= "class_decs",nullable = true)
+  @Column(name= "class_desc",nullable = true)
   private String classDesc;
 
   @Column(name = "join_code", nullable = false)
@@ -55,6 +57,9 @@ public class Classroom extends BaseEntity{
 
   @Column(name = "is_game_enabled", nullable = false)
   private boolean isGameEnabled = false;
+
+  @Column(name = "deleted_at", nullable = true)
+  private LocalDateTime deletedAt;
 
   @UpdateTimestamp
   @Column(name ="updated_at", nullable = false)
