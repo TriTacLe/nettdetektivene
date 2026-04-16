@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import NavigationHeader from './components/NavigationHeader.vue'
+import SceneComponent from './components/SceneComponent.vue'
 </script>
 
 <template>
-  <div class="app">
-    <NavigationHeader previous="/youtube" previous-label="Tilbake" title="Lag din avatar" next="/github" next-label="Fortsett" />
-    <RouterView />
-  </div>
+  <SceneComponent
+  title="Introduksjon" previous="/youtube"
+  previous-label="Tilbake" next="/github"
+  next-label="Fortsett" :darken="0.5" />
 </template>
 
 <style scoped></style>
