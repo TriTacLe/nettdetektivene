@@ -3,8 +3,8 @@ package ntnu.no.backend.mapper;
 import ntnu.no.backend.dto.auth.RegisterRequestDTO;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
-import ntnu.no.backend.model.Role;
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.Role;
+import ntnu.no.backend.model.auth.User;
 
 /**
  *

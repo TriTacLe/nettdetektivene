@@ -1,4 +1,4 @@
-package ntnu.no.backend.model;
+package ntnu.no.backend.model.auth;
 
 import jakarta.persistence.*;
 import lombok.*;

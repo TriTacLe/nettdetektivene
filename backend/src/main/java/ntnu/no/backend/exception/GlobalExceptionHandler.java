@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  * @see BadCredentialsException
  * @see DisabledException
  * @see LockedException
+ * @see RefreshTokenException
  * @see MethodArgumentNotValidException
  */
 @RestControllerAdvice
@@ -88,6 +89,18 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(LockedException.class)
   public ResponseEntity<String> handleLocked(LockedException e) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account is locked");
+  }
+
+  /**
+   * Handles an invalid refresh token; expired, revoked etc.
+   *
+   * @param e the exception thrown when refresh token is invalid
+   * @return 401 Unauthorized with generic error message
+   */
+  @ExceptionHandler(RefreshTokenException.class)
+  public ResponseEntity<String> handleRefreshToken(RefreshTokenException e) {
+    logger.warn(e.getMessage());
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
   }
 
   /**

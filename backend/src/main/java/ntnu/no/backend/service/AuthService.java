@@ -6,9 +6,9 @@ import ntnu.no.backend.dto.auth.AuthResponseDTO;
 import ntnu.no.backend.dto.auth.LoginRequestDTO;
 import ntnu.no.backend.dto.auth.RegisterRequestDTO;
 import ntnu.no.backend.mapper.UserMapper;
-import ntnu.no.backend.model.LocalCredential;
-import ntnu.no.backend.model.Role;
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.LocalCredential;
+import ntnu.no.backend.model.auth.Role;
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.LocalCredentialRepository;
 import ntnu.no.backend.repository.RoleRepository;
 import ntnu.no.backend.repository.UserRepository;
@@ -38,18 +38,22 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final JWTUtil jwtUtil;
   private final RoleRepository roleRepository;
+  private final RefreshTokenService refreshTokenService;
 
 
   @Transactional
   public AuthResponseDTO register(RegisterRequestDTO dto) {
-    if (userRepository.existsByEmail(dto.getEmail())) {
-      throw new EmailAlreadyExistsException(dto.getEmail());
+    String email = dto.getEmail().toLowerCase();
+
+    if (userRepository.existsByEmail(email)) {
+      throw new EmailAlreadyExistsException(email);
     }
 
     Role studentRole = roleRepository.findByRoleName("student")
       .orElseThrow(() -> new EntityNotFoundException("student role not found"));
 
     User user = UserMapper.toEntity(dto);
+    user.setEmail(email);
     user.getRoles().add(studentRole);
     userRepository.save(user);
 
@@ -61,19 +65,22 @@ public class AuthService {
 
     return AuthResponseDTO.builder()
       .token(jwtUtil.generateToken(user))
+      .refreshToken(refreshTokenService.create(user))
       .build();
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public AuthResponseDTO login(LoginRequestDTO dto) {
+    String email = dto.getEmail().toLowerCase();
     authenticationManager.authenticate(
-      new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+      new UsernamePasswordAuthenticationToken(email, dto.getPassword())
     );
-    User user = userRepository.findByEmail(dto.getEmail())
+    User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + dto.getEmail()));
 
     return AuthResponseDTO.builder()
       .token(jwtUtil.generateToken(user))
+      .refreshToken(refreshTokenService.create(user))
       .build();
   }
 }

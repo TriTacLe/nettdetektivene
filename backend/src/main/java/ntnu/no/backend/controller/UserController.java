@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

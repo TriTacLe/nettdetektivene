@@ -1,4 +1,4 @@
-package ntnu.no.backend.model;
+package ntnu.no.backend.model.auth;
 
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import ntnu.no.backend.model.BaseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -25,7 +26,7 @@ import java.util.List;
  */
 @Entity
 @Table(name = "app_user")
-@AttributeOverride(name = "id", column = @Column(name = "user_id", updatable = false, nullable = false))
+@AttributeOverride(name = "id", column = @Column(name = "user_id"))
 @Getter
 @Setter
 @NoArgsConstructor

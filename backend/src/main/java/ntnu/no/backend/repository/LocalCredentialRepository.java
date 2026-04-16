@@ -1,7 +1,7 @@
 package ntnu.no.backend.repository;
 
-import ntnu.no.backend.model.LocalCredential;
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.LocalCredential;
+import ntnu.no.backend.model.auth.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

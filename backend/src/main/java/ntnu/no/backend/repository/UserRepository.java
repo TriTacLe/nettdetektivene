@@ -1,8 +1,9 @@
 package ntnu.no.backend.repository;
 
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * @since 0.1
  * @see User
  */
+@Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
   /**

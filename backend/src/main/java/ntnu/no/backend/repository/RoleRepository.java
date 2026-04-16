@@ -1,6 +1,6 @@
 package ntnu.no.backend.repository;
 
-import ntnu.no.backend.model.Role;
+import ntnu.no.backend.model.auth.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

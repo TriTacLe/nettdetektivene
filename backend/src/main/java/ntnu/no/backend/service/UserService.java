@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
 import ntnu.no.backend.mapper.UserMapper;
-import ntnu.no.backend.model.User;
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,10 +1,11 @@
-package ntnu.no.backend.model;
+package ntnu.no.backend.model.auth;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import ntnu.no.backend.model.BaseEntity;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -18,7 +19,7 @@ import org.springframework.security.core.GrantedAuthority;
  */
 @Entity
 @Table(name = "role")
-@AttributeOverride(name = "id", column = @Column(name = "role_id", updatable = false, nullable = false))
+@AttributeOverride(name = "id", column = @Column(name = "role_id"))
 @Getter
 @Setter
 @NoArgsConstructor

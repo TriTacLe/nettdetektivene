@@ -20,4 +20,7 @@ import lombok.NoArgsConstructor;
 public class AuthResponseDTO {
   @Schema(description = "The secret JWT token")
   private String token;
+
+  @Schema(description = "The refresh token for session renewal")
+  private String refreshToken;
 }

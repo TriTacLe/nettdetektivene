@@ -1,4 +1,4 @@
-package ntnu.no.backend.model;
+package ntnu.no.backend.model.auth;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -70,7 +70,7 @@ public class RefreshToken {
   private byte[] ipAddress;
 
   /**
-   * Sets {@code createdAt} before the entity is first persisted.
+   * Sets {@code issuedAt} before the entity is first persisted.
    */
   @PrePersist
   protected void onCreate() {
