@@ -190,3 +190,12 @@ Wrapper that ensures all endpoints return the same JSON structure. Used in every
 
 ### `GlobalExceptionHandler` — `exception/`
 Catches all unhandled exceptions and returns them as `ApiResponse` instead of Spring's raw stack trace. Define separate exception classes for 400, 401, 403, 404, 500.
+
+
+## Pull Request and commit messages guidelines
+- No credits to Claude
+- Give simple template
+- Don't assume, if you have questions ask
+- No emojis silly. 
+- No 
+overcomplicated explainations
