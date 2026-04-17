@@ -1,51 +1,108 @@
 <script setup lang="ts">
-import SceneComponent from '../components/SceneComponent.vue'
-
 import { useRouter } from 'vue-router'
+import SceneComponent from '../components/SceneComponent.vue'
+import BoardNote from '../components/BoardNote.vue'
 
 const corkboardImage = '/corkboard.jpg'
 const router = useRouter()
 
-const notes = [
-  { id: 1, label: 'Profil', top: '20%', left: '10%', route: '/profile' },
-  { id: 2, label: 'Ledertavle', top: '60%', left: '10%', route: '/leaderboard' },
-  { id: 3, label: 'Hjelp', top: '20%', left: '40%', route: '/help' },
-  { id: 4, label: 'Kart', top: '50%', left: '50%', route: '/game-map' },
-  { id: 5, label: 'Ukens Mysterium', top: '80%', left: '40%', route: '/mystery' },
-  { id: 6, label: 'Medaljer', top: '20%', left: '80%', route: '/medals' },
-  { id: 7, label: 'Notatblokk', top: '50%', left: '80%', route: '/notepad' },
-  { id: 8, label: 'Innstillinger', top: '80%', left: '90%', route: '/settings' },
-]
-
 function goTo(route: string) {
   router.push(route)
 }
-
 </script>
-
-
 
 <template>
   <SceneComponent title="Tavle">
     <div class="student-home">
       <div class="board-frame">
         <img :src="corkboardImage" alt="Korktavle" class="corkboard-image" />
-        <button
-          v-for="note in notes"
-          :key="note.id"
-          class="note-button"
-          :style="{ top: note.top, left: note.left }"
-          @click="goTo(note.route)"
-        >
-          {{ note.label }}
-        </button>
+
+        <div class="note-slot" style="top: 38%; left: 16%">
+          <BoardNote
+            :rotation="-6"
+            pin-color="#2f9e44"
+            width="13rem"
+            @click="goTo('/profile')"
+          >
+            <p class="note-title">Detektiv Kari</p>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 22%; left: 36%">
+          <BoardNote
+            :rotation="4"
+            pin-color="#1c7ed6"
+            width="7rem"
+            @click="goTo('/help')"
+          >
+            <p class="note-title">Hjelp</p>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 50%; left: 55%">
+          <BoardNote
+            :rotation="-2"
+            pin-color="#1c7ed6"
+            width="30rem"
+            height="18rem"
+            @click="goTo('/game-map')"
+          >
+            <div class="map-note">
+              <p class="note-title map-title">Kartet</p>
+              <p class="map-subtitle">Gå utendørs</p>
+            </div>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 28%; left: 82%">
+          <BoardNote
+            :rotation="5"
+            pin-color="#f59f00"
+            width="14rem"
+            @click="goTo('/medals')"
+          >
+            <p class="note-title">Medaljer</p>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 70%; left: 86%">
+          <BoardNote
+            :rotation="-4"
+            pin-color="#7048e8"
+            width="14rem"
+            @click="goTo('/notepad')"
+          >
+            <p class="note-title">Notatblokk</p>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 80%; left: 18%">
+          <BoardNote
+            :rotation="3"
+            pin-color="#f59f00"
+            width="14rem"
+            @click="goTo('/leaderboard')"
+          >
+            <p class="note-title">Ledertavle</p>
+          </BoardNote>
+        </div>
+
+        <div class="note-slot" style="top: 88%; left: 52%">
+          <BoardNote
+            :rotation="-1"
+            pin-color="#e03131"
+            width="16rem"
+            @click="goTo('/mystery')"
+          >
+            <p class="note-title">Ukens Mysterium</p>
+          </BoardNote>
+        </div>
       </div>
     </div>
   </SceneComponent>
 </template>
 
 <style scoped>
-
 .student-home {
   flex: 1;
   min-height: 0;
@@ -53,37 +110,56 @@ function goTo(route: string) {
   padding: 1.5rem;
 }
 
-
 .board-frame {
   position: relative;
-  flex: 1;
-  width: 100%;
-  min-height: 0;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  margin: 0 auto;
   overflow: hidden;
-  border-radius: 1rem;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  border: 0.6rem solid #5c3a1e;
+  box-shadow: 0 0 0 2px #3b2512 inset;
 }
 
 .corkboard-image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-
 }
 
-.note-button {
+.note-slot {
   position: absolute;
-  transform: translate(-50%, -50%) rotate(-5deg);
-  padding: 0.8rem 1rem;
-  background: rgba(218, 192, 127, 0.8);
-  border: none;
-  border-radius: 0.35rem;
-  font-weight: bold;
+  transform: translate(-50%, -50%);
 }
 
+.note-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-align: center;
+  color: #1a365d;
+}
 
+.map-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.map-title {
+  font-size: 2rem;
+}
+
+.map-subtitle {
+  margin: 0;
+  color: #4a5568;
+  font-size: 1rem;
+  font-style: italic;
+}
 </style>
