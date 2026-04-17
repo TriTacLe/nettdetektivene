@@ -101,4 +101,9 @@ VITE_APP_TITLE=Nettdetektivene
 - No credits to Claude
 - Give simple template
 - Don't assume, if you have questions ask
-- No emojis silly. 
+- No emojis silly.
+
+## 9. Views and Routing
+- Whenever you add a new view under `src/views/`, also register a corresponding route in `src/router/index.ts`.
+- Never create a view without wiring it into the router — orphan views are not allowed.
+
