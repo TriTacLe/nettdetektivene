@@ -96,9 +96,14 @@ VITE_APP_TITLE=Nettdetektivene
 | CSS classes | kebab-case (Tailwind utilities) | `task-card`, `nav-wrapper` |
 | Constants | SCREAMING_SNAKE_CASE | `MAX_RETRIES`, `API_TIMEOUT` |
 | Props / emits | camelCase | `studentId`, `onTaskComplete` |
-
+`
 ## 8. Pull Request Guidelines
 - No credits to Claude
 - Give simple template
 - Don't assume, if you have questions ask
 - No emojis silly. 
+
+
+## 9. Views and Routing
+- Whenever you add a new view under `src/views/`, also register a corresponding route in `src/router/index.ts`.
+- Never create a view without wiring it into the router — orphan views are not allowed.
