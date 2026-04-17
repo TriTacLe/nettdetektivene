@@ -1,124 +1,228 @@
-# Backend Implementasjonsplan
+# Backend Implementation Plan
 
-## 1. Layers og avhengigheter
+## 1. Dependency Layers
 
-| Layer | Avhenger av | Tabeller / entiteter |
-|-------|-------------|---------------------|
-| 0 | - | role, app_user, institution, achievement |
-| 1 | Layer 0 | app_user_local_credential, app_user_refresh_token, app_user_identity, user_role, user_profile, classroom |
-| 2 | Layer 1 | task, classroom_instructor, classroom_student, classroom_task |
-| 3 | Layer 2 | task_best_score, user_achievement, notebook_entry, mystery_submission, notification |
+| Layer | Depends on | Tables / Entities |
+|-------|------------|-------------------|
+| 0 | — | `role`, `app_user`, `institution`, `achievement` |
+| 1 | Layer 0 | `app_user_local_credential`, `app_user_refresh_token`, `app_user_identity`, `user_role`, `user_profile`, `classroom` |
+| 2 | Layer 1 | `task`, `classroom_instructor`, `classroom_student`, `classroom_task` |
+| 3 | Layer 2 | `task_best_score`, `user_achievement`, `notebook_entry`, `mystery_submission`, `notification` |
 
-Viktig å ikke havne i situasjon der man jobbe med X avhenger av Y og Y ikke er implementert enda
+Never start working on X if Y that X depends on is not implemented yet.
 
-## 2. Ansvarsfordeling
+---
 
-| Person | Ansvarsområde |
-|--------|---------------|
-| A - Nora, Anine | Auth, user_profile, classroom, institution, classroom_instructor, classroom_student |
-| B - Tri | Achivement, task, classroom_task, task_attempt, task_best_score, user_achivement, notebook_entry, mystery_submission, notification |
+## 2. Team Responsibilities
 
-Kode mot entity-og repository-interfacet, ikke mot services - da blokkerer ikke A og B hverandre.
+| Person | Areas |
+|--------|-------|
+| A — Nora, Anine | Auth, user_profile, classroom, institution, classroom_instructor, classroom_student |
+| B — Tri | Achievement, task, classroom_task, task_attempt, task_best_score, user_achievement, notebook_entry, mystery_submission, notification |
 
-## 3. Filstruktur og navnkonvensjon på filer
+Code against the entity and repository interface, not against services — A and B won't block each other.
 
-Spring Boot layered architecture:
+---
 
+## 3. File Structure and Naming
 
-**Navnkonvensjon:**
+```
+src/main/java/...
+├── controller/
+├── service/
+├── repository/
+├── model/           # JPA entities (PascalCase matching db snake_case)
+├── dto/
+│   ├── XxxRequestDTO
+│   └── XxxResponseDTO
+├── mapper/
+├── security/        # JWT only — do NOT touch if you are not Nora (A)
+├── shared/          # ApiResponse<T>
+├── exception/       # GlobalExceptionHandler + domain exceptions
+└── config/
+```
 
-| Type | Konvensjon | Eksempel |
-|------|------------|----------|
-| DTO | XxxRequestDTO, XxxReponseDTO | LoginRequestDTO |
-| Controller | XxxController | AuthController |
-| Service | XxxService | UserService |
-| Entity | db tabell er app_user, entity blir CamelCase | AppUser |
+**Naming conventions:**
 
-## 4. Steg for koding
+| Type | Convention | Example |
+|------|------------|---------|
+| DTO | `XxxRequestDTO` / `XxxResponseDTO` | `LoginRequestDTO` |
+| Controller | `XxxController` | `AuthController` |
+| Service | `XxxService` | `UserService` |
+| Entity | PascalCase matching db snake_case | `AppUser` |
+| Branch | `feature/<issue-number>-<short-desc>` | `feature/7-auth-jwt` |
 
-### Steg 0 - Felles FØR koding av faktisk kode
+---
 
-Avtal application.properties, pom, .env, og alt av configs i lag og publiser dette til github før neste steg
+## 4. Build Order
 
-Deretter avtal og lag klassene som brukes i både A og B sine implementasjoner: ApiResonse<T> og GlobalExceptionHandler - skriv disse før noen lager eneste controller. Legger ApiResponse i shared/ og GlobalExepcetionHandler i exception/
+### Step 0 — Shared config (do FIRST, together)
+Agree on `application.properties`, `pom.xml`, `.env` and commit before anything else.
+- Write `ApiResponse<T>` → `shared/`
+- Write `GlobalExceptionHandler` → `exception/`
+- Commit and push before any controller is written
 
-- **ApiResponse<T>** er en wrapper klasse som sikrer at alle endepunkter returnerer samme JSON-struktur. Frontend vet hva man alltid får. Brukes i alle kontrollere
-- **GlobalExeceptionHandler** fanger alle ubehandlede exceptions automatisk og returnerer dem som ApiResponse istedenfor Spring sin rå strack trace. Lager exeception for hvert error kode 404, 403, 401, 400, 500
+### Step 1 — Entities and Repositories
+Start with Layer 0, commit immediately so the rest of the team can unblock.
+All repos extend `JpaRepository` — Spring implements them automatically.
 
-Publiser alt dette til github før neste steg
+### Step 2 — Auth (JWT + Security)
+- `JwtUtil` — generates and validates access tokens
+- `JwtAuthFilter` — `OncePerRequestFilter`, reads user from header
+- `SecurityConfig` — permits `/api/v1/auth/**`, locks everything else, configures CORS/CSRF
 
-### Steg 1 - Entities og repositories
+### Step 3 — DTOs and Mappers
+Not blocked by anything — can be done at any time.
 
-Starter her med entities og repo da vi ikke har service-logikk og ingen risiko for sirkulære avhengigheter. Publiser til github når Layer 0 er ferdig da resten av teamet avhenger av disse.
+### Step 4 — Services (repo dependencies only)
+- `UserService`, `RoleService`, `InstitutionService`, `AchievementService`
 
-### Steg 2 - Auth (JWT og security config)
+Then in this order (service dependencies):
+1. `UserProfileService` ← `UserService`
+2. `ClassroomService` ← `UserService`, `InstitutionService`, `UserProfileService`
+3. `ClassroomMemberService` ← `ClassroomService`, `UserService`
+4. `TaskService` ← `UserService`
+5. `TaskAttemptService` ← `TaskService`, `ClassroomService`
+6. `NotebookService` ← `UserService`, `ClassroomService`
+7. `MysteryService` ← `ClassroomService`, `UserService`, `AchievementService`
+8. `NotificationService` ← `UserService`, `ClassroomService`
 
-Avhenger ikke av noe og kan startes med en gang. Må være ferdig før noen endepunkter kan fungere.
+### Step 5 — Controllers / Endpoints
+Base URL: `localhost:8080/api/v1/`
 
-- **JwtUtil** - genererer og validerer access tokens
-- **JwtAuthFilter** - OncePerRequestFilter, henter bruker fra header
-- **SecurityConfig** - tillater /api/v1/auth/**, sperrer alt annet, konfigurerer CORS og CSRF osv
+### Step 6 — Tests (required before push)
+See testing section below.
 
-### Steg 3 - DTO og mappers
+---
 
-DTO og mapper blir ikke blokkert av noen
+## 5. MySQL Triggers — Do NOT re-implement in Java
 
-### Steg 4 - Service layer
+| Trigger / Procedure | When | What it does |
+|---------------------|------|--------------|
+| `trg_classroom_auto_instructor` | AFTER INSERT classroom | Auto-inserts creator as instructor — do NOT do this in `ClassroomService` |
+| `trg_attempt_sync` | AFTER INSERT task_attempt | Upserts `task_best_score`, awards 10 XP on first pass, updates `xp_level` |
+| `trg_mystery_approved` | AFTER UPDATE mystery_submission | Creates notification + awards achievement on approval (idempotent via INSERT IGNORE) |
+| `sp_submit_attempt` | Stored procedure | Only entry point for registering attempts — call via `JdbcTemplate`, then read back state |
 
-**kun repo-avhengigheter:**
-- UserService
-- RoleService
-- InstitutionService
-- AchievementService
+`task_best_score` is read-only in Java — never call `.save()` on it.
 
-**service-avhengigheter:**
-1. UserProfileService - avhenger av UserService
-2. ClassroomService - avhenger av UserService, InstitutionService, UserProfileService
-3. ClassroomMemberService - avhenger av ClassroomService, UserService
-4. TaskService - avhenger av UserService
-5. TaskAttemptService - avhenger av TaskService, ClassroomService
-6. NotebookService - avhenger av UserService, ClassroomService
-7. MysteryService - avhenger av ClassroomService, UserService, AchievementService
-8. NotificationService - avhenger av UserService, ClassroomService
+---
 
-**OBS - Triggers og stored procedures:**
+## 6. Testing
 
-Triggers er MySQL-kode som kjører automatisk. Ikke reimplementer denne logikken i Java.
+### Test Types
 
-| Navn | Timing | Hva den gjør |
-|------|--------|--------------|
-| trg_classroom_auto_instructor | AFTER INSERT classroom | Auto-inserter oppretter som instructor - ikke gjør dette manuelt i ClassroomService |
-| trg_attempt_sync | AFTER INSERT task_attempt | Upsert av task_best_score, tildeler 10 XP kun ved første bestått, oppdaterer xp_level |
-| trg_mystery_approved | AFTER UPDATE mystery_submission | Oppretter notifikasjon og tildeler achievement ved godkjenning - idempotent via INSERT IGNORE |
-| sp_submit_attempt | Stored procedure | Eneste inngangspunkt for å registrere forsøk. Kall via JdbcTemplate. Les tilbake state etterpå - ikke beregn det selv |
+| Type | Tools | What is tested |
+|------|-------|----------------|
+| Unit | JUnit 5 + Mockito | Service logic isolated from DB |
+| Controller | `@WebMvcTest` + MockMvc | HTTP status codes and JSON structure |
+| Integration | Testcontainers + MySQL | Triggers, stored procedures, real DB |
 
-### Steg 5 - Endepunkter
+### File Structure
+```
+src/test/java/.../
+  controller/     # @WebMvcTest tests
+  service/        # Unit tests with Mockito
+  integration/    # Testcontainers tests (slower, run separately)
+  util/           # TestFactory classes (shared test data)
+```
 
-Basestruktur: localhost:8080/api/v1/...
+### Test Factories
+Use factories in `util/` to build test data. Never repeat `Task.builder()...` across multiple test files.
+- Create a factory when the same object is built in 2+ test files
+- Factory has static methods: `entity()`, `requestDTO()`, `responseDTO(UUID id)`
+- Examples: `TaskTestFactory`, `ClassroomTestFactory`, `AchievementTestFactory`
 
-TODO: hvilke endepunkter trengs @Frontend?
+### Service Tests (Unit)
+```java
+@ExtendWith(MockitoExtension.class)
+class MyServiceTest {
+  @Mock MyRepository myRepository;
+  @InjectMocks MyService myService;
+}
+```
+**Test per method:**
+- Happy path returns correct DTO
+- `EntityNotFoundException` is thrown when not found
+- `verify(repo).save(any(...))` when saving
+- Soft delete sets `deletedAt` — don't just verify `deleteById` is called
 
-### Steg 6 - Tester (viktig!)
+### Controller Tests (@WebMvcTest)
+```java
+@WebMvcTest(MyController.class)
+class MyControllerTest {
+  @Autowired MockMvc mockMvc;
+  @Autowired ObjectMapper objectMapper;
+  @MockitoBean MyService myService;
+}
+```
+**Rules:**
+- `@WithMockUser` on all authenticated tests
+- `@WithMockUser(roles = "instructor")` for role-restricted endpoints
+- `.with(csrf())` on all POST, PATCH, DELETE requests
+- Wrong role → expect `403 Forbidden`
+- No auth → expect `401 Unauthorized`
+- Always assert `$.success` and at least one data field in JSON
 
-- **Unit:** Service-logikk isolert fra DB med JUnit 5 + Mockito
-- **Integration:** Testcontainers med MySQL image. Nødvendig for stored procedures og triggers som ikke kan mockes med H2.
-- **Controller:** @WebMvcTest + MockMvc som verifiserer HTTP-statuskoder og JSON-struktur
-- Integrasjonstester ligger adskilt fra unit-tester under test/.../integration/ da de er tregere og bør kjøres separat
-- Bruker ikke H2!
-- Tommelfingerregel: test logikk du selv har skrevet. Alt autogenerert av Spring testes indirekte via integrasjonstester
-- Før push skal alle ting som er lagd testes og at testene er grønne. Trengs ikke å teste alt – bare det som er relevant. F.eks. entiteter og DTO trengs ikke å testes.
+### Integration Tests (Testcontainers)
+**Always use Testcontainers with MySQL — never H2.**
+H2 does not support MySQL-specific features like stored procedures and triggers.
 
-## 5. Samarbeid A og B
+```java
+@SpringBootTest
+@Testcontainers
+class MyIntegrationTest {
+  @Container
+  static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8");
+}
+```
+Required for:
+- Anything that calls `sp_submit_attempt`
+- Anything that depends on `trg_attempt_sync`, `trg_mystery_approved`, `trg_classroom_auto_instructor`
+- Flyway migrations
 
-- GJORT! Dag 1 - sett opp configs i lag: application.properties, ApiResponse<T>, GlobalExceptionHandler
-- A eier security/ - B rører aldri disse filene
-- Delte filer (ApiResponse, GlobalExceptionHandler, pom.xml) - avtal endringer muntlig først
-- Code review: A reviewer B sine PRer og omvendt
+### Naming Convention
+```
+methodName_expectedResult_whenCondition
 
-## 6. Miljøvariabel og andre configs
+getTask_returnsDTO_whenFound
+getTask_throwsEntityNotFoundException_whenNotFound
+createTask_savesAndReturnsDTO
+deleteClassroom_softDeletes_whenFound
+```
 
-Bruker application.properties. Hemmeligheter hentes fra .env via spring-dotenv dependency.
+### What to Test
+- All service logic you wrote yourself
+- HTTP status codes and JSON structure for all endpoints
+- Role checks (`@PreAuthorize`)
+- Exception handling (not found, forbidden etc.)
+- Soft delete sets `deletedAt`
 
+### What NOT to Test
+- Entities and DTOs directly
+- Spring auto-generated repository methods
+- Mapper classes directly (covered by service tests)
+- Auto-generated Lombok code
+
+### Rules
+- All tests must be green before pushing
+- One assertion focus per `@Test` — don't test 5 things in one test
+- Tests must be independent — no shared mutable state between tests
+- Integration tests go in `integration/` and are run separately from unit tests
+
+---
+
+## 7. Team Collaboration
+
+- A owns `security/` — B never touches those files
+- Shared files (`ApiResponse`, `GlobalExceptionHandler`, `pom.xml`) — agree verbally before changing
+- Code review: A reviews B's PRs and vice versa
+
+---
+
+## 8. Config and Secrets
+
+**`application.properties`**
 ```properties
 spring.application.name=nettdetektivene
 spring.datasource.url=${DB_URL}
@@ -136,49 +240,49 @@ springdoc.swagger-ui.path=/swagger-ui.html
 server.port=8080
 ```
 
-.env ligger i rotmappen og committes aldri. Commit .env.example som mal for teamet.
-
+**`.env`** (never commit — add to `.gitignore`)
 ```env
-DB_URL=jdbc:mysql://localhost:3306/
+DB_URL=jdbc:mysql://localhost:3306/<dbname>
 DB_USERNAME=
 DB_PASSWORD=
-JWT_SECRET=kjør openssl rand –base64 32
+JWT_SECRET=   # generate: openssl rand -base64 32
 JWT_EXPIRATION_MS=86400000
 ```
 
-## 7. Databasetabeller
+Commit `.env.example` as a template for the team.
 
-task_best_score er oppdatert av trigger trg_attempt_sync. Aldri write til denne tabellen, altså read-only og ingen save() calls
+---
 
-Når vi lager entitetsklasser speiler vi db tabellene
+## 9. Coding Rules
 
-## 999. Huskeregler
+**Must do:**
+- Always map to DTO before returning from controller — never return JPA entities
+- `@PreAuthorize` on every endpoint that modifies data
+- `@Valid` on all request DTOs in controllers
+- `@Enumerated(EnumType.STRING)` on all ENUM columns — values must match MySQL ENUM exactly
+- UUID generated in Java: `UUID.randomUUID()` — not by the database
+- Use `FetchType.LAZY` on all `@ManyToOne` and `@OneToMany` relations
+- Use `springdoc-openapi` from day one — frontend tests on `/swagger-ui.html`
+- `ApiResponse<T>` in every controller — `ResponseEntity` controls HTTP layer, `ApiResponse<T>` controls JSON body
+- `GlobalExceptionHandler` in `exception/` — without it Spring leaks stack traces to frontend
+- All repos extend `JpaRepository` — Spring implements them automatically
+- Soft delete: all repository queries against `classroom` must filter on `deletedAt IS NULL`
 
+**Must not do:**
+- Never call `.save()` on `task_best_score` — trigger managed, read-only
+- Never re-implement trigger logic in Java (`trg_attempt_sync`, `trg_mystery_approved`, `trg_classroom_auto_instructor`)
+- Never award achievements manually in service code — `trg_mystery_approved` handles it
+- Never create notifications manually — `trg_mystery_approved` handles it
+- Never touch `security/` — owned by Nora
+- Never use wildcard imports (`import lombok.*`)
+- Never return raw stack traces — `GlobalExceptionHandler` handles all exceptions
 
-- Aldri returner JPA-entiteter fra kontrollere - mapper alltid til DTO
-- Rollesjekk på hvert endepunkt med @PreAuthorize for alt som modifiserer classroom-data
-- Alle repositories skrives som interface og extender JpaRepository - Spring implementerer dem automatisk
-- Bruk springdoc-openapi fra dag én - frontend tester på /swagger-ui.html uten å vente på backend endringer
-- Felles ApiResponse<T> i shared/ - ResponseEntity styrer HTTP-laget, ApiResponse<T> styrer JSON-innholdet
-- Global exception handler i exception/ - uten denne leaker Spring stack traces til frontend
-- Input validation med @Valid og Bean Validation - ellers kan alle sende tomme strenger og null-felter
-- Soft delete: alle repository-queries mot classroom må filtrere på deleted At IS NULL
-- ENUM-kolonner: alltid @Enumerated(EnumType.STRING) - verdiene må matche MySQL ENUM eksakt
-- UUID genereres i Java med UUID.randomUUID().toString() - ikke la databasen generere disse
-- Seed-data: rollene STUDENT og TEACHER må ligge i Flyway-migrasjon fra dag én
-- Brancher fra issues, f.eks. feature/7-auth-jwt
-- Baseendepunkt alltid: localhost:8080/api/v1/
-- Ingen start imports som import lombok.*
+---
 
-### `GlobalExceptionHandler` — `exception/`
-Catches all unhandled exceptions and returns them as `ApiResponse` instead of Spring's raw stack trace. Define separate exception classes for 400, 401, 403, 404, 500.
+## 10. Pull Request and Commit Guidelines
 
-
-## Pull Request and commit messages guidelines
 - No credits to Claude
-- Give simple template
-- Don't assume, if you have questions ask
-- No emojis silly. 
-- No 
-overcomplicated explainations
-
+- Keep commit messages simple and descriptive
+- Don't assume — ask if unsure
+- No emojis
+- No overcomplicated explanations
