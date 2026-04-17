@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
  * Represents a single attempt by a student on a task within a classroom.
  * After insert, the {@code trg_attempt_sync} trigger automatically upserts
  * {@code task_best_score}, awards XP on first pass, and updates {@code xp_level}
+ *
  * do NOT replicate this logic in Java.
  *
  * @author tri
