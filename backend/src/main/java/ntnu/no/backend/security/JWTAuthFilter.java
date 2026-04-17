@@ -76,6 +76,9 @@ public class JWTAuthFilter extends OncePerRequestFilter {
   /**
    * Validates the token and sets the authenticated user in the Security Config
    * if the token is valid and the request is not already authenticated.
+   * If a {@code feideId} claim is present, it is extracted and stored as a
+   * request attribute, making it available to the FEIDE login endpoint for
+   * subsequent login resolution via the identity provider lookup.
    *
    * @param jwt the token to validate
    * @param req the HTTP request for building authentication details
@@ -87,6 +90,10 @@ public class JWTAuthFilter extends OncePerRequestFilter {
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
         if (jwtUtil.isTokenValid(jwt, userDetails)) {
           setAuthentication(userDetails, req);
+          String feideId = jwtUtil.extractFeideId(jwt);
+          if (feideId != null) {
+            req.setAttribute("feideId", feideId);
+          }
         }
       }
     } catch (JwtException e) {
