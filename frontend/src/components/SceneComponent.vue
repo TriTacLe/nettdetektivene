@@ -5,31 +5,21 @@ withDefaults(
   defineProps<{
     title: string
     previous?: string
-    previousLabel?: string
     next?: string
-    nextLabel?: string
-    backgroundImage?: string
-    darken?: number
+    background?: string
   }>(),
   {
-    backgroundImage: '/background.jpg',
-    darken: 0.5,
+    background: '/StartBackground.jpg',
   },
 )
 </script>
 
 <template>
   <div class="scene">
-    <img class="scene-background" :src="backgroundImage" alt="" aria-hidden="true" />
-    <div class="scene-overlay" :style="{ opacity: darken }" />
+    <img class="scene-background" :src="background" alt="" aria-hidden="true" />
+    <div class="scene-overlay" />
     <div class="scene-content">
-      <NavigationHeader
-        :title="title"
-        :previous="previous"
-        :previous-label="previousLabel"
-        :next="next"
-        :next-label="nextLabel"
-      />
+      <NavigationHeader :title="title" :previous="previous" :next="next" />
       <div class="scene-body">
         <slot />
       </div>
@@ -57,6 +47,7 @@ withDefaults(
   position: fixed;
   inset: 0;
   background: black;
+  opacity: 0.5;
   z-index: 10;
   pointer-events: none;
 }
