@@ -20,7 +20,7 @@ export enum UserRole {
 }
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -36,7 +36,7 @@ export interface RefreshRequest {
 export interface UserDTO {
   id: string;
   displayName: string;
-  username: string;
+  email: string;
   isActive: boolean;
   roles: string[];
   createdAt: string;
