@@ -63,6 +63,28 @@ public class JWTUtil {
   }
 
   /**
+   * Generates a signed JWT for a FEIDE-authenticated user, embedding
+   * {@code feideId} as a custom claim alongside the user's roles.
+   * In a real FEIDE flow, the caller would pass the {@code sub} claim
+   * extracted from FEIDE's verified token. In this simulation, the caller
+   * passes a server-generated UUID, since the OAuth handshake cannot be
+   * performed in a simulation. The token itself is identical in both cases.
+   *
+   * @param userDetails the authenticated user
+   * @param feideId the FEIDE identifier to embed as a custom claim
+   * @return a compact, signed JWT string
+   */
+  public String generateToken(UserDetails userDetails, String feideId) {
+    Map<String, Object> claims = new HashMap<>();
+    List<String> roles = userDetails.getAuthorities().stream()
+      .map(GrantedAuthority::getAuthority)
+      .collect(Collectors.toList());
+    claims.put("roles", roles);
+    claims.put("feideId", feideId);
+    return buildToken(claims, userDetails);
+  }
+
+  /**
    * Constructs and signs the JWT with subject, issue time,
    * expiration, and custom claims.
    *
@@ -110,6 +132,18 @@ public class JWTUtil {
    */
   public String extractEmail(String token) {
     return extractTokenClaim(token, Claims::getSubject);
+  }
+
+  /**
+   *  Extracts the FEIDE identifier claim from the token, if present.
+   *  Returns {@code null} for tokens issued to non-FEIDE users
+   *  authenticated via local credentials.
+   *
+   * @param token the JWT string
+   * @return the feideId claim value, or {@code null} if absent
+   */
+  public String extractFeideId(String token) {
+    return extractTokenClaim(token, claims -> claims.get("feideId", String.class));
   }
 
   /**
