@@ -33,12 +33,12 @@ public class ClassroomTaskId implements Serializable {
   /**
    * The ID of the classroom.
    */
-  @Column(name = "classroom_id")
+  @Column(name = "classroom_id", nullable = false)
   private UUID classroomId;
 
   /**
    * The ID of the task.
    */
-  @Column(name = "task_id")
+  @Column(name = "task_id", nullable = false)
   private UUID taskId;
 }
