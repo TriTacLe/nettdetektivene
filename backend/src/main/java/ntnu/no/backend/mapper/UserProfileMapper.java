@@ -1,7 +1,9 @@
 package ntnu.no.backend.mapper;
 
+import ntnu.no.backend.dto.auth.FeideLoginRequestDTO;
 import ntnu.no.backend.dto.profile.UserProfileResponseDTO;
 import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 
 /**
@@ -13,6 +15,7 @@ import ntnu.no.backend.model.auth.UserProfile;
  * @see UserProfile
  * @see UserProfileResponseDTO
  * @see UserProfileUpdateRequestDTO
+ * @see FeideLoginRequestDTO
  */
 public class UserProfileMapper {
 
@@ -26,23 +29,40 @@ public class UserProfileMapper {
    */
   public static UserProfileResponseDTO toDTO(UserProfile profile) {
     if (profile == null) return null;
-    return UserProfileResponseDTO.builder()
-      .id(profile.getId())
-      .displayName(profile.getDisplayName())
-      .feideId(profile.getFeideId())
-      .avatarConfig(profile.getAvatarConfig())
-      .xp(profile.getXp())
-      .xpLevel(profile.getXpLevel())
-      .createdAt(profile.getCreatedAt())
+    return new UserProfileResponseDTO(
+      profile.getId(),
+      profile.getDisplayName(),
+      profile.getFeideId(),
+      profile.getAvatarConfig(),
+      profile.getXp(),
+      profile.getXpLevel(),
+      profile.getCreatedAt()
+    );
+  }
+
+  /**
+   * Creates a {@link UserProfile} entity from a {@link User} and a {@link FeideLoginRequestDTO}.
+   * Used on first FEIDE login to initialize the user's profile.
+   * The {@code feideId} is set by the service layer after creation.
+   *
+   * @param user the user this profile belongs to
+   * @param dto the FEIDE login request containing the display name
+   * @return a {@link UserProfile} entity, or {@code null} if either argument is null
+   */
+  public static UserProfile toEntity(User user, FeideLoginRequestDTO dto) {
+    if (user == null || dto == null) return null;
+    return UserProfile.builder()
+      .user(user)
+      .displayName(dto.getDisplayName())
       .build();
   }
 
   /**
    * Updates the fields of a {@link UserProfile} entity from a {@link UserProfileUpdateRequestDTO}.
-   * Does not update {@code xp} or {@code xpLevel} — those are managed by database triggers.
+   * Does not update {@code xp} or {@code xpLevel} (managed by database triggers).
    *
    * @param profile the profile entity to update
-   * @param dto     the DTO containing the new values
+   * @param dto the DTO containing the new values
    */
   public static void updateEntity(UserProfile profile, UserProfileUpdateRequestDTO dto) {
     if (profile == null || dto == null) return;
