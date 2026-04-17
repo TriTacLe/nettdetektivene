@@ -1,13 +1,7 @@
-<script setup lang="ts">
-import SceneComponent from './components/SceneComponent.vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <SceneComponent
-    title="Introduksjon"
-    previous="/youtube"
-    background="/GameMapBackground.jpg"
-  />
+  <RouterView />
 </template>
 
 <style scoped></style>
