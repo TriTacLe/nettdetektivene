@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 
-const props = defineProps<{
+defineProps<{
   previous?: string
-  previousLabel?: string
   title: string
   next?: string
-  nextLabel?: string
 }>()
 
 const router = useRouter()
@@ -31,14 +29,12 @@ function goTo(route: string) {
           />
         </svg>
       </button>
-      <span v-if="previousLabel" class="nav-previous-label">{{ previousLabel }}</span>
     </div>
     <div v-else class="nav-placeholder" />
 
     <h1 class="nav-title">{{ title }}</h1>
 
     <div v-if="next" class="nav-next" @click="goTo(next!)">
-      <span v-if="nextLabel" class="nav-next-label">{{ nextLabel }}</span>
       <button class="nav-button" aria-label="Go forward">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />
@@ -99,12 +95,6 @@ function goTo(route: string) {
   opacity: 0.8;
 }
 
-.nav-previous-label {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .nav-next {
   display: flex;
   align-items: center;
@@ -115,12 +105,6 @@ function goTo(route: string) {
 
 .nav-next:hover {
   opacity: 0.8;
-}
-
-.nav-next-label {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .nav-title {

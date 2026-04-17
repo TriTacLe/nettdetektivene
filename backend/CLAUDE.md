@@ -24,19 +24,6 @@ Kode mot entity-og repository-interfacet, ikke mot services - da blokkerer ikke 
 
 Spring Boot layered architecture:
 
-```
-controller/
-service/
-repository/
-entity/ eller model/
-dto/
-  request/
-  response/
-security/       # JWT-infrastruktur, tilhører ikke controller eller service
-shared/         # ApiResponse<T>
-exception/      # GlobalExceptionHandler + andre exceptions
-config/
-```
 
 **Navnkonvensjon:**
 
@@ -167,6 +154,7 @@ Når vi lager entitetsklasser speiler vi db tabellene
 
 ## 999. Huskeregler
 
+
 - Aldri returner JPA-entiteter fra kontrollere - mapper alltid til DTO
 - Rollesjekk på hvert endepunkt med @PreAuthorize for alt som modifiserer classroom-data
 - Alle repositories skrives som interface og extender JpaRepository - Spring implementerer dem automatisk
@@ -181,3 +169,16 @@ Når vi lager entitetsklasser speiler vi db tabellene
 - Brancher fra issues, f.eks. feature/7-auth-jwt
 - Baseendepunkt alltid: localhost:8080/api/v1/
 - Ingen start imports som import lombok.*
+
+### `GlobalExceptionHandler` — `exception/`
+Catches all unhandled exceptions and returns them as `ApiResponse` instead of Spring's raw stack trace. Define separate exception classes for 400, 401, 403, 404, 500.
+
+
+## Pull Request and commit messages guidelines
+- No credits to Claude
+- Give simple template
+- Don't assume, if you have questions ask
+- No emojis silly. 
+- No 
+overcomplicated explainations
+
