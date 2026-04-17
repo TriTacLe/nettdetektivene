@@ -6,7 +6,7 @@ import SceneComponent from '../components/SceneComponent.vue'
   <SceneComponent
     title="Introduksjon"
     previous="/student-login"
-    next="/teacher-login"
+    next="/student-home"
     background="/StartBackground.jpg"
   />
 </template>
