@@ -1,11 +1,12 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import SceneComponent from './components/SceneComponent.vue'
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <SceneComponent
+  title="Introduksjon" previous="/youtube"
+  previous-label="Tilbake" next="/github"
+  next-label="Fortsett" :darken="0.5" />
 </template>
 
 <style scoped></style>

@@ -10,8 +10,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @author norakirknes
- * @author tri :)
+ * Request Data Transfer Object for user registration.
+ * Contains the display name, email, and password required to create a new account.
+ *
+ * @author norakirknes, tri
+ * @version 0.1
+ * @since 0.1
  */
 @Data
 @NoArgsConstructor
@@ -20,6 +24,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Data Transfer Object request data for registering a user")
 public class RegisterRequestDTO{
 
+    /**
+     * The name displayed to other users in the application.
+     */
     @NotBlank(message = "Display name is required")
     @Schema(description = "Display name", example = "Firstname Lastname")
     private String displayName;
@@ -32,6 +39,9 @@ public class RegisterRequestDTO{
     @Schema(description = "User email", example = "example@gmail.com")
     private String email;
 
+    /**
+     * The user's password. Must be at least 8 characters and contain both letters and numbers.
+     */
     @NotBlank(message = "Password is required")
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$",
       message = "Password must be at least 8 characters with letters and numbers")

@@ -8,7 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Request Data Transfer Object for a refreshed token
+ * Request Data Transfer Object for token refresh and logout.
+ * Contains the raw refresh token issued at login.
  *
  * @author norakirknes
  * @version 0.1
@@ -18,8 +19,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Data Transfer Object request body for the refresh token")
+@Schema(description = "Request body containing the refresh token for session renewal or logout")
 public class RefreshRequestDTO {
+
+  /**
+   * The raw refresh token issued at login. Used to obtain a new access token or revoke the session.
+   */
   @NotBlank
   @Schema(description = "The refresh token issued at login")
   private String refreshToken;

@@ -52,7 +52,7 @@ public class UserResponseDTO {
   /**
    * The roles of the user
    */
-  @Schema(description = "Roles assigned to the user", example = "STUDENT")
+  @Schema(description = "Roles assigned to the user", example = "student")
   private List<String> roles;
 
   /**

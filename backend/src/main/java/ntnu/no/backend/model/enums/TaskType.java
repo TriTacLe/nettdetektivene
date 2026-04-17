@@ -1,4 +1,4 @@
-package ntnu.no.backend.model;
+package ntnu.no.backend.model.enums;
 
 /**
  * Represents the category of a task.
