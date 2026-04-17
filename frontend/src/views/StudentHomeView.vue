@@ -17,7 +17,7 @@ function goTo(route: string) {
       <div class="board-frame">
         <img :src="corkboardImage" alt="Korktavle" class="corkboard-image" />
 
-        <div class="note-slot" style="top: 38%; left: 16%">
+        <div class="note-slot" style="top: 12%; left: 13%">
           <BoardNote
             :rotation="-6"
             pin-color="#2f9e44"
@@ -28,7 +28,7 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 22%; left: 36%">
+        <div class="note-slot" style="top: 50%; left: 92%">
           <BoardNote
             :rotation="4"
             pin-color="#1c7ed6"
@@ -39,12 +39,12 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 50%; left: 55%">
+        <div class="note-slot" style="top: 50%; left: 52%">
           <BoardNote
             :rotation="-2"
             pin-color="#1c7ed6"
-            width="30rem"
-            height="18rem"
+            width="28rem"
+            height="16rem"
             @click="goTo('/game-map')"
           >
             <div class="map-note">
@@ -54,7 +54,7 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 28%; left: 82%">
+        <div class="note-slot" style="top: 10%; left: 86%">
           <BoardNote
             :rotation="5"
             pin-color="#f59f00"
@@ -65,7 +65,7 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 70%; left: 86%">
+        <div class="note-slot" style="top: 85%; left: 86%">
           <BoardNote
             :rotation="-4"
             pin-color="#7048e8"
@@ -76,7 +76,7 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 80%; left: 18%">
+        <div class="note-slot" style="top: 89%; left: 14%">
           <BoardNote
             :rotation="3"
             pin-color="#f59f00"
@@ -87,7 +87,7 @@ function goTo(route: string) {
           </BoardNote>
         </div>
 
-        <div class="note-slot" style="top: 88%; left: 52%">
+        <div class="note-slot" style="top: 90%; left: 52%">
           <BoardNote
             :rotation="-1"
             pin-color="#e03131"
