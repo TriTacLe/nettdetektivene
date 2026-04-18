@@ -76,18 +76,14 @@ public class FeideAuthService {
    *
    * @param user the authenticated user
    * @param feideId the FEIDE identifier to embed in the JWT
-   * @return a {@link FeideAuthResponseDTO} with JWT, refresh token, role and feideId
+   * @return a {@link FeideAuthResponseDTO} with JWT, refresh token, roles and feideId
    */
   private FeideAuthResponseDTO issueTokens(User user, String feideId) {
     refreshTokenService.revokeAll(user);
-    String role = user.getRoles().stream()
-      .findFirst()
-      .map(Role::getAuthority)
-      .orElse("");
     return new FeideAuthResponseDTO(
       jwtUtil.generateToken(user, feideId),
       refreshTokenService.create(user),
-      role,
+      user.getRoles().stream().map(Role::getAuthority).toList(),
       feideId
     );
   }

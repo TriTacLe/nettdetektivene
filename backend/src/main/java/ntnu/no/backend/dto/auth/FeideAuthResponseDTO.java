@@ -2,6 +2,8 @@ package ntnu.no.backend.dto.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 /**
  * Response DTO returned after successful FEIDE authentication simulation.
  * Extends the auth response with a FEIDE identifier embedded in the JWT.
@@ -10,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *
  * @param token short-lived JWT access token used to authenticate requests, contains feideId as a claim
  * @param refreshToken long-lived refresh token used to obtain a new access token when it expires
- * @param role the role of the authenticated user
+ * @param roles the roles assigned to the authenticated user
  * @param feideId the generated FEIDE identifier for this user, mirroring the {@code sub} claim in a real FEIDE token
  *
  * @author norakirknes
@@ -21,6 +23,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record FeideAuthResponseDTO(
     String token,
     String refreshToken,
-    String role,
+    List<String> roles,
     String feideId
 ) {}

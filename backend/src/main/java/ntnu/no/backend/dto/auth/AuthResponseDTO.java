@@ -2,12 +2,14 @@ package ntnu.no.backend.dto.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 /**
  * Response DTO returned after successful authentication.
  *
  * @param token short-lived JWT access token used to authenticate requests
  * @param refreshToken long-lived refresh token used to obtain a new access token when it expires
- * @param role the role of the authenticated user
+ * @param roles the roles assigned to the authenticated user
  *
  * @author norakirknes
  * @version 0.1
@@ -17,5 +19,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record AuthResponseDTO(
     String token,
     String refreshToken,
-    String role
+    List<String> roles
 ) {}
