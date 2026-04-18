@@ -1,5 +1,6 @@
 package ntnu.no.backend.mapper;
 
+import ntnu.no.backend.dto.auth.FeideLoginRequestDTO;
 import ntnu.no.backend.dto.auth.RegisterRequestDTO;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
@@ -16,6 +17,7 @@ import ntnu.no.backend.model.auth.User;
  * @see UserResponseDTO
  * @see RegisterRequestDTO
  * @see UserUpdateDTO
+ * @see FeideLoginRequestDTO
  */
 public class UserMapper {
 
@@ -54,6 +56,21 @@ public class UserMapper {
     return User.builder()
       .displayName(dto.getDisplayName())
       .email(dto.getEmail())
+      .build();
+  }
+
+  /**
+   * Converts a {@link FeideLoginRequestDTO} to a {@link User} entity.
+   * Does not set credentials or roles — handled by the service layer.
+   *
+   * @param dto the FEIDE login request to convert
+   * @return a {@link User} entity, or {@code null} if {@code dto} is null
+   */
+  public static User toEntity(FeideLoginRequestDTO dto) {
+    if (dto == null) return null;
+    return User.builder()
+      .displayName(dto.getDisplayName())
+      .email(dto.getEmail().toLowerCase())
       .build();
   }
 
