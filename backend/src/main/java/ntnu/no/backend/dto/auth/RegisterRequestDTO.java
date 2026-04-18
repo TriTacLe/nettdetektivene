@@ -47,4 +47,12 @@ public class RegisterRequestDTO{
       message = "Password must be at least 8 characters with letters and numbers")
     @Schema(description = "Password", example = "password123")
     private String password;
+
+    /**
+     * The role to assign. Restricted to {@code sys_admin} and {@code inst_admin} —
+     * students and instructors authenticate via FEIDE simulation.
+     */
+    @NotBlank(message = "Role is required")
+    @Schema(description = "Role to assign", allowableValues = {"sys_admin", "inst_admin"}, example = "inst_admin")
+    private String role;
 }
