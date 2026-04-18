@@ -50,4 +50,13 @@ public class FeideLoginRequestDTO {
   @NotBlank(message = "Affiliation is required")
   @Schema(description = "Simulated eduPersonAffiliation claim from FEIDE", allowableValues = {"student", "instructor"}, example = "student")
   private String affiliation;
+
+  /**
+   * Password field for logins, deviating from exact FEIDE mirroring
+   * where credential validation happens by the third party FEIDE.
+   *
+   */
+  @NotBlank(message = "password is required")
+  @Schema(description = "The password of the user")
+  private String password;
 }
