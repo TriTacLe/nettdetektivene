@@ -70,7 +70,7 @@ public class UserMapper {
     if (dto == null) return null;
     return User.builder()
       .displayName(dto.getDisplayName())
-      .email(dto.getEmail().toLowerCase())
+      .email(dto.getEmail())
       .build();
   }
 
