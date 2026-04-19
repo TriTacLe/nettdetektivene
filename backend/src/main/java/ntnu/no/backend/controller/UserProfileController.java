@@ -1,7 +1,6 @@
 package ntnu.no.backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +8,7 @@ import ntnu.no.backend.dto.profile.UserProfileResponseDTO;
 import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.service.UserProfileService;
+import ntnu.no.backend.shared.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,14 +41,10 @@ public class UserProfileController {
    * @return {@code 200 OK} with the user's profile
    */
   @Operation(summary = "Get the authenticated user's profile")
-  @ApiResponse(responseCode = "200", description = "Profile retrieved successfully")
-  @ApiResponse(responseCode = "401", description = "Not authenticated")
-  @ApiResponse(responseCode = "403", description = "Not authorized")
-  @ApiResponse(responseCode = "404", description = "Profile not found")
   @PreAuthorize("isAuthenticated()")
   @GetMapping("/me")
-  public ResponseEntity<UserProfileResponseDTO> getProfile(@AuthenticationPrincipal User user) {
-    return ResponseEntity.ok(userProfileService.getByUser(user));
+  public ResponseEntity<ApiResponse<UserProfileResponseDTO>> getProfile(@AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(userProfileService.getByUser(user)));
   }
 
   /**
@@ -59,16 +55,11 @@ public class UserProfileController {
    * @return {@code 200 OK} with the updated profile
    */
   @Operation(summary = "Update the authenticated user's profile")
-  @ApiResponse(responseCode = "200", description = "Profile updated successfully")
-  @ApiResponse(responseCode = "400", description = "Invalid input")
-  @ApiResponse(responseCode = "401", description = "Not authenticated")
-  @ApiResponse(responseCode = "403", description = "Not authorized")
-  @ApiResponse(responseCode = "404", description = "Profile not found")
   @PreAuthorize("isAuthenticated()")
   @PatchMapping("/me")
-  public ResponseEntity<UserProfileResponseDTO> updateProfile(@AuthenticationPrincipal User user,
-                                                              @Valid @RequestBody UserProfileUpdateRequestDTO dto) {
-    return ResponseEntity.ok(userProfileService.update(user, dto));
+  public ResponseEntity<ApiResponse<UserProfileResponseDTO>> updateProfile(@AuthenticationPrincipal User user,
+                                                                           @Valid @RequestBody UserProfileUpdateRequestDTO dto) {
+    return ResponseEntity.ok(ApiResponse.ok(userProfileService.update(user, dto)));
   }
 
   /**
@@ -79,12 +70,9 @@ public class UserProfileController {
    * @return {@code 200 OK} with the user's profile
    */
   @Operation(summary = "Get a user profile by FEIDE identifier")
-  @ApiResponse(responseCode = "200", description = "Profile retrieved successfully")
-  @ApiResponse(responseCode = "401", description = "Not authenticated")
-  @ApiResponse(responseCode = "404", description = "Profile not found")
   @PreAuthorize("isAuthenticated()")
   @GetMapping("/{feideId}")
-  public ResponseEntity<UserProfileResponseDTO> getProfileByFeideId(@PathVariable String feideId) {
-    return ResponseEntity.ok(userProfileService.getByFeideId(feideId));
+  public ResponseEntity<ApiResponse<UserProfileResponseDTO>> getProfileByFeideId(@PathVariable String feideId) {
+    return ResponseEntity.ok(ApiResponse.ok(userProfileService.getByFeideId(feideId)));
   }
 }
