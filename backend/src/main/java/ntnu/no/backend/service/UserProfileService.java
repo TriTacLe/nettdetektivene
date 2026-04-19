@@ -7,9 +7,14 @@ import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.mapper.UserProfileMapper;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
+import ntnu.no.backend.model.enums.NameChangeStatus;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
  * Service for user profile management.
@@ -24,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserProfileService {
 
   private final UserProfileRepository userProfileRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
 
   /**
    * Retrieves the profile for the given user.
@@ -58,6 +64,10 @@ public class UserProfileService {
 
   /**
    * Updates the profile for the given user.
+   * If the user is a student in a classroom and a display name change is requested,
+   * the change is forwarded as a pending name change request on the classroom
+   * membership instead of updating the profile directly. The profile display name
+   * is only updated when the instructor approves the request.
    *
    * @param user the authenticated user whose profile should be updated
    * @param dto  the update request containing new display name and avatar config
@@ -68,6 +78,18 @@ public class UserProfileService {
   public UserProfileResponseDTO update(User user, UserProfileUpdateRequestDTO dto) {
     UserProfile profile = userProfileRepository.findByUser(user)
       .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+    if (dto.getDisplayName() != null) {
+      classroomStudentRepository.findByUser(user).ifPresentOrElse(
+        student -> {
+          student.setRequestedDisplayName(dto.getDisplayName());
+          student.setNameChangeStatus(NameChangeStatus.PENDING);
+          student.setNameChangeRequestedAt(LocalDateTime.now());
+          student.setNameChangeReviewedBy(null);
+          student.setNameChangeReviewedAt(null);
+        },
+        () -> profile.setDisplayName(dto.getDisplayName())
+      );
+    }
     UserProfileMapper.updateEntity(profile, dto);
     return UserProfileMapper.toDTO(profile);
   }

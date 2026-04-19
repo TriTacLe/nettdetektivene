@@ -58,7 +58,9 @@ public class UserProfileMapper {
   }
 
   /**
-   * Updates the fields of a {@link UserProfile} entity from a {@link UserProfileUpdateRequestDTO}.
+   * Updates non-display-name fields of a {@link UserProfile} from a {@link UserProfileUpdateRequestDTO}.
+   * Display name updates are handled by the service layer, which routes them through
+   * the classroom approval flow when the user is in a classroom.
    * Does not update {@code xp} or {@code xpLevel} (managed by database triggers).
    *
    * @param profile the profile entity to update
@@ -66,7 +68,6 @@ public class UserProfileMapper {
    */
   public static void updateEntity(UserProfile profile, UserProfileUpdateRequestDTO dto) {
     if (profile == null || dto == null) return;
-    if (dto.getDisplayName() != null) profile.setDisplayName(dto.getDisplayName());
     if (dto.getAvatarConfig() != null) profile.setAvatarConfig(dto.getAvatarConfig());
   }
 }
