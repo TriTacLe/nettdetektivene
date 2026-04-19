@@ -28,4 +28,11 @@ public class RefreshRequestDTO {
   @NotBlank
   @Schema(description = "The refresh token issued at login")
   private String refreshToken;
+
+  /**
+   * The expired JWT access token. Used to forward claims {@code feideId} to the new token.
+   * Optional field, absent for local credential users.
+   */
+  @Schema(description = "The expired JWT access token, used to carry forward provider claims")
+  private String expiredToken;
 }
