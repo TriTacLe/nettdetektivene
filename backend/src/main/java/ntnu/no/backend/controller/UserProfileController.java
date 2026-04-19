@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see UserProfileService
  */
 @RestController
-@RequestMapping("api/v1/profiles")
+@RequestMapping("/api/v1/profiles")
 @RequiredArgsConstructor
 @Tag(name = "Profiles", description = "Endpoints for user profile management")
 public class UserProfileController {
