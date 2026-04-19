@@ -82,7 +82,7 @@ public class User extends BaseEntity implements UserDetails {
    * The roles assigned to this user.
    */
   @Builder.Default
-  @ManyToMany(fetch = FetchType.LAZY)
+  @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
     name = "user_role",
     joinColumns = @JoinColumn(name = "user_id"),

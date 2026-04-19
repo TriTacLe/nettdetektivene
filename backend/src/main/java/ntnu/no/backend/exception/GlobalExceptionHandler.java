@@ -105,6 +105,18 @@ public class GlobalExceptionHandler {
   }
 
   /**
+   * Handles illegal argument errors such as an unrecognized affiliation claim
+   *
+   * @param e the exception thrown for invalid argument values
+   * @return 400 Bad Request with the error message
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
+    logger.warn(e.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+  }
+
+  /**
    * Handles validation failures from {@code @Valid} annotations
    *
    * @param e the exception containing field validation errors
