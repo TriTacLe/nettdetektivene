@@ -90,7 +90,7 @@ public class RefreshTokenService {
 
   /**
    * Refreshes the refresh token, revoking the old one and
-   * generating a new one. Soft delete old refresh token. Old JWT
+   * generating a new one. Soft revoke old refresh token. Old JWT
    * forwards the {@code feideId} claim, if present.
    *
    * @param rawToken the raw expired refresh token
@@ -112,12 +112,10 @@ public class RefreshTokenService {
     softRevoke(token);
     String newRefreshToken = create(user);
 
-    String feideId = expiredJwt != null
-      ? jwtUtil.extractFeideId(expiredJwt)
-      : null;
-    String newAccessToken = feideId != null
-      ? jwtUtil.generateToken(user, feideId)
-      : jwtUtil.generateToken(user);
+    String newAccessToken = jwtUtil.introspect(expiredJwt)
+      .map(claims -> claims.get("feideId", String.class))
+      .map(feideId -> jwtUtil.generateToken(user, feideId))
+      .orElseGet(() -> jwtUtil.generateToken(user));
 
     return new AuthResponseDTO(
       newAccessToken,
