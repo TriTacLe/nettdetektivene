@@ -25,6 +25,7 @@ public class ClassroomInstructorMapper {
   public static ClassroomInstructorResponseDTO toDTO(ClassroomInstructor instructor) {
     if (instructor == null) return null;
     return new ClassroomInstructorResponseDTO(
+      instructor.getId().getClassroomId(),
       instructor.getId().getUserId(),
       instructor.getAssignedAt()
     );

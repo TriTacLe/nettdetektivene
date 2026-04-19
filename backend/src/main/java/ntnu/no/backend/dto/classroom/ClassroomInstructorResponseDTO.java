@@ -8,6 +8,7 @@ import java.util.UUID;
 /**
  * Response DTO representing an instructors assignment to a classroom.
  *
+ * @param classroomId the classroom ID
  * @param userId the instructors user ID
  * @param assignedAt timestamp of when the instructor was assigned
  *
@@ -17,6 +18,7 @@ import java.util.UUID;
  */
 @Schema(description = "Represents an instructors assignment to a classroom")
 public record ClassroomInstructorResponseDTO(
+    UUID classroomId,
     UUID userId,
     LocalDateTime assignedAt
 ) {}
