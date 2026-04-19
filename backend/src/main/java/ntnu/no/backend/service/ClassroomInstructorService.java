@@ -9,6 +9,7 @@ import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.classroom.ClassroomInstructor;
 import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
+import ntnu.no.backend.model.enums.RoleName;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -84,6 +85,12 @@ public class ClassroomInstructorService {
     Classroom classroom = findClassroom(classroomId);
     User targetUser = userRepository.findById(userId)
       .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+    boolean isInstructor = targetUser.getAuthorities().stream()
+      .anyMatch(a -> RoleName.INSTRUCTOR.getValue().equals(a.getAuthority()));
+    if (!isInstructor) {
+      throw new IllegalStateException("User does not have the instructor role");
+    }
 
     if (classroomInstructorRepository.existsById(
       ClassroomInstructorId.builder()
