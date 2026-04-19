@@ -1,6 +1,6 @@
 package ntnu.no.backend.security;
 
-import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.Optional;
 
 /**
  * Intercepts every incoming HTTP request once and validates
@@ -74,7 +76,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
   }
 
   /**
-   * Validates the token and sets the authenticated user in the Security Config
+   * Validates the token and sets the authenticated user in the Security Context
    * if the token is valid and the request is not already authenticated.
    * If a {@code feideId} claim is present, it is extracted and stored as a
    * request attribute, making it available to the FEIDE login endpoint for
@@ -84,20 +86,27 @@ public class JWTAuthFilter extends OncePerRequestFilter {
    * @param req the HTTP request for building authentication details
    */
   private void authenticateUser(String jwt, HttpServletRequest req) {
-    try {
-      final String email = jwtUtil.extractEmail(jwt);
-      if (email != null && isNotAuthenticated()) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        if (jwtUtil.isTokenValid(jwt, userDetails)) {
-          setAuthentication(userDetails, req);
-          String feideId = jwtUtil.extractFeideId(jwt);
-          if (feideId != null) {
-            req.setAttribute("feideId", feideId);
-          }
+    Optional<Claims> result = jwtUtil.introspect(jwt);
+    if (result.isEmpty()) {
+      logger.warn("Invalid JWT token on request {}", req.getRequestURI());
+      return;
+    }
+    Claims claims = result.get();
+    if (claims.getExpiration().before(new Date())) {
+      logger.debug("Expired JWT on request {}", req.getRequestURI());
+      return;
+    }
+
+    String email = claims.getSubject();
+    if (email != null && isNotAuthenticated()) {
+      UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+      if (email.equals(userDetails.getUsername()) && userDetails.isEnabled()) {
+        setAuthentication(userDetails, req);
+        String feideId = claims.get("feideId", String.class);
+        if (feideId != null) {
+          req.setAttribute("feideId", feideId);
         }
       }
-    } catch (JwtException e) {
-      logger.warn("Invalid JWT token: {}", e.getMessage());
     }
   }
 
@@ -111,7 +120,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
   }
 
   /**
-   * Builds a authentication token and sets it
+   * Builds an authentication token and sets it
    * in the SecurityContext.
    *
    * @param userDetails the authenticated user
