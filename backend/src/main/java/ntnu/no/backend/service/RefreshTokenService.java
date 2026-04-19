@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.auth.AuthResponseDTO;
 import ntnu.no.backend.exception.RefreshTokenException;
 import ntnu.no.backend.model.auth.RefreshToken;
+import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.RefreshTokenRepository;
 import ntnu.no.backend.security.JWTUtil;
@@ -19,6 +20,19 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
+
+/**
+ * Service handling refresh token lifecycle; creation, rotation and revocation.
+ * Refresh tokens are stored as SHA-256 hashes; the raw token is only ever held by the client.
+ * On token rotation, the old token is soft-revoked and a new one is issued.
+ * On login, all existing tokens are hard-deleted to prevent session accumulation.
+ *
+ * @author norakirknes
+ * @version 0.1
+ * @since 0.1
+ * @see JWTUtil
+ * @see RefreshTokenRepository
+ */
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -29,7 +43,14 @@ public class RefreshTokenService {
   @Value("${jwt.refresh-expiration-ms}")
   private long refreshTokenExpirationInMs;
 
-  // TODO: populate ipAddress
+  /**
+   * Creates a new refresh token, encoding the random 32 bytes
+   * to string with Base64. Builds refresh token, storing only hashed
+   * token in db. Returns the raw token for client.
+   * TODO: populate ipAddress
+   * @param user the user to generate the refresh token to
+   * @return the raw token as a string
+   */
   @Transactional
   public String create(User user) {
     byte[] bytes = new byte[32];
@@ -45,16 +66,39 @@ public class RefreshTokenService {
     return rawToken;
   }
 
+  /**
+   * Hard deletes all refresh tokens belonging to the given user.
+   * Called before issuing a new token to prevent session accumulation.
+   *
+   * @param user the user whose refresh tokens should be deleted
+   */
+  @Transactional
+  public void revokeAll(User user) { refreshTokenRepository.deleteByUser(user); }
+
+  /**
+   * Soft-revokes a single refresh token by setting {@code revokedAt}.
+   * Used on logout to invalidate the current session.
+   *
+   * @param rawToken the raw refresh token to revoke
+   */
   @Transactional
   public void revoke(String rawToken) {
     RefreshToken token = refreshTokenRepository.findByTokenHash(sha256(rawToken))
       .orElseThrow(() -> new RefreshTokenException("Refresh token not found"));
-    token.setRevokedAt(LocalDateTime.now());
-    refreshTokenRepository.save(token);
+    softRevoke(token);
   }
 
+  /**
+   * Refreshes the refresh token, revoking the old one and
+   * generating a new one. Soft delete old refresh token. Old JWT
+   * forwards the {@code feideId} claim, if present.
+   *
+   * @param rawToken the raw expired refresh token
+   * @param expiredJwt the raw expired JWT token, used for forwarding claims (optional)
+   * @return a {@link AuthResponseDTO} containing the successful authentication.
+   */
   @Transactional
-  public AuthResponseDTO refresh(String rawToken) {
+  public AuthResponseDTO refresh(String rawToken, String expiredJwt) {
     RefreshToken token = refreshTokenRepository.findByTokenHash(sha256(rawToken))
       .orElseThrow(() -> new RefreshTokenException("Refresh token not found"));
 
@@ -64,24 +108,47 @@ public class RefreshTokenService {
     if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
       throw new RefreshTokenException("Refresh token has expired");
     }
-
-    token.setRevokedAt(LocalDateTime.now());
-    refreshTokenRepository.save(token);
-
     User user = token.getUser();
+    softRevoke(token);
     String newRefreshToken = create(user);
-    String newAccessToken = jwtUtil.generateToken(user);
 
-    return AuthResponseDTO.builder()
-      .token(newAccessToken)
-      .refreshToken(newRefreshToken)
-      .build();
+    String feideId = expiredJwt != null
+      ? jwtUtil.extractFeideId(expiredJwt)
+      : null;
+    String newAccessToken = feideId != null
+      ? jwtUtil.generateToken(user, feideId)
+      : jwtUtil.generateToken(user);
+
+    return new AuthResponseDTO(
+      newAccessToken,
+      newRefreshToken,
+      user.getRoles().stream().map(Role::getAuthority).toList()
+    );
   }
 
-  private String sha256(String input) {
+  /**
+   * Sets {@code revokedAt} on the given token and persists it.
+   *
+   * @param token the token to soft-revoke
+   */
+  private void softRevoke(RefreshToken token) {
+    token.setRevokedAt(LocalDateTime.now());
+    refreshTokenRepository.save(token);
+  }
+
+  /**
+   * Private helper method for hashing the raw token
+   * using sha 256 hashing algorithm, and converting to
+   * hex format and returning the hashed token in hex format as string.
+   *
+   * @param rawToken the token to be hashed by SHA256 algorithm
+   * @return the hashed token in hex format
+   */
+  private String sha256(String rawToken) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+      byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+
       StringBuilder hex = new StringBuilder();
       for (byte b : hash) {
         hex.append(String.format("%02x", b));
