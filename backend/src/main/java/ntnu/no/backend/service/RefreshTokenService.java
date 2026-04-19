@@ -113,6 +113,7 @@ public class RefreshTokenService {
     String newRefreshToken = create(user);
 
     String newAccessToken = jwtUtil.introspect(expiredJwt)
+      .filter(claims -> user.getEmail().equals(claims.getSubject()))
       .map(claims -> claims.get("feideId", String.class))
       .map(feideId -> jwtUtil.generateToken(user, feideId))
       .orElseGet(() -> jwtUtil.generateToken(user));
