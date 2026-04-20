@@ -44,8 +44,7 @@ const router = createRouter({
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/TeacherHomeView.vue'),
-      beforeEnter: requireTeacher,
-    }
+    },
     {
       path: '/notebook',
       name: 'notebook',
