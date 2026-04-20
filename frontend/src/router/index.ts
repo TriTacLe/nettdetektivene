@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/start' },
+    { path: '/', redirect: { name: 'start' } },
     { path: '/start', name: 'start', component: () => import('../views/StartView.vue') },
     {
       path: '/student-login',
@@ -40,6 +40,12 @@ const router = createRouter({
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
     },
+    {
+      path: '/teacher-home',
+      name: 'teacher-home',
+      component: () => import('../views/TeacherHomeView.vue'),
+      beforeEnter: requireTeacher,
+    }
     {
       path: '/notebook',
       name: 'notebook',
