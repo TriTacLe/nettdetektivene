@@ -30,6 +30,11 @@ const router = createRouter({
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
     },
+    {
+      path: '/task-info',
+      name: 'task-info',
+      component: () => import('../views/TaskInfoView.vue'),
+    },
   ],
 })
 
