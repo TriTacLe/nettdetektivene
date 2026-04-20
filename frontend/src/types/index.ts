@@ -15,28 +15,37 @@ export enum TaskType {
 }
 
 export enum UserRole {
-  TEACHER = 'TEACHER',
-  STUDENT = 'STUDENT',
+  TEACHER = 'instructor',
+  STUDENT = 'student',
 }
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
+}
+
+export interface FeideLoginRequest {
+  displayName?: string
+  email: string
+  affiliation: 'student' | 'instructor'
+  password: string
 }
 
 export interface AuthResponse {
   token: string;
   refreshToken: string;
+  roles: string[];
 }
 
 export interface RefreshRequest {
   refreshToken: string;
+  expiredToken?: string;
 }
 
 export interface UserDTO {
   id: string;
   displayName: string;
-  username: string;
+  email: string;
   isActive: boolean;
   roles: string[];
   createdAt: string;

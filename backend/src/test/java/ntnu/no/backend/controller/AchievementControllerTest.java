@@ -1,12 +1,14 @@
 package ntnu.no.backend.controller;
 
+import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.AchievementService;
 import ntnu.no.backend.util.AchievementTestFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -33,6 +35,12 @@ class AchievementControllerTest {
 
   @MockitoBean
   private AchievementService achievementService;
+
+  @MockitoBean
+  private JWTUtil jwtUtil;
+
+  @MockitoBean
+  private UserDetailsService userDetailsService;
 
   @Test
   @WithMockUser

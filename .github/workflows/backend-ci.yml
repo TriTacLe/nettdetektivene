@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: [main, dev]
     paths:
-      - "backend/**"
+      - "backend/**"  return notebookEntryRepository.findByClassroom_IdAndUser_Id(classroomId, userID);
 
 jobs:
   test:
