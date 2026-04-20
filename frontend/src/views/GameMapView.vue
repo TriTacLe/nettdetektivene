@@ -11,7 +11,7 @@ const houses = [
 </script>
 
 <template>
-  <SceneComponent title="Utendørs" previous="/start" background="/GameMapBackground.jpg">
+  <SceneComponent title="Utendørs" previous="/student-home" background="/GameMapBackground.jpg">
     <div class="map-objects">
       <div class="road" aria-hidden="true"></div>
       <RouterLink

@@ -31,7 +31,8 @@ withDefaults(
 .scene {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .scene-background {
@@ -55,13 +56,14 @@ withDefaults(
 .scene-content {
   position: relative;
   z-index: 20;
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .scene-body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
