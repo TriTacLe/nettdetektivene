@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from "pinia";
 import { useRouter } from 'vue-router'
 import AuthService from "@/services/AuthService.ts";
-import type { UserDTO, LoginRequest } from "@/types";
+import type { UserDTO, FeideLoginRequest } from "@/types";
 import { UserRole } from "@/types";
 
 export const useAuthStore = defineStore('auth', () => {
@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
     return null;
   })
 
-  async function login(credentials: LoginRequest): Promise<void> {
+  async function login(credentials: FeideLoginRequest): Promise<void> {
     const response = await AuthService.login(credentials);
     token.value = response.token;
     refreshToken.value = response.refreshToken
