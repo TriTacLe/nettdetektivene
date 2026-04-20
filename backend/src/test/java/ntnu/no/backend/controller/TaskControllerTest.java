@@ -1,12 +1,16 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.TaskService;
 import ntnu.no.backend.util.TaskTestFactory;
+import ntnu.no.backend.util.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 0.1
  */
 @WebMvcTest(TaskController.class)
+@Import(TestSecurityConfig.class)
 class TaskControllerTest {
 
   @Autowired
@@ -43,6 +48,12 @@ class TaskControllerTest {
 
   @MockitoBean
   private TaskService taskService;
+
+  @MockitoBean
+  private JWTUtil jwtUtil;
+
+  @MockitoBean
+  private UserDetailsService userDetailsService;
 
   @Test
   @WithMockUser

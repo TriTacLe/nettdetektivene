@@ -3,6 +3,7 @@ package ntnu.no.backend.repository;
 import ntnu.no.backend.model.NotebookEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -13,4 +14,9 @@ import java.util.UUID;
  * @since 0.1
  */
 public interface NotebookEntryRepository extends JpaRepository<NotebookEntry, UUID> {
+
+  List<NotebookEntry> findByClassroom_IdAndUser_Id(UUID classroomId, UUID userID);
+
+
+  List<NotebookEntry> findByClassroom_Id(UUID classroomId);
 }
