@@ -25,7 +25,7 @@ export interface LoginRequest {
 }
 
 export interface FeideLoginRequest {
-  displayName: string
+  displayName?: string
   email: string
   affiliation: 'student' | 'instructor'
   password: string

@@ -43,7 +43,7 @@ async function handleLogin(): Promise<void> {
 
   isLoading.value = true
   try {
-    await authStore.login({ email: email.value, password: password.value})
+    await authStore.feideLogin({ email: email.value, affiliation: "instructor", password: password.value})
     router.push({ name: 'teacher-home' })
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
