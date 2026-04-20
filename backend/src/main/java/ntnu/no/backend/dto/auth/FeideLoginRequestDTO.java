@@ -29,7 +29,6 @@ public class FeideLoginRequestDTO {
   /**
    * The display name returned by FEIDE.
    */
-  @NotBlank(message = "Display name is required")
   @Schema(description = "Display name returned by FEIDE", example = "Firstname Lastname")
   private String displayName;
 
