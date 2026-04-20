@@ -3,9 +3,9 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createTestingPinia } from '@pinia/testing';
 import { createRouter, createWebHashHistory } from "vue-router";
 
-import StudentLoginView from "@/views/StudentLoginView.vue";
-import TeacherLoginView from "@/views/TeacherLoginView.vue";
-import { useAuthStore } from "@/stores/AuthStore";
+import StudentLoginView from '../../views/StudentLoginView.vue'
+import TeacherLoginView from '../../views/TeacherLoginView.vue'
+import { useAuthStore } from '../../stores/AuthStore'
 
 vi.mock('@/components/SceneComponent.vue', () => ({
   default: {
@@ -17,7 +17,7 @@ vi.mock('@/components/SceneComponent.vue', () => ({
 const mockPush = vi.fn()
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
-  return { ...actual, useRouter: () => ({ push.mockPush })}
+  return { ...actual, useRouter: () => ({ push: mockPush })}
 })
 
 const router = createRouter({
@@ -34,8 +34,8 @@ function mountView(component: object) {
 }
 
 async function fillForm(wrapper: ReturnType<typeof mount>, email: string, password: string) {
-  await wrapper.find('input[type="email').setValue(email)
-  await wrapper.find('input[type="password').setValue(password)
+  await wrapper.find('input[type="email"]').setValue(email)
+  await wrapper.find('input[type="password"]').setValue(password)
 }
 
 async function submit(wrapper: ReturnType<typeof mount>) {
@@ -49,6 +49,108 @@ describe('StudentLoginView', () => {
   let authStore: ReturnType<typeof useAuthStore>
 
   beforeEach(() => {
-    vi.clearAllMocks
+    vi.clearAllMocks()
+    wrapper = mountView(StudentLoginView)
+    authStore = useAuthStore()
   })
-}
+
+  it('shows email and password fields', () => {
+    expect(wrapper.find('input[type="email"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+  })
+
+  it('shows error if empty submit', async () => {
+    await submit(wrapper)
+    expect(wrapper.text()).toContain('Epost kreves')
+    expect(wrapper.text()).toContain('Passord kreves')
+  })
+
+  it('doesnt call on feideLogin if validation error', async () => {
+    await submit(wrapper)
+    expect(authStore.feideLogin).not.toHaveBeenCalled()
+  })
+
+  it('calls on feideLogin if valid input and affiliation student', async () => {
+    await fillForm(wrapper, 'kari@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(authStore.feideLogin).toHaveBeenCalledWith({
+      email: 'kari@skole.no',
+      affiliation: 'student',
+      password: 'passord123',
+    })
+  })
+
+  it('navigates to join-classroom after successful login', async () => {
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    await fillForm(wrapper, 'kari@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(mockPush).toHaveBeenCalledWith({ name: 'join-classroom' })
+  })
+
+  it('shows error if unsuccessful login', async () => {
+    vi.mocked(authStore.feideLogin).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
+    await fillForm(wrapper, 'kari@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(wrapper.text()).toContain('Ugyldig epost eller passord')
+  })
+})
+
+// TeacherLoginView
+
+describe('TeacherLoginView', () => {
+  let wrapper: ReturnType<typeof mount>
+  let authStore: ReturnType<typeof useAuthStore>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    wrapper = mountView(TeacherLoginView)
+    authStore = useAuthStore()
+  })
+
+  it('calls feideLogin with affiliation instructor', async () => {
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    await fillForm(wrapper, 'lars@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(authStore.feideLogin).toHaveBeenCalledWith({
+      email: 'lars@skole.no',
+      affiliation: 'instructor',
+      password: 'passord123'
+    })
+  })
+
+  it('navigates to teacher-home after successful login', async() => {
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    await fillForm(wrapper, 'lars@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(mockPush).toHaveBeenCalledWith({ name: 'teacher-home' })
+  })
+
+  it('shows error if unsuccessful login', async () => {
+    vi.mocked(authStore.feideLogin).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
+    await fillForm(wrapper, 'lars@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(wrapper.text()).toContain('Ugyldig epost eller passord')
+  })
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
