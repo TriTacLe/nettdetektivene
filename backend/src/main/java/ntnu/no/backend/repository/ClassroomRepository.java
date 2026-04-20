@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Repository for {@link Classroom} entities.
  *
- * @author tri
+ * @author tri, norakirknes
  * @version 0.1
  * @since 0.1
  */
@@ -38,4 +38,12 @@ public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
    * @return the classroom if found and not soft-deleted
    */
   Optional<Classroom> findByIdAndDeletedAtIsNull(UUID id);
+
+  /**
+   * Returns an active classroom by its join code.
+   *
+   * @param joinCode the classroom join code
+   * @return the classroom if found and not soft-deleted
+   */
+  Optional<Classroom> findByJoinCodeAndDeletedAtIsNull(String joinCode);
 }
