@@ -30,6 +30,11 @@ const router = createRouter({
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
     },
+    {
+      path: '/student-leaderboard',
+      name: 'student-leaderboard',
+      component: () => import('../views/StudentLeaderboardView.vue'),
+    },
   ],
 })
 
