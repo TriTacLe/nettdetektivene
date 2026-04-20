@@ -25,6 +25,11 @@ const router = createRouter({
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
     },
+    {
+      path: '/notebook',
+      name: 'notebook',
+      component: () => import('../views/NotebookView.vue'),
+    },
   ],
 })
 
