@@ -124,9 +124,7 @@ public class FeideAuthService {
     String generatedFeideId = UUID.randomUUID().toString();
 
     createIdentity(user, generatedFeideId, email);
-    if (RoleName.STUDENT.getValue().equals(roleName)) {
-      createStudentProfile(user, dto, generatedFeideId);
-    }
+    createProfile(user, dto, generatedFeideId);
     return issueTokens(user, generatedFeideId);
   }
 
@@ -175,13 +173,13 @@ public class FeideAuthService {
   }
 
   /**
-   * Creates and persists a {@link UserProfile} for a student, setting the feideId for public lookup.
+   * Creates and persists a {@link UserProfile} for the user, setting the feideId for public lookup.
    *
-   * @param user the authenticated student
+   * @param user the authenticated user
    * @param dto the FEIDE login request
    * @param feideId the generated FEIDE identifier
    */
-  private void createStudentProfile(User user, FeideLoginRequestDTO dto, String feideId) {
+  private void createProfile(User user, FeideLoginRequestDTO dto, String feideId) {
     UserProfile profile = UserProfileMapper.toEntity(user, dto);
     profile.setFeideId(feideId);
     userProfileRepository.save(profile);

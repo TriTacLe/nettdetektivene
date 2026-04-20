@@ -45,7 +45,7 @@ public class UserProfileController {
   @ApiResponse(responseCode = "401", description = "Not authenticated")
   @ApiResponse(responseCode = "403", description = "Not authorized")
   @ApiResponse(responseCode = "404", description = "Profile not found")
-  @PreAuthorize("hasAuthority('student')")
+  @PreAuthorize("isAuthenticated()")
   @GetMapping("/me")
   public ResponseEntity<UserProfileResponseDTO> getProfile(@AuthenticationPrincipal User user) {
     return ResponseEntity.ok(userProfileService.getByUser(user));
@@ -64,7 +64,7 @@ public class UserProfileController {
   @ApiResponse(responseCode = "401", description = "Not authenticated")
   @ApiResponse(responseCode = "403", description = "Not authorized")
   @ApiResponse(responseCode = "404", description = "Profile not found")
-  @PreAuthorize("hasAuthority('student')")
+  @PreAuthorize("isAuthenticated()")
   @PatchMapping("/me")
   public ResponseEntity<UserProfileResponseDTO> updateProfile(@AuthenticationPrincipal User user,
                                                               @Valid @RequestBody UserProfileUpdateRequestDTO dto) {
@@ -72,17 +72,17 @@ public class UserProfileController {
   }
 
   /**
-   * Retrieves a student profile by FEIDE identifier.
-   * Used to view another student's profile from a leaderboard or classroom context.
+   * Retrieves a user profile by FEIDE identifier.
+   * Used to view another user's profile from a leaderboard or classroom context.
    *
-   * @param feideId the FEIDE identifier of the student
-   * @return {@code 200 OK} with the student's profile
+   * @param feideId the FEIDE identifier of the user
+   * @return {@code 200 OK} with the user's profile
    */
-  @Operation(summary = "Get a student profile by FEIDE identifier")
+  @Operation(summary = "Get a user profile by FEIDE identifier")
   @ApiResponse(responseCode = "200", description = "Profile retrieved successfully")
   @ApiResponse(responseCode = "401", description = "Not authenticated")
   @ApiResponse(responseCode = "404", description = "Profile not found")
-  @PreAuthorize("hasAnyAuthority('student', 'instructor')")
+  @PreAuthorize("isAuthenticated()")
   @GetMapping("/{feideId}")
   public ResponseEntity<UserProfileResponseDTO> getProfileByFeideId(@PathVariable String feideId) {
     return ResponseEntity.ok(userProfileService.getByFeideId(feideId));
