@@ -65,3 +65,20 @@ export interface TaskDTO {
   isActive: boolean;
   stopLocation: string | null;
 }
+
+export interface NotebookEntryDTO {
+  id: string;
+  userId: string;
+  classroomId: string;
+  stopLocation: string;
+  autoNotes: string | null;
+  studentReflection: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotebookEntryRequest {
+  stopLocation: string;
+  autoNotes?: string;
+  studentReflection?: string;
+}
