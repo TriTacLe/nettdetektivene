@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { NotebookEntryDTO, NotebookEntryRequest } from '@/types'
 import {
-  getNotebookEntries,
+  // getNotebookEntries, // kommenter inn når backend er klar
   createNotebookEntry,
   updateNotebookEntry,
 } from '@/services/NotebookService'
@@ -29,7 +29,7 @@ export const useNotebookStore = defineStore('notebook', () => {
           updatedAt: '',
         }
       ]
-      // entries.value = await getNotebookEntries()  // kommenter ut til backend er klar
+      // entries.value = await getNotebookEntries()  // kommenter inn når backend er klar
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Kunne ikke hente notatblokkoppføringer'
     } finally {
@@ -61,6 +61,4 @@ export const useNotebookStore = defineStore('notebook', () => {
     saveEntry,
     getEntryByStop,
   }
-
-
 })
