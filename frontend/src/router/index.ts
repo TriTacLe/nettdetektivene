@@ -26,9 +26,25 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
+      path: '/stops/nyhetskvartalet',
+      name: 'nyhetskvartalet',
+      component: () => import('../views/NyhetskvartaletView.vue'),
+    },
+    {
       path: '/join-classroom',
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
+    },
+    {
+
+      path: '/student-leaderboard',
+      name: 'student-leaderboard',
+      component: () => import('../views/StudentLeaderboardView.vue'),
+    },
+    {
+      path: '/task-info',
+      name: 'task-info',
+      component: () => import('../views/TaskInfoView.vue'),
     },
   ],
 })

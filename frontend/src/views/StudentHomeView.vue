@@ -81,7 +81,7 @@ function goTo(route: string) {
             :rotation="3"
             pin-color="#f59f00"
             width="14rem"
-            @click="goTo('/leaderboard')"
+            @click="goTo('/student-leaderboard')"
           >
             <p class="note-title">Ledertavle</p>
           </BoardNote>
