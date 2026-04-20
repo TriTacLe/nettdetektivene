@@ -65,3 +65,12 @@ export interface TaskDTO {
   isActive: boolean;
   stopLocation: string | null;
 }
+
+export interface NewsArticle {
+  imagePath: string;
+  isReal: boolean;
+}
+
+export interface NewsChallenge {
+  articles: [NewsArticle, NewsArticle];
+}
