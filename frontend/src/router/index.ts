@@ -41,7 +41,11 @@ const router = createRouter({
       component: () => import('../views/JoinClassroomView.vue'),
     },
     {
-
+      path: '/notebook',
+      name: 'notebook',
+      component: () => import('../views/NotebookView.vue'),
+    },
+    {
       path: '/student-leaderboard',
       name: 'student-leaderboard',
       component: () => import('../views/StudentLeaderboardView.vue'),

@@ -66,6 +66,23 @@ export interface TaskDTO {
   stopLocation: string | null;
 }
 
+export interface NotebookEntryDTO {
+  id: string;
+  userId: string;
+  classroomId: string;
+  stopLocation: string;
+  autoNotes: string | null;
+  studentReflection: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotebookEntryRequest {
+  stopLocation: string;
+  autoNotes?: string;
+  studentReflection?: string;
+}
+
 export interface NewsArticle {
   imagePath: string;
   isReal: boolean;
