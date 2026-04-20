@@ -35,12 +35,12 @@ async function deleteClassroom(id: string): Promise<void> {
   await apiClient.delete(`/classrooms/${id}`)
 }
 
-// async function getStudents(classroomId: string): Promise<ClassroomStudentResponseDTO>{
-//   const { data } = await apiClient.get<ApiResponse<ClassroomStudentResponseDTO[]>>(
-//     `/classrooms/${classroomId}/students`
-//   )
-//   return data.data
-// }
+async function getStudents(classroomId: string): Promise<ClassroomStudentResponseDTO[]>{
+  const { data } = await apiClient.get<ApiResponse<ClassroomStudentResponseDTO[]>>(
+    `/classrooms/${classroomId}/students`
+  )
+  return data.data
+}
 
 async function approveStudent(classroomId: string, userId: string): Promise<ClassroomStudentResponseDTO> {
   const { data } = await apiClient.post<ApiResponse<ClassroomStudentResponseDTO>>(
@@ -60,7 +60,7 @@ export default {
   createClassroom,
   updateClassroom,
   deleteClassroom,
-  //getStudents,
+  getStudents,
   approveStudent,
   removeStudent,
 }
