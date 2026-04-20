@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 
 const houses = [
-  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/stops/detektivkontoret' },
+  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home' },
   { key: 'news', src: '/NewsObject.png', name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet' },
   { key: 'photo', src: '/PhotoObject.png', name: 'Fotografen', to: '/stops/fotografen' },
   { key: 'final-boss', src: '/FinalBossObject.png', name: 'Datasenteret', to: '/stops/datasenteret' },

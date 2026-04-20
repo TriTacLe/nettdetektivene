@@ -26,6 +26,11 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
+      path: '/stops/nyhetskvartalet',
+      name: 'nyhetskvartalet',
+      component: () => import('../views/NyhetskvartaletView.vue'),
+    },
+    {
       path: '/join-classroom',
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
