@@ -61,7 +61,7 @@ class NotebookControllerTest {
    * Verifies that an instructor gets 200 and a list of all notebook entries.
    */
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void getAllNotebooks_asInstructor_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
@@ -78,7 +78,7 @@ class NotebookControllerTest {
    * Verifies that a student gets 403 when trying to access all notebook entries.
    */
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void getAllNotebooks_asStudent_returnsForbidden() throws Exception {
     UUID classroomId = UUID.randomUUID();
 

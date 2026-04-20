@@ -79,7 +79,7 @@ class TaskControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void createTask_returnsCreated() throws Exception {
     when(taskService.createTask(any())).thenReturn(TaskTestFactory.responseDTO(UUID.randomUUID()));
 
@@ -92,7 +92,7 @@ class TaskControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void createTask_asStudent_returnsForbidden() throws Exception {
     mockMvc.perform(post("/api/v1/tasks")
         .contentType(MediaType.APPLICATION_JSON)
@@ -102,7 +102,7 @@ class TaskControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void deleteTask_returnsNoContent() throws Exception {
     UUID id = UUID.randomUUID();
     doNothing().when(taskService).deleteTask(id);

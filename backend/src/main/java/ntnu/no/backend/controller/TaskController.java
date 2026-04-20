@@ -69,7 +69,7 @@ public class TaskController {
    */
   @PostMapping
   @Operation(summary = "Create a new task")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<TaskResponseDTO>> createTask(@RequestBody @Valid TaskRequestDTO dto) {
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(taskService.createTask(dto)));
   }
@@ -83,7 +83,7 @@ public class TaskController {
    */
   @PatchMapping("/{id}")
   @Operation(summary = "Update a task")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<TaskResponseDTO>> updateTask(
       @PathVariable UUID id,
       @RequestBody @Valid TaskRequestDTO dto) {
@@ -98,7 +98,7 @@ public class TaskController {
    */
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete a task")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
     taskService.deleteTask(id);
     return ResponseEntity.noContent().build();

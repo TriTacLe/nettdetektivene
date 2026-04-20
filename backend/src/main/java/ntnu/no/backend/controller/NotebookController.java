@@ -47,7 +47,7 @@ public class NotebookController {
    */
   @Operation(summary = "Get all notebook entries in a classroom")
   @GetMapping
-  @PreAuthorize("hasRole('instructor')")
+  @PreAuthorize("hasAuthority('instructor')")
   public ResponseEntity<ApiResponse<List<NotebookEntryResponseDTO>>> getAllNotebooks(@PathVariable UUID classroomId) {
     return ResponseEntity.ok(ApiResponse.ok(notebookService.getNotebooksByClassroom(classroomId)));
   }
