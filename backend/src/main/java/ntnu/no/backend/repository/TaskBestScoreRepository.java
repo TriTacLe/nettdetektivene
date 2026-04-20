@@ -5,6 +5,9 @@ import ntnu.no.backend.model.TaskBestScoreId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Read-only repository for {@link TaskBestScore} entities.
  *
@@ -20,4 +23,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface TaskBestScoreRepository extends JpaRepository<TaskBestScore, TaskBestScoreId> {
+  List<TaskBestScore> findByClassroomId(UUID id);
 }

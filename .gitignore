@@ -17,7 +17,10 @@ Thumbs.db
 *.ipr/
 .idea_modules/
 out/
-.claude
+
+# Claude AI Skills (project-specific instructions)
+.claude/
+.claude/skills/
 
 
 # IDE - VS Code
@@ -203,4 +206,4 @@ backend/backend.iml
 
 
 .env
-
+course_docs/

@@ -122,22 +122,4 @@ public class ClassroomController {
       @PathVariable UUID institutionId) {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getAllClassroomsByInstitution(institutionId)));
   }
-
-  // TODO: Blocked until ClassroomStudent entity and repository are implemented (Nora sitt område)
-  //
-  // /**
-  //  * Joins a classroom using a join code. Only accessible by students.
-  //  *
-  //  * @param joinCode    the classroom join code
-  //  * @param currentUser the authenticated student joining the classroom
-  //  * @return 200 OK with the joined classroom
-  //  */
-  // @PostMapping("/join")
-  // @Operation(summary = "Join a classroom using a join code")
-  // @PreAuthorize("hasRole('student')")
-  // public ResponseEntity<ApiResponse<ClassroomResponseDTO>> joinClassroom(
-  //     @RequestParam String joinCode,
-  //     @AuthenticationPrincipal User currentUser) {
-  //   return ResponseEntity.ok(ApiResponse.ok(classroomService.joinClassroom(joinCode, currentUser)));
-  // }
 }

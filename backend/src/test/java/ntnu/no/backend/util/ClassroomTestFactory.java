@@ -19,8 +19,8 @@ public class ClassroomTestFactory {
 
   public static User user() {
     return User.builder()
-      .displayName("Test User")
-      .email("test@example.com")
+      .displayName("Nora")
+      .email("nora@ntnu.no")
       .build();
   }
 
