@@ -74,3 +74,16 @@ export interface NewsArticle {
 export interface NewsChallenge {
   articles: [NewsArticle, NewsArticle];
 }
+
+export type PhotoType = 'ekte' | 'ai-generert' | 'manipulert'
+
+export interface PhotoAlternative {
+  imagePath: string;
+  description: string;
+  correctType: PhotoType;
+  begrunnelser: string[];
+}
+
+export interface FotografenChallenge {
+  alternatives: PhotoAlternative[];
+}
