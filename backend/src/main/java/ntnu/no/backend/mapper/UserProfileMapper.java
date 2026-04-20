@@ -51,9 +51,12 @@ public class UserProfileMapper {
    */
   public static UserProfile toEntity(User user, FeideLoginRequestDTO dto) {
     if (user == null || dto == null) return null;
+    String displayName = dto.getDisplayName() != null
+      ? dto.getDisplayName()
+      : user.getEmail().split("@")[0];
     return UserProfile.builder()
       .user(user)
-      .displayName(dto.getDisplayName())
+      .displayName(displayName)
       .build();
   }
 
