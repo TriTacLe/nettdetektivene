@@ -37,6 +37,13 @@ export interface AuthResponse {
   roles: string[];
 }
 
+export interface FeideAuthResponse {
+  token: string;
+  refreshToken: string;
+  roles: string[];
+  feideId: string;
+}
+
 export interface RefreshRequest {
   refreshToken: string;
   expiredToken?: string;
