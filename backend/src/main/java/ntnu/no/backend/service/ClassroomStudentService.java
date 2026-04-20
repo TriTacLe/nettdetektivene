@@ -248,8 +248,11 @@ public class ClassroomStudentService {
    * @throws AccessDeniedException if the user is not an instructor of the classroom
    */
   private void verifyInstructor(UUID classroomId, User user) {
-    ClassroomInstructorId id = new ClassroomInstructorId(classroomId, user.getId());
-    if (!classroomInstructorRepository.existsById(id)) {
+    if (!classroomInstructorRepository.existsById(
+      ClassroomInstructorId.builder()
+        .classroomId(classroomId)
+        .userId(user.getId())
+        .build())) {
       throw new AccessDeniedException("You are not an instructor of this classroom");
     }
   }
@@ -275,8 +278,11 @@ public class ClassroomStudentService {
    * @throws EntityNotFoundException if the student is not in the classroom
    */
   private ClassroomStudent findMembership(UUID classroomId, UUID userId) {
-    ClassroomStudentId id = new ClassroomStudentId(classroomId, userId);
-    return classroomStudentRepository.findById(id)
+    return classroomStudentRepository.findById(
+        ClassroomStudentId.builder()
+          .classroomId(classroomId)
+          .userId(userId)
+          .build())
       .orElseThrow(() -> new EntityNotFoundException("Student not found in classroom"));
   }
 }
