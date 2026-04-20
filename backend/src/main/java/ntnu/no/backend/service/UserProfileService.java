@@ -1,0 +1,96 @@
+package ntnu.no.backend.service;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.profile.UserProfileResponseDTO;
+import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
+import ntnu.no.backend.mapper.UserProfileMapper;
+import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.auth.UserProfile;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
+import ntnu.no.backend.model.enums.NameChangeStatus;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+/**
+ * Service for user profile management.
+ *
+ * @author norakirknes
+ * @version 0.1
+ * @since 0.1
+ * @see UserProfileRepository
+ */
+@Service
+@RequiredArgsConstructor
+public class UserProfileService {
+
+  private final UserProfileRepository userProfileRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
+
+  /**
+   * Retrieves the profile for the given user.
+   *
+   * @param user the authenticated user
+   * @return a {@link UserProfileResponseDTO} containing the profile data
+   * @throws EntityNotFoundException if no profile exists for the given user
+   */
+  @Transactional(readOnly = true)
+  public UserProfileResponseDTO getByUser(User user) {
+    UserProfile profile = userProfileRepository.findByUser(user)
+      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+    return UserProfileMapper.toDTO(profile);
+  }
+
+  /**
+   * Retrieves a profile by FEIDE identifier.
+   * Used for public profile lookups where only the feideId is known.
+   * For example for viewing another student's profile from a leaderboard
+   * or classroom context.
+   *
+   * @param feideId the FEIDE identifier
+   * @return a {@link UserProfileResponseDTO} containing the profile data
+   * @throws EntityNotFoundException if no profile exists for the given feideId
+   */
+  @Transactional(readOnly = true)
+  public UserProfileResponseDTO getByFeideId(String feideId) {
+    UserProfile profile = userProfileRepository.findByFeideId(feideId)
+      .orElseThrow(() -> new EntityNotFoundException("No profile found for feideId: " + feideId));
+    return UserProfileMapper.toDTO(profile);
+  }
+
+  /**
+   * Updates the profile for the given user.
+   * If the user is a student in a classroom and a display name change is requested,
+   * the change is forwarded as a pending name change request on the classroom
+   * membership instead of updating the profile directly. The profile display name
+   * is only updated when the instructor approves the request.
+   *
+   * @param user the authenticated user whose profile should be updated
+   * @param dto  the update request containing new display name and avatar config
+   * @return a {@link UserProfileResponseDTO} with the updated profile data
+   * @throws EntityNotFoundException if no profile exists for the given user
+   */
+  @Transactional
+  public UserProfileResponseDTO update(User user, UserProfileUpdateRequestDTO dto) {
+    UserProfile profile = userProfileRepository.findByUser(user)
+      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+    if (dto.getDisplayName() != null) {
+      classroomStudentRepository.findByUser(user).ifPresentOrElse(
+        student -> {
+          student.setRequestedDisplayName(dto.getDisplayName());
+          student.setNameChangeStatus(NameChangeStatus.PENDING);
+          student.setNameChangeRequestedAt(LocalDateTime.now());
+          student.setNameChangeReviewedBy(null);
+          student.setNameChangeReviewedAt(null);
+        },
+        () -> profile.setDisplayName(dto.getDisplayName())
+      );
+    }
+    UserProfileMapper.updateEntity(profile, dto);
+    return UserProfileMapper.toDTO(profile);
+  }
+}

@@ -1,79 +1,83 @@
-# CLAUDE.md — Backend (nettdetektivene)
+# Backend Implementation Plan
 
-## Project Overview
-Spring Boot REST API backend for the nettdetektivene educational app.
-Base URL: `localhost:8080/api/v1/`
-
-**Tech stack:** Java · Spring Boot · Maven · MySQL · Flyway · JWT · Springdoc OpenAPI
-
----
-
-## Architecture
-
-### Package Structure
-```
-src/main/java/...
-├── controller/
-├── service/
-├── repository/
-├── entity/          # JPA entities (CamelCase matching db snake_case)
-├── dto/
-│   ├── request/     # XxxRequestDTO
-│   └── response/    # XxxResponseDTO
-├── security/        # JWT only — do NOT touch if you're not Nora (A)
-├── shared/          # ApiResponse<T>
-├── exception/       # GlobalExceptionHandler + domain exceptions
-└── config/
-```
-
-### Naming Conventions
-| Thing | Convention | Example |
-|---|---|---|
-| DB table | snake_case | `app_user` |
-| Entity class | PascalCase | `AppUser` |
-| DTO | `XxxRequestDTO` / `XxxResponseDTO` | `LoginRequestDTO` |
-| Controller | `XxxController` | `AuthController` |
-| Service | `XxxService` | `UserService` |
-| Branch | `feature/<issue-number>-<short-desc>` | `feature/7-auth-jwt` |
-
----
-
-## Dependency Layers
-
-Build in this order — never reference a layer above before the one below is done:
+## 1. Dependency Layers
 
 | Layer | Depends on | Tables / Entities |
-|---|---|---|
+|-------|------------|-------------------|
 | 0 | — | `role`, `app_user`, `institution`, `achievement` |
 | 1 | Layer 0 | `app_user_local_credential`, `app_user_refresh_token`, `app_user_identity`, `user_role`, `user_profile`, `classroom` |
 | 2 | Layer 1 | `task`, `classroom_instructor`, `classroom_student`, `classroom_task` |
 | 3 | Layer 2 | `task_best_score`, `user_achievement`, `notebook_entry`, `mystery_submission`, `notification` |
 
+Never start working on X if Y that X depends on is not implemented yet.
+
 ---
 
-## Build Order (Steps)
+## 2. Team Responsibilities
+
+| Person | Areas |
+|--------|-------|
+| A — Nora, Anine | Auth, user_profile, classroom, institution, classroom_instructor, classroom_student |
+| B — Tri | Achievement, task, classroom_task, task_attempt, task_best_score, user_achievement, notebook_entry, mystery_submission, notification |
+
+Code against the entity and repository interface, not against services — A and B won't block each other.
+
+---
+
+## 3. File Structure and Naming
+
+```
+src/main/java/...
+├── controller/
+├── service/
+├── repository/
+├── model/           # JPA entities (PascalCase matching db snake_case)
+├── dto/
+│   ├── XxxRequestDTO
+│   └── XxxResponseDTO
+├── mapper/
+├── security/        # JWT only — do NOT touch if you are not Nora (A)
+├── shared/          # ApiResponse<T>
+├── exception/       # GlobalExceptionHandler + domain exceptions
+└── config/
+```
+
+**Naming conventions:**
+
+| Type | Convention | Example |
+|------|------------|---------|
+| DTO | `XxxRequestDTO` / `XxxResponseDTO` | `LoginRequestDTO` |
+| Controller | `XxxController` | `AuthController` |
+| Service | `XxxService` | `UserService` |
+| Entity | PascalCase matching db snake_case | `AppUser` |
+| Branch | `feature/<issue-number>-<short-desc>` | `feature/7-auth-jwt` |
+
+---
+
+## 4. Build Order
 
 ### Step 0 — Shared config (do FIRST, together)
-- `application.properties`, `pom.xml`, `.env` — agree and commit before anything else
+Agree on `application.properties`, `pom.xml`, `.env` and commit before anything else.
 - Write `ApiResponse<T>` → `shared/`
 - Write `GlobalExceptionHandler` → `exception/`
-- **Commit and push before any controller is written**
+- Commit and push before any controller is written
 
-### Step 1 — Entities & Repositories
-- Start with Layer 0, commit immediately so the rest of the team can unblock
-- All repos extend `JpaRepository` — Spring implements them automatically
-- No service logic here, no risk of circular deps
+### Step 1 — Entities and Repositories
+Start with Layer 0, commit immediately so the rest of the team can unblock.
+All repos extend `JpaRepository` — Spring implements them automatically.
 
 ### Step 2 — Auth (JWT + Security)
 - `JwtUtil` — generates and validates access tokens
 - `JwtAuthFilter` — `OncePerRequestFilter`, reads user from header
 - `SecurityConfig` — permits `/api/v1/auth/**`, locks everything else, configures CORS/CSRF
 
-### Step 3 — Services (repo deps only)
+### Step 3 — DTOs and Mappers
+Not blocked by anything — can be done at any time.
+
+### Step 4 — Services (repo dependencies only)
 - `UserService`, `RoleService`, `InstitutionService`, `AchievementService`
 
-### Step 4 — Services (service deps)
-In this order:
+Then in this order (service dependencies):
 1. `UserProfileService` ← `UserService`
 2. `ClassroomService` ← `UserService`, `InstitutionService`, `UserProfileService`
 3. `ClassroomMemberService` ← `ClassroomService`, `UserService`
@@ -84,59 +88,139 @@ In this order:
 8. `NotificationService` ← `UserService`, `ClassroomService`
 
 ### Step 5 — Controllers / Endpoints
+Base URL: `localhost:8080/api/v1/`
 
 ### Step 6 — Tests (required before push)
+See testing section below.
 
 ---
 
-## Team Responsibilities
+## 5. MySQL Triggers — Do NOT re-implement in Java
 
-| Person | Areas |
-|---|---|
-| **A — Nora** | Auth, Roles, Profile, Classroom |
-| **B — Tri** | Tasks, Progress, Achievements, Notebook, Mystery, Notification, Institution |
+| Trigger / Procedure | When | What it does |
+|---------------------|------|--------------|
+| `trg_classroom_auto_instructor` | AFTER INSERT classroom | Auto-inserts creator as instructor — do NOT do this in `ClassroomService` |
+| `trg_attempt_sync` | AFTER INSERT task_attempt | Upserts `task_best_score`, awards 10 XP on first pass, updates `xp_level` |
+| `trg_mystery_approved` | AFTER UPDATE mystery_submission | Creates notification + awards achievement on approval (idempotent via INSERT IGNORE) |
+| `sp_submit_attempt` | Stored procedure | Only entry point for registering attempts — call via `JdbcTemplate`, then read back state |
 
-- Code against the **entity/repository interface**, not against services — A and B don't block each other
-- **A owns `security/`** — B never touches those files
+`task_best_score` is read-only in Java — never call `.save()` on it.
+
+---
+
+## 6. Testing
+
+### Test Types
+
+| Type | Tools | What is tested |
+|------|-------|----------------|
+| Unit | JUnit 5 + Mockito | Service logic isolated from DB |
+| Controller | `@WebMvcTest` + MockMvc | HTTP status codes and JSON structure |
+| Integration | Testcontainers + MySQL | Triggers, stored procedures, real DB |
+
+### File Structure
+```
+src/test/java/.../
+  controller/     # @WebMvcTest tests
+  service/        # Unit tests with Mockito
+  integration/    # Testcontainers tests (slower, run separately)
+  util/           # TestFactory classes (shared test data)
+```
+
+### Test Factories
+Use factories in `util/` to build test data. Never repeat `Task.builder()...` across multiple test files.
+- Create a factory when the same object is built in 2+ test files
+- Factory has static methods: `entity()`, `requestDTO()`, `responseDTO(UUID id)`
+- Examples: `TaskTestFactory`, `ClassroomTestFactory`, `AchievementTestFactory`
+
+### Service Tests (Unit)
+```java
+@ExtendWith(MockitoExtension.class)
+class MyServiceTest {
+  @Mock MyRepository myRepository;
+  @InjectMocks MyService myService;
+}
+```
+**Test per method:**
+- Happy path returns correct DTO
+- `EntityNotFoundException` is thrown when not found
+- `verify(repo).save(any(...))` when saving
+- Soft delete sets `deletedAt` — don't just verify `deleteById` is called
+
+### Controller Tests (@WebMvcTest)
+```java
+@WebMvcTest(MyController.class)
+class MyControllerTest {
+  @Autowired MockMvc mockMvc;
+  @Autowired ObjectMapper objectMapper;
+  @MockitoBean MyService myService;
+}
+```
+**Rules:**
+- `@WithMockUser` on all authenticated tests
+- `@WithMockUser(roles = "instructor")` for role-restricted endpoints
+- `.with(csrf())` on all POST, PATCH, DELETE requests
+- Wrong role → expect `403 Forbidden`
+- No auth → expect `401 Unauthorized`
+- Always assert `$.success` and at least one data field in JSON
+
+### Integration Tests (Testcontainers)
+**Always use Testcontainers with MySQL — never H2.**
+H2 does not support MySQL-specific features like stored procedures and triggers.
+
+```java
+@SpringBootTest
+@Testcontainers
+class MyIntegrationTest {
+  @Container
+  static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8");
+}
+```
+Required for:
+- Anything that calls `sp_submit_attempt`
+- Anything that depends on `trg_attempt_sync`, `trg_mystery_approved`, `trg_classroom_auto_instructor`
+- Flyway migrations
+
+### Naming Convention
+```
+methodName_expectedResult_whenCondition
+
+getTask_returnsDTO_whenFound
+getTask_throwsEntityNotFoundException_whenNotFound
+createTask_savesAndReturnsDTO
+deleteClassroom_softDeletes_whenFound
+```
+
+### What to Test
+- All service logic you wrote yourself
+- HTTP status codes and JSON structure for all endpoints
+- Role checks (`@PreAuthorize`)
+- Exception handling (not found, forbidden etc.)
+- Soft delete sets `deletedAt`
+
+### What NOT to Test
+- Entities and DTOs directly
+- Spring auto-generated repository methods
+- Mapper classes directly (covered by service tests)
+- Auto-generated Lombok code
+
+### Rules
+- All tests must be green before pushing
+- One assertion focus per `@Test` — don't test 5 things in one test
+- Tests must be independent — no shared mutable state between tests
+- Integration tests go in `integration/` and are run separately from unit tests
+
+---
+
+## 7. Team Collaboration
+
+- A owns `security/` — B never touches those files
 - Shared files (`ApiResponse`, `GlobalExceptionHandler`, `pom.xml`) — agree verbally before changing
 - Code review: A reviews B's PRs and vice versa
 
 ---
 
-## Database Rules
-
-### ⚠️ MySQL Triggers — Do NOT re-implement in Java
-
-| Trigger / Procedure | When | What it does |
-|---|---|---|
-| `trg_classroom_auto_instructor` | AFTER INSERT classroom | Auto-inserts creator as instructor — do NOT do this in `ClassroomService` |
-| `trg_attempt_sync` | AFTER INSERT task_attempt | Upserts `task_best_score`, awards 10 XP on first pass, updates `xp_level` |
-| `trg_mystery_approved` | AFTER UPDATE mystery_submission | Creates notification + awards achievement on approval (idempotent via INSERT IGNORE) |
-| `sp_submit_attempt` | Stored procedure | **Only** entry point for registering attempts — call via `JdbcTemplate`, then read back state |
-
-### `task_best_score`
-- **Read-only in Java.** Updated exclusively by `trg_attempt_sync`.
-- Never call `.save()` on this table. Treat it as a denormalized cache.
-
-### Soft Delete
-- All repository queries against `classroom` must filter on `deletedAt IS NULL`.
-
----
-
-## Coding Rules
-
-- **Never return JPA entities from controllers** — always map to DTO
-- `@PreAuthorize` on every endpoint that modifies classroom data
-- `@Enumerated(EnumType.STRING)` on all ENUM columns — values must match MySQL ENUM exactly
-- UUID generated in Java: `UUID.randomUUID().toString()` — not by the database
-- No wildcard imports (`import lombok.*` etc.)
-- Input validation with `@Valid` + Bean Validation on all request DTOs
-- Use `springdoc-openapi` from day one — frontend can test on `/swagger-ui.html`
-- Seed data: roles `STUDENT` and `TEACHER` must be in a Flyway migration from day one
-
----
-
-## Config & Secrets
+## 8. Config and Secrets
 
 **`application.properties`**
 ```properties
@@ -167,35 +251,38 @@ JWT_EXPIRATION_MS=86400000
 
 Commit `.env.example` as a template for the team.
 
-> **Note:** Two `.env` files and two `docker-compose` files exist — confirm which applies to backend vs frontend.
+---
+
+## 9. Coding Rules
+
+**Must do:**
+- Always map to DTO before returning from controller — never return JPA entities
+- `@PreAuthorize` on every endpoint that modifies data
+- `@Valid` on all request DTOs in controllers
+- `@Enumerated(EnumType.STRING)` on all ENUM columns — values must match MySQL ENUM exactly
+- UUID generated in Java: `UUID.randomUUID()` — not by the database
+- Use `FetchType.LAZY` on all `@ManyToOne` and `@OneToMany` relations
+- Use `springdoc-openapi` from day one — frontend tests on `/swagger-ui.html`
+- `ApiResponse<T>` in every controller — `ResponseEntity` controls HTTP layer, `ApiResponse<T>` controls JSON body
+- `GlobalExceptionHandler` in `exception/` — without it Spring leaks stack traces to frontend
+- All repos extend `JpaRepository` — Spring implements them automatically
+- Soft delete: all repository queries against `classroom` must filter on `deletedAt IS NULL`
+
+**Must not do:**
+- Never call `.save()` on `task_best_score` — trigger managed, read-only
+- Never re-implement trigger logic in Java (`trg_attempt_sync`, `trg_mystery_approved`, `trg_classroom_auto_instructor`)
+- Never award achievements manually in service code — `trg_mystery_approved` handles it
+- Never create notifications manually — `trg_mystery_approved` handles it
+- Never touch `security/` — owned by Nora
+- Never use wildcard imports (`import lombok.*`)
+- Never return raw stack traces — `GlobalExceptionHandler` handles all exceptions
 
 ---
 
-## Testing
+## 10. Pull Request and Commit Guidelines
 
-- **Unit tests:** `JUnit 5` + `Mockito` — service logic isolated from DB
-- **Integration tests:** `Testcontainers` with MySQL image (required for triggers/stored procedures — H2 cannot run these)
-- **Controller tests:** `@WebMvcTest` + `MockMvc` — verify HTTP status codes and JSON structure
-- Integration tests go under `test/.../integration/` (slower, run separately)
-- **Do NOT use H2**
-- Rule: test logic you wrote yourself. Entities and DTOs don't need direct unit tests — they're covered by integration tests
-- **All tests must be green before pushing**
-
----
-
-## Shared Utilities
-
-### `ApiResponse<T>` — `shared/`
-Wrapper that ensures all endpoints return the same JSON structure. Used in every controller. `ResponseEntity` controls the HTTP layer; `ApiResponse<T>` controls the JSON body.
-
-### `GlobalExceptionHandler` — `exception/`
-Catches all unhandled exceptions and returns them as `ApiResponse` instead of Spring's raw stack trace. Define separate exception classes for 400, 401, 403, 404, 500.
-
-
-## Pull Request and commit messages guidelines
 - No credits to Claude
-- Give simple template
-- Don't assume, if you have questions ask
-- No emojis silly. 
-- No 
-overcomplicated explainations
+- Keep commit messages simple and descriptive
+- Don't assume — ask if unsure
+- No emojis
+- No overcomplicated explanations

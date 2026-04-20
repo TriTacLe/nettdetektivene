@@ -82,3 +82,12 @@ export interface NotebookEntryRequest {
   autoNotes?: string;
   studentReflection?: string;
 }
+
+export interface NewsArticle {
+  imagePath: string;
+  isReal: boolean;
+}
+
+export interface NewsChallenge {
+  articles: [NewsArticle, NewsArticle];
+}
