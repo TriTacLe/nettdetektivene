@@ -102,6 +102,8 @@ VITE_APP_TITLE=Nettdetektivene
 - Give simple template
 - Don't assume, if you have questions ask
 - No emojis silly. 
+- Checkboxes for tests. 
+- No em/en dashes. 
 
 
 
