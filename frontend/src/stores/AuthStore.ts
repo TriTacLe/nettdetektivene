@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
     refreshToken.value = null;
     user.value = null;
-    router.push( { name: 'login' } );
+    router.push( { name: 'start' } );
   }
 
   return {
