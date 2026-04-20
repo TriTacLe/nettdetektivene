@@ -66,7 +66,7 @@ public class UserProfileMapper {
    */
   public static void updateEntity(UserProfile profile, UserProfileUpdateRequestDTO dto) {
     if (profile == null || dto == null) return;
-    profile.setDisplayName(dto.getDisplayName());
-    profile.setAvatarConfig(dto.getAvatarConfig());
+    if (dto.getDisplayName() != null) profile.setDisplayName(dto.getDisplayName());
+    if (dto.getAvatarConfig() != null) profile.setAvatarConfig(dto.getAvatarConfig());
   }
 }

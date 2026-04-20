@@ -17,6 +17,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
+ * Configures Spring Security for stateless JWT authentication.
+ * Defines public endpoints, CORS policy and the filter chain.
  *
  * @author norakirknes
  * @version 0.1
@@ -36,6 +38,7 @@ public class SecurityConfig {
     "/swagger-ui/**",
     "/swagger-ui.html",
     "/v3/api-docs/**",
+    "/api/v1/auth/feide",
     "/api/v1/auth/login",
     "/api/v1/auth/register",
     "/api/v1/auth/refresh",
@@ -43,6 +46,14 @@ public class SecurityConfig {
   };
 
 
+  /**
+   * Configures the security filter chain with stateless session management,
+   * public endpoint rules and the JWT auth filter.
+   *
+   * @param http the {@link HttpSecurity} to configure
+   * @return the configured {@link SecurityFilterChain}
+   * @throws Exception if configuration fails
+   */
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -60,6 +71,11 @@ public class SecurityConfig {
     return http.build();
   }
 
+  /**
+   * Configures CORS to allow requests from local development origins.
+   *
+   * @return a {@link WebMvcConfigurer} with the CORS mappings applied
+   */
   @Bean
   public WebMvcConfigurer corsConfig() {
     return new WebMvcConfigurer() {

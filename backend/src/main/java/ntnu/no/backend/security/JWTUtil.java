@@ -1,6 +1,8 @@
 package ntnu.no.backend.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -15,8 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * Service responsible for JWT token operations.
@@ -57,8 +58,30 @@ public class JWTUtil {
     Map<String, Object> claims = new HashMap<>();
     List<String> roles = userDetails.getAuthorities().stream()
       .map(GrantedAuthority::getAuthority)
-      .collect(Collectors.toList());
+      .toList();
     claims.put("roles", roles);
+    return buildToken(claims, userDetails);
+  }
+
+  /**
+   * Generates a signed JWT for a FEIDE-authenticated user, embedding
+   * {@code feideId} as a custom claim alongside the user's roles.
+   * In a real FEIDE flow, the caller would pass the {@code sub} claim
+   * extracted from FEIDE's verified token. In this simulation, the caller
+   * passes a server-generated UUID, since the OAuth handshake cannot be
+   * performed in a simulation. The token itself is identical in both cases.
+   *
+   * @param userDetails the authenticated user
+   * @param feideId the FEIDE identifier to embed as a custom claim
+   * @return a compact, signed JWT string
+   */
+  public String generateToken(UserDetails userDetails, String feideId) {
+    Map<String, Object> claims = new HashMap<>();
+    List<String> roles = userDetails.getAuthorities().stream()
+      .map(GrantedAuthority::getAuthority)
+      .toList();
+    claims.put("roles", roles);
+    claims.put("feideId", feideId);
     return buildToken(claims, userDetails);
   }
 
@@ -81,47 +104,21 @@ public class JWTUtil {
   }
 
   /**
-   * Validates a token by verifying the email matches the given user
-   * and that the token has not expired.
+   * Parses the token and returns all claims as an {@link Optional}.
+   * Returns empty for malformed or tampered tokens.
+   * Expired tokens are included, callers are responsible for checking
+   * expiration where necessary.
    *
-   * @param token the JWT string to validate
-   * @param userDetails the user to validate against
-   * @return {@code true} if valid, {@code false} otherwise
+   * @param token the JWT string to introspect
+   * @return an {@link Optional} containing the claims, or empty if the token is invalid
    */
-  public boolean isTokenValid(String token, UserDetails userDetails) {
-    return extractEmail(token).equals(userDetails.getUsername()) && !isTokenExpired(token);
-  }
-
-  /**
-   * Returns {@code true} if the token's expiration time is in the past.
-   *
-   * @param token the JWT string to check
-   * @return {@code true} if expired
-   */
-  private boolean isTokenExpired(String token) {
-    return extractTokenClaim(token, Claims::getExpiration).before(new Date());
-  }
-
-  /**
-   * Extracts the email (subject claim) from the token.
-   *
-   * @param token the JWT string
-   * @return the email stored as the subject
-   */
-  public String extractEmail(String token) {
-    return extractTokenClaim(token, Claims::getSubject);
-  }
-
-  /**
-   * Extracts a single claim from the token using the provided extractor function.
-   *
-   * @param token the JWT string
-   * @param extractor function that maps {@link Claims} to the desired value
-   * @param <T> the type of the extracted value
-   * @return the extracted claim value
-   */
-  public <T> T extractTokenClaim(String token, Function<Claims, T> extractor) {
-    return extractor.apply(extractAllTokenClaims(token));
+  public Optional<Claims> introspect(String token) {
+    if (token == null) return Optional.empty();
+    try {
+      return Optional.of(extractAllClaimsIgnoringExpiry(token));
+    } catch (JwtException e) {
+      return Optional.empty();
+    }
   }
 
   /**
@@ -136,6 +133,23 @@ public class JWTUtil {
       .build()
       .parseClaimsJws(token)
       .getBody();
+  }
+
+  /**
+   * Parses the token and returns all claims, including those from expired tokens.
+   * Used when claims must be read from a token that is expired, specifically
+   * for expiry checks and feideId extraction in the refresh flow.
+   * Still throws for malformed or tampered tokens.
+   *
+   * @param token the JWT string
+   * @return the {@link Claims} payload, regardless of expiry
+   */
+  private Claims extractAllClaimsIgnoringExpiry(String token) {
+    try {
+      return extractAllTokenClaims(token);
+    } catch (ExpiredJwtException e) {
+      return e.getClaims();
+    }
   }
 
   /**

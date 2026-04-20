@@ -1,7 +1,6 @@
 package ntnu.no.backend.dto.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +24,6 @@ public class UserProfileUpdateRequestDTO {
   /**
    * The new display name for the user.
    */
-  @NotBlank(message = "Display name is required")
   @Schema(description = "New display name for the user", example = "Firstname Lastname")
   private String displayName;
 
