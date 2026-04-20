@@ -24,7 +24,7 @@ function validate(): boolean {
   }
 
   if (!password.value) {
-    fieldErrors.value.email = 'Passord kreves'
+    fieldErrors.value.password = 'Passord kreves'
     valid = false
   }
 
