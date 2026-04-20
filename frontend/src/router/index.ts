@@ -31,12 +31,21 @@ const router = createRouter({
       component: () => import('../views/NyhetskvartaletView.vue'),
     },
     {
+      path: '/stops/fotografen',
+      name: 'fotografen',
+      component: () => import('../views/FotografenView.vue'),
+    },
+    {
       path: '/join-classroom',
       name: 'join-classroom',
       component: () => import('../views/JoinClassroomView.vue'),
     },
     {
-
+      path: '/notebook',
+      name: 'notebook',
+      component: () => import('../views/NotebookView.vue'),
+    },
+    {
       path: '/student-leaderboard',
       name: 'student-leaderboard',
       component: () => import('../views/StudentLeaderboardView.vue'),
