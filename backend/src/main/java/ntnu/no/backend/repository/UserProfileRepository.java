@@ -1,5 +1,6 @@
 package ntnu.no.backend.repository;
 
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -27,4 +28,12 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, UUID> 
    * @return an {@link Optional} containing the matching profile, or empty if not found
    */
   Optional<UserProfile> findByFeideId(String feideId);
+
+  /**
+   * Retrieves a profile by the owning user.
+   *
+   * @param user the user whose profile to retrieve
+   * @return an {@link Optional} containing the matching profile, or empty if not found
+   */
+  Optional<UserProfile> findByUser(User user);
 }
