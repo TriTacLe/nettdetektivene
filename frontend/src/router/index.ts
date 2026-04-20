@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { requireTeacher } from "@/router/guards.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,25 @@ const router = createRouter({
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/TeacherHomeView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom-overview',
+      name: 'classroom-overview',
+      component: () => import('../views/ClassroomOverviewView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/new',
+      name: 'create-classroom',
+      component: () => import('../views/CreateClassroomView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id',
+      name: 'classroom-detail',
+      component: () => import('../views/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
     },
     {
       path: '/notebook',
