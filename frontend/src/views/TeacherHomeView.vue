@@ -1,52 +1,53 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/AuthStore.ts'
 import SceneComponent from "@/components/SceneComponent.vue";
 
 const router = useRouter()
-const authStore = useAuthStore()
 
-function goTo(name: string) {
-  router.push({ name })
-}
+const menuItems = [
+  {
+    title: 'Oversikt klasserom',
+    subtitle: 'Se og administrer klasserom',
+    route: 'classroom-overview',
+  },
+  {
+    title: 'Varslinger',
+    subtitle: 'Se alle varslinger',
+    route: 'teacher-notifications',
+  },
+  {
+    title: 'Innstillinger',
+    subtitle: 'Konto og lydinnstillinger',
+    route: 'settings',
+  },
+  {
+    title: 'Ledertavle',
+    subtitle: 'Se klassenes resultater',
+    route: 'leaderboard',
+  },
+]
+
 </script>
 
 <template>
-  <SceneComponent background="/StartBackground.jpg">
-    <div class="min-h-creen flex flex-col items-center justify-center p-8">
-      <div class="text-center mb-10">
-        <h1 class="text-fxl font-bold text-amber-900 drop-shadow">
-          Nettdetektivenes lærerportal
-        </h1>
-      </div>
+  <SceneComponent
+    title="Lærerportal"
+    previous="/teacher-login"
+    background="/StartBackground.jpg">
 
-      <nav class="flex flex-col gap-4 w-full max-w-sm">
+    <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10">
+      <nav class="flex flex-col gap-3 w-full max-w-md mx-auto">
         <button
-          @click="goTo('classroooms-overview')"
-          class="w-full py-4 px-6 bg-amber-800 hover:bg-amber-700 text-white text-xl font-semibold rounded-xl shadow-lg transition"
+          v-for="item in menuItems"
+          :key="item.route"
+          @click="router.push({ name: item.route })"
+          class="w-full bg-white rounded-2xl shadow px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition text-left"
         >
-          Oversikt klasserom
-        </button>
-
-        <button
-          @click="goTo('teacher-notifications')"
-          class="w-full py-4 px-6 bg-amber-800 hover:bg-amber-700 text-white text-xl font-semibold rounded-xl shadow-lg transition"
-        >
-          Varslinger
-        </button>
-
-        <button
-          @click="goTo('leaderboard')"
-          class="w-full py-4 px-6 bg-amber-800 hover:bg-amber-700 text-white text-xl font-semibold rounded-xl shadow-lg transition"
-        >
-          Ledertavle
-        </button>
-
-        <button
-          @click="goTo('settings')"
-          class="w-full py-4 px-6 bg-amber-800 hover:bg-amber-700 text-white text-xl font-semibold rounded-xl shadow-lg transition"
-        >
-          Innstillinger
+          <div class="flex-1">
+            <p class="font-bold text-gray-900 text-base leading-tight">{{ item.title }}</p>
+            <p class="text-gray-500 text-sm mt-0.5">{{ item.subtitle }}</p>
+          </div>
+          <span class="text-gray-400 text-lg">›</span>
         </button>
       </nav>
     </div>
