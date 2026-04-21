@@ -55,6 +55,11 @@ const router = createRouter({
       name: 'task-info',
       component: () => import('../views/TaskInfoView.vue'),
     },
+    {
+      path: '/achievements',
+      name: 'achievements',
+      component: () => import('../views/AchievementsView.vue'),
+    },
   ],
 })
 
