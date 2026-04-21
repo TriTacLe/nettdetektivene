@@ -4,7 +4,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn -q -DskipTests package
+RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
