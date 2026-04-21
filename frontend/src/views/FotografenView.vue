@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import FotografenComponent from '../components/FotografenComponent.vue'
 import { fetchFotografenChallenge } from '@/services/ChallengeService'
+import { STOPS } from '@/data/StopData'
 import type { FotografenChallenge } from '../types'
 
 const route = useRoute()
 const router = useRouter()
 
 const taskId = Number(route.params.taskId)
+const taskHint = computed(() => STOPS['fotografen']?.taskHints?.[taskId])
 const challenge = ref<FotografenChallenge | null>(null)
 const isLoading = ref(true)
 const error = ref('')
@@ -40,7 +42,14 @@ function onFailed(reason: string) {
   <SceneComponent title="Fotografen" previous="/stops/fotografen" background="/FotografenBackground.png">
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
-    <FotografenComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" @failed="onFailed" />
+    <FotografenComponent
+      v-else-if="challenge"
+      :challenge="challenge"
+      :question="taskHint?.description"
+      :tip="taskHint?.hint"
+      @complete="onComplete"
+      @failed="onFailed"
+    />
   </SceneComponent>
 </template>
 

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import type { FotografenChallenge, PhotoType } from '../types'
 
-const props = defineProps<{ challenge: FotografenChallenge }>()
+const props = defineProps<{ challenge: FotografenChallenge; question?: string; tip?: string }>()
 const emit = defineEmits<{
   complete: []
   failed: [reason: string]
@@ -47,8 +47,9 @@ function submit() {
 <template>
   <div class="fotografen-wrapper">
     <div class="header">
-      <h2 class="title">Er bildene ekte, KI-generert eller manipulert?</h2>
-      <p class="subtitle">Velg riktig alternativ for hvert bilde</p>
+      <h2 class="title">{{ question ?? 'Er bildene ekte, KI-generert eller manipulert?' }}</h2>
+      <p v-if="tip" class="tip"><span class="tip-label">Tips:</span> {{ tip }}</p>
+      <p v-else class="subtitle">Velg riktig alternativ for hvert bilde</p>
     </div>
 
     <div class="cards" :style="{ '--count': challenge.alternatives.length }">
@@ -111,10 +112,9 @@ function submit() {
 .fotografen-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
   padding: 1rem 2rem 1.5rem;
   gap: 1rem;
-  min-height: 0;
+  overflow-y: auto;
 }
 
 .header {
@@ -138,12 +138,25 @@ function submit() {
   margin: 0;
 }
 
+.tip {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.tip-label {
+  font-weight: 700;
+  font-style: normal;
+  color: #FFD700;
+}
+
 .cards {
-  flex: 1;
   display: grid;
-  grid-template-columns: repeat(var(--count), 1fr);
+  grid-template-columns: repeat(var(--count), minmax(0, 260px));
+  justify-content: center;
   gap: 1.25rem;
-  min-height: 0;
   overflow-y: auto;
 }
 
@@ -157,15 +170,16 @@ function submit() {
   border: 3px solid transparent;
   transition: border-color 0.2s;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  align-self: start;
 }
 
 .card-image {
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  height: 160px;
   object-fit: cover;
   border-radius: 8px;
   background: #e9e5da;
+  flex-shrink: 0;
 }
 
 .choices {
