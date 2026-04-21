@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/AuthStore.ts";
-import ClassroomService from "@/services/ClassroomService.ts";
-import SceneComponent from "@/components/SceneComponent.vue";
-import type { ClassroomResponseDTO } from "@/types";
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/AuthStore.ts'
+import ClassroomService from '@/services/ClassroomService.ts'
+import SceneComponent from '@/components/SceneComponent.vue'
+import type { ClassroomResponseDTO } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -14,13 +14,13 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const myClassrooms = computed(() =>
-  classrooms.value.filter((c) => c.createdById === authStore.user?.id)
+  classrooms.value.filter((c) => c.createdById === authStore.user?.id),
 )
 
 onMounted(async () => {
   loading.value = true
   try {
-    classrooms.value = await ClassroomService.getAllClassrooms()
+    classrooms.value = await ClassroomService.getMyClassrooms()
   } catch (e: any) {
     error.value = e.message ?? 'Kunne ikke hente klasserom'
   } finally {
@@ -29,7 +29,7 @@ onMounted(async () => {
 })
 
 async function deleteClassroom(id: string) {
-  if(!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
+  if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
   try {
     await ClassroomService.deleteClassroom(id)
     classrooms.value = classrooms.value.filter((c) => c.id !== id)
@@ -44,87 +44,70 @@ function openClassroom(id: string) {
 </script>
 
 <template>
-  <SceneComponent title="Klasseromsoversikt" background="/StartBackground.jpg">
-    <div class="min-h-screen p-8 max-w-3xø mx-auto">
-      <div class="flex items-center justify between mb-8">
-        <button
-          @click="$router.push({ name: 'teacher-home'})"
-          class="text-amber-900 hover:text-amber-700 font-semibold"
+  <SceneComponent
+    title="Klasseromsoversikt"
+    background="/StartBackground.jpg"
+    previous="teacher-home"
+  >
+    <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
+      <div class="flex flex-col gap 3 w-full max-w-md mx-auto">
+        <div
+          v-if="error"
+          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
         >
-          Tilbake
-        </button>
-        <h1 class="text-3xl font-bold text-amber-900">Oversikt</h1>
+          {{ error }}
+        </div>
+
         <button
-          @click="$router.push({ name: 'create-classroom' })"
-          class="bg-green-700 hover: bg-green-600 text-white px-4 py-2 rounded-lg font-semibold shadow"
+          @click="router.push({ name: 'create-classroom' })"
+          class="w-full bg-white rounded-2xl shadow px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition text-left"
         >
-          Lag nytt klasserom
+          <span class="text-2xl">+</span>
+          <div class="flex-1">
+            <p class="font-bold text-gray-900 text-base leading-tight">Nytt Klasserom</p>
+            <p class="text-gray-500 text-sm mt-0.5">Opprett et nytt klasserom</p>
+          </div>
+          <span class="text-gray-400 text-lg">›</span>
         </button>
-      </div>
 
-      <div v-if="error" class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded mb-4">
-        {{ error }}
-      </div>
+        <div v-if="loading" class="text-center text-white py-6">Laster...</div>
 
-      <div v-if="loading" class="text-amber-900 text-center py-10 text-xl">Laster...</div>
+        <div v-else-if="classrooms.length === 0" class="text-center text-white py-6 text-sm">
+          Du har ingen klasserom enda.
+        </div>
 
-      <div v-else-if="myClassrooms.length === 0"
-           class="text-center text-amber-900 py-16 text-lg"
-      >
-        Du har ingen klasserom enda
-        <br />
-        <button
-          @click="$router.push({ name: 'create-classroom' })"
-          class="mt-4 underline hover:text-amber-700"
-        >
-          Opprett ditt første klasserom
-        </button>
-      </div>
-
-      <ul v-else class="flex flex-col gap-4">
-        <li
-          v-for="classroom in myClassrooms"
+        <div
+          v-for="classroom in classrooms"
           :key="classroom.id"
-          class="bg-amber-50 border border-amber-300 rounded-xl px-6 py-4 flex items-center justify-between shadow"
+          class="w-full bg-white rounded-2xl shadow px-5 py-4 flex items-center gap-3"
+        >
+          <button
+            @click="deleteClassroom(classroom.id)"
+            class="text-red-600 hover:text-red-800 font-bold text-xl leading-none shrink-0"
+            title="Slett klasserom"
+            aria-label="Slett klasserom"
           >
-          <div>
-            <p class="text-xl font-bold text-amber-900">{{ classroom.title }} </p>
-            <p class="text-sm text-amber-700">
-              Kode: <span class="font-mono font-bold">{{ classroom.joinCode }}</span>
+            ✕
+          </button>
+          <button
+            @click="router.push({ name: 'classroom-detail', params: { id: classroom.id } })"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0"
+            title="Åpne klasserom"
+            aria-label="Åpne klasserom"
+          >
+            ›
+          </button>
+          <button
+            @click="router.push({ name: 'classroom-detail', params: { id: classroom.id } })"
+            class="flex-1 text-left"
+          >
+            <p class="font-bold text-gray-900 text-base leading-tight">{{ classroom.title }}</p>
+            <p class="text-gray-500 text-sm">
+              Kode: <span class="font-mono">{{ classroom.joinCode }}</span>
             </p>
-            <p v-if="classroom.classDesc" class="text-sm text-amber-600 mt-1">
-              {{ classroom.classDesc }}
-            </p>
-          </div>
-          <div class="flex gap-3">
-            <button
-              @click="openClassroom(classroom.id)"
-              class="text-blue-700 hover:text-blue-500 text-xl"
-              title="Åpne"
-            >
-              Åpne klasserom
-            </button>
-            <button
-              @click="deleteClassroom(classroom.id)"
-              class="text-red-700 hover:text-red-500 text-xl"
-              title="Slett"
-            >
-              Slett
-            </button>
-          </div>
-        </li>
-      </ul>
+          </button>
+        </div>
+      </div>
     </div>
   </SceneComponent>
 </template>
-
-
-
-
-
-
-
-
-
-
-
