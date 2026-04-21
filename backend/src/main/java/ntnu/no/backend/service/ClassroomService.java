@@ -125,28 +125,6 @@ public class ClassroomService {
     return classroomRepository.findAllByInstitution_IdAndDeletedAtIsNull(institutionId).stream().map(ClassroomMapper::toDTO).toList();
   }
 
-  // TODO: Blocked until ClassroomStudent entity and repository are implemented (Nora's area)
-  //
-  // /**
-  //  * Adds the current user to a classroom matching the given join code.
-  //  *
-  //  * @param joinCode    the classroom join code
-  //  * @param currentUser the authenticated student joining the classroom
-  //  * @return the joined classroom as a DTO
-  //  * @throws EntityNotFoundException if no active classroom found with the given join code
-  //  */
-  // @Transactional
-  // public ClassroomResponseDTO joinClassroom(String joinCode, User currentUser) {
-  //   Classroom classroom = classroomRepository.findByJoinCodeAndDeletedAtIsNull(joinCode)
-  //     .orElseThrow(() -> new EntityNotFoundException("No classroom found with join code: " + joinCode));
-  //   ClassroomStudent member = ClassroomStudent.builder()
-  //     .classroom(classroom)
-  //     .user(currentUser)
-  //     .build();
-  //   classroomStudentRepository.save(member);
-  //   return ClassroomMapper.toDTO(classroom);
-  // }
-
   /**
    * Generates a random 5 character uppercase join code.
    *

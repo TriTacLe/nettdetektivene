@@ -1,12 +1,16 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.ClassroomService;
 import ntnu.no.backend.util.ClassroomTestFactory;
+import ntnu.no.backend.util.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 0.1
  */
 @WebMvcTest(ClassroomController.class)
+@Import(TestSecurityConfig.class)
 class ClassroomControllerTest {
 
   @Autowired
@@ -44,6 +49,12 @@ class ClassroomControllerTest {
 
   @MockitoBean
   private ClassroomService classroomService;
+
+  @MockitoBean
+  private JWTUtil jwtUtil;
+
+  @MockitoBean
+  private UserDetailsService userDetailsService;
 
   @Test
   @WithMockUser
@@ -69,7 +80,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void createClassroom_returnsCreated() throws Exception {
     when(classroomService.createClassroom(any(), any())).thenReturn(ClassroomTestFactory.responseDTO(UUID.randomUUID()));
 
@@ -82,7 +93,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void createClassroom_asStudent_returnsForbidden() throws Exception {
     mockMvc.perform(post("/api/v1/classrooms")
         .contentType(MediaType.APPLICATION_JSON)
@@ -92,7 +103,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void updateClassroom_returnsOk() throws Exception {
     UUID id = UUID.randomUUID();
     when(classroomService.updateClassroom(any(), any())).thenReturn(ClassroomTestFactory.responseDTO(id));
@@ -106,7 +117,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void updateClassroom_asStudent_returnsForbidden() throws Exception {
     UUID id = UUID.randomUUID();
 
@@ -118,7 +129,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void deleteClassroom_returnsNoContent() throws Exception {
     UUID id = UUID.randomUUID();
     doNothing().when(classroomService).deleteClassroom(id);
@@ -128,7 +139,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void deleteClassroom_asStudent_returnsForbidden() throws Exception {
     UUID id = UUID.randomUUID();
 

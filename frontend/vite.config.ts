@@ -12,7 +12,7 @@ export default defineConfig({
     tailwindcss(),
     vue(),
     vueJsx(),
-    vueDevTools(),
+    ...(process.env.NODE_ENV !== 'test' ? [vueDevTools()] : []),
   ],
   resolve: {
     alias: {

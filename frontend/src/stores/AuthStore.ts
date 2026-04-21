@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
 import { defineStore } from "pinia";
 import { useRouter } from 'vue-router'
-import apiClient from "@/services/ApiService.ts";
-import type { UserDTO, LoginRequest, AuthResponse } from "@/types";
+import AuthService from "@/services/AuthService.ts";
+import type { UserDTO, FeideLoginRequest } from "@/types";
 import { UserRole } from "@/types";
 
 export const useAuthStore = defineStore('auth', () => {
@@ -21,16 +21,15 @@ export const useAuthStore = defineStore('auth', () => {
     return null;
   })
 
-  async function login(credentials: LoginRequest): Promise<void> {
-    const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    token.value = data.token;
-    refreshToken.value = data.refreshToken
+  async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
+    const response = await AuthService.login(credentials);
+    token.value = response.token;
+    refreshToken.value = response.refreshToken
     await fetchMe()
   }
 
   async function fetchMe(): Promise<void> {
-    const { data } = await apiClient.get<UserDTO>('/users/me');
-    user.value = data;
+    user.value = await AuthService.fetchMe()
   }
 
   async function refresh(): Promise<void> {
@@ -38,21 +37,19 @@ export const useAuthStore = defineStore('auth', () => {
       logout()
       return;
     }
-    const { data } = await apiClient.post<AuthResponse>('/auth/refresh', {
-      refreshToken: refreshToken.value,
-    });
-    token.value = data.token;
-    refreshToken.value = data.refreshToken;
+    const response = await AuthService.refresh(refreshToken.value);
+    token.value = response.token;
+    refreshToken.value = response.refreshToken;
   }
 
   function logout(): void {
     if (refreshToken.value) {
-      apiClient.post(`/auth/logout`, { refreshToken: refreshToken.value }).catch(() => {})
+      AuthService.logout(refreshToken.value).catch(() => {})
     }
     token.value = null;
     refreshToken.value = null;
     user.value = null;
-    router.push( { name: 'login' } );
+    router.push( { name: 'start' } );
   }
 
   return {
@@ -63,7 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
     isTeacher,
     isStudent,
     userRole,
-    login,
+    feideLogin,
     fetchMe,
     refresh,
     logout,

@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { requireTeacher } from "@/router/guards.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/start' },
+    { path: '/', redirect: { name: 'start' } },
     { path: '/start', name: 'start', component: () => import('../views/StartView.vue') },
     {
       path: '/student-login',
@@ -41,6 +42,30 @@ const router = createRouter({
       component: () => import('../views/JoinClassroomView.vue'),
     },
     {
+      path: '/teacher-home',
+      name: 'teacher-home',
+      component: () => import('../views/TeacherHomeView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom-overview',
+      name: 'classroom-overview',
+      component: () => import('../views/ClassroomOverviewView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/new',
+      name: 'create-classroom',
+      component: () => import('../views/CreateClassroomView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id',
+      name: 'classroom-detail',
+      component: () => import('../views/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
       path: '/notebook',
       name: 'notebook',
       component: () => import('../views/NotebookView.vue'),
@@ -55,7 +80,12 @@ const router = createRouter({
       name: 'task-info',
       component: () => import('../views/TaskInfoView.vue'),
     },
+
+    {
+      path: '/task-finished',
+      name: 'task-finished',
+      component: () => import('../views/TaskFinishedView.vue'),
+    },
   ],
 })
-
 export default router

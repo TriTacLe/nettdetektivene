@@ -15,28 +15,44 @@ export enum TaskType {
 }
 
 export enum UserRole {
-  TEACHER = 'TEACHER',
-  STUDENT = 'STUDENT',
+  TEACHER = 'instructor',
+  STUDENT = 'student',
 }
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
+}
+
+export interface FeideLoginRequest {
+  displayName?: string
+  email: string
+  affiliation: 'student' | 'instructor'
+  password: string
 }
 
 export interface AuthResponse {
   token: string;
   refreshToken: string;
+  roles: string[];
+}
+
+export interface FeideAuthResponse {
+  token: string;
+  refreshToken: string;
+  roles: string[];
+  feideId: string;
 }
 
 export interface RefreshRequest {
   refreshToken: string;
+  expiredToken?: string;
 }
 
 export interface UserDTO {
   id: string;
   displayName: string;
-  username: string;
+  email: string;
   isActive: boolean;
   roles: string[];
   createdAt: string;
@@ -103,4 +119,42 @@ export interface PhotoAlternative {
 
 export interface FotografenChallenge {
   alternatives: PhotoAlternative[];
+}
+
+export interface ClassroomResponseDTO {
+  id: string
+  title: string
+  classDesc: string | null
+  joinCode: string
+  institutionId: string
+  createdById: string
+  isGameEnabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ClassroomRequestDTO {
+  title: string
+  classDesc?: string
+  institutionId: string
+  isGameEnabled: boolean
+}
+
+export interface ClassroomInstructorResponseDTO {
+  classroomId: string
+  userId: string
+  assignedAt: string
+}
+
+export interface ClassroomStudentResponseDTO {
+  userId: string
+  displayName: string
+  isAllowed: boolean
+  nameChangeStatus: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED'
+  requestedDisplayName: string | null
+  joinedAt: string
+}
+
+export interface JoinClassroomRequestDTO {
+  joinCode: string
 }
