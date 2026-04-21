@@ -80,7 +80,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void createClassroom_returnsCreated() throws Exception {
     when(classroomService.createClassroom(any(), any())).thenReturn(ClassroomTestFactory.responseDTO(UUID.randomUUID()));
 
@@ -93,7 +93,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void createClassroom_asStudent_returnsForbidden() throws Exception {
     mockMvc.perform(post("/api/v1/classrooms")
         .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +103,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void updateClassroom_returnsOk() throws Exception {
     UUID id = UUID.randomUUID();
     when(classroomService.updateClassroom(any(), any())).thenReturn(ClassroomTestFactory.responseDTO(id));
@@ -117,7 +117,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void updateClassroom_asStudent_returnsForbidden() throws Exception {
     UUID id = UUID.randomUUID();
 
@@ -129,7 +129,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "instructor")
+  @WithMockUser(authorities = "instructor")
   void deleteClassroom_returnsNoContent() throws Exception {
     UUID id = UUID.randomUUID();
     doNothing().when(classroomService).deleteClassroom(id);
@@ -139,7 +139,7 @@ class ClassroomControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "student")
+  @WithMockUser(authorities = "student")
   void deleteClassroom_asStudent_returnsForbidden() throws Exception {
     UUID id = UUID.randomUUID();
 

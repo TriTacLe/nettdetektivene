@@ -3,16 +3,14 @@ import { ref } from 'vue'
 import type { NewsChallenge, NewsArticle } from '../types'
 
 const props = defineProps<{ challenge: NewsChallenge }>()
-
-type Result = 'correct' | 'incorrect' | null
+const emit = defineEmits<{ complete: [] }>()
 
 const selected = ref<NewsArticle | null>(null)
-const result = ref<Result>(null)
 
 function choose(article: NewsArticle) {
-  if (result.value !== null) return
+  if (selected.value !== null) return
   selected.value = article
-  result.value = article.isReal ? 'correct' : 'incorrect'
+  emit('complete')
 }
 </script>
 
@@ -24,28 +22,19 @@ function choose(article: NewsArticle) {
       v-for="(article, i) in props.challenge.articles"
       :key="i"
       class="article-card"
-      :class="{
-        'is-correct': result !== null && article.isReal,
-        'is-incorrect': result !== null && selected === article && !article.isReal,
-        'is-dimmed': result !== null && selected !== article && !article.isReal,
-      }"
+      :class="{ 'is-selected': selected === article }"
     >
       <img class="article-image" :src="article.imagePath" alt="Nyhetsartikkel" />
 
       <button
         type="button"
         class="article-choice"
-        :disabled="result !== null"
+        :disabled="selected !== null"
         @click="choose(article)"
       >
         Dette er den ekte nyheten
       </button>
     </article>
-  </div>
-
-  <div v-if="result !== null" class="feedback" :class="result">
-    <span v-if="result === 'correct'">Riktig! Du valgte den ekte artikkelen.</span>
-    <span v-else>Feil! Den andre artikkelen var den ekte.</span>
   </div>
 </template>
 
@@ -81,16 +70,8 @@ function choose(article: NewsArticle) {
   transition: border-color 0.2s ease, opacity 0.2s ease;
 }
 
-.article-card.is-correct {
+.article-card.is-selected {
   border-color: #22c55e;
-}
-
-.article-card.is-incorrect {
-  border-color: #ef4444;
-}
-
-.article-card.is-dimmed {
-  opacity: 0.5;
 }
 
 .article-image {
@@ -133,23 +114,4 @@ function choose(article: NewsArticle) {
   opacity: 0.6;
 }
 
-.feedback {
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 1.25rem;
-  font-weight: 700;
-  padding: 1rem 2rem;
-  border-radius: 10px;
-  margin: 1.5rem 5% 0;
-}
-
-.feedback.correct {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.feedback.incorrect {
-  background: #fee2e2;
-  color: #b91c1c;
-}
 </style>

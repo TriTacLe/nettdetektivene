@@ -46,6 +46,7 @@
     "happy-dom": "^20.9.0",
     "jiti": "^2.6.1",
     "jsdom": "^24.1.3",
+    "msw": "^2.13.4",
     "npm-run-all2": "^8.0.4",
     "oxlint": "~1.57.0",
     "prettier": "3.8.1",
@@ -59,5 +60,10 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

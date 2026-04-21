@@ -72,7 +72,7 @@ public class ClassroomController {
    */
   @PostMapping
   @Operation(summary = "Create a new classroom")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<ClassroomResponseDTO>> createClassroom(
       @RequestBody @Valid ClassroomRequestDTO dto,
       @AuthenticationPrincipal User currentUser) {
@@ -89,7 +89,7 @@ public class ClassroomController {
    */
   @PatchMapping("/{id}")
   @Operation(summary = "Update a classroom")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<ClassroomResponseDTO>> updateClassroom(
       @PathVariable UUID id,
       @RequestBody @Valid ClassroomRequestDTO dto) {
@@ -104,7 +104,7 @@ public class ClassroomController {
    */
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete a classroom")
-  @PreAuthorize("hasAnyRole('instructor', 'inst_admin', 'sys_admin')")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<Void> deleteClassroom(@PathVariable UUID id) {
     classroomService.deleteClassroom(id);
     return ResponseEntity.noContent().build();

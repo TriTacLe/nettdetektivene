@@ -1,61 +1,55 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import FotografenComponent from '../components/FotografenComponent.vue'
+import { fetchFotografenChallenge } from '@/services/ChallengeService'
 import type { FotografenChallenge } from '../types'
 
-// Placeholder — replace with backend fetch when API is ready
-const challenge: FotografenChallenge = {
-  alternatives: [
-    {
-      imagePath: '/FotografenTest.jpg',
-      description: 'En person med uvanlig mange fingre og merkelig bakgrunn',
-      correctType: 'ai-generert',
-      begrunnelser: [
-        'Fingrene ser unaturlige ut',
-        'Bakgrunnen virker generert',
-        'Lyset stemmer ikke',
-        'Detaljene mangler konsistens',
-      ],
-    },
-    {
-      imagePath: '/FotografenTest.jpg',
-      description: 'Skolebarn som leker i skolegård, lett bevegelsesuskarphet',
-      correctType: 'ekte',
-      begrunnelser: [
-        'Naturlig bevegelsesuskarphet',
-        'Realistiske skygger',
-        'Konsistente detaljer',
-        'Ingen tegn på redigering',
-      ],
-    },
-    {
-      imagePath: '/FotografenTest.jpg',
-      description: 'Kjent politiker på ukjent sted – bakgrunnen virker lagt inn',
-      correctType: 'manipulert',
-      begrunnelser: [
-        'Bakgrunnen ser innklipt ut',
-        'Lyset stemmer ikke mellom person og bakgrunn',
-        'Kantene virker redigerte',
-        'Fargene er unaturlige',
-      ],
-    },
-    {
-      imagePath: '/FotografenTest.jpg',
-      description: 'Dyr i et naturbilde – lyset ser unaturlig ut',
-      correctType: 'ai-generert',
-      begrunnelser: [
-        'Lyset er urealistisk',
-        'Pelsen mangler naturlig tekstur',
-        'Bakgrunnen er for perfekt',
-        'Detaljene ser genererte ut',
-      ],
-    },
-  ],
+const route = useRoute()
+const router = useRouter()
+
+const taskId = Number(route.params.taskId)
+const challenge = ref<FotografenChallenge | null>(null)
+const isLoading = ref(true)
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    challenge.value = await fetchFotografenChallenge('fotografen', taskId)
+  } catch {
+    error.value = 'Kunne ikke laste oppgaven. Prøv igjen.'
+  } finally {
+    isLoading.value = false
+  }
+})
+
+function onComplete() {
+  router.push({ name: 'task-finished', query: { stop: 'fotografen', taskId: String(taskId) } })
 }
 </script>
 
 <template>
-  <SceneComponent title="Fotografen" previous="/game-map" background="/FotografenBackground.png">
-    <FotografenComponent :challenge="challenge" />
+  <SceneComponent title="Fotografen" previous="/stops/fotografen" background="/FotografenBackground.png">
+    <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
+    <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
+    <FotografenComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" />
   </SceneComponent>
 </template>
+
+<style scoped>
+.state-msg {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.state-msg--error {
+  color: #fca5a5;
+}
+</style>

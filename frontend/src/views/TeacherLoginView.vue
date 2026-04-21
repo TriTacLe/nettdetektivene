@@ -57,6 +57,7 @@ async function handleLogin(): Promise<void> {
   <SceneComponent
     title="Feide Lærer innlogging"
     previous="/start"
+    next="/teacher-home"
     background="/StartBackground.jpg"
   >
     <div class="login-container">
