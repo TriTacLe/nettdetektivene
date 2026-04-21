@@ -1,6 +1,11 @@
 # Backend Implementation Plan
 
 This repo uses git.ntnu.no which is github
+
+## 0. Rules for Claude
+
+- Never edit files, commit, or push unless the user explicitly asks.
+- Only explain and guide unless told to make changes.
 ## 1. Dependency Layers
 
 | Layer | Depends on | Tables / Entities                                                                                                    |

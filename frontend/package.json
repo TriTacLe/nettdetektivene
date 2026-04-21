@@ -19,6 +19,8 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.13.1",
+    "@tanstack/vue-query": "^5.99.2",
     "axios": "1.15.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.2.0",

@@ -63,6 +63,7 @@ public class ClassroomStudent {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("classroomId")
+  @JoinColumn(name = "classroom_id")
   private Classroom classroom;
 
   /**
@@ -71,6 +72,7 @@ public class ClassroomStudent {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("userId")
+  @JoinColumn(name = "user_id")
   private User user;
 
   /**

@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * REST controller for leaderboard endpoints.
- * All data is read-only — scores are maintained by the {@code trg_attempt_sync} trigger.
+ * All data is read-only; scores are maintained by the {@code trg_attempt_sync} trigger.
  *
  * @author tri
  * @version 0.1

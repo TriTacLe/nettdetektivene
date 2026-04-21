@@ -29,6 +29,8 @@ services:
       dockerfile: Dockerfile
     container_name: nd-backend
     restart: on-failure
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
