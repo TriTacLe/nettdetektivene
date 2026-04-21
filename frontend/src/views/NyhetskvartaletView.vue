@@ -1,19 +1,55 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
+import { fetchNewsChallenge } from '@/services/ChallengeService'
 import type { NewsChallenge } from '../types'
 
-// Placeholder — replace with backend fetch when API is ready
-const challenge: NewsChallenge = {
-  articles: [
-    { imagePath: '/NyhetTest.png', isReal: false },
-    { imagePath: '/NyhetTest.png', isReal: true },
-  ],
+const route = useRoute()
+const router = useRouter()
+
+const taskId = Number(route.params.taskId)
+const challenge = ref<NewsChallenge | null>(null)
+const isLoading = ref(true)
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    challenge.value = await fetchNewsChallenge('nyhetskvartalet', taskId)
+  } catch {
+    error.value = 'Kunne ikke laste oppgaven. Prøv igjen.'
+  } finally {
+    isLoading.value = false
+  }
+})
+
+function onComplete() {
+  router.push({ name: 'task-finished', query: { stop: 'nyhetskvartalet', taskId: String(taskId) } })
 }
 </script>
 
 <template>
-  <SceneComponent title="Nyhetskvartalet" previous="/game-map" background="/NyhetskvartaletBackground.png">
-    <NyhetskvartaletComponent :challenge="challenge" />
+  <SceneComponent title="Nyhetskvartalet" previous="/stops/nyhetskvartalet" background="/NyhetskvartaletBackground.png">
+    <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
+    <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
+    <NyhetskvartaletComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" />
   </SceneComponent>
 </template>
+
+<style scoped>
+.state-msg {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.state-msg--error {
+  color: #fca5a5;
+}
+</style>

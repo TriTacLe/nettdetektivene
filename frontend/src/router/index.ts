@@ -27,14 +27,19 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet',
-      name: 'nyhetskvartalet',
+      path: '/stops/nyhetskvartalet/task/:taskId',
+      name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletView.vue'),
     },
     {
-      path: '/stops/fotografen',
-      name: 'fotografen',
+      path: '/stops/fotografen/task/:taskId',
+      name: 'fotografen-task',
       component: () => import('../views/FotografenView.vue'),
+    },
+    {
+      path: '/stops/:stopId',
+      name: 'stop',
+      component: () => import('../views/StopView.vue'),
     },
     {
       path: '/join-classroom',
@@ -76,11 +81,10 @@ const router = createRouter({
       component: () => import('../views/StudentLeaderboardView.vue'),
     },
     {
-      path: '/task-info',
-      name: 'task-info',
-      component: () => import('../views/TaskInfoView.vue'),
+      path: '/introduction',
+      name: 'introduction',
+      component: () => import('../views/Introduction.vue'),
     },
-
     {
       path: '/task-finished',
       name: 'task-finished',

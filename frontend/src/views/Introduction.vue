@@ -4,8 +4,8 @@ import SceneComponent from "@/components/SceneComponent.vue";
 </script>
 
 <template>
-  <SceneComponent title="Oppgave informasjon" previous="/avatar-creator" next="/student-home">
-    <div class="task-info">
+  <SceneComponent title="Oppgave informasjon" previous="/join-classroom" next="/student-home">
+    <div class="introduction">
       <h1>Velkommen</h1>
       <h4>
         Oppdraget ditt er å beskytte internettbyen
@@ -20,7 +20,7 @@ import SceneComponent from "@/components/SceneComponent.vue";
 </template>
 
 <style scoped>
-.task-info {
+.introduction {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -29,10 +29,11 @@ import SceneComponent from "@/components/SceneComponent.vue";
   gap: 1rem;
   padding: 2rem;
 }
-.task-info h1 {
+
+.introduction h1 {
   font-size: 2.5rem;
 }
-.task-info h4 {
+.introduction h4 {
   font-size: 1.25rem;
   max-width: 600px;
 }

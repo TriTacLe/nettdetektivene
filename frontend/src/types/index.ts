@@ -158,3 +158,9 @@ export interface ClassroomStudentResponseDTO {
 export interface JoinClassroomRequestDTO {
   joinCode: string
 }
+
+export interface StopTaskDTO {
+  taskId: number
+  title: string
+  taskType: string
+}
