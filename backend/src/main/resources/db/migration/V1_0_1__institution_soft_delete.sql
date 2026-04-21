@@ -1,2 +1,0 @@
-ALTER TABLE institution
-    ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL;

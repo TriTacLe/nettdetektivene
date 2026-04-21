@@ -1,6 +1,5 @@
 package ntnu.no.backend.util;
 
-import ntnu.no.backend.dto.institution.InstitutionRequestDTO;
 import ntnu.no.backend.dto.institution.InstitutionResponseDTO;
 import ntnu.no.backend.model.Institution;
 
@@ -11,12 +10,6 @@ public class InstitutionTestFactory {
 
   public static Institution institution() {
     return Institution.builder()
-        .instName("NTNU")
-        .build();
-  }
-
-  public static InstitutionRequestDTO requestDTO() {
-    return InstitutionRequestDTO.builder()
         .instName("NTNU")
         .build();
   }
