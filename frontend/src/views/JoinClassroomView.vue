@@ -10,7 +10,7 @@ const handleJoin = () => {
 </script>
 
 <template>
-  <SceneComponent title="Bli med i klasserom" previous="/student-login" next="/game-map">
+  <SceneComponent title="Bli med i klasserom" previous="/student-login" next="/introduction">
     <div class="join-form">
       <input v-model="classroomCode" type="text" placeholder="Klasseromskode" />
       <button @click="handleJoin">Bli med</button>

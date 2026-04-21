@@ -1,5 +1,5 @@
 <template>
-  <SceneComponent title="" previous="/game-map" previous-label="Kart">
+  <SceneComponent title="" :previous="stopId ? `/stops/${stopId}` : '/game-map'" previous-label="Tilbake">
     <canvas ref="confettiCanvas" class="confetti-canvas" />
 
     <div class="content">
@@ -17,11 +17,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
+import { useStopStore } from '@/stores/StopStore'
 
+const route = useRoute()
 const router = useRouter()
+const stopStore = useStopStore()
 const confettiCanvas = ref<HTMLCanvasElement | null>(null)
+
+const stopId = route.query.stop as string | undefined
+const taskId = Number(route.query.taskId) || 0
+
+if (stopId && taskId) {
+  stopStore.markComplete(stopId, taskId)
+}
 
 let animationId: number | null = null
 
@@ -153,9 +163,11 @@ onUnmounted(() => {
 
 // ---- Navigation ----
 function goToNextTask() {
-  // Navigerer til game-map for nå.
-  // Bytt ut med riktig rute når TaskView er koblet på.
-  router.push({ name: 'game-map' })
+  if (stopId) {
+    router.push({ name: 'stop', params: { stopId } })
+  } else {
+    router.push({ name: 'game-map' })
+  }
 }
 </script>
 

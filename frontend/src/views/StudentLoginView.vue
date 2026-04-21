@@ -121,7 +121,7 @@ async function handleLogin(): Promise<void> {
   gap: 0.5rem;
 }
 
-.label {
+label {
   color: white;
   font-weight: 700;
   font-size: 1.25rem;
