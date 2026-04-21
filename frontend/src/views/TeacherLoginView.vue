@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from "vue-router";
-import SceneComponent from '../components/SceneComponent.vue';
-import { useAuthStore } from "@/stores/AuthStore.ts";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import SceneComponent from '../components/SceneComponent.vue'
+import { useAuthStore } from '@/stores/AuthStore.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
+const email = ref('laerer@ntnu.no')
+const password = ref('password123')
 const serverError = ref('')
 const isLoading = ref(false)
 
-const fieldErrors = ref ({ email: '', password: '' })
+const fieldErrors = ref({ email: '', password: '' })
 
 function validate(): boolean {
   fieldErrors.value = { email: '', password: '' }
@@ -43,7 +43,12 @@ async function handleLogin(): Promise<void> {
 
   isLoading.value = true
   try {
-    await authStore.feideLogin({ email: email.value, affiliation: "instructor", password: password.value})
+    await authStore.feideLogin({
+      displayName: email.value, // ny endring, er de1n gyldig?
+      email: email.value,
+      affiliation: 'instructor',
+      password: password.value,
+    })
     router.push({ name: 'teacher-home' })
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
@@ -92,8 +97,8 @@ async function handleLogin(): Promise<void> {
             @keyup.enter="handleLogin"
           />
           <span v-if="fieldErrors.password" class="field-error" role="alert">
-              {{ fieldErrors.password }}
-            </span>
+            {{ fieldErrors.password }}
+          </span>
         </div>
 
         <button :disabled="isLoading" @click="handleLogin">

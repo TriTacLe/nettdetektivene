@@ -1,41 +1,69 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/AuthStore.ts";
-import ClassroomService from "@/services/ClassroomService.ts";
-import SceneComponent from "@/components/SceneComponent.vue";
-import type { ClassroomResponseDTO } from "@/types";
+// OLD (manual axios approach)
+// import { ref, onMounted, computed } from 'vue'
+// import ClassroomService from '@/services/ClassroomService.ts'
+// import type { ClassroomResponseDTO } from '@/types'
+//  NEW (generated client + TanStack Query)
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/AuthStore.ts'
+import SceneComponent from '@/components/SceneComponent.vue'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  getAllClassroomsOptions,
+  getAllClassroomsQueryKey,
+  deleteClassroomMutation,
+} from '@/generated-client/@tanstack/vue-query.gen'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const queryClient = useQueryClient()
 
-const classrooms = ref<ClassroomResponseDTO[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
+// OLD
+// const classrooms = ref<ClassroomResponseDTO[]>([])
+// const loading = ref(false)
+// const error = ref<string | null>(null)
+//
+// const myClassrooms = computed(() =>
+//   classrooms.value.filter((c) => c.createdById === authStore.user?.id),
+// )
+//
+// onMounted(async () => {
+//   loading.value = true
+//   try {
+//     classrooms.value = await ClassroomService.getAllClassrooms()
+//   } catch (e: any) {
+//     error.value = e.message ?? 'Kunne ikke hente klasserom'
+//   } finally {
+//     loading.value = false
+//   }
+// })
+//  NEW
+const { data, isLoading, error } = useQuery(getAllClassroomsOptions())
 
-const myClassrooms = computed(() =>
-  classrooms.value.filter((c) => c.createdById === authStore.user?.id)
+const myClassrooms = computed(
+  () => data.value?.data?.filter((c) => c.createdById === authStore.user?.id) ?? [],
 )
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    classrooms.value = await ClassroomService.getAllClassrooms()
-  } catch (e: any) {
-    error.value = e.message ?? 'Kunne ikke hente klasserom'
-  } finally {
-    loading.value = false
-  }
+const deleteMutation = useMutation({
+  ...deleteClassroomMutation(),
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: getAllClassroomsQueryKey() }),
 })
 
+// OLD
+// async function deleteClassroom(id: string) {
+//   if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
+//   try {
+//     await ClassroomService.deleteClassroom(id)
+//     classrooms.value = classrooms.value.filter((c) => c.id !== id)
+//   } catch (e: any) {
+//     error.value = e.message ?? 'Kunne ikke slette klasserommet'
+//   }
+// }
+// NEW
 async function deleteClassroom(id: string) {
-  if(!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
-  try {
-    await ClassroomService.deleteClassroom(id)
-    classrooms.value = classrooms.value.filter((c) => c.id !== id)
-  } catch (e: any) {
-    error.value = e.message ?? 'Kunne ikke slette klasserommet'
-  }
+  if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
+  deleteMutation.mutate({ path: { id } })
 }
 
 function openClassroom(id: string) {
@@ -48,7 +76,7 @@ function openClassroom(id: string) {
     <div class="min-h-screen p-8 max-w-3xø mx-auto">
       <div class="flex items-center justify between mb-8">
         <button
-          @click="$router.push({ name: 'teacher-home'})"
+          @click="$router.push({ name: 'teacher-home' })"
           class="text-amber-900 hover:text-amber-700 font-semibold"
         >
           Tilbake
@@ -62,15 +90,16 @@ function openClassroom(id: string) {
         </button>
       </div>
 
-      <div v-if="error" class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded mb-4">
+      <div
+        v-if="error"
+        class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded mb-4"
+      >
         {{ error }}
       </div>
 
-      <div v-if="loading" class="text-amber-900 text-center py-10 text-xl">Laster...</div>
+      <div v-if="isLoading" class="text-amber-900 text-center py-10 text-xl">Laster...</div>
 
-      <div v-else-if="myClassrooms.length === 0"
-           class="text-center text-amber-900 py-16 text-lg"
-      >
+      <div v-else-if="myClassrooms.length === 0" class="text-center text-amber-900 py-16 text-lg">
         Du har ingen klasserom enda
         <br />
         <button
@@ -86,9 +115,9 @@ function openClassroom(id: string) {
           v-for="classroom in myClassrooms"
           :key="classroom.id"
           class="bg-amber-50 border border-amber-300 rounded-xl px-6 py-4 flex items-center justify-between shadow"
-          >
+        >
           <div>
-            <p class="text-xl font-bold text-amber-900">{{ classroom.title }} </p>
+            <p class="text-xl font-bold text-amber-900">{{ classroom.title }}</p>
             <p class="text-sm text-amber-700">
               Kode: <span class="font-mono font-bold">{{ classroom.joinCode }}</span>
             </p>
@@ -117,14 +146,3 @@ function openClassroom(id: string) {
     </div>
   </SceneComponent>
 </template>
-
-
-
-
-
-
-
-
-
-
-
