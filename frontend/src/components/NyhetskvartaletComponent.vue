@@ -3,14 +3,21 @@ import { ref } from 'vue'
 import type { NewsChallenge, NewsArticle } from '../types'
 
 const props = defineProps<{ challenge: NewsChallenge }>()
-const emit = defineEmits<{ complete: [] }>()
+const emit = defineEmits<{
+  complete: []
+  failed: [reason: string]
+}>()
 
 const selected = ref<NewsArticle | null>(null)
 
 function choose(article: NewsArticle) {
   if (selected.value !== null) return
   selected.value = article
-  emit('complete')
+  if (article.isReal) {
+    emit('complete')
+  } else {
+    emit('failed', 'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.')
+  }
 }
 </script>
 
