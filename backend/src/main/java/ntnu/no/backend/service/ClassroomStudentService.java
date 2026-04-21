@@ -110,7 +110,7 @@ public class ClassroomStudentService {
   public List<ClassroomStudentResponseDTO> getApprovedStudents(UUID classroomId, User instructor) {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
-    return classroomStudentRepository.findAllByClassroomAndAllowedIsTrue(classroom).stream()
+    return classroomStudentRepository.findAllByClassroomAndIsAllowedIsTrue(classroom).stream()
       .map(ClassroomStudentMapper::toDTO)
       .toList();
   }
@@ -128,7 +128,7 @@ public class ClassroomStudentService {
   public List<ClassroomStudentResponseDTO> getPendingStudents(UUID classroomId, User instructor) {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
-    return classroomStudentRepository.findAllByClassroomAndAllowedIsFalse(classroom).stream()
+    return classroomStudentRepository.findAllByClassroomAndIsAllowedIsFalse(classroom).stream()
       .map(ClassroomStudentMapper::toDTO)
       .toList();
   }

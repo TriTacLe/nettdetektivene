@@ -1,9 +1,14 @@
 import apiClient from '@/services/ApiService'
-import type { AuthResponse, LoginRequest, UserDTO } from "@/types";
+import type { AuthResponse, FeideAuthResponse, FeideLoginRequest, LoginRequest, UserDTO } from "@/types";
 
 async function login(credentials: LoginRequest): Promise<AuthResponse>{
   const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
   return data;
+}
+
+async function feideLogin(credentials: FeideLoginRequest): Promise<FeideAuthResponse> {
+  const { data } = await apiClient.post<FeideAuthResponse>(`/auth/feide`, credentials);
+  return data
 }
 
 async function logout(refreshToken: string): Promise<void> {
@@ -22,6 +27,7 @@ async function fetchMe(): Promise<UserDTO> {
 
 export default {
   login,
+  feideLogin,
   logout,
   refresh,
   fetchMe,

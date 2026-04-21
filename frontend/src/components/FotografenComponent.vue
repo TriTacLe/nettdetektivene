@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { FotografenChallenge, PhotoType } from '../types'
 
 const props = defineProps<{ challenge: FotografenChallenge }>()
+const emit = defineEmits<{ complete: [] }>()
 
 const TYPES: { value: PhotoType; label: string }[] = [
   { value: 'ekte', label: 'Ekte' },
@@ -24,16 +25,8 @@ function select(index: number, type: PhotoType) {
 function submit() {
   if (!allSelected.value) return
   submitted.value = true
+  emit('complete')
 }
-
-function isCorrect(index: number) {
-  return selections.value[index] === props.challenge.alternatives[index].correctType
-}
-
-const score = computed(() => {
-  if (!submitted.value) return 0
-  return props.challenge.alternatives.filter((_, i) => isCorrect(i)).length
-})
 </script>
 
 <template>
@@ -48,10 +41,6 @@ const score = computed(() => {
         v-for="(alt, i) in challenge.alternatives"
         :key="i"
         class="card"
-        :class="{
-          'card--correct': submitted && isCorrect(i),
-          'card--incorrect': submitted && !isCorrect(i),
-        }"
       >
         <img class="card-image" :src="alt.imagePath" :alt="alt.description" />
 
@@ -87,15 +76,7 @@ const score = computed(() => {
           </select>
         </div>
 
-        <div v-if="submitted" class="card-feedback">
-          <span v-if="isCorrect(i)" class="feedback-correct">Riktig!</span>
-          <span v-else class="feedback-incorrect">Feil — svaret var: {{ alt.correctType }}</span>
-        </div>
       </div>
-    </div>
-
-    <div v-if="submitted" class="score-banner">
-      Du fikk {{ score }} av {{ challenge.alternatives.length }} riktige.
     </div>
 
     <div class="lever-row">
@@ -161,14 +142,6 @@ const score = computed(() => {
   border: 3px solid transparent;
   transition: border-color 0.2s;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-}
-
-.card--correct {
-  border-color: #22c55e;
-}
-
-.card--incorrect {
-  border-color: #ef4444;
 }
 
 .card-image {
@@ -264,33 +237,6 @@ const score = computed(() => {
 .begrunnelse-select:disabled {
   cursor: default;
   opacity: 0.7;
-}
-
-.card-feedback {
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  margin-top: 0.25rem;
-}
-
-.feedback-correct {
-  color: #15803d;
-}
-
-.feedback-incorrect {
-  color: #b91c1c;
-  text-transform: capitalize;
-}
-
-.score-banner {
-  flex-shrink: 0;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  padding: 0.7rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a1a1a;
 }
 
 .lever-row {

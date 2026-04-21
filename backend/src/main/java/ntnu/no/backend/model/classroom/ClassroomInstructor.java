@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.PrePersist;
@@ -51,6 +52,7 @@ public class ClassroomInstructor {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("classroomId")
+  @JoinColumn(name = "classroom_id")
   private Classroom classroom;
 
   /**
@@ -59,6 +61,7 @@ public class ClassroomInstructor {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("userId")
+  @JoinColumn(name = "user_id")
   private User user;
 
   /**

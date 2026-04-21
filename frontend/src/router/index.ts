@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { requireTeacher } from "@/router/guards.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,14 +27,19 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet',
-      name: 'nyhetskvartalet',
+      path: '/stops/nyhetskvartalet/task/:taskId',
+      name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletView.vue'),
     },
     {
-      path: '/stops/fotografen',
-      name: 'fotografen',
+      path: '/stops/fotografen/task/:taskId',
+      name: 'fotografen-task',
       component: () => import('../views/FotografenView.vue'),
+    },
+    {
+      path: '/stops/:stopId',
+      name: 'stop',
+      component: () => import('../views/StopView.vue'),
     },
     {
       path: '/join-classroom',
@@ -44,8 +50,26 @@ const router = createRouter({
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/TeacherHomeView.vue'),
-      beforeEnter: requireTeacher,
-    }
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom-overview',
+      name: 'classroom-overview',
+      component: () => import('../views/ClassroomOverviewView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/new',
+      name: 'create-classroom',
+      component: () => import('../views/CreateClassroomView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id',
+      name: 'classroom-detail',
+      component: () => import('../views/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
+    },
     {
       path: '/notebook',
       name: 'notebook',
@@ -57,11 +81,15 @@ const router = createRouter({
       component: () => import('../views/StudentLeaderboardView.vue'),
     },
     {
-      path: '/task-info',
-      name: 'task-info',
-      component: () => import('../views/TaskInfoView.vue'),
+      path: '/introduction',
+      name: 'introduction',
+      component: () => import('../views/Introduction.vue'),
+    },
+    {
+      path: '/task-finished',
+      name: 'task-finished',
+      component: () => import('../views/TaskFinishedView.vue'),
     },
   ],
 })
-
 export default router

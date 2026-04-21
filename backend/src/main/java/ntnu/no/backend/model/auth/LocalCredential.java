@@ -63,7 +63,7 @@ public class LocalCredential {
    * Used to trigger account locking.
    */
   @Builder.Default
-  @Column(name = "failed_attempts", nullable = false)
+  @Column(name = "failed_attempts", nullable = false, columnDefinition = "TINYINT UNSIGNED")
   private int failedAttempts = 0;
 
   /**

@@ -37,6 +37,13 @@ export interface AuthResponse {
   roles: string[];
 }
 
+export interface FeideAuthResponse {
+  token: string;
+  refreshToken: string;
+  roles: string[];
+  feideId: string;
+}
+
 export interface RefreshRequest {
   refreshToken: string;
   expiredToken?: string;
@@ -112,4 +119,48 @@ export interface PhotoAlternative {
 
 export interface FotografenChallenge {
   alternatives: PhotoAlternative[];
+}
+
+export interface ClassroomResponseDTO {
+  id: string
+  title: string
+  classDesc: string | null
+  joinCode: string
+  institutionId: string
+  createdById: string
+  isGameEnabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ClassroomRequestDTO {
+  title: string
+  classDesc?: string
+  institutionId: string
+  isGameEnabled: boolean
+}
+
+export interface ClassroomInstructorResponseDTO {
+  classroomId: string
+  userId: string
+  assignedAt: string
+}
+
+export interface ClassroomStudentResponseDTO {
+  userId: string
+  displayName: string
+  isAllowed: boolean
+  nameChangeStatus: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED'
+  requestedDisplayName: string | null
+  joinedAt: string
+}
+
+export interface JoinClassroomRequestDTO {
+  joinCode: string
+}
+
+export interface StopTaskDTO {
+  taskId: number
+  title: string
+  taskType: string
 }

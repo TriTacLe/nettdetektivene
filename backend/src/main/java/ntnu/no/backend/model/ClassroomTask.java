@@ -59,5 +59,5 @@ public class ClassroomTask {
    * Lower values appear first. Defaults to {@code 0}.
    */
   @Column(name = "sort_order", nullable = false)
-  private int sortOrder = 0;
+  private Short sortOrder = 0;
 }

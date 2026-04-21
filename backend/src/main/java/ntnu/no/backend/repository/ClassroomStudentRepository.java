@@ -52,7 +52,7 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
    * @param classroom the classroom to list students for
    * @return a list of approved student memberships
    */
-  List<ClassroomStudent> findAllByClassroomAndAllowedIsTrue(Classroom classroom);
+  List<ClassroomStudent> findAllByClassroomAndIsAllowedIsTrue(Classroom classroom);
 
   /**
    * Retrieves student memberships for a classroom filtered by not approved (pending)
@@ -60,7 +60,7 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
    * @param classroom the classroom to list students for
    * @return a list of pending student memberships
    */
-  List<ClassroomStudent> findAllByClassroomAndAllowedIsFalse(Classroom classroom);
+  List<ClassroomStudent> findAllByClassroomAndIsAllowedIsFalse(Classroom classroom);
 
   /**
    * Retrieves student memberships for a classroom filtered by name change status.

@@ -11,8 +11,8 @@ import ntnu.no.backend.shared.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import ntnu.no.backend.model.auth.User;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -47,7 +47,7 @@ public class NotebookController {
    */
   @Operation(summary = "Get all notebook entries in a classroom")
   @GetMapping
-  @PreAuthorize("hasRole('instructor')")
+  @PreAuthorize("hasAuthority('instructor')")
   public ResponseEntity<ApiResponse<List<NotebookEntryResponseDTO>>> getAllNotebooks(@PathVariable UUID classroomId) {
     return ResponseEntity.ok(ApiResponse.ok(notebookService.getNotebooksByClassroom(classroomId)));
   }
@@ -63,9 +63,8 @@ public class NotebookController {
   @GetMapping("/me")
   public ResponseEntity<ApiResponse<List<NotebookEntryResponseDTO>>> getMyNotebooks(
       @PathVariable UUID classroomId,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    UUID userId = UUID.fromString(userDetails.getUsername());
-    return ResponseEntity.ok(ApiResponse.ok(notebookService.getNotebookByClassroomAndUser(classroomId, userId)));
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(notebookService.getNotebookByClassroomAndUser(classroomId, user.getId())));
   }
 
   /**
@@ -81,10 +80,9 @@ public class NotebookController {
   public ResponseEntity<ApiResponse<NotebookEntryResponseDTO>> createNotebook(
       @PathVariable UUID classroomId,
       @RequestBody @Valid NotebookEntryRequestDTO dto,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    UUID userId = UUID.fromString(userDetails.getUsername());
+      @AuthenticationPrincipal User user) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.ok(notebookService.createNotebook(classroomId, dto, userId)));
+        .body(ApiResponse.ok(notebookService.createNotebook(classroomId, dto, user.getId())));
   }
 
   /**
