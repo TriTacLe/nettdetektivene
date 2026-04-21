@@ -6,6 +6,7 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 import { VueQueryPlugin } from '@tanstack/vue-query'
+import '@/lib/GeneratedClient'
 
 async function bootstrap() {
   if (import.meta.env.DEV) {

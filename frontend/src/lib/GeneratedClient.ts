@@ -1,8 +1,8 @@
-import { createClient } from '@hey-api/client-fetch'
+import { client } from '@/generated-client/client.gen'
 
 const SESSION_KEY = 'auth'
 
-function gettoken(): string | undefined {
+function getToken(): string | undefined {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
     return raw ? (JSON.parse(raw) as { token?: string }).token : undefined
@@ -11,14 +11,10 @@ function gettoken(): string | undefined {
   }
 }
 
-export const generatedClient = createClient({
-  baseUrl: import.meta.env.VITE_API_URL as string,
-})
+client.setConfig({ baseUrl: 'http://localhost:8080' })
 
-generatedClient.interceptors.request.use((request) => {
-  const token = gettoken()
-  if (token) {
-    request.headers.set('Authorization', `Bearer ${token}`)
-  }
+client.interceptors.request.use((request) => {
+  const token = getToken()
+  if (token) request.headers.set('Authorization', `Bearer ${token}`)
   return request
 })
