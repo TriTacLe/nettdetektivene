@@ -27,13 +27,20 @@ onMounted(async () => {
 function onComplete() {
   router.push({ name: 'task-finished', query: { stop: 'fotografen', taskId: String(taskId) } })
 }
+
+function onFailed(reason: string) {
+  router.push({
+    name: 'task-failed',
+    query: { stop: 'fotografen', taskId: String(taskId), reason, returnTo: 'fotografen-task' },
+  })
+}
 </script>
 
 <template>
   <SceneComponent title="Fotografen" previous="/stops/fotografen" background="/FotografenBackground.png">
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
-    <FotografenComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" />
+    <FotografenComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" @failed="onFailed" />
   </SceneComponent>
 </template>
 

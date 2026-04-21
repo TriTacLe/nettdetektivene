@@ -3,7 +3,10 @@ import { ref, computed } from 'vue'
 import type { FotografenChallenge, PhotoType } from '../types'
 
 const props = defineProps<{ challenge: FotografenChallenge }>()
-const emit = defineEmits<{ complete: [] }>()
+const emit = defineEmits<{
+  complete: []
+  failed: [reason: string]
+}>()
 
 const TYPES: { value: PhotoType; label: string }[] = [
   { value: 'ekte', label: 'Ekte' },
@@ -25,7 +28,19 @@ function select(index: number, type: PhotoType) {
 function submit() {
   if (!allSelected.value) return
   submitted.value = true
-  emit('complete')
+
+  const wrongIndexes = props.challenge.alternatives
+    .map((alt, i) => (selections.value[i] !== alt.correctType ? i + 1 : null))
+    .filter((i): i is number => i !== null)
+
+  if (wrongIndexes.length === 0) {
+    emit('complete')
+  } else {
+    const which = wrongIndexes.length === 1
+      ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
+      : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
+    emit('failed', `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`)
+  }
 }
 </script>
 

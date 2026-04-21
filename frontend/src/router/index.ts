@@ -90,6 +90,11 @@ const router = createRouter({
       name: 'task-finished',
       component: () => import('../views/TaskFinishedView.vue'),
     },
+    {
+      path: '/task-failed',
+      name: 'task-failed',
+      component: () => import('../views/TaskFailedView.vue'),
+    },
   ],
 })
 export default router
