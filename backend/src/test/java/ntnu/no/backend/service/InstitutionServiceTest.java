@@ -37,7 +37,7 @@ class InstitutionServiceTest {
     List<InstitutionResponseDTO> result = institutionService.getAllInstitutions();
 
     assertThat(result).hasSize(1);
-    assertThat(result.get(0).instName()).isEqualTo("NTNU");
+    assertThat(result.getFirst().instName()).isEqualTo("NTNU");
   }
 
   @Test
