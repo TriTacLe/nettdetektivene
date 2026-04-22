@@ -116,6 +116,11 @@ const router = createRouter({
       component: () => import('../views/TaskFailedView.vue'),
     },
     {
+      path: '/teacher-notifications',
+      name: 'teacher-notifications',
+      component: () => import('../views/NotificationView.vue'),
+    },
+    {
       path: '/achievements',
       name: 'achievements',
       component: () => import('../views/AchievementsView.vue'),
