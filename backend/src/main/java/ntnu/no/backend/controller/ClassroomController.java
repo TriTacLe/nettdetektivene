@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskUpdateRequestDTO;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.service.ClassroomService;
 import ntnu.no.backend.shared.ApiResponse;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,8 +31,8 @@ import java.util.UUID;
 /**
  * REST controller for classroom endpoints.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @RestController
@@ -40,36 +43,18 @@ public class ClassroomController {
 
   private final ClassroomService classroomService;
 
-  /**
-   * Returns all active classrooms.
-   *
-   * @return 200 OK with list of classrooms
-   */
   @GetMapping
   @Operation(summary = "Get all classrooms")
   public ResponseEntity<ApiResponse<List<ClassroomResponseDTO>>> getAllClassrooms() {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getAllClassroom()));
   }
 
-  /**
-   * Returns a single classroom by ID.
-   *
-   * @param id the classroom ID
-   * @return 200 OK with the classroom
-   */
   @GetMapping("/{id}")
   @Operation(summary = "Get classroom by ID")
   public ResponseEntity<ApiResponse<ClassroomResponseDTO>> getClassroom(@PathVariable UUID id) {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getClassroom(id)));
   }
 
-  /**
-   * Creates a new classroom. Only accessible by instructors and admins.
-   *
-   * @param dto         the request body
-   * @param currentUser the authenticated user who becomes the creator
-   * @return 201 Created with the created classroom
-   */
   @PostMapping
   @Operation(summary = "Create a new classroom")
   @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
@@ -80,13 +65,6 @@ public class ClassroomController {
         .body(ApiResponse.ok(classroomService.createClassroom(dto, currentUser)));
   }
 
-  /**
-   * Updates an existing classroom. Only accessible by instructors and admins.
-   *
-   * @param id  the classroom ID
-   * @param dto the request body with updated values
-   * @return 200 OK with the updated classroom
-   */
   @PatchMapping("/{id}")
   @Operation(summary = "Update a classroom")
   @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
@@ -96,12 +74,6 @@ public class ClassroomController {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.updateClassroom(dto, id)));
   }
 
-  /**
-   * Soft-deletes a classroom by ID. Only accessible by instructors and admins.
-   *
-   * @param id the classroom ID
-   * @return 204 No Content
-   */
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete a classroom")
   @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
@@ -110,16 +82,33 @@ public class ClassroomController {
     return ResponseEntity.noContent().build();
   }
 
-  /**
-   * Returns all active classrooms belonging to an institution.
-   *
-   * @param institutionId the institution ID
-   * @return 200 OK with list of classrooms for the institution
-   */
   @GetMapping("/institution/{institutionId}")
   @Operation(summary = "Get classrooms by institution")
   public ResponseEntity<ApiResponse<List<ClassroomResponseDTO>>> getAllClassroomsByInstitution(
       @PathVariable UUID institutionId) {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getAllClassroomsByInstitution(institutionId)));
+  }
+
+  @GetMapping("/{classroomId}/tasks")
+  @Operation(summary = "Get tasks assigned to a classroom")
+  public ResponseEntity<ApiResponse<List<ClassroomTaskResponseDTO>>> getClassroomTasks(
+      @PathVariable UUID classroomId,
+      @RequestParam(defaultValue = "false") boolean activeOnly) {
+    if (activeOnly) {
+      return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasks(classroomId)));
+    }
+    return ResponseEntity.ok(ApiResponse.ok(classroomService.getClassroomTasks(classroomId)));
+  }
+
+  @PatchMapping("/{classroomId}/tasks/{taskId}")
+  @Operation(summary = "Update a task assignment in a classroom")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<ClassroomTaskResponseDTO>> updateClassroomTask(
+      @PathVariable UUID classroomId,
+      @PathVariable UUID taskId,
+      @RequestBody ClassroomTaskUpdateRequestDTO dto) {
+    return ResponseEntity.ok(ApiResponse.ok(
+        classroomService.updateClassroomTask(classroomId, taskId, dto)
+    ));
   }
 }

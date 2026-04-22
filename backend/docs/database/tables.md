@@ -245,6 +245,7 @@ Assigns tasks to a specific classroom.
 | classroom_id | CHAR(36) |
 | task_id | CHAR(36) |
 | sort_order | SMALLINT UNSIGNED |
+| is_active | TINYINT(1) |
 
 **Foreign keys:**
 - `classroom_id` → `classroom.classroom_id`
