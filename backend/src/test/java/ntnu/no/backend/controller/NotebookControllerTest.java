@@ -1,9 +1,12 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ntnu.no.backend.dto.notebook.NotebookEntryRequestDTO;
+import ntnu.no.backend.dto.notebook.NotebookEntryResponseDTO;
+import ntnu.no.backend.model.auth.Role;
+import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.NotebookService;
-import ntnu.no.backend.util.NotebookTestFactory;
 import ntnu.no.backend.util.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -34,8 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Controller tests for {@link NotebookController}.
  * Verifies HTTP status codes and JSON structure.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @WebMvcTest(NotebookController.class)
@@ -57,112 +63,154 @@ class NotebookControllerTest {
   @MockitoBean
   private UserDetailsService userDetailsService;
 
-  /**
-   * Verifies that an instructor gets 200 and a list of all notebook entries.
-   */
   @Test
   @WithMockUser(authorities = "instructor")
   void getAllNotebooks_asInstructor_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
-    when(notebookService.getNotebooksByClassroom(classroomId))
-        .thenReturn(List.of(NotebookTestFactory.responseDTO(UUID.randomUUID(), userId, classroomId)));
 
-    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/notebooks"))
+    when(notebookService.getNotebooksByClassroom(classroomId))
+        .thenReturn(List.of(notebookResponseDTO(UUID.randomUUID(), userId, classroomId)));
+
+    mockMvc.perform(get("/api/v1/classrooms/{classroomId}/notebooks", classroomId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data[0].stopLocation").value("stop_3"));
   }
 
-  /**
-   * Verifies that a student gets 403 when trying to access all notebook entries.
-   */
   @Test
   @WithMockUser(authorities = "student")
   void getAllNotebooks_asStudent_returnsForbidden() throws Exception {
     UUID classroomId = UUID.randomUUID();
 
-    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/notebooks"))
+    mockMvc.perform(get("/api/v1/classrooms/{classroomId}/notebooks", classroomId))
         .andExpect(status().isForbidden());
   }
 
-  /**
-   * Verifies that an authenticated student gets 200 and their own notebook entries.
-   */
   @Test
-  @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
   void getMyNotebooks_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    when(notebookService.getNotebookByClassroomAndUser(eq(classroomId), eq(userId)))
-        .thenReturn(List.of(NotebookTestFactory.responseDTO(UUID.randomUUID(), userId, classroomId)));
+    User principal = testUser(userId, "student");
 
-    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/notebooks/me"))
+    when(notebookService.getNotebookByClassroomAndUser(eq(classroomId), eq(userId)))
+        .thenReturn(List.of(notebookResponseDTO(UUID.randomUUID(), userId, classroomId)));
+
+    mockMvc.perform(get("/api/v1/classrooms/{classroomId}/notebooks/me", classroomId)
+            .with(user(principal)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data[0].stopLocation").value("stop_3"));
   }
 
-  /**
-   * Verifies that an authenticated student gets 201 when creating a notebook entry.
-   */
   @Test
-  @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
   void createNotebook_returnsCreated() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    when(notebookService.createNotebook(eq(classroomId), any(), eq(userId)))
-        .thenReturn(NotebookTestFactory.responseDTO(UUID.randomUUID(), userId, classroomId));
+    User principal = testUser(userId, "student");
 
-    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/notebooks")
+    when(notebookService.createNotebook(eq(classroomId), any(), eq(userId)))
+        .thenReturn(notebookResponseDTO(UUID.randomUUID(), userId, classroomId));
+
+    mockMvc.perform(post("/api/v1/classrooms/{classroomId}/notebooks", classroomId)
+            .with(user(principal))
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(NotebookTestFactory.requestDTO()))
-            .with(csrf()))
+            .content(objectMapper.writeValueAsString(notebookRequestDTO())))
         .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.stopLocation").value("stop_3"));
   }
 
-  /**
-   * Verifies that an authenticated user gets 200 when updating a notebook entry.
-   */
   @Test
-  @WithMockUser
+  @WithMockUser(authorities = "student")
   void updateNotebook_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID notebookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
-    when(notebookService.updateNotebook(any(), eq(notebookId)))
-        .thenReturn(NotebookTestFactory.responseDTO(notebookId, userId, classroomId));
 
-    mockMvc.perform(patch("/api/v1/classrooms/" + classroomId + "/notebooks/" + notebookId)
+    when(notebookService.updateNotebook(any(), eq(notebookId)))
+        .thenReturn(notebookResponseDTO(notebookId, userId, classroomId));
+
+    mockMvc.perform(patch("/api/v1/classrooms/{classroomId}/notebooks/{notebookId}", classroomId, notebookId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(NotebookTestFactory.requestDTO()))
+            .content(objectMapper.writeValueAsString(notebookRequestDTO()))
             .with(csrf()))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.stopLocation").value("stop_3"));
   }
 
-  /**
-   * Verifies that an authenticated user gets 204 when deleting a notebook entry.
-   */
   @Test
-  @WithMockUser
+  @WithMockUser(authorities = "student")
   void deleteNotebook_returnsNoContent() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID notebookId = UUID.randomUUID();
+
     doNothing().when(notebookService).deleteNotebook(notebookId);
 
-    mockMvc.perform(delete("/api/v1/classrooms/" + classroomId + "/notebooks/" + notebookId)
+    mockMvc.perform(delete("/api/v1/classrooms/{classroomId}/notebooks/{notebookId}", classroomId, notebookId)
             .with(csrf()))
         .andExpect(status().isNoContent());
   }
 
-  /**
-   * Verifies that an unauthenticated request returns 401.
-   */
   @Test
   void getAllNotebooks_unauthenticated_returnsUnauthorized() throws Exception {
-    mockMvc.perform(get("/api/v1/classrooms/" + UUID.randomUUID() + "/notebooks"))
+    UUID classroomId = UUID.randomUUID();
+
+    mockMvc.perform(get("/api/v1/classrooms/{classroomId}/notebooks", classroomId))
         .andExpect(status().isUnauthorized());
+  }
+
+  private NotebookEntryRequestDTO notebookRequestDTO() {
+    return NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .autoNotes("{\"summary\":\"auto generated\"}")
+        .studentReflection("This is my reflection")
+        .build();
+  }
+
+  private NotebookEntryResponseDTO notebookResponseDTO(UUID id, UUID userId, UUID classroomId) {
+    return new NotebookEntryResponseDTO(
+        id,
+        userId,
+        classroomId,
+        "stop_3",
+        "{\"summary\":\"auto generated\"}",
+        "This is my reflection",
+        LocalDateTime.of(2026, 4, 22, 12, 0),
+        LocalDateTime.of(2026, 4, 22, 12, 30)
+    );
+  }
+
+  private User testUser(UUID id, String authority) {
+    Role role = new Role();
+    role.setRoleName(authority);
+
+    User user = new User();
+    user.setEmail("test@example.com");
+    user.setDisplayName("Test User");
+    user.setRoles(List.of(role));
+    setIdReflectively(user, id);
+    return user;
+  }
+
+  private void setIdReflectively(Object target, UUID id) {
+    Class<?> type = target.getClass();
+
+    while (type != null) {
+      try {
+        Field field = type.getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(target, id);
+        return;
+      } catch (NoSuchFieldException e) {
+        type = type.getSuperclass();
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    throw new IllegalArgumentException("Could not find id field on " + target.getClass());
   }
 }

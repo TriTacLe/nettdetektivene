@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import type { NewsChallenge, NewsArticle } from '../types'
 
-const props = defineProps<{ challenge: NewsChallenge }>()
+const props = defineProps<{ challenge: NewsChallenge; question?: string; tip?: string }>()
 const emit = defineEmits<{
   complete: []
   failed: [reason: string]
@@ -22,7 +22,10 @@ function choose(article: NewsArticle) {
 </script>
 
 <template>
-  <h2 class="question">Hvilken artikkel er ekte?</h2>
+  <div class="task-header">
+    <h2 class="question">{{ question ?? 'Hvilken artikkel er ekte?' }}</h2>
+    <p v-if="tip" class="tip"><span class="tip-label">Tips:</span> {{ tip }}</p>
+  </div>
 
   <div class="articles">
     <article
@@ -46,14 +49,32 @@ function choose(article: NewsArticle) {
 </template>
 
 <style scoped>
-.question {
+.task-header {
   flex-shrink: 0;
   text-align: center;
+  margin: 0 0 1.25rem;
+}
+
+.question {
   color: white;
-  font-size: 2.25rem;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
   font-weight: 800;
-  margin: 0 0 1.5rem 0;
+  margin: 0;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.tip {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.tip-label {
+  font-weight: 700;
+  font-style: normal;
+  color: #FFD700;
 }
 
 .articles {

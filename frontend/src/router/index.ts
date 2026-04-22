@@ -71,6 +71,21 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/classroom/:id/students',
+      name: 'classroom-students',
+      component: () => import('../views/ClassroomStudentsView.vue'),
+    },
+    {
+      path: '/classroom/:id/settings',
+      name: 'classroom-settings',
+      component: () => import('../views/ClassroomSettingsView.vue'),
+    },
+    {
+      path: '/classroom/:id/edit',
+      name: 'edit-classroom',
+      component: () => import('../views/CreateClassroomView.vue')
+    },
+    {
       path: '/notebook',
       name: 'notebook',
       component: () => import('../views/NotebookView.vue'),
@@ -91,6 +106,11 @@ const router = createRouter({
       component: () => import('../views/TaskFinishedView.vue'),
     },
     {
+      path: '/stop-finished',
+      name: 'stop-finished',
+      component: () => import('../views/StopFinishedView.vue'),
+    },
+    {
       path: '/task-failed',
       name: 'task-failed',
       component: () => import('../views/TaskFailedView.vue'),
@@ -99,6 +119,11 @@ const router = createRouter({
       path: '/teacher-notifications',
       name: 'teacher-notifications',
       component: () => import('../views/NotificationView.vue'),
+    },
+    {
+      path: '/achievements',
+      name: 'achievements',
+      component: () => import('../views/AchievementsView.vue'),
     },
   ],
 })

@@ -17,7 +17,7 @@ async function getAllClassrooms(): Promise<ClassroomResponseDTO[]> {
 }
 
 async function getClassroom(id: string): Promise<ClassroomResponseDTO> {
-  const { data } = await apiClient.post<ApiResponse<ClassroomResponseDTO>>(`/classrooms/${id}`)
+  const { data } = await apiClient.get<ApiResponse<ClassroomResponseDTO>>(`/classrooms/${id}`)
   return data.data
 }
 

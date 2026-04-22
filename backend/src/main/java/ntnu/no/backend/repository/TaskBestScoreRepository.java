@@ -15,13 +15,20 @@ import java.util.UUID;
  * {@code task_best_score} is maintained exclusively by the {@code trg_attempt_sync}
  * database trigger.</p>
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.12
  * @since 0.1
  * @see TaskBestScore
  * @see TaskBestScoreId
  */
+
 @Repository
 public interface TaskBestScoreRepository extends JpaRepository<TaskBestScore, TaskBestScoreId> {
   List<TaskBestScore> findByClassroomId(UUID id);
+
+  long countByClassroomIdAndUserIdAndTaskStopLocationAndFirstPassedAtIsNotNull(
+      UUID classroomId,
+      UUID userId,
+      String stopLocation
+  );
 }

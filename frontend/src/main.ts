@@ -5,6 +5,8 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+import { VueQueryPlugin } from '@tanstack/vue-query'
+import '@/lib/GeneratedClient'
 
 async function bootstrap() {
   if (import.meta.env.DEV) {
@@ -18,6 +20,7 @@ async function bootstrap() {
 
   app.use(pinia)
   app.use(router)
+  app.use(VueQueryPlugin)
   app.mount('#app')
 }
 
