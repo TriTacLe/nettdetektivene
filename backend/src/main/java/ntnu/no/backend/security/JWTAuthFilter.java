@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -99,13 +100,17 @@ public class JWTAuthFilter extends OncePerRequestFilter {
 
     String email = claims.getSubject();
     if (email != null && isNotAuthenticated()) {
-      UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-      if (email.equals(userDetails.getUsername()) && userDetails.isEnabled()) {
-        setAuthentication(userDetails, req);
-        String feideId = claims.get("feideId", String.class);
-        if (feideId != null) {
-          req.setAttribute("feideId", feideId);
+      try {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        if (email.equals(userDetails.getUsername()) && userDetails.isEnabled()) {
+          setAuthentication(userDetails, req);
+          String feideId = claims.get("feideId", String.class);
+          if (feideId != null) {
+            req.setAttribute("feideId", feideId);
+          }
         }
+      } catch (UsernameNotFoundException e) {
+        logger.debug("User from JWT not found: {}", email);
       }
     }
   }
