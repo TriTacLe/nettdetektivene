@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
 import { fetchNewsChallenge } from '@/services/ChallengeService'
+import { STOPS } from '@/data/StopData'
 import type { NewsChallenge } from '../types'
 
 const route = useRoute()
 const router = useRouter()
 
 const taskId = Number(route.params.taskId)
+const taskHint = computed(() => STOPS['nyhetskvartalet']?.taskHints?.[taskId])
 const challenge = ref<NewsChallenge | null>(null)
 const isLoading = ref(true)
 const error = ref('')
@@ -27,13 +29,27 @@ onMounted(async () => {
 function onComplete() {
   router.push({ name: 'task-finished', query: { stop: 'nyhetskvartalet', taskId: String(taskId) } })
 }
+
+function onFailed(reason: string) {
+  router.push({
+    name: 'task-failed',
+    query: { stop: 'nyhetskvartalet', taskId: String(taskId), reason, returnTo: 'nyhetskvartalet-task' },
+  })
+}
 </script>
 
 <template>
   <SceneComponent title="Nyhetskvartalet" previous="/stops/nyhetskvartalet" background="/NyhetskvartaletBackground.png">
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
-    <NyhetskvartaletComponent v-else-if="challenge" :challenge="challenge" @complete="onComplete" />
+    <NyhetskvartaletComponent
+      v-else-if="challenge"
+      :challenge="challenge"
+      :question="taskHint?.description"
+      :tip="taskHint?.hint"
+      @complete="onComplete"
+      @failed="onFailed"
+    />
   </SceneComponent>
 </template>
 

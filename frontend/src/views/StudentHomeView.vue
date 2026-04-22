@@ -59,9 +59,9 @@ function goTo(route: string) {
             :rotation="5"
             pin-color="#f59f00"
             width="14rem"
-            @click="goTo('/medals')"
+            @click="goTo('/achievements')"
           >
-            <p class="note-title">Medaljer</p>
+            <p class="note-title">Prestasjoner</p>
           </BoardNote>
         </div>
 

@@ -39,5 +39,11 @@ export const useStopStore = defineStore('stop', () => {
     return isComplete(stopId, taskId - 1)
   }
 
-  return { tasks, loading, completedTasks, loadTasks, markComplete, isComplete, isUnlocked }
+  function isAllComplete(stopId: string): boolean {
+    const stopTasks = tasks.value[stopId]
+    if (!stopTasks || stopTasks.length === 0) return false
+    return stopTasks.every(t => isComplete(stopId, t.taskId))
+  }
+
+  return { tasks, loading, completedTasks, loadTasks, markComplete, isComplete, isUnlocked, isAllComplete }
 })

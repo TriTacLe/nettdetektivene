@@ -1,5 +1,7 @@
 package ntnu.no.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.task.LeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
@@ -16,7 +18,7 @@ import java.util.UUID;
 
 /**
  * REST controller for leaderboard endpoints.
- * All data is read-only — scores are maintained by the {@code trg_attempt_sync} trigger.
+ * All data is read-only; scores are maintained by the {@code trg_attempt_sync} trigger.
  *
  * @author tri
  * @version 0.1
@@ -25,6 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/classrooms")
 @RequiredArgsConstructor
+@Tag(name = "Leaderboard", description = "Endpoints for classroom leaderboards and student scores")
 public class LeaderboardController {
   private final LeaderboardService leaderboardService;
 
@@ -35,6 +38,7 @@ public class LeaderboardController {
    * @return 200 with ranked list of {@link LeaderboardEntryResponseDTO}
    */
   @GetMapping("/{classroomId}/leaderboard")
+  @Operation(summary = "Get classroom leaderboard ranked by total score")
   public ResponseEntity<ApiResponse<List<LeaderboardEntryResponseDTO>>> getClassroomLeaderboard(@PathVariable UUID classroomId){
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomLeaderboard(classroomId)));
   }
@@ -47,6 +51,7 @@ public class LeaderboardController {
    * @return 200 with list of {@link TaskBestScoreResponseDTO}
    */
   @GetMapping("/{classroomId}/leaderboard/{userId}")
+  @Operation(summary = "Get a student's best scores per task within a classroom")
   public ResponseEntity<ApiResponse<List<TaskBestScoreResponseDTO>>> getStudentScore(@PathVariable UUID classroomId, @PathVariable UUID userId){
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getStudentScore(classroomId, userId)));
   }

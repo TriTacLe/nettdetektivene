@@ -33,7 +33,7 @@ public class LeaderboardService {
 
   /**
    * Returns all students in a classroom ranked by their total score,
-   * aggregated across all tasks. Rank 1 is the highest score.
+   * aggregated across all tasks. Rank 1 (rangering) is the highest score.
    *
    * @param classroomId the classroom to fetch the leaderboard for
    * @return ranked list of {@link LeaderboardEntryResponseDTO}, sorted descending by total score

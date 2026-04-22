@@ -53,8 +53,12 @@ public class UserMapper {
    */
   public static User toEntity(RegisterRequestDTO dto) {
     if (dto == null) return null;
+    String displayName = dto.getDisplayName();
+    if (displayName == null || displayName.isBlank()) {
+      displayName = dto.getEmail().split("@")[0];
+    }
     return User.builder()
-      .displayName(dto.getDisplayName())
+      .displayName(displayName)
       .email(dto.getEmail())
       .build();
   }

@@ -29,6 +29,11 @@ function goToTask(taskId: number) {
     :background="stop.background"
   >
     <div class="task-list">
+      <div class="stop-header">
+        <h2 class="stop-title">{{ stop.name }}</h2>
+        <p class="stop-intro">{{ stop.intro }}</p>
+      </div>
+
       <div v-if="isLoading" class="loading">Laster oppgaver...</div>
 
       <template v-else>
@@ -44,7 +49,12 @@ function goToTask(taskId: number) {
           @click="goToTask(task.taskId)"
         >
           <span class="task-number">{{ task.taskId }}</span>
-          <span class="task-title">{{ task.title }}</span>
+          <span class="task-body">
+            <span class="task-title">{{ stop.taskHints?.[task.taskId]?.description ?? task.title }}</span>
+            <span v-if="stop.taskHints?.[task.taskId]?.hint && !stopStore.isComplete(stopId, task.taskId)" class="task-hint">
+              {{ stop.taskHints[task.taskId].hint }}
+            </span>
+          </span>
           <span class="task-status">
             <template v-if="stopStore.isComplete(stopId, task.taskId)">&#10003;</template>
             <template v-else-if="!stopStore.isUnlocked(stopId, task.taskId)">&#128274;</template>
@@ -69,6 +79,31 @@ function goToTask(taskId: number) {
   justify-content: center;
   gap: 1.25rem;
   padding: 2rem;
+}
+
+.stop-header {
+  max-width: 520px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stop-title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  margin: 0;
+}
+
+.stop-intro {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  line-height: 1.5;
+  margin: 0;
 }
 
 .loading {
@@ -131,13 +166,27 @@ function goToTask(taskId: number) {
   flex-shrink: 0;
 }
 
-.task-title {
+.task-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   text-align: left;
+}
+
+.task-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: white;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.task-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
+  line-height: 1.3;
 }
 
 .task-status {

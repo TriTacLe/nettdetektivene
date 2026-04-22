@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Verifies HTTP status codes and JSON structure for authentication endpoints.
  * Security filters are disabled because all auth endpoints are public.
  *
- * @author tri
+ * @author aninesst
  * @version 0.1
  * @since 0.1
  */
