@@ -1,8 +1,8 @@
 package ntnu.no.backend.controller;
 
+import ntnu.no.backend.dto.notification.NotificationResponseDTO;
 import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.NotificationService;
-import ntnu.no.backend.util.NotificationTestFactory;
 import ntnu.no.backend.util.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Controller tests for {@link NotificationController}.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @WebMvcTest(NotificationController.class)
@@ -51,14 +52,15 @@ class NotificationControllerTest {
   @WithMockUser
   void getMyNotifications_returnsOk() throws Exception {
     UUID id = UUID.randomUUID();
-    UUID recipientId = UUID.randomUUID();
-    when(notificationService.getNotificationsForUser(any())).thenReturn(
-        List.of(NotificationTestFactory.responseDTO(id, recipientId)));
+
+    when(notificationService.getNotificationsForUser(any()))
+        .thenReturn(List.of(notificationResponseDTO(id, false)));
 
     mockMvc.perform(get("/api/v1/notifications"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data[0].msg").value("Din eleveksempel er godkjent"));
+        .andExpect(jsonPath("$.data[0].msg").value("Din eleveksempel er godkjent"))
+        .andExpect(jsonPath("$.data[0].isRead").value(false));
   }
 
   @Test
@@ -71,19 +73,35 @@ class NotificationControllerTest {
   @WithMockUser
   void markAsRead_returnsOk() throws Exception {
     UUID id = UUID.randomUUID();
-    UUID recipientId = UUID.randomUUID();
-    when(notificationService.markAsRead(any(), any())).thenReturn(
-        NotificationTestFactory.responseDTO(id, recipientId));
+
+    when(notificationService.markAsRead(any(), any()))
+        .thenReturn(notificationResponseDTO(id, true));
 
     mockMvc.perform(patch("/api/v1/notifications/" + id + "/read").with(csrf()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.msg").value("Din eleveksempel er godkjent"))
+        .andExpect(jsonPath("$.data.isRead").value(true));
   }
 
   @Test
   void markAsRead_unauthenticated_returnsUnauthorized() throws Exception {
     UUID id = UUID.randomUUID();
+
     mockMvc.perform(patch("/api/v1/notifications/" + id + "/read").with(csrf()))
         .andExpect(status().isUnauthorized());
+  }
+
+  private NotificationResponseDTO notificationResponseDTO(UUID id, boolean read) {
+    return new NotificationResponseDTO(
+        id,
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        "Din eleveksempel er godkjent",
+        null,
+        null,
+        read,
+        LocalDateTime.of(2026, 4, 22, 12, 0)
+    );
   }
 }

@@ -1,37 +1,42 @@
 package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import ntnu.no.backend.controller.TaskController;
+import ntnu.no.backend.dto.task.TaskAttemptRequestDTO;
 import ntnu.no.backend.dto.task.TaskAttemptResponseDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskAttempt;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.TaskAttemptRepository;
-import ntnu.no.backend.util.TaskAttemptTestFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link TaskAttemptService}.
+ * Controller tests for {@link TaskAttemptService}.
  *
- * @author tri
- * @version 0.1
+ * @author aninesst
+ * @version 0.2
  * @since 0.1
  */
+
 @ExtendWith(MockitoExtension.class)
 class TaskAttemptServiceTest {
 
@@ -44,65 +49,238 @@ class TaskAttemptServiceTest {
   @InjectMocks
   private TaskAttemptService taskAttemptService;
 
+  private UUID userId;
+  private UUID taskId;
+  private UUID classroomId;
+  private LocalDateTime attemptedAt;
+
+  @BeforeEach
+  void setUp() {
+    userId = UUID.randomUUID();
+    taskId = UUID.randomUUID();
+    classroomId = UUID.randomUUID();
+    attemptedAt = LocalDateTime.of(2026, 4, 22, 10, 30);
+  }
+
   @Test
-  void submitAttempt_returnsDTO_afterStoredProcedureCall() {
-    User user = TaskAttemptTestFactory.user();
-    Task task = TaskAttemptTestFactory.task();
-    Classroom classroom = TaskAttemptTestFactory.classroom();
-    UUID taskId = UUID.randomUUID();
-    UUID classroomId = UUID.randomUUID();
-    TaskAttempt attempt = TaskAttemptTestFactory.attempt(user, task, classroom);
+  void submitAttempt_callsStoredProcedure_andReturnsDto_whenPassed() {
+    User user = userWithId(userId);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 85);
 
-    when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-    when(taskAttemptRepository.findById(any(UUID.class))).thenReturn(Optional.of(attempt));
+    TaskAttempt persistedAttempt = taskAttempt(
+        null, userId, taskId, classroomId, 85, true, attemptedAt
+    );
 
-    TaskAttemptResponseDTO result = taskAttemptService.submitAttempt(
-        user, TaskAttemptTestFactory.requestDTO(taskId, classroomId));
+    when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
+        .thenReturn(Optional.of(persistedAttempt));
 
+    TaskAttemptResponseDTO result = taskAttemptService.submitAttempt(user, dto);
+
+    ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> attemptIdCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> taskIdCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> classroomIdCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<Integer> scoreCaptor = ArgumentCaptor.forClass(Integer.class);
+    ArgumentCaptor<Integer> passedCaptor = ArgumentCaptor.forClass(Integer.class);
+
+    verify(jdbcTemplate).update(
+        sqlCaptor.capture(),
+        attemptIdCaptor.capture(),
+        userIdCaptor.capture(),
+        taskIdCaptor.capture(),
+        classroomIdCaptor.capture(),
+        scoreCaptor.capture(),
+        passedCaptor.capture()
+    );
+
+    assertThat(sqlCaptor.getValue()).isEqualTo("CALL sp_submit_attempt(?, ?, ?, ?, ?, ?)");
+    assertThat(UUID.fromString(attemptIdCaptor.getValue())).isNotNull();
+    assertThat(userIdCaptor.getValue()).isEqualTo(userId.toString());
+    assertThat(taskIdCaptor.getValue()).isEqualTo(taskId.toString());
+    assertThat(classroomIdCaptor.getValue()).isEqualTo(classroomId.toString());
+    assertThat(scoreCaptor.getValue()).isEqualTo(85);
+    assertThat(passedCaptor.getValue()).isEqualTo(1);
+
+    assertThat(result.id()).isEqualTo(persistedAttempt.getId());
+    assertThat(result.userId()).isEqualTo(userId);
+    assertThat(result.taskId()).isEqualTo(taskId);
+    assertThat(result.classroomId()).isEqualTo(classroomId);
     assertThat(result.score()).isEqualTo(85);
     assertThat(result.passed()).isTrue();
+    assertThat(result.attemptedAt()).isEqualTo(attemptedAt);
   }
 
   @Test
-  void submitAttempt_throwsEntityNotFoundException_whenAttemptNotFoundAfterInsert() {
-    User user = TaskAttemptTestFactory.user();
-    UUID taskId = UUID.randomUUID();
-    UUID classroomId = UUID.randomUUID();
+  void submitAttempt_callsStoredProcedure_withPassedZero_whenScoreBelow80() {
+    User user = userWithId(userId);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 79);
 
-    when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-    when(taskAttemptRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
+    TaskAttempt persistedAttempt = taskAttempt(
+        null, userId, taskId, classroomId, 79, false, attemptedAt
+    );
 
-    assertThatThrownBy(() -> taskAttemptService.submitAttempt(
-        user, TaskAttemptTestFactory.requestDTO(taskId, classroomId)))
-        .isInstanceOf(EntityNotFoundException.class);
+    when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
+        .thenReturn(Optional.of(persistedAttempt));
+
+    TaskAttemptResponseDTO result = taskAttemptService.submitAttempt(user, dto);
+
+    ArgumentCaptor<Integer> passedCaptor = ArgumentCaptor.forClass(Integer.class);
+
+    verify(jdbcTemplate).update(
+        eq("CALL sp_submit_attempt(?, ?, ?, ?, ?, ?)"),
+        org.mockito.ArgumentMatchers.anyString(),
+        eq(userId.toString()),
+        eq(taskId.toString()),
+        eq(classroomId.toString()),
+        eq(79),
+        passedCaptor.capture()
+    );
+
+    assertThat(passedCaptor.getValue()).isEqualTo(0);
+    assertThat(result.passed()).isFalse();
   }
 
   @Test
-  void getAttemptsByUserAndTask_returnsMappedDTOs() {
-    UUID userId = UUID.randomUUID();
-    UUID taskId = UUID.randomUUID();
-    User user = TaskAttemptTestFactory.user();
-    TaskAttempt attempt = TaskAttemptTestFactory.attempt(user, TaskAttemptTestFactory.task(), TaskAttemptTestFactory.classroom());
+  void submitAttempt_throwsEntityNotFoundException_whenAttemptCannotBeReadBack() {
+    User user = userWithId(userId);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 80);
 
-    when(taskAttemptRepository.findByUserIdAndTaskId(userId, taskId)).thenReturn(List.of(attempt));
+    when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
+        .thenReturn(Optional.empty());
 
-    List<TaskAttemptResponseDTO> result = taskAttemptService.getAttemptsByUserAndTask(userId, taskId);
+    assertThatThrownBy(() -> taskAttemptService.submitAttempt(user, dto))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessageContaining("Attempt not found after insert");
 
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst().score()).isEqualTo(85);
+    verify(jdbcTemplate).update(
+        eq("CALL sp_submit_attempt(?, ?, ?, ?, ?, ?)"),
+        org.mockito.ArgumentMatchers.anyString(),
+        eq(userId.toString()),
+        eq(taskId.toString()),
+        eq(classroomId.toString()),
+        eq(80),
+        eq(1)
+    );
   }
 
   @Test
-  void getAttemptsByClassroom_returnsMappedDTOs() {
-    UUID classroomId = UUID.randomUUID();
-    User user = TaskAttemptTestFactory.user();
-    TaskAttempt attempt = TaskAttemptTestFactory.attempt(user, TaskAttemptTestFactory.task(), TaskAttemptTestFactory.classroom());
+  void getAttemptsByUserAndTask_returnsMappedDtos() {
+    TaskAttempt attempt1 = taskAttempt(
+        UUID.randomUUID(), userId, taskId, classroomId, 65, false,
+        LocalDateTime.of(2026, 4, 20, 9, 0)
+    );
+    TaskAttempt attempt2 = taskAttempt(
+        UUID.randomUUID(), userId, taskId, classroomId, 90, true,
+        LocalDateTime.of(2026, 4, 21, 14, 15)
+    );
 
-    when(taskAttemptRepository.findByClassroomId(classroomId)).thenReturn(List.of(attempt));
+    when(taskAttemptRepository.findByUserIdAndTaskId(userId, taskId))
+        .thenReturn(List.of(attempt1, attempt2));
 
-    List<TaskAttemptResponseDTO> result = taskAttemptService.getAttemptsByClassroom(classroomId);
+    List<TaskAttemptResponseDTO> result =
+        taskAttemptService.getAttemptsByUserAndTask(userId, taskId);
 
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst().passed()).isTrue();
+    assertThat(result).hasSize(2);
+
+    assertThat(result.get(0).id()).isEqualTo(attempt1.getId());
+    assertThat(result.get(0).userId()).isEqualTo(userId);
+    assertThat(result.get(0).taskId()).isEqualTo(taskId);
+    assertThat(result.get(0).classroomId()).isEqualTo(classroomId);
+    assertThat(result.get(0).score()).isEqualTo(65);
+    assertThat(result.get(0).passed()).isFalse();
+
+    assertThat(result.get(1).id()).isEqualTo(attempt2.getId());
+    assertThat(result.get(1).score()).isEqualTo(90);
+    assertThat(result.get(1).passed()).isTrue();
+  }
+
+  @Test
+  void getAttemptsByClassroom_returnsMappedDtos() {
+    UUID otherUserId = UUID.randomUUID();
+    UUID otherTaskId = UUID.randomUUID();
+
+    TaskAttempt attempt1 = taskAttempt(
+        UUID.randomUUID(), userId, taskId, classroomId, 88, true,
+        LocalDateTime.of(2026, 4, 18, 8, 0)
+    );
+    TaskAttempt attempt2 = taskAttempt(
+        UUID.randomUUID(), otherUserId, otherTaskId, classroomId, 40, false,
+        LocalDateTime.of(2026, 4, 18, 8, 30)
+    );
+
+    when(taskAttemptRepository.findByClassroomId(classroomId))
+        .thenReturn(List.of(attempt1, attempt2));
+
+    List<TaskAttemptResponseDTO> result =
+        taskAttemptService.getAttemptsByClassroom(classroomId);
+
+    assertThat(result).hasSize(2);
+
+    assertThat(result.get(0).classroomId()).isEqualTo(classroomId);
+    assertThat(result.get(0).userId()).isEqualTo(userId);
+    assertThat(result.get(0).taskId()).isEqualTo(taskId);
+    assertThat(result.get(0).score()).isEqualTo(88);
+    assertThat(result.get(0).passed()).isTrue();
+
+    assertThat(result.get(1).classroomId()).isEqualTo(classroomId);
+    assertThat(result.get(1).userId()).isEqualTo(otherUserId);
+    assertThat(result.get(1).taskId()).isEqualTo(otherTaskId);
+    assertThat(result.get(1).score()).isEqualTo(40);
+    assertThat(result.get(1).passed()).isFalse();
+  }
+
+  private User userWithId(UUID id) {
+    User user = new User();
+    setIdReflectively(user, id);
+    return user;
+  }
+
+  private TaskAttempt taskAttempt(
+      UUID attemptId,
+      UUID userId,
+      UUID taskId,
+      UUID classroomId,
+      int score,
+      boolean passed,
+      LocalDateTime attemptedAt
+  ) {
+    User user = new User();
+    setIdReflectively(user, userId);
+
+    Task task = new Task();
+    setIdReflectively(task, taskId);
+
+    Classroom classroom = new Classroom();
+    setIdReflectively(classroom, classroomId);
+
+    TaskAttempt attempt = new TaskAttempt();
+    if (attemptId != null) {
+      setIdReflectively(attempt, attemptId);
+    }
+    attempt.setUser(user);
+    attempt.setTask(task);
+    attempt.setClassroom(classroom);
+    attempt.setScore(score);
+    attempt.setPassed(passed);
+    attempt.setAttemptedAt(attemptedAt);
+    return attempt;
+  }
+
+  private void setIdReflectively(Object target, UUID id) {
+    Class<?> type = target.getClass();
+    while (type != null) {
+      try {
+        var field = type.getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(target, id);
+        return;
+      } catch (NoSuchFieldException ignored) {
+        type = type.getSuperclass();
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    throw new IllegalArgumentException("Could not find id field on " + target.getClass());
   }
 }
