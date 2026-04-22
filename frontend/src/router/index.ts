@@ -47,6 +47,11 @@ const router = createRouter({
       component: () => import('../views/JoinClassroomView.vue'),
     },
     {
+      path: '/set-display-name',
+      name: 'set-display-name',
+      component: () => import('../views/SetDisplayNameView.vue'),
+    },
+    {
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
