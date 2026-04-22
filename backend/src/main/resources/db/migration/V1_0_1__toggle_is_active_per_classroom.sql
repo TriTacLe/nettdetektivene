@@ -1,1 +1,1 @@
-ALTER TABLE classroom_task ADD COLUMN is_active TINYINT(1);
+ALTER TABLE classroom_task ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1;
