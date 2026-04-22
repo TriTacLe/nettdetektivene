@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ClassroomService from '@/services/ClassroomService.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
-import type { ClassroomResponseDTO } from '@/types'
+import { useQuery } from '@tanstack/vue-query'
+import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const route = useRoute()
 const router = useRouter()
 const classroomId = route.params.id as string
 
-const classroomTitle = ref('')
 const showJoinCodeModal = ref(false)
-const joinCode = ref('')
 
-onMounted(async () => {
-  const classroom = await ClassroomService.getClassroom(classroomId)
-  classroomTitle.value = classroom.title
-  joinCode.value = classroom.joinCode
-})
+const { data } = useQuery(getClassroomOptions({ path: { id: classroomId } }))
+const classroom = computed(() => data.value?.data ?? null)
 
 const menuItems = [
   {
@@ -64,7 +59,6 @@ const menuItems = [
 
 function handleMenuItem(item: (typeof menuItems)[0]) {
   if (!item.route) return
-
   if (item.route === 'join-code') {
     showJoinCodeModal.value = true
     return
@@ -75,7 +69,7 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 
 <template>
   <SceneComponent
-    :title="classroomTitle || 'Klasserom'"
+    :title="classroom?.title || 'Klasserom'"
     previous="/classroom-overview"
     background="/StartBackground.jpg"
   >
@@ -105,7 +99,7 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
       <div class="bg-white rounded-2xl p-8 text-center shadow-xl max-w-xs w-full mx-4">
         <h2 class="text-xl font-bold mb-2">Klasseromskode</h2>
         <p class="text-5xl font-mono font-black tracking-widest text-indigo-600 my-6">
-          {{ joinCode }}
+          {{ classroom?.joinCode }}
         </p>
         <button
           class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl"
