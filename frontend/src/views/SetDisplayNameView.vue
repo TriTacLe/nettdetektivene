@@ -21,7 +21,9 @@ function handleSubmit() {
   fieldError.value = ''
   if (!displayName.value.trim()) {
     fieldError.value = 'Brukernavn kreves'
+    return
   }
+  update.mutate({ body: { displayName: displayName.value.trim() } })
 }
 </script>
 
