@@ -25,8 +25,8 @@ import static org.mockito.Mockito.when;
  * Unit tests for {@link LeaderboardService}.
  * Verifies ranking logic and filtering without hitting the database.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @ExtendWith(MockitoExtension.class)
@@ -137,5 +137,25 @@ class LeaderboardServiceTest {
     List<TaskBestScoreResponseDTO> result = leaderboardService.getStudentScore(classroomId, unknownUserId);
 
     assertThat(result).isEmpty();
+  }
+
+  /**
+   * Verifies that passed task count is delegated correctly to the repository.
+   */
+  @Test
+  void countPassedTasksByStopLocation_returnsCount() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    String stopLocation = "STOP_1";
+
+    when(taskBestScoreRepository
+        .countByClassroomIdAndUserIdAndTaskStopLocationAndFirstPassedAtIsNotNull(
+            classroomId, userId, stopLocation))
+        .thenReturn(7L);
+
+    long result = leaderboardService.countPassedTasksByStopLocation(
+        classroomId, userId, stopLocation);
+
+    assertThat(result).isEqualTo(7L);
   }
 }
