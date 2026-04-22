@@ -38,7 +38,12 @@ async function handleLogin(): Promise<void> {
   isLoading.value = true
   try {
     await authStore.feideLogin({ email: email.value, affiliation: "student", password: password.value})
-    router.push({ name: 'join-classroom' })
+    const emailPrefix = authStore.user?.email?.split('@')[0]
+    if (authStore.user?.displayName === emailPrefix) {
+      router.push({ name: 'set-display-name' })
+    } else {
+      router.push({ name: 'join-classroom' })
+    }
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
   } finally {
