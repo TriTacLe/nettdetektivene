@@ -24,7 +24,6 @@ export const useAuthStore = defineStore(
     })
 
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
-      // const response = await AuthService.login(credentials);
       const response = await AuthService.feideLogin(credentials)
       token.value = response.token
       refreshToken.value = response.refreshToken

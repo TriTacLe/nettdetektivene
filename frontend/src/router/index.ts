@@ -71,6 +71,21 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/classroom/:id/students',
+      name: 'classroom-students',
+      component: () => import('../views/ClassroomStudentsView.vue'),
+    },
+    {
+      path: '/classroom/:id/settings',
+      name: 'classroom-settings',
+      component: () => import('../views/ClassroomSettingsView.vue'),
+    },
+    {
+      path: '/classroom/:id/edit',
+      name: 'edit-classroom',
+      component: () => import('../views/CreateClassroomView.vue')
+    },
+    {
       path: '/notebook',
       name: 'notebook',
       component: () => import('../views/NotebookView.vue'),

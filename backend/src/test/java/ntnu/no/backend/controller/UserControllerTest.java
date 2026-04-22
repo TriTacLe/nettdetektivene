@@ -37,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Controller tests for {@link UserController}.
  * Verifies HTTP status codes and JSON structure for user management endpoints.
  *
+ * @author tri
  * @author aninesst
  * @version 0.1
  * @since 0.1
