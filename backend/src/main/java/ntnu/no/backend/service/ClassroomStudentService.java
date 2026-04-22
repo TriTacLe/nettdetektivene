@@ -1,7 +1,9 @@
 package ntnu.no.backend.service;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
 import ntnu.no.backend.mapper.ClassroomStudentMapper;
 import ntnu.no.backend.model.Classroom;
@@ -20,7 +22,6 @@ import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,6 +43,8 @@ public class ClassroomStudentService {
   private final ClassroomRepository classroomRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
   private final UserProfileRepository userProfileRepository;
+  private final JdbcTemplate jdbcTemplate;
+  private final EntityManager entityManager;
 
   /**
    * Joins a student to a classroom via join code. The student's display name
@@ -186,7 +189,10 @@ public class ClassroomStudentService {
   }
 
   /**
-   * Approves a student's display name change request.
+   * Approves a student's display name change request by calling
+   * {@code sp_review_display_name_change}. After the SP updates the classroom
+   * membership, the student's user profile display name is synced in Java
+   * since the SP does not update {@code user_profile}.
    *
    * @param classroomId the classroom ID
    * @param userId the student's user ID
@@ -194,30 +200,26 @@ public class ClassroomStudentService {
    * @return the updated membership as a DTO
    * @throws AccessDeniedException if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
-   * @throws IllegalStateException if no name change is pending
    */
   @Transactional
   public ClassroomStudentResponseDTO approveNameChange(UUID classroomId, UUID userId, User instructor) {
     verifyInstructor(classroomId, instructor);
-    ClassroomStudent student = findMembership(classroomId, userId);
-    if (student.getNameChangeStatus() != NameChangeStatus.PENDING) {
-      throw new IllegalStateException("No pending name change request");
-    }
-    String newName = student.getRequestedDisplayName();
-    student.setDisplayName(newName);
-    student.setNameChangeStatus(NameChangeStatus.APPROVED);
-    student.setNameChangeReviewedBy(instructor);
-    student.setNameChangeReviewedAt(LocalDateTime.now());
+    jdbcTemplate.update("CALL sp_review_display_name_change(?, ?, ?)",
+        instructor.getId().toString(), userId.toString(), "APPROVED");
+    entityManager.flush();
+    entityManager.clear();
 
+    ClassroomStudent student = findMembership(classroomId, userId);
     UserProfile profile = userProfileRepository.findByUser(student.getUser())
-      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + student.getUser().getId()));
-    profile.setDisplayName(newName);
+      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + userId));
+    profile.setDisplayName(student.getDisplayName());
 
     return ClassroomStudentMapper.toDTO(student);
   }
 
   /**
-   * Rejects a student's display name change request.
+   * Rejects a student's display name change request by calling
+   * {@code sp_review_display_name_change}.
    *
    * @param classroomId the classroom ID
    * @param userId the student's user ID
@@ -225,18 +227,15 @@ public class ClassroomStudentService {
    * @return the updated membership as a DTO
    * @throws AccessDeniedException if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
-   * @throws IllegalStateException if no name change is pending
    */
   @Transactional
   public ClassroomStudentResponseDTO rejectNameChange(UUID classroomId, UUID userId, User instructor) {
     verifyInstructor(classroomId, instructor);
+    jdbcTemplate.update("CALL sp_review_display_name_change(?, ?, ?)",
+        instructor.getId().toString(), userId.toString(), "REJECTED");
+    entityManager.flush();
+    entityManager.clear();
     ClassroomStudent student = findMembership(classroomId, userId);
-    if (student.getNameChangeStatus() != NameChangeStatus.PENDING) {
-      throw new IllegalStateException("No pending name change request");
-    }
-    student.setNameChangeStatus(NameChangeStatus.REJECTED);
-    student.setNameChangeReviewedBy(instructor);
-    student.setNameChangeReviewedAt(LocalDateTime.now());
     return ClassroomStudentMapper.toDTO(student);
   }
 
