@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useMutation } from '@tanstack/vue-query'
-import { createClassroomMutation } from '@/generated-client/@tanstack/vue-query.gen'
+import { createClassroomMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
 

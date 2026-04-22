@@ -13,7 +13,7 @@ import {
   getAllClassroomsOptions,
   getAllClassroomsQueryKey,
   deleteClassroomMutation,
-} from '@/generated-client/@tanstack/vue-query.gen'
+} from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
