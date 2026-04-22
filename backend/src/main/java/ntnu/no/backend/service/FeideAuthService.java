@@ -72,6 +72,15 @@ public class FeideAuthService {
         .orElseThrow(() -> new EntityNotFoundException("No FEIDE identity found for id: " + feideId));
       return issueTokens(identity.getUser(), identity.getProviderUserId());
     }
+    if (userRepository.existsByEmail(email)) {
+      authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, dto.getPassword()));
+      User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new EntityNotFoundException("No user found with email: " + email));
+      AppUserIdentity identity = identityRepository
+        .findByProviderNameAndUser(PROVIDER_NAME, user)
+        .orElseThrow(() -> new EntityNotFoundException("No FEIDE identity found for user: " + email));
+      return issueTokens(identity.getUser(), identity.getProviderUserId());
+    }
     return firstLogin(dto, email);
   }
 
