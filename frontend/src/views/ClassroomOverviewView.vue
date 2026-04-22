@@ -78,21 +78,13 @@ function openClassroom(id: string) {
     previous="teacher-home"
   >
     <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
-      <div class="flex flex-col gap 3 w-full max-w-md mx-auto">
+      <div class="flex flex-col gap-3 w-full max-w-md mx-auto">
         <div
           v-if="error"
           class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
         >
           {{ error }}
         </div>
-      </div>
-
-      <div
-        v-if="error"
-        class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded mb-4"
-      >
-        {{ error }}
-      </div>
 
         <button
           @click="router.push({ name: 'create-classroom' })"
