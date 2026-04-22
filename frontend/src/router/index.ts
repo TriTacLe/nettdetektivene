@@ -95,6 +95,11 @@ const router = createRouter({
       name: 'task-failed',
       component: () => import('../views/TaskFailedView.vue'),
     },
+    {
+      path: '/teacher-notifications',
+      name: 'teacher-notifications',
+      component: () => import('../views/NotificationView.vue'),
+    },
   ],
 })
 export default router
