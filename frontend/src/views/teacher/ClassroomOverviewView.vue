@@ -13,7 +13,7 @@ import {
   getAllClassroomsOptions,
   getAllClassroomsQueryKey,
   deleteClassroomMutation,
-} from '@/generated-client/@tanstack/vue-query.gen'
+} from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -120,14 +120,14 @@ function openClassroom(id: string) {
           </div>
           <div class="flex gap-3">
             <button
-              @click="openClassroom(classroom.id)"
+              @click="classroom.id && openClassroom(classroom.id)"
               class="text-blue-700 hover:text-blue-500 text-xl"
               title="Åpne"
             >
               Åpne klasserom
             </button>
             <button
-              @click="deleteClassroom(classroom.id)"
+              @click="classroom.id && deleteClassroom(classroom.id)"
               class="text-red-700 hover:text-red-500 text-xl"
               title="Slett"
             >

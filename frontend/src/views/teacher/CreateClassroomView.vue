@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import ClassroomService from '@/services/ClassroomService.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
+import { useMutation } from '@tanstack/vue-query'
+import { createClassroomMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
 
@@ -11,7 +12,6 @@ const classDesc = ref('')
 const institutionId = ref('')
 const isGameEnabled = ref(false)
 const serverError = ref<string | null>(null)
-const loading = ref(false)
 
 interface FieldErrors {
   title?: string
@@ -26,24 +26,29 @@ function validate(): boolean {
   return Object.keys(fieldErrors.value).length === 0
 }
 
-async function submit() {
+const createMutation = useMutation({
+  ...createClassroomMutation(),
+  onSuccess: (res) => {
+    router.push({ name: 'classroom-detail', params: { id: res.data?.id } })
+  },
+  onError: (e: any) => {
+    serverError.value = e.message ?? 'Kunne ikke opprette klasserom'
+  },
+})
+
+function submit() {
   serverError.value = null
   if (!validate()) return
-  loading.value = true
-  try {
-    const classroom = await ClassroomService.createClassroom({
+  createMutation.mutate({
+    body: {
       title: title.value.trim(),
       classDesc: classDesc.value.trim() || undefined,
       institutionId: institutionId.value.trim(),
-      isGameEnabled: isGameEnabled.value,
-    })
-    router.push({ name: 'classroom-detail', params: { id: classroom.id } })
-  } catch (e: any) {
-    serverError.value = e.message ?? 'Kunne ikke opprette klasserom'
-  } finally {
-    loading.value = false
-  }
+      gameEnabled: isGameEnabled.value,
+    },
+  })
 }
+
 </script>
 
 <template>
@@ -112,10 +117,10 @@ async function submit() {
 
           <button
             type="submit"
-            :disabled="loading"
+            :disabled="createMutation.isPending.value"
             class="w-full bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition mt-2"
           >
-            {{ loading ? 'Oppretter...' : 'Opprett klasserom' }}
+            {{ createMutation.isPending.value ? 'Oppretter...' : 'Opprett klasserom' }}
           </button>
         </form>
       </div>

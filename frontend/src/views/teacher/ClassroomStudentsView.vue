@@ -1,48 +1,37 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import ClassroomService from '@/services/ClassroomService.ts'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
-import type { ClassroomStudentResponseDTO } from '@/types'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { getStudentsOptions, getStudentsQueryKey, approveMutation, removeMutation} from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 
 const route = useRoute()
-const router = useRouter()
-
 const classroomId = route.params.id as string
-const students = ref<ClassroomStudentResponseDTO[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
+const queryClient = useQueryClient()
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    students.value = await ClassroomService.getStudents(classroomId)
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Kunne ikke hente elever'
-  } finally {
-    loading.value = false
-  }
+const { data, isLoading, error } = useQuery(getStudentsOptions({ path: { classroomId } }))
+const students = computed(() => data.value?.data ?? [])
+
+const approve = useMutation({
+  ...approveMutation(),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: getStudentsQueryKey({ path: { classroomId } })}),
 })
 
-async function approveStudent(userId: string) {
-  try {
-    const updated = await ClassroomService.approveStudent(classroomId, userId)
-    const idx = students.value.findIndex((s) => s.userId === userId)
-    if (idx !== -1) students.value[idx] = updated
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Kunne ikke godkjenne elev'
-  }
+const remove = useMutation({
+  ...removeMutation(),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: getStudentsQueryKey({ path: { classroomId } })}),
+})
+
+function approveStudent(userId: string) {
+  approve.mutate({ path: { classroomId, userId }})
 }
 
-async function removeStudent(userId: string) {
-  if (!confirm('Er du sikker på at du vil fjerne denne eleven?')) return
-  try {
-    await ClassroomService.removeStudent(classroomId, userId)
-    students.value = students.value.filter((s) => s.userId !== userId)
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Kunne ikke fjerne elev'
-  }
+function removeStudent(userId: string) {
+  if(!confirm('Er du sikker på at du vil fjerne denne eleven?')) return
+  remove.mutate({ path: { classroomId, userId } })
 }
 </script>
 
@@ -58,7 +47,7 @@ async function removeStudent(userId: string) {
           {{ error }}
         </div>
 
-        <div v-if="loading" class="text-center text-white py-6">Laster...</div>
+        <div v-if="isLoading" class="text-center text-white py-6">Laster...</div>
 
         <div v-else-if="students.length === 0" class="text-center text-white py-6 text-sm">
           Ingen elever i klasserommet enda.
@@ -74,7 +63,7 @@ async function removeStudent(userId: string) {
               {{ student.displayName }}
             </p>
             <p class="text-gray-500 text-sm mt-0.5">
-              Ble med: {{ new Date(student.joinedAt).toLocaleDateString('nb-NO') }}
+              Ble med: {{ student.joinedAt ? new Date(student.joinedAt).toLocaleDateString('nb-NO') : '' }}
             </p>
           </div>
 
@@ -87,14 +76,14 @@ async function removeStudent(userId: string) {
 
           <button
             v-if="!student.isAllowed"
-            @click="approveStudent(student.userId)"
+            @click="student.userId && approveStudent(student.userId)"
             class="text-green-700 hover:text-green-500 font-bold text-sm shrink-0"
           >
             Godkjenn
           </button>
 
           <button
-            @click="removeStudent(student.userId)"
+            @click="student.userId && removeStudent(student.userId)"
             class="text-red-600 hover:text-red-800 font-bold text-xl leading-none shrink-0"
             title="Fjern elev"
           >
