@@ -3,6 +3,7 @@ package ntnu.no.backend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.task.ClassroomLeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.LeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.service.LeaderboardService;
@@ -27,6 +28,12 @@ import java.util.UUID;
 @Tag(name = "Leaderboard", description = "Endpoints for classroom leaderboards and student scores")
 public class LeaderboardController {
   private final LeaderboardService leaderboardService;
+
+  @GetMapping("/leaderboard")
+  @Operation(summary = "Get all classrooms ranked by total score")
+  public ResponseEntity<ApiResponse<List<ClassroomLeaderboardEntryResponseDTO>>> getClassroomsLeaderboard(){
+    return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomsLeaderboard()));
+  }
 
   /**
    * Returns all students in a classroom ranked by their total score.
