@@ -101,6 +101,7 @@ export type ApiResponseClassroomStudentResponseDto = {
  * Represents a student's membership in a classroom
  */
 export type ClassroomStudentResponseDto = {
+    classroomId?: string;
     userId?: string;
     displayName?: string;
     isAllowed?: boolean;
@@ -264,6 +265,43 @@ export type FeideAuthResponseDto = {
 };
 
 /**
+ * Request payload for submitting a task attempt
+ */
+export type TaskAttemptRequestDto = {
+    /**
+     * ID of the task being attempted
+     */
+    taskId: string;
+    /**
+     * ID of the classroom context
+     */
+    classroomId: string;
+    /**
+     * Score achieved on this attempt
+     */
+    score?: number;
+};
+
+export type ApiResponseTaskAttemptResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: TaskAttemptResponseDto;
+};
+
+/**
+ * Represents a task attempt made by a student
+ */
+export type TaskAttemptResponseDto = {
+    id?: string;
+    userId?: string;
+    taskId?: string;
+    classroomId?: string;
+    score?: number;
+    passed?: boolean;
+    attemptedAt?: string;
+};
+
+/**
  * Request DTO for updating a user account
  */
 export type UserUpdateDto = {
@@ -333,16 +371,95 @@ export type UserProfileResponseDto = {
     createdAt?: string;
 };
 
+export type ApiResponseNotificationResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: NotificationResponseDto;
+};
+
+/**
+ * Represents a notification sent to a user
+ */
+export type NotificationResponseDto = {
+    id?: string;
+    recipientId?: string;
+    classroomId?: string;
+    msg?: string;
+    refType?: string;
+    refId?: string;
+    isRead?: boolean;
+    createdAt?: string;
+};
+
+/**
+ * Request payload for updating a classroom task assignment
+ */
+export type ClassroomTaskUpdateRequestDto = {
+    /**
+     * Whether the task is active in this classroom
+     */
+    isActive?: boolean;
+    /**
+     * Display order inside the classroom
+     */
+    sortOrder?: number;
+};
+
+export type ApiResponseClassroomTaskResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: ClassroomTaskResponseDto;
+};
+
+/**
+ * Represents a task assignment within a classroom
+ */
+export type ClassroomTaskResponseDto = {
+    classroomId?: string;
+    taskId?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+    task?: TaskResponseDto;
+};
+
 export type ApiResponseListTaskResponseDto = {
     success?: boolean;
     message?: string;
     data?: Array<TaskResponseDto>;
 };
 
+export type ApiResponseListNotificationResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<NotificationResponseDto>;
+};
+
+export type ApiResponseListInstitutionResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<InstitutionResponseDto>;
+};
+
+/**
+ * Represents an institution
+ */
+export type InstitutionResponseDto = {
+    id?: string;
+    instName?: string;
+    createdAt?: string;
+    updatedAt?: string;
+};
+
 export type ApiResponseListClassroomResponseDto = {
     success?: boolean;
     message?: string;
     data?: Array<ClassroomResponseDto>;
+};
+
+export type ApiResponseListClassroomTaskResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<ClassroomTaskResponseDto>;
 };
 
 export type ApiResponseListClassroomStudentResponseDto = {
@@ -389,10 +506,35 @@ export type TaskBestScoreResponseDto = {
     lastAttemptedAt?: string;
 };
 
+export type ApiResponseLong = {
+    success?: boolean;
+    message?: string;
+    data?: number;
+};
+
 export type ApiResponseListClassroomInstructorResponseDto = {
     success?: boolean;
     message?: string;
     data?: Array<ClassroomInstructorResponseDto>;
+};
+
+export type ApiResponseListClassroomLeaderboardEntryResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<ClassroomLeaderboardEntryResponseDto>;
+};
+
+export type ClassroomLeaderboardEntryResponseDto = {
+    classroomId?: string;
+    title?: string;
+    totalScore?: number;
+    rank?: number;
+};
+
+export type ApiResponseListTaskAttemptResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<TaskAttemptResponseDto>;
 };
 
 /**
@@ -768,6 +910,22 @@ export type FeideLoginResponses = {
 
 export type FeideLoginResponse = FeideLoginResponses[keyof FeideLoginResponses];
 
+export type SubmitAttemptData = {
+    body: TaskAttemptRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/v1/attempts';
+};
+
+export type SubmitAttemptResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseTaskAttemptResponseDto;
+};
+
+export type SubmitAttemptResponse = SubmitAttemptResponses[keyof SubmitAttemptResponses];
+
 export type UpdateUserByIdData = {
     body: UserUpdateDto;
     path: {
@@ -941,6 +1099,24 @@ export type UpdateProfileResponses = {
 
 export type UpdateProfileResponse = UpdateProfileResponses[keyof UpdateProfileResponses];
 
+export type MarkAsReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkAsReadResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseNotificationResponseDto;
+};
+
+export type MarkAsReadResponse = MarkAsReadResponses[keyof MarkAsReadResponses];
+
 export type DeleteClassroomData = {
     body?: never;
     path: {
@@ -992,6 +1168,25 @@ export type UpdateClassroomResponses = {
 };
 
 export type UpdateClassroomResponse = UpdateClassroomResponses[keyof UpdateClassroomResponses];
+
+export type UpdateClassroomTaskData = {
+    body: ClassroomTaskUpdateRequestDto;
+    path: {
+        classroomId: string;
+        taskId: string;
+    };
+    query?: never;
+    url: '/api/v1/classrooms/{classroomId}/tasks/{taskId}';
+};
+
+export type UpdateClassroomTaskResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseClassroomTaskResponseDto;
+};
+
+export type UpdateClassroomTaskResponse = UpdateClassroomTaskResponses[keyof UpdateClassroomTaskResponses];
 
 export type DeleteNotebookData = {
     body?: never;
@@ -1046,6 +1241,58 @@ export type GetProfileByFeideIdResponses = {
 };
 
 export type GetProfileByFeideIdResponse = GetProfileByFeideIdResponses[keyof GetProfileByFeideIdResponses];
+
+export type GetMyNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications';
+};
+
+export type GetMyNotificationsResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListNotificationResponseDto;
+};
+
+export type GetMyNotificationsResponse = GetMyNotificationsResponses[keyof GetMyNotificationsResponses];
+
+export type GetAllInstitutionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/institutions';
+};
+
+export type GetAllInstitutionsResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListInstitutionResponseDto;
+};
+
+export type GetAllInstitutionsResponse = GetAllInstitutionsResponses[keyof GetAllInstitutionsResponses];
+
+export type GetClassroomTasksData = {
+    body?: never;
+    path: {
+        classroomId: string;
+    };
+    query?: {
+        activeOnly?: boolean;
+    };
+    url: '/api/v1/classrooms/{classroomId}/tasks';
+};
+
+export type GetClassroomTasksResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListClassroomTaskResponseDto;
+};
+
+export type GetClassroomTasksResponse = GetClassroomTasksResponses[keyof GetClassroomTasksResponses];
 
 export type GetStudentsData = {
     body?: never;
@@ -1174,6 +1421,27 @@ export type GetStudentScoreResponses = {
 
 export type GetStudentScoreResponse = GetStudentScoreResponses[keyof GetStudentScoreResponses];
 
+export type CountPassedTasksByStopLocationData = {
+    body?: never;
+    path: {
+        classroomId: string;
+        userId: string;
+    };
+    query: {
+        stopLocation: string;
+    };
+    url: '/api/v1/classrooms/{classroomId}/leaderboard/{userId}/passed-count';
+};
+
+export type CountPassedTasksByStopLocationResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseLong;
+};
+
+export type CountPassedTasksByStopLocationResponse = CountPassedTasksByStopLocationResponses[keyof CountPassedTasksByStopLocationResponses];
+
 export type GetInstructorsData = {
     body?: never;
     path: {
@@ -1208,6 +1476,38 @@ export type GetMyClassroomsResponses = {
 
 export type GetMyClassroomsResponse = GetMyClassroomsResponses[keyof GetMyClassroomsResponses];
 
+export type GetMyClassroomData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/classrooms/me';
+};
+
+export type GetMyClassroomResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseClassroomResponseDto;
+};
+
+export type GetMyClassroomResponse = GetMyClassroomResponses[keyof GetMyClassroomResponses];
+
+export type GetClassroomsLeaderboardData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/classrooms/leaderboard';
+};
+
+export type GetClassroomsLeaderboardResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListClassroomLeaderboardEntryResponseDto;
+};
+
+export type GetClassroomsLeaderboardResponse = GetClassroomsLeaderboardResponses[keyof GetClassroomsLeaderboardResponses];
+
 export type GetAllClassroomsByInstitutionData = {
     body?: never;
     path: {
@@ -1225,6 +1525,43 @@ export type GetAllClassroomsByInstitutionResponses = {
 };
 
 export type GetAllClassroomsByInstitutionResponse = GetAllClassroomsByInstitutionResponses[keyof GetAllClassroomsByInstitutionResponses];
+
+export type GetAttemptsByUserAndTaskData = {
+    body?: never;
+    path: {
+        userId: string;
+        taskId: string;
+    };
+    query?: never;
+    url: '/api/v1/attempts/user/{userId}/task/{taskId}';
+};
+
+export type GetAttemptsByUserAndTaskResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListTaskAttemptResponseDto;
+};
+
+export type GetAttemptsByUserAndTaskResponse = GetAttemptsByUserAndTaskResponses[keyof GetAttemptsByUserAndTaskResponses];
+
+export type GetAttemptsByClassroomData = {
+    body?: never;
+    path: {
+        classroomId: string;
+    };
+    query?: never;
+    url: '/api/v1/attempts/classroom/{classroomId}';
+};
+
+export type GetAttemptsByClassroomResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListTaskAttemptResponseDto;
+};
+
+export type GetAttemptsByClassroomResponse = GetAttemptsByClassroomResponses[keyof GetAttemptsByClassroomResponses];
 
 export type GetAllAchievementsData = {
     body?: never;
