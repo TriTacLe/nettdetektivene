@@ -4,14 +4,20 @@ import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import { useMutation } from '@tanstack/vue-query'
 import { joinMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import { useStudentStore } from '@/stores/StudentStore.ts'
 
 const router = useRouter()
+const studentStore = useStudentStore()
 const joinCode = ref('')
 const fieldError = ref('')
 
 const join = useMutation({
   ...joinMutation(),
-  onSuccess: () => router.push({ name: 'introduction' }),
+  onSuccess: (res) => {
+    const classroomId = res.data?.classroomId
+    if (classroomId) studentStore.setClassroomId(classroomId)
+    router.push({ name: 'introduction' })
+  },
   onError: (e: any) => {
     fieldError.value = e.message ?? 'Kunne ikke bli med i klasserommet'
   },
