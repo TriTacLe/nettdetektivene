@@ -30,7 +30,7 @@ public class UserAchievementService {
    * @return list of {@link UserAchievementResponseDTO}, may be empty
    */
   @Transactional(readOnly = true)
-  public List<UserAchievementResponseDTO> getAchivementsForUser(UUID userId){
+  public List<UserAchievementResponseDTO> getAchievementsForUser(UUID userId){
     return userAchievementRepository.findByUserId(userId).stream().map(UserAchievementMapper::toDTO).toList();
   }
 }

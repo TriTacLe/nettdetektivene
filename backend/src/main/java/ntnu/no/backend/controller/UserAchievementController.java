@@ -1,6 +1,5 @@
 package ntnu.no.backend.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.achievement.UserAchievementResponseDTO;
@@ -16,13 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller for user achievement endpoints.
- *
- * @author tri
- * @version 0.1
- * @since 0.1
- */
 @RestController
 @RequestMapping("/api/v1/achievements")
 @RequiredArgsConstructor
@@ -30,16 +22,10 @@ import java.util.List;
 public class UserAchievementController {
   private final UserAchievementService userAchievementService;
 
-  /**
-   * Returns all achievements earned by the authenticated user.
-   *
-   * @param user the authenticated user
-   * @return 200 OK with list of {@link UserAchievementResponseDTO}
-   */
   @GetMapping("/me")
   @PreAuthorize("isAuthenticated()")
-  @Operation(summary = "Get achievements earned by the authenticated user")
-  public ResponseEntity<ApiResponse<List<UserAchievementResponseDTO>>> getMyAchievements(@AuthenticationPrincipal User user){
-    return ResponseEntity.ok(ApiResponse.ok(userAchievementService.getAchivementsForUser(user.getId())));
+  public ResponseEntity<ApiResponse<List<UserAchievementResponseDTO>>> getMyAchievements(@AuthenticationPrincipal
+                                                                                         User user){
+    return ResponseEntity.ok(ApiResponse.ok(userAchievementService.getAchievementsForUser(user.getId())));
   }
 }

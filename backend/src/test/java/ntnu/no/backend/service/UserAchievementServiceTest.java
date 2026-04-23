@@ -55,7 +55,7 @@ public class UserAchievementServiceTest {
 
     when(userAchievementRepository.findByUserId(userId)).thenReturn(List.of(ua));
 
-    List<UserAchievementResponseDTO> result = userAchievementService.getAchivementsForUser(userId);
+    List<UserAchievementResponseDTO> result = userAchievementService.getAchievementsForUser(userId);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().userId()).isEqualTo(userId);
@@ -71,7 +71,7 @@ public class UserAchievementServiceTest {
     UUID userId = UUID.randomUUID();
     when(userAchievementRepository.findByUserId(userId)).thenReturn(List.of());
 
-    List<UserAchievementResponseDTO> result = userAchievementService.getAchivementsForUser(userId);
+    List<UserAchievementResponseDTO> result = userAchievementService.getAchievementsForUser(userId);
 
     assertThat(result).isEmpty();
   }
