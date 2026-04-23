@@ -25,6 +25,7 @@ public class ClassroomStudentMapper {
   public static ClassroomStudentResponseDTO toDTO(ClassroomStudent student) {
     if (student == null) return null;
     return new ClassroomStudentResponseDTO(
+      student.getId().getClassroomId(),
       student.getId().getUserId(),
       student.getDisplayName(),
       student.isAllowed(),
