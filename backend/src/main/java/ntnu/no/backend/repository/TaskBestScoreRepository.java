@@ -16,7 +16,7 @@ import java.util.UUID;
  * database trigger.</p>
  *
  * @author tri, aninesst
- * @version 0.12
+ * @version 0.2
  * @since 0.1
  * @see TaskBestScore
  * @see TaskBestScoreId
