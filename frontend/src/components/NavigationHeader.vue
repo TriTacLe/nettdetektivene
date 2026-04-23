@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 defineProps<{
   previous?: string
   title: string
@@ -6,9 +8,14 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{ back: [] }>()
+const router = useRouter()
 
-function goTo() {
-  emit('back')
+function goTo(path?: string) {
+  if (path) {
+    router.push(path)
+  } else {
+    emit('back')
+  }
 }
 </script>
 
