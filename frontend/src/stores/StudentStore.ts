@@ -5,16 +5,19 @@ export const useStudentStore = defineStore(
   'student',
   () => {
     const classroomId = ref<string | null>(null)
+    const institutionId = ref<string | null>(null)
 
-    function setClassroomId(id: string) {
-      classroomId.value = id
+    function setClassroom(cId: string, iId: string) {
+      classroomId.value = cId
+      institutionId.value = iId
     }
 
     function clear() {
       classroomId.value = null
+      institutionId.value = null
     }
 
-    return { classroomId, setClassroomId, clear }
+    return { classroomId, institutionId, setClassroom, clear }
   },
   {
     persist: {
