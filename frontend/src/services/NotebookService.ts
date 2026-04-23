@@ -1,17 +1,32 @@
 import apiClient from '@/services/ApiService'
-import type { NotebookEntryDTO, NotebookEntryRequest } from '@/types'
+import type { ApiResponse, NotebookEntryDTO, NotebookEntryRequest } from '@/types'
 
-export async function getNotebookEntries(): Promise<NotebookEntryDTO[]> {
-  const { data } = await apiClient.get<NotebookEntryDTO[]>('/notebook')
-  return data
+export async function getNotebookEntries(classroomId: string): Promise<NotebookEntryDTO[]> {
+  const { data } = await apiClient.get<ApiResponse<NotebookEntryDTO[]>>(
+    `/classrooms/${classroomId}/notebooks/me`
+  )
+  return data.data
 }
 
-export async function createNotebookEntry(request: NotebookEntryRequest): Promise<NotebookEntryDTO> {
-  const { data } = await apiClient.post<NotebookEntryDTO>('/notebook', request)
-  return data
+export async function createNotebookEntry(
+  classroomId: string,
+  request: NotebookEntryRequest
+): Promise<NotebookEntryDTO> {
+  const { data } = await apiClient.post<ApiResponse<NotebookEntryDTO>>(
+    `/classrooms/${classroomId}/notebooks`,
+    request
+  )
+  return data.data
 }
 
-export async function updateNotebookEntry(id: string, request: NotebookEntryRequest): Promise<NotebookEntryDTO> {
-  const { data } = await apiClient.put<NotebookEntryDTO>(`/notebook/${id}`, request)
-  return data
+export async function updateNotebookEntry(
+  classroomId: string,
+  id: string,
+  request: NotebookEntryRequest
+): Promise<NotebookEntryDTO> {
+  const { data } = await apiClient.patch<ApiResponse<NotebookEntryDTO>>(
+    `/classrooms/${classroomId}/notebooks/${id}`,
+    request
+  )
+  return data.data
 }

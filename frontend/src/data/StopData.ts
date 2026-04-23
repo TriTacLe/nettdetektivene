@@ -40,19 +40,12 @@ export const STOPS: Record<string, StopConfig> = {
     intro: 'På dette stoppestedet undersøker vi bilder som kan være manipulerte eller skapt av KI. Tren øyet og finn ut hva som er ekte!',
     background: '/FotografenBackground.png',
     taskRoute: '/stops/fotografen/task',
-    taskHints: {
-      1: {
-        description: 'Er bildet ekte?',
-        hint: 'Se etter unaturlige detaljer som rare fingre, uskarp bakgrunn eller merkelig lys.',
-      },
-      2: {
-        description: 'Finn manipulasjonen',
-        hint: 'Legg merke til skygger, kanter og om elementer i bildet ser redigert ut.',
-      },
-      3: {
-        description: 'KI eller ekte?',
-        hint: 'KI-bilder har ofte feil på hender, refleksjoner og symmetri.',
-      },
-    },
+  },
+  datasenteret: {
+    stopId: 'datasenteret',
+    name: 'Datasenteret',
+    intro: 'Velkommen til hjertet av dataverdenen. Her må du bruke alle dine ferdigheter for å løse de vanskeligste utfordringene!',
+    background: '/GameMapBackground.jpg',
+    taskRoute: '/stops/datasenteret/task',
   },
 }

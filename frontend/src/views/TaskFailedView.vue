@@ -30,10 +30,8 @@ const reason = (route.query.reason as string | undefined) ?? 'Sjekk svarene dine
 const returnTo = route.query.returnTo as string | undefined
 
 function retry() {
-  if (returnTo && taskId) {
-    router.push({ name: returnTo, params: { taskId } })
-  } else if (stopId) {
-    router.push({ name: 'stop', params: { stopId } })
+  if (stopId) {
+    router.push(`/stops/${stopId}`)
   } else {
     router.push({ name: 'game-map' })
   }

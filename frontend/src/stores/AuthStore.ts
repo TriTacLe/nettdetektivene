@@ -25,6 +25,7 @@ export const useAuthStore = defineStore(
 
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
       const response = await AuthService.feideLogin(credentials)
+      sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
       await fetchMe()
@@ -40,6 +41,7 @@ export const useAuthStore = defineStore(
         return
       }
       const response = await AuthService.refresh(refreshToken.value, token.value ?? undefined)
+      sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
     }
@@ -48,6 +50,7 @@ export const useAuthStore = defineStore(
       if (refreshToken.value) {
         AuthService.logout(refreshToken.value).catch(() => {})
       }
+      sessionStorage.removeItem('auth')
       token.value = null
       refreshToken.value = null
       user.value = null

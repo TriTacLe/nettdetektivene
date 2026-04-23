@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useAttrs } from 'vue'
+import { useRouter } from 'vue-router'
 import NavigationHeader from './NavigationHeader.vue'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title: string
     previous?: string
@@ -12,6 +14,18 @@ withDefaults(
     background: '/StartBackground.jpg',
   },
 )
+
+const emit = defineEmits<{ back: [] }>()
+const attrs = useAttrs()
+const router = useRouter()
+
+function handleBack() {
+  if (attrs.onBack) {
+    emit('back')
+  } else if (props.previous) {
+    router.push(props.previous)
+  }
+}
 </script>
 
 <template>
@@ -19,7 +33,7 @@ withDefaults(
     <img class="scene-background" :src="background" alt="" aria-hidden="true" />
     <div class="scene-overlay" />
     <div class="scene-content">
-      <NavigationHeader :title="title" :previous="previous" :next="next" />
+      <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
       <div class="scene-body">
         <slot />
       </div>

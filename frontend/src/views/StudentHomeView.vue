@@ -1,14 +1,35 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import BoardNote from '../components/BoardNote.vue'
+import ClassroomService from '@/services/ClassroomService'
 
 const corkboardImage = '/corkboard.jpg'
 const router = useRouter()
+const classroomId = ref<string | null>(null)
 
 function goTo(route: string) {
   router.push(route)
 }
+
+async function goToNotebook() {
+  if (!classroomId.value) {
+    router.push({ name: 'notebook' })
+    return
+  }
+
+  router.push({ name: 'notebook', query: { classroomId: classroomId.value } })
+}
+
+onMounted(async () => {
+  try {
+    const classrooms = await ClassroomService.getMyClassrooms()
+    classroomId.value = classrooms[0]?.id ?? null
+  } catch {
+    classroomId.value = null
+  }
+})
 </script>
 
 <template>
@@ -70,7 +91,7 @@ function goTo(route: string) {
             :rotation="-4"
             pin-color="#7048e8"
             width="14rem"
-            @click="goTo('/notepad')"
+            @click="goToNotebook"
           >
             <p class="note-title">Notatblokk</p>
           </BoardNote>

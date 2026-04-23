@@ -53,12 +53,8 @@ public class UserMapper {
    */
   public static User toEntity(RegisterRequestDTO dto) {
     if (dto == null) return null;
-    String displayName = dto.getDisplayName();
-    if (displayName == null || displayName.isBlank()) {
-      displayName = dto.getEmail().split("@")[0];
-    }
     return User.builder()
-      .displayName(displayName)
+      .displayName(dto.getDisplayName())
       .email(dto.getEmail())
       .build();
   }
@@ -72,12 +68,8 @@ public class UserMapper {
    */
   public static User toEntity(FeideLoginRequestDTO dto) {
     if (dto == null) return null;
-    String displayName = dto.getDisplayName();
-    if (displayName == null || displayName.isBlank()) {
-      displayName = dto.getEmail().split("@")[0];
-    }
     return User.builder()
-      .displayName(displayName)
+      .displayName(dto.getDisplayName())
       .email(dto.getEmail())
       .build();
   }
