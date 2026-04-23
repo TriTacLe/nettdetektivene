@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useNotebookStore } from '@/stores/NotebookStore'
 import { TaskType } from '@/types'
 
+const route = useRoute()
 const notebookStore = useNotebookStore()
 
 const STOP_LABELS: Record<TaskType, string> = {
@@ -85,12 +87,17 @@ async function saveReflection(stopLocation: string): Promise<void> {
 }
 
 onMounted(() => {
-  notebookStore.fetchEntries()
+  const cid = route.query.classroomId as string | undefined
+  if (cid) {
+    notebookStore.fetchEntries(cid)
+  } else {
+    notebookStore.error = 'Mangler klasserom-ID. Naviger hit fra klasserommet ditt.'
+  }
 })
 </script>
 
 <template>
-  <SceneComponent title="Dine notater" previous="/home" previous-label="Hjem">
+  <SceneComponent title="Dine notater" previous="/student-home" previous-label="Hjem">
     <div class="notebook-wrapper">
       <p v-if="notebookStore.isLoading" class="notebook-status" aria-live="polite">
         Laster inn notatblokk...
