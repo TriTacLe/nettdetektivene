@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { getClassroomsLeaderboardOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
-import SceneComponent from "@/components/SceneComponent.vue";
+import { getClassroomsLeaderboardByInstitutionOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import SceneComponent from '@/components/SceneComponent.vue'
+import { useStudentStore } from '@/stores/StudentStore'
 
-const { data, isLoading, isError} = useQuery(getClassroomsLeaderboardOptions())
+const studentStore = useStudentStore()
+const institutionId = computed(() => studentStore.institutionId)
+
+const { data, isLoading, isError } = useQuery(
+  computed(() =>
+    getClassroomsLeaderboardByInstitutionOptions({
+      path: { institutionId: institutionId.value ?? '' },
+    }),
+  ),
+)
+
 const entries = computed(() => data.value?.data ?? [])
 </script>
 
@@ -22,35 +33,34 @@ const entries = computed(() => data.value?.data ?? [])
 
         <table v-else class="w-full border-collapse">
           <thead>
-          <tr class="bg-gray-800 text-white">
-            <th class="px-4 py-3 text-left rounded-tl-lg">Plassering</th>
-            <th class="px-4 py-3 text-left">Klasse</th>
-            <th class="px-4 py-3 text-right rounded-tr-lg">Poeng</th>
-          </tr>
+            <tr class="bg-gray-800 text-white">
+              <th class="px-4 py-3 text-left rounded-tl-lg">Plassering</th>
+              <th class="px-4 py-3 text-left">Klasse</th>
+              <th class="px-4 py-3 text-right rounded-tr-lg">Poeng</th>
+            </tr>
           </thead>
           <tbody>
-          <tr
-            v-for="entry in entries"
-            :key="entry.classroomId"
-            class="border-b border-gray-200 last:border-0"
-          >
-            <td class="px-4 py-3 font-bold text-gray-700">#{{ entry.rank }}</td>
-            <td class="px-4 py-3 text-gray-900">{{ entry.title }}</td>
-            <td class="px-4 py-3 text-right font-semibold text-indigo-700">
-              {{ entry.totalScore }}
-            </td>
-          </tr>
-          <tr v-if="entries.length === 0">
-            <td colspan="3" class="px-4 py-8 text-center text-gray-400">
-              Ingen resultater ennå.
-            </td>
-          </tr>
+            <tr
+              v-for="entry in entries"
+              :key="entry.classroomId"
+              class="border-b border-gray-200 last:border-0"
+            >
+              <td class="px-4 py-3 font-bold text-gray-700">#{{ entry.rank }}</td>
+              <td class="px-4 py-3 text-gray-900">{{ entry.title }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-indigo-700">
+                {{ entry.totalScore }}
+              </td>
+            </tr>
+            <tr v-if="entries.length === 0">
+              <td colspan="3" class="px-4 py-8 text-center text-gray-400">
+                Ingen resultater ennå.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
     </div>
   </SceneComponent>
-
 </template>
 
 <style scoped>
