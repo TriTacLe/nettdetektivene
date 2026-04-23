@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { NotebookEntryDTO, NotebookEntryRequest } from '@/types'
 import {
-  // getNotebookEntries, // kommenter inn når backend er klar
+  getNotebookEntries,
   createNotebookEntry,
   updateNotebookEntry,
 } from '@/services/NotebookService'
@@ -11,25 +11,14 @@ export const useNotebookStore = defineStore('notebook', () => {
   const entries = ref<NotebookEntryDTO[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const classroomId = ref<string | null>(null)
 
-  async function fetchEntries(): Promise<void> {
+  async function fetchEntries(cid: string): Promise<void> {
+    classroomId.value = cid
     isLoading.value = true
     error.value = null
     try {
-      // TODO: fjern mock når backend er klar
-      entries.value = [
-        {
-          id: '1',
-          userId: 'test',
-          classroomId: 'test',
-          stopLocation: 'NEWS',
-          autoNotes: '["Sjekk alltid kilden", "Se etter clickbait-overskrifter"]',
-          studentReflection: '',
-          createdAt: '',
-          updatedAt: '',
-        }
-      ]
-      // entries.value = await getNotebookEntries()  // kommenter inn når backend er klar
+      entries.value = await getNotebookEntries(cid)
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Kunne ikke hente notatblokkoppføringer'
     } finally {
@@ -38,13 +27,14 @@ export const useNotebookStore = defineStore('notebook', () => {
   }
 
   async function saveEntry(request: NotebookEntryRequest): Promise<void> {
+    if (!classroomId.value) throw new Error('Mangler klasserom-ID')
     const existing = getEntryByStop(request.stopLocation)
     if (existing) {
-      const updated = await updateNotebookEntry(existing.id, request)
+      const updated = await updateNotebookEntry(classroomId.value, existing.id, request)
       const index = entries.value.findIndex((e) => e.id === existing.id)
       if (index !== -1) entries.value[index] = updated
     } else {
-      const created = await createNotebookEntry(request)
+      const created = await createNotebookEntry(classroomId.value, request)
       entries.value.push(created)
     }
   }
@@ -57,6 +47,7 @@ export const useNotebookStore = defineStore('notebook', () => {
     entries,
     isLoading,
     error,
+    classroomId,
     fetchEntries,
     saveEntry,
     getEntryByStop,
