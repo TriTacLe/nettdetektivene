@@ -9,21 +9,11 @@ on:
   pull_request:
     branches: [main, dev]
     paths:
-      - "backend/**"  return notebookEntryRepository.findByClassroom_IdAndUser_Id(classroomId, userID);
+      - "backend/**"
 
 jobs:
   test:
     runs-on: ntnu-runners
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_DATABASE: db
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_USER: test_user
-          MYSQL_PASSWORD: test_pass
-        ports:
-          - 3306:3306
 
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +27,6 @@ jobs:
 
       - name: build and test
         working-directory: ./backend
-        env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/
-          SPRING_DATASOURCE_USERNAME: test_user
-          SPRING_DATASOURCE_PASSWORD: test_pass
-          TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: /var/run/docker.sock
         run: |
           ./mvnw clean test
 
