@@ -4,10 +4,11 @@ import axios, {
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig
 } from 'axios';
-import { useAuthStore } from '@/stores/AuthStore'
+
+const SESSION_KEY = 'auth'
 
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
-  400: 'Ugyldig forespørsel',
+  400: 'Ugyldig foresporsel',
   401: 'Du er ikke innlogget',
   403: 'Du har ikke tilgang til denne ressursen',
   404: 'Ressursen ble ikke funnet',
@@ -17,31 +18,35 @@ const HTTP_ERROR_MESSAGES: Record<number, string> = {
   503: 'Tjenesten er midlertidig utilgjengelig'
 } as const
 
+interface AuthTokens {
+  token: string
+  refreshToken: string
+}
+
 interface PendingRequest {
   resolve: (token: string) => void
   reject: (reason: unknown) => void
 }
 
-function getToken(): string | null {
+function readSession(): Partial<AuthTokens> {
   try {
-    const authData = sessionStorage.getItem('auth')
-    if (!authData) return null
-    const parsed = JSON.parse(authData)
-    return parsed.token || null
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    return raw ? (JSON.parse(raw) as Partial<AuthTokens>) : {}
   } catch {
-    return null
+    return {}
   }
 }
 
-function getRefreshToken(): string | null {
+function writeSessionTokens(tokens: AuthTokens): void {
   try {
-    const authData = sessionStorage.getItem('auth')
-    if (!authData) return null
-    const parsed = JSON.parse(authData)
-    return parsed.refreshToken || null
+    const current = readSession()
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({...current, ...tokens}))
   } catch {
-    return null
   }
+}
+
+function clearSession(): void {
+  sessionStorage.removeItem(SESSION_KEY)
 }
 
 function toUserMessage(status: number | undefined): string {
@@ -79,7 +84,7 @@ const apiClient: AxiosInstance = axios.create({
 })
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getToken()
+  const { token } = readSession()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -105,31 +110,17 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   }
 
   isRefreshing = true
-<<<<<<< HEAD
-  const refreshToken = getRefreshToken()
-=======
   const { refreshToken, token: expiredToken } = readSession()
->>>>>>> dev
 
   if (!refreshToken) {
-    sessionStorage.removeItem('auth')
+    clearSession()
     window.location.href = '/login'
     return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt.'))
   }
 
   try {
-<<<<<<< HEAD
-    const { data } = await apiClient.post<{ token: string, refreshToken: string }>('/auth/refresh', { refreshToken })
-    
-    const authData = JSON.parse(sessionStorage.getItem('auth') || '{}')
-    authData.token = data.token
-    authData.refreshToken = data.refreshToken
-    sessionStorage.setItem('auth', JSON.stringify(authData))
-    
-=======
     const { data } = await apiClient.post<AuthTokens>('/auth/refresh', { refreshToken, expiredToken })
     writeSessionTokens(data)
->>>>>>> dev
     flushQueue(null, data.token)
     original.headers = {
       ...original.headers,
@@ -138,7 +129,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
     return apiClient(original)
   } catch (refreshError) {
     flushQueue(refreshError, null)
-    sessionStorage.removeItem('auth')
+    clearSession()
     window.location.href = '/login'
     return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt. '))
   } finally {
