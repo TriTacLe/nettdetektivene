@@ -72,8 +72,8 @@ public class LeaderboardService {
    * @return ranked list of {@link ClassroomLeaderboardEntryResponseDTO}, sorted descending by total score
    */
   @Transactional(readOnly = true)
-  public List<ClassroomLeaderboardEntryResponseDTO> getClassroomsLeaderboard(){
-    Map<UUID, Integer> scoreByClassroom = taskBestScoreRepository.findAll().stream()
+  public List<ClassroomLeaderboardEntryResponseDTO> getClassroomsLeaderboard(UUID institutionId){
+    Map<UUID, Integer> scoreByClassroom = taskBestScoreRepository.findAll().stream().filter(tbs -> tbs.getClassroom().getInstitution().getId().equals(institutionId))
         .collect(groupingBy(tbs -> tbs.getClassroom().getId(), summingInt(TaskBestScore::getBestScore)));
 
     Map<UUID, String> titlesByClassroom = classroomRepository.findAllByDeletedAtIsNull().stream()

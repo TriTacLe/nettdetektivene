@@ -4,6 +4,7 @@ import ntnu.no.backend.dto.task.ClassroomLeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.LeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.model.Classroom;
+import ntnu.no.backend.model.Institution;
 import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.TaskBestScoreId;
@@ -169,8 +170,10 @@ class LeaderboardServiceTest {
    */
   @Test
   void getClassroomsLeaderboard_returnsRankedList() {
-    Classroom classroom1 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7A").build();
-    Classroom classroom2 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7C").build();
+    UUID institutionId = UUID.randomUUID();
+    Institution institution = Institution.builder().id(institutionId).instName("Flatåsen Skole").build();
+    Classroom classroom1 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7A").institution(institution).build();
+    Classroom classroom2 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7C").institution(institution).build();
     User user = User.builder().id(UUID.randomUUID()).displayName("Tri").build();
     Task task = Task.builder().id(UUID.randomUUID()).title("Ta buss").build();
 
@@ -180,7 +183,7 @@ class LeaderboardServiceTest {
     when(taskBestScoreRepository.findAll()).thenReturn(List.of(score1, score2));
     when(classroomRepository.findAllByDeletedAtIsNull()).thenReturn(List.of(classroom1, classroom2));
 
-    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard();
+    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard(institutionId);
 
     assertThat(result).hasSize(2);
     assertThat(result.getFirst().title()).isEqualTo("Flatåsen 7C");
@@ -199,7 +202,7 @@ class LeaderboardServiceTest {
     when(taskBestScoreRepository.findAll()).thenReturn(List.of());
     when(classroomRepository.findAllByDeletedAtIsNull()).thenReturn(List.of());
 
-    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard();
+    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard(UUID.randomUUID());
 
     assertThat(result).isEmpty();
   }
