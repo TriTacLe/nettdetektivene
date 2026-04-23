@@ -105,7 +105,11 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   }
 
   isRefreshing = true
+<<<<<<< HEAD
   const refreshToken = getRefreshToken()
+=======
+  const { refreshToken, token: expiredToken } = readSession()
+>>>>>>> dev
 
   if (!refreshToken) {
     sessionStorage.removeItem('auth')
@@ -114,6 +118,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   }
 
   try {
+<<<<<<< HEAD
     const { data } = await apiClient.post<{ token: string, refreshToken: string }>('/auth/refresh', { refreshToken })
     
     const authData = JSON.parse(sessionStorage.getItem('auth') || '{}')
@@ -121,6 +126,10 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
     authData.refreshToken = data.refreshToken
     sessionStorage.setItem('auth', JSON.stringify(authData))
     
+=======
+    const { data } = await apiClient.post<AuthTokens>('/auth/refresh', { refreshToken, expiredToken })
+    writeSessionTokens(data)
+>>>>>>> dev
     flushQueue(null, data.token)
     original.headers = {
       ...original.headers,

@@ -23,8 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Controller tests for {@link LeaderboardController}.
  * Verifies HTTP status codes and JSON structure.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @WebMvcTest(LeaderboardController.class)
@@ -86,6 +86,39 @@ class LeaderboardControllerTest {
   }
 
   /**
+   * Verifies that an authenticated user gets 200 and the passed task count for a stop location.
+   */
+  @Test
+  @WithMockUser
+  void countPassedTasksByStopLocation_returnsOk() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    String stopLocation = "STOP_1";
+
+    when(leaderboardService.countPassedTasksByStopLocation(classroomId, userId, stopLocation))
+        .thenReturn(5L);
+
+    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/leaderboard/" + userId + "/passed-count")
+            .param("stopLocation", stopLocation))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").value(5));
+  }
+
+  /**
+   * Verifies that a missing required stopLocation parameter returns 400.
+   */
+  @Test
+  @WithMockUser
+  void countPassedTasksByStopLocation_missingParam_returnsBadRequest() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/leaderboard/" + userId + "/passed-count"))
+        .andExpect(status().isBadRequest());
+  }
+
+  /**
    * Verifies that an unauthenticated request to the leaderboard returns 401.
    */
   @Test
@@ -100,6 +133,17 @@ class LeaderboardControllerTest {
   @Test
   void getStudentScore_unauthenticated_returnsUnauthorized() throws Exception {
     mockMvc.perform(get("/api/v1/classrooms/" + UUID.randomUUID() + "/leaderboard/" + UUID.randomUUID()))
+        .andExpect(status().isUnauthorized());
+  }
+
+  /**
+   * Verifies that an unauthenticated request for passed-count returns 401.
+   */
+  @Test
+  void countPassedTasksByStopLocation_unauthenticated_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/api/v1/classrooms/" + UUID.randomUUID()
+            + "/leaderboard/" + UUID.randomUUID() + "/passed-count")
+            .param("stopLocation", "STOP_1"))
         .andExpect(status().isUnauthorized());
   }
 }

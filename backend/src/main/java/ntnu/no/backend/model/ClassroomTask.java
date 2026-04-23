@@ -18,8 +18,8 @@ import lombok.Setter;
  * Uses a composite primary key {@link ClassroomTaskId} consisting of
  * {@code classroom_id} and {@code task_id}.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  * @see ClassroomTaskId
  */
@@ -60,4 +60,11 @@ public class ClassroomTask {
    */
   @Column(name = "sort_order", nullable = false)
   private Short sortOrder = 0;
+
+  /**
+   * Whether this task assignment is active for this classroom.
+   * Nullable because the SQL migration does not declare NOT NULL or a default.
+   */
+  @Column(name = "is_active")
+  private Boolean isActive;
 }

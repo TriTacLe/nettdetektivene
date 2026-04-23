@@ -8,10 +8,7 @@ import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.service.LeaderboardService;
 import ntnu.no.backend.shared.ApiResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +17,8 @@ import java.util.UUID;
  * REST controller for leaderboard endpoints.
  * All data is read-only; scores are maintained by the {@code trg_attempt_sync} trigger.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @RestController
@@ -54,5 +51,16 @@ public class LeaderboardController {
   @Operation(summary = "Get a student's best scores per task within a classroom")
   public ResponseEntity<ApiResponse<List<TaskBestScoreResponseDTO>>> getStudentScore(@PathVariable UUID classroomId, @PathVariable UUID userId){
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getStudentScore(classroomId, userId)));
+  }
+
+  @GetMapping("/{classroomId}/leaderboard/{userId}/passed-count")
+  @Operation(summary = "Get how many tasks a student has passed in a stop location")
+  public ResponseEntity<ApiResponse<Long>> countPassedTasksByStopLocation(
+      @PathVariable UUID classroomId,
+      @PathVariable UUID userId,
+      @RequestParam String stopLocation) {
+    return ResponseEntity.ok(ApiResponse.ok(
+        leaderboardService.countPassedTasksByStopLocation(classroomId, userId, stopLocation)
+    ));
   }
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +22,9 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link UserService}.
  *
+ * @author tri
  * @author aninesst
+ * @author norakirknes
  * @version 0.1
  * @since 0.1
  */
@@ -30,6 +33,9 @@ class UserServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private UserProfileRepository userProfileRepository;
 
   @InjectMocks
   private UserService userService;

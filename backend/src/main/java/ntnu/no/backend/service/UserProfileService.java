@@ -7,14 +7,11 @@ import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.mapper.UserProfileMapper;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
-import ntnu.no.backend.model.classroom.ClassroomStudent;
-import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 /**
  * Service for user profile management.
@@ -30,6 +27,7 @@ public class UserProfileService {
 
   private final UserProfileRepository userProfileRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final JdbcTemplate jdbcTemplate;
 
   /**
    * Retrieves the profile for the given user.
@@ -79,16 +77,12 @@ public class UserProfileService {
     UserProfile profile = userProfileRepository.findByUser(user)
       .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
     if (dto.getDisplayName() != null) {
-      classroomStudentRepository.findByUser(user).ifPresentOrElse(
-        student -> {
-          student.setRequestedDisplayName(dto.getDisplayName());
-          student.setNameChangeStatus(NameChangeStatus.PENDING);
-          student.setNameChangeRequestedAt(LocalDateTime.now());
-          student.setNameChangeReviewedBy(null);
-          student.setNameChangeReviewedAt(null);
-        },
-        () -> profile.setDisplayName(dto.getDisplayName())
-      );
+      if (classroomStudentRepository.existsByUser(user)) {
+        jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
+            user.getId().toString(), dto.getDisplayName());
+      } else {
+        profile.setDisplayName(dto.getDisplayName());
+      }
     }
     UserProfileMapper.updateEntity(profile, dto);
     return UserProfileMapper.toDTO(profile);

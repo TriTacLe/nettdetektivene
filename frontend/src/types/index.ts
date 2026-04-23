@@ -178,3 +178,37 @@ export interface StopTaskDTO {
   title: string
   taskType: string
 }
+
+export enum NotificationType {
+  STOP_COMPLETED = 'STOP_COMPLETED',
+  CLASS_COMPLETED_GAME = 'CLASS_COMPLETED_GAME',
+  STUCK = 'STUCK',
+  MYSTERY_SUBMITTED = 'MYSTERY_SUBMITTED',
+  INAPPROPRIATE_MESSAGE = 'INAPPROPRIATE_MESSAGE',
+  INAPPROPRIATE_USERNAME = 'INAPPROPRIATE_USERNAME',
+}
+
+export interface NotificationResponseDTO {
+  id: string
+  recipientId: string
+  classroomId: string | null
+  msg: string
+  refType: string | null
+  refId: string | null
+  isRead: boolean
+  createdAt: string
+}
+
+export interface NotificationDTO {
+  id: string
+  type: NotificationType
+  recipientId: string
+  studentName: string
+  classroomId: string
+  classroomName: string
+  msg: string
+  refType: string | null
+  refId: string | null
+  isRead: boolean
+  createdAt: string
+}

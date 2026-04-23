@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
  * All data is read-only. {@code task_best_score} is maintained exclusively
  * by the {@code trg_attempt_sync} database trigger.
  *
- * @author tri
- * @version 0.1
+ * @author tri, aninesst
+ * @version 0.2
  * @since 0.1
  */
 @Service
@@ -67,5 +67,14 @@ public class LeaderboardService {
    */
   public List<TaskBestScoreResponseDTO> getStudentScore(UUID classroomId, UUID userId){
     return taskBestScoreRepository.findByClassroomId(classroomId).stream().filter(s->s.getUser().getId().equals(userId)).map(TaskBestScoreMapper::toDTO).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public long countPassedTasksByStopLocation(UUID classroomId, UUID userId, String stopLocation) {
+    return taskBestScoreRepository.countByClassroomIdAndUserIdAndTaskStopLocationAndFirstPassedAtIsNotNull(
+        classroomId,
+        userId,
+        stopLocation
+    );
   }
 }

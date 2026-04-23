@@ -22,7 +22,7 @@ function goTo(route: string) {
             :rotation="-6"
             pin-color="#2f9e44"
             width="13rem"
-            @click="goTo('/profile')"
+            @click="goTo('/student-profile')"
           >
             <p class="note-title">Detektiv Kari</p>
           </BoardNote>

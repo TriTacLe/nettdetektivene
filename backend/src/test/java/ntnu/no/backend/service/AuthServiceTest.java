@@ -39,6 +39,7 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link AuthService}.
  *
+ * @author tri
  * @author aninesst
  * @version 0.1
  * @since 0.1
