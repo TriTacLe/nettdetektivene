@@ -112,7 +112,7 @@ function submit() {
 .fotografen-wrapper {
   display: flex;
   flex-direction: column;
-  padding: 1rem 2rem 1.5rem;
+  padding: 1.25rem 2rem 1.5rem;
   gap: 1rem;
   overflow-y: auto;
 }
@@ -163,10 +163,10 @@ function submit() {
 .card {
   background: #fdfaf4;
   border-radius: 14px;
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.75rem;
   border: 3px solid transparent;
   transition: border-color 0.2s;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -175,7 +175,7 @@ function submit() {
 
 .card-image {
   width: 100%;
-  height: 160px;
+  height: 200px;
   object-fit: cover;
   border-radius: 8px;
   background: #e9e5da;
@@ -194,11 +194,11 @@ function submit() {
   align-items: center;
   gap: 0.6rem;
   width: 100%;
-  padding: 0.55rem 0.8rem;
+  padding: 0.75rem 0.9rem;
   border: 2px solid #c8c0d4;
   border-radius: 8px;
   background: white;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #1a1a1a;
   cursor: pointer;
@@ -217,8 +217,8 @@ function submit() {
 }
 
 .checkbox {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: 2px solid #888;
   border-radius: 4px;
   display: flex;
@@ -235,8 +235,8 @@ function submit() {
 }
 
 .checkbox svg {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 .begrunnelse {
@@ -246,18 +246,18 @@ function submit() {
 }
 
 .begrunnelse-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #555;
 }
 
 .begrunnelse-select {
   width: 100%;
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.7rem;
   border: 2px solid #c8c0d4;
   border-radius: 8px;
   background: white;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-family: inherit;
   cursor: pointer;
   color: #1a1a1a;
@@ -270,16 +270,17 @@ function submit() {
 
 .lever-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   flex-shrink: 0;
+  padding-top: 0.5rem;
 }
 
 .lever-btn {
-  padding: 0.75rem 2rem;
+  padding: 1rem 3rem;
   background: white;
   border: 2px solid #1a1a1a;
   border-radius: 999px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;

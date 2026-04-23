@@ -80,6 +80,20 @@ export interface TaskDTO {
   difficulty: number;
   isActive: boolean;
   stopLocation: string | null;
+  content: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NewsChallengeContent {
+  hint?: string;
+  articles?: any[];
+  question?: string;
+}
+
+export interface PhotoChallengeContent {
+  description?: string;
+  alternatives?: any[];
 }
 
 export interface NotebookEntryDTO {

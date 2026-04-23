@@ -7,16 +7,21 @@ defineProps<{
   next?: string
 }>()
 
+const emit = defineEmits<{ back: [] }>()
 const router = useRouter()
 
-function goTo(route: string) {
-  router.push(route)
+function goTo(path?: string) {
+  if (path) {
+    router.push(path)
+  } else {
+    emit('back')
+  }
 }
 </script>
 
 <template>
   <header class="navigation-header">
-    <div v-if="previous" class="nav-previous" @click="goTo(previous!)">
+    <div v-if="previous" class="nav-previous" @click="goTo()">
       <button class="nav-button" aria-label="Go back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />

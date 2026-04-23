@@ -3,23 +3,25 @@ package ntnu.no.backend.service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
+import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
+import ntnu.no.backend.mapper.ClassroomMapper;
 import ntnu.no.backend.mapper.ClassroomStudentMapper;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
-import ntnu.no.backend.repository.ClassroomRepository;
-import ntnu.no.backend.repository.ClassroomStudentRepository;
-import ntnu.no.backend.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
-import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
@@ -46,6 +48,19 @@ public class ClassroomStudentService {
   private final JdbcTemplate jdbcTemplate;
   private final EntityManager entityManager;
 
+  /**
+   * Gets the classroom the student belongs to
+   *
+   * @param user the user to fetch the classroom for
+   * @return the classroom as DTO
+   * @throws EntityNotFoundException if the student does not have classroom membership
+   */
+  @Transactional(readOnly = true)
+  public ClassroomResponseDTO getMyClassroom(User user) {
+    ClassroomStudent membership = classroomStudentRepository.findByUser(user)
+        .orElseThrow(() -> new EntityNotFoundException("Student is not in any classroom"));
+    return ClassroomMapper.toDTO(membership.getClassroom());
+  }
   /**
    * Joins a student to a classroom via join code. The student's display name
    * is set from their user profile. Membership is pending until approved

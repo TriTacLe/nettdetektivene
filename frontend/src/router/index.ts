@@ -27,14 +27,24 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet/task/:taskId',
-      name: 'nyhetskvartalet-task',
+      path: '/stops/nyhetskvartalet',
+      name: 'nyhetskvartalet',
       component: () => import('../views/NyhetskvartaletView.vue'),
     },
     {
-      path: '/stops/fotografen/task/:taskId',
-      name: 'fotografen-task',
+      path: '/stops/nyhetskvartalet/:taskId',
+      name: 'nyhetskvartalet-task',
+      component: () => import('../views/NyhetskvartaletTaskView.vue'),
+    },
+    {
+      path: '/stops/fotografen',
+      name: 'fotografen',
       component: () => import('../views/FotografenView.vue'),
+    },
+    {
+      path: '/stops/fotografen/:taskId',
+      name: 'fotografen-task',
+      component: () => import('../views/FotografenTaskView.vue'),
     },
     {
       path: '/stops/:stopId',
@@ -134,6 +144,11 @@ const router = createRouter({
       path: '/achievements',
       name: 'achievements',
       component: () => import('../views/AchievementsView.vue'),
+    },
+    {
+      path: '/tasks',
+      name: 'tasks',
+      component: () => import('../views/TasksView.vue'),
     },
   ],
 })

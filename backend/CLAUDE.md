@@ -168,7 +168,7 @@ Generate report:
 | ----------- | ----------------------- | ------------------------------------ |
 | Unit        | JUnit 5 + Mockito       | Service logic isolated from DB       |
 | Controller  | `@WebMvcTest` + MockMvc | HTTP status codes and JSON structure |
-| Integration | Testcontainers + MySQL  | Triggers, stored procedures, real DB |
+| Integration | H2 in-memory database   | Repository and service integration   |
 
 ### File Structure
 
@@ -234,25 +234,28 @@ class MyControllerTest {
 - No auth → expect `401 Unauthorized`
 - Always assert `$.success` and at least one data field in JSON
 
-### Integration Tests (Testcontainers)
+### Integration Tests (H2 Database)
 
-**Always use Testcontainers with MySQL — never H2.**
-H2 does not support MySQL-specific features like stored procedures and triggers.
+**Use H2 in-memory database for all tests.**
+H2 is used with MySQL compatibility mode to support similar SQL syntax.
 
-```java
-@SpringBootTest
-@Testcontainers
-class MyIntegrationTest {
-  @Container
-  static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8");
-}
+Test configuration is in `src/test/resources/application-test.properties`:
+```properties
+spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.flyway.enabled=false
 ```
 
-Required for:
+**Note:** H2 does NOT support MySQL stored procedures and triggers. These are tested manually or verified through:
+- Unit tests of Java code that calls stored procedures
+- Manual integration testing against real MySQL
+- CI pipeline validation
 
-- Anything that calls `sp_submit_attempt`
-- Anything that depends on `trg_attempt_sync`, `trg_mystery_approved`, `trg_classroom_auto_instructor`
-- Flyway migrations
+Run tests with H2 profile:
+```bash
+./mvnw clean test -Dspring.profiles.active=test
+```
 
 ### Naming Convention
 
@@ -285,7 +288,8 @@ deleteClassroom_softDeletes_whenFound
 - All tests must be green before pushing
 - One assertion focus per `@Test` — don't test 5 things in one test
 - Tests must be independent — no shared mutable state between tests
-- Integration tests go in `integration/` and are run separately from unit tests
+- H2 is used for all automated tests (fast, no Docker required)
+- Manual testing against MySQL Docker container for stored procedure/trigger validation
 
 ---
 
