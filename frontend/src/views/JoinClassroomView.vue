@@ -2,9 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
-import { useMutation } from '@tanstack/vue-query'
-import { joinMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { joinMutation, getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import { useStudentStore } from '@/stores/StudentStore.ts'
+import { getClassroom } from '@/generated-client'
 
 const router = useRouter()
 const studentStore = useStudentStore()
@@ -13,9 +14,15 @@ const fieldError = ref('')
 
 const join = useMutation({
   ...joinMutation(),
-  onSuccess: (res) => {
+  onSuccess: async (res) => {
     const classroomId = res.data?.classroomId
-    if (classroomId) studentStore.setClassroomId(classroomId)
+    if (classroomId) {
+      const classroomRes = await getClassroom({ path: { id: classroomId } })
+      const institutionId = classroomRes.data?.data?.institutionId
+      if (institutionId) {
+        studentStore.setClassroom(classroomId, institutionId)
+      }
+    }
     router.push({ name: 'introduction' })
   },
   onError: (e: any) => {
