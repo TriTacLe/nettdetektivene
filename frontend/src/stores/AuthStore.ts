@@ -39,7 +39,7 @@ export const useAuthStore = defineStore(
         logout()
         return
       }
-      const response = await AuthService.refresh(refreshToken.value)
+      const response = await AuthService.refresh(refreshToken.value, token.value ?? undefined)
       token.value = response.token
       refreshToken.value = response.refreshToken
     }

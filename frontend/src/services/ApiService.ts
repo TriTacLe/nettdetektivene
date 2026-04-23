@@ -111,7 +111,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   }
 
   isRefreshing = true
-  const { refreshToken } = readSession()
+  const { refreshToken, token: expiredToken } = readSession()
 
   if (!refreshToken) {
     clearSession()
@@ -120,7 +120,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   }
 
   try {
-    const { data } = await apiClient.post<AuthTokens>('/auth/refresh', { refreshToken })
+    const { data } = await apiClient.post<AuthTokens>('/auth/refresh', { refreshToken, expiredToken })
     writeSessionTokens(data)
     flushQueue(null, data.token)
     original.headers = {
