@@ -8,7 +8,7 @@ import axios, {
 const SESSION_KEY = 'auth'
 
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
-  400: 'Ugyldig foresporsel',
+  400: 'Ugyldig forespørsel',
   401: 'Du er ikke innlogget',
   403: 'Du har ikke tilgang til denne ressursen',
   404: 'Ressursen ble ikke funnet',
@@ -42,6 +42,7 @@ function writeSessionTokens(tokens: AuthTokens): void {
     const current = readSession()
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({...current, ...tokens}))
   } catch {
+    // sessionStorage unavailable
   }
 }
 
