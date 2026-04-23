@@ -9,11 +9,6 @@ import { VueQueryPlugin } from '@tanstack/vue-query'
 import '@/lib/GeneratedClient'
 
 async function bootstrap() {
-  if (import.meta.env.DEV) {
-    const { worker } = await import('./mocks/browser')
-    await worker.start({ onUnhandledRequest: 'bypass' })
-  }
-
   const app = createApp(App)
   const pinia = createPinia()
   pinia.use(piniaPluginPersistedstate)

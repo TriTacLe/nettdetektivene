@@ -166,7 +166,7 @@ function goToNextTask() {
   if (stopId && stopStore.isAllComplete(stopId)) {
     router.push({ name: 'stop-finished', query: { stop: stopId } })
   } else if (stopId) {
-    router.push({ name: 'stop', params: { stopId } })
+    router.push(`/stops/${stopId}`)
   } else {
     router.push({ name: 'game-map' })
   }

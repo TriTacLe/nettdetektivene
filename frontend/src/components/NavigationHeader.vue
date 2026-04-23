@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-
 defineProps<{
   previous?: string
   title: string
   next?: string
 }>()
 
-const router = useRouter()
+const emit = defineEmits<{ back: [] }>()
 
-function goTo(route: string) {
-  router.push(route)
+function goTo() {
+  emit('back')
 }
 </script>
 
 <template>
   <header class="navigation-header">
-    <div v-if="previous" class="nav-previous" @click="goTo(previous!)">
+    <div v-if="previous" class="nav-previous" @click="goTo()">
       <button class="nav-button" aria-label="Go back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />

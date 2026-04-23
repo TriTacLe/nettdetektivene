@@ -1,7 +1,13 @@
-import apiClient from './ApiService'
-import type { ApiResponse, StopTaskDTO } from '@/types'
+import { fetchAllTasks } from '@/services/TaskService'
+import type { StopTaskDTO } from '@/types'
 
 export async function fetchStopTasks(stopId: string): Promise<StopTaskDTO[]> {
-  const { data } = await apiClient.get<ApiResponse<StopTaskDTO[]>>(`/stops/${stopId}/tasks`)
-  return data.data
+  const allTasks = await fetchAllTasks()
+  const filteredTasks = allTasks.filter(task => task.stopLocation === stopId)
+
+  return filteredTasks.map((task, index) => ({
+    taskId: index + 1,
+    title: task.title,
+    taskType: task.taskType,
+  }))
 }
