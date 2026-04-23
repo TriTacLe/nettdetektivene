@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/vue-query';
 
 import { client } from '../client.gen';
-import { addInstructor, approve, approveNameChange, countPassedTasksByStopLocation, createClassroom, createNotebook, createTask, deleteClassroom, deleteNotebook, deleteTask, feideLogin, getAchievement, getAchievementsByTrigger, getAllAchievements, getAllClassrooms, getAllClassroomsByInstitution, getAllInstitutions, getAllNotebooks, getAllTasks, getApprovedStudents, getAttemptsByClassroom, getAttemptsByUserAndTask, getClassroom, getClassroomLeaderboard, getClassroomsLeaderboardByInstitution, getClassroomTasks, getInstructors, getMyAchievements, getMyClassroom, getMyClassrooms, getMyNotebooks, getMyNotifications, getPendingNameChanges, getPendingStudents, getProfile, getProfileByFeideId, getStudents, getStudentScore, getTask, getUser, join, login, logout, markAsRead, type Options, refresh, register, rejectNameChange, remove, removeInstructor, submitAttempt, updateClassroom, updateClassroomTask, updateNotebook, updateProfile, updateTask, updateUser, updateUserById } from '../sdk.gen';
-import type { AddInstructorData, AddInstructorResponse, ApproveData, ApproveNameChangeData, ApproveNameChangeResponse, ApproveResponse, CountPassedTasksByStopLocationData, CountPassedTasksByStopLocationResponse, CreateClassroomData, CreateClassroomResponse, CreateNotebookData, CreateNotebookResponse, CreateTaskData, CreateTaskResponse, DeleteClassroomData, DeleteNotebookData, DeleteTaskData, FeideLoginData, FeideLoginError, FeideLoginResponse, GetAchievementData, GetAchievementResponse, GetAchievementsByTriggerData, GetAchievementsByTriggerResponse, GetAllAchievementsData, GetAllAchievementsResponse, GetAllClassroomsByInstitutionData, GetAllClassroomsByInstitutionResponse, GetAllClassroomsData, GetAllClassroomsResponse, GetAllInstitutionsData, GetAllInstitutionsResponse, GetAllNotebooksData, GetAllNotebooksResponse, GetAllTasksData, GetAllTasksResponse, GetApprovedStudentsData, GetApprovedStudentsResponse, GetAttemptsByClassroomData, GetAttemptsByClassroomResponse, GetAttemptsByUserAndTaskData, GetAttemptsByUserAndTaskResponse, GetClassroomData, GetClassroomLeaderboardData, GetClassroomLeaderboardResponse, GetClassroomResponse, GetClassroomsLeaderboardByInstitutionData, GetClassroomsLeaderboardByInstitutionResponse, GetClassroomTasksData, GetClassroomTasksResponse, GetInstructorsData, GetInstructorsResponse, GetMyAchievementsData, GetMyAchievementsResponse, GetMyClassroomData, GetMyClassroomResponse, GetMyClassroomsData, GetMyClassroomsResponse, GetMyNotebooksData, GetMyNotebooksResponse, GetMyNotificationsData, GetMyNotificationsResponse, GetPendingNameChangesData, GetPendingNameChangesResponse, GetPendingStudentsData, GetPendingStudentsResponse, GetProfileByFeideIdData, GetProfileByFeideIdResponse, GetProfileData, GetProfileResponse, GetStudentScoreData, GetStudentScoreResponse, GetStudentsData, GetStudentsResponse, GetTaskData, GetTaskResponse, GetUserData, GetUserError, GetUserResponse, JoinData, JoinResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutResponse, MarkAsReadData, MarkAsReadResponse, RefreshData, RefreshError, RefreshResponse, RegisterData, RegisterError, RegisterResponse, RejectNameChangeData, RejectNameChangeResponse, RemoveData, RemoveInstructorData, SubmitAttemptData, SubmitAttemptResponse, UpdateClassroomData, UpdateClassroomResponse, UpdateClassroomTaskData, UpdateClassroomTaskResponse, UpdateNotebookData, UpdateNotebookResponse, UpdateProfileData, UpdateProfileResponse, UpdateTaskData, UpdateTaskResponse, UpdateUserByIdData, UpdateUserByIdError, UpdateUserByIdResponse, UpdateUserData, UpdateUserError, UpdateUserResponse } from '../types.gen';
+import { addInstructor, approve, approveNameChange, countPassedTasksByStopLocation, createClassroom, createNotebook, createTask, deleteClassroom, deleteNotebook, deleteTask, feideLogin, getAchievement, getAchievementsByTrigger, getAllAchievements, getAllClassrooms, getAllClassroomsByInstitution, getAllInstitutions, getAllNotebooks, getAllTasks, getApprovedStudents, getAttemptsByClassroom, getAttemptsByUserAndTask, getClassroom, getClassroomLeaderboard, getClassroomTasks, getInstructors, getMyClassrooms, getMyNotebooks, getMyNotifications, getPendingNameChanges, getPendingStudents, getProfile, getProfileByFeideId, getStudents, getStudentScore, getTask, getUser, join, login, logout, markAsRead, type Options, refresh, register, rejectNameChange, remove, removeInstructor, submitAttempt, updateClassroom, updateClassroomTask, updateNotebook, updateProfile, updateTask, updateUser, updateUserById } from '../sdk.gen';
+import type { AddInstructorData, AddInstructorResponse, ApproveData, ApproveNameChangeData, ApproveNameChangeResponse, ApproveResponse, CountPassedTasksByStopLocationData, CountPassedTasksByStopLocationResponse, CreateClassroomData, CreateClassroomResponse, CreateNotebookData, CreateNotebookResponse, CreateTaskData, CreateTaskResponse, DeleteClassroomData, DeleteNotebookData, DeleteTaskData, FeideLoginData, FeideLoginError, FeideLoginResponse, GetAchievementData, GetAchievementResponse, GetAchievementsByTriggerData, GetAchievementsByTriggerResponse, GetAllAchievementsData, GetAllAchievementsResponse, GetAllClassroomsByInstitutionData, GetAllClassroomsByInstitutionResponse, GetAllClassroomsData, GetAllClassroomsResponse, GetAllInstitutionsData, GetAllInstitutionsResponse, GetAllNotebooksData, GetAllNotebooksResponse, GetAllTasksData, GetAllTasksResponse, GetApprovedStudentsData, GetApprovedStudentsResponse, GetAttemptsByClassroomData, GetAttemptsByClassroomResponse, GetAttemptsByUserAndTaskData, GetAttemptsByUserAndTaskResponse, GetClassroomData, GetClassroomLeaderboardData, GetClassroomLeaderboardResponse, GetClassroomResponse, GetClassroomTasksData, GetClassroomTasksResponse, GetInstructorsData, GetInstructorsResponse, GetMyClassroomsData, GetMyClassroomsResponse, GetMyNotebooksData, GetMyNotebooksResponse, GetMyNotificationsData, GetMyNotificationsResponse, GetPendingNameChangesData, GetPendingNameChangesResponse, GetPendingStudentsData, GetPendingStudentsResponse, GetProfileByFeideIdData, GetProfileByFeideIdResponse, GetProfileData, GetProfileResponse, GetStudentScoreData, GetStudentScoreResponse, GetStudentsData, GetStudentsResponse, GetTaskData, GetTaskResponse, GetUserData, GetUserError, GetUserResponse, JoinData, JoinResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutResponse, MarkAsReadData, MarkAsReadResponse, RefreshData, RefreshError, RefreshResponse, RegisterData, RegisterError, RegisterResponse, RejectNameChangeData, RejectNameChangeResponse, RemoveData, RemoveInstructorData, SubmitAttemptData, SubmitAttemptResponse, UpdateClassroomData, UpdateClassroomResponse, UpdateClassroomTaskData, UpdateClassroomTaskResponse, UpdateNotebookData, UpdateNotebookResponse, UpdateProfileData, UpdateProfileResponse, UpdateTaskData, UpdateTaskResponse, UpdateUserByIdData, UpdateUserByIdError, UpdateUserByIdResponse, UpdateUserData, UpdateUserError, UpdateUserResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -661,24 +661,6 @@ export const getAllInstitutionsOptions = (options?: Options<GetAllInstitutionsDa
     queryKey: getAllInstitutionsQueryKey(options)
 });
 
-export const getClassroomsLeaderboardByInstitutionQueryKey = (options: Options<GetClassroomsLeaderboardByInstitutionData>) => createQueryKey('getClassroomsLeaderboardByInstitution', options);
-
-/**
- * Get all classrooms ranked by total score
- */
-export const getClassroomsLeaderboardByInstitutionOptions = (options: Options<GetClassroomsLeaderboardByInstitutionData>) => queryOptions<GetClassroomsLeaderboardByInstitutionResponse, DefaultError, GetClassroomsLeaderboardByInstitutionResponse, ReturnType<typeof getClassroomsLeaderboardByInstitutionQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getClassroomsLeaderboardByInstitution({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getClassroomsLeaderboardByInstitutionQueryKey(options)
-});
-
 export const getClassroomTasksQueryKey = (options: Options<GetClassroomTasksData>) => createQueryKey('getClassroomTasks', options);
 
 /**
@@ -877,24 +859,6 @@ export const getMyClassroomsOptions = (options?: Options<GetMyClassroomsData>) =
     queryKey: getMyClassroomsQueryKey(options)
 });
 
-export const getMyClassroomQueryKey = (options?: Options<GetMyClassroomData>) => createQueryKey('getMyClassroom', options);
-
-/**
- * Get the classroom the authenticated student belongs to
- */
-export const getMyClassroomOptions = (options?: Options<GetMyClassroomData>) => queryOptions<GetMyClassroomResponse, DefaultError, GetMyClassroomResponse, ReturnType<typeof getMyClassroomQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getMyClassroom({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getMyClassroomQueryKey(options)
-});
-
 export const getAllClassroomsByInstitutionQueryKey = (options: Options<GetAllClassroomsByInstitutionData>) => createQueryKey('getAllClassroomsByInstitution', options);
 
 /**
@@ -983,21 +947,6 @@ export const getAchievementOptions = (options: Options<GetAchievementData>) => q
         return data;
     },
     queryKey: getAchievementQueryKey(options)
-});
-
-export const getMyAchievementsQueryKey = (options?: Options<GetMyAchievementsData>) => createQueryKey('getMyAchievements', options);
-
-export const getMyAchievementsOptions = (options?: Options<GetMyAchievementsData>) => queryOptions<GetMyAchievementsResponse, DefaultError, GetMyAchievementsResponse, ReturnType<typeof getMyAchievementsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getMyAchievements({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getMyAchievementsQueryKey(options)
 });
 
 export const getAchievementsByTriggerQueryKey = (options: Options<GetAchievementsByTriggerData>) => createQueryKey('getAchievementsByTrigger', options);

@@ -26,9 +26,9 @@ const menuItems = [
     route: '',
   },
   {
-    title: 'Varslinger',
+    title: 'Varsler',
     subtitle: 'Meldinger fra klassen',
-    route: 'teacher-notifications',
+    route: 'notifications',
   },
   {
     title: 'Ukens Mysterium',
@@ -63,7 +63,7 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
     showJoinCodeModal.value = true
     return
   }
-  if (item.route === 'teacher-notifiactions') {
+  if (item.route === 'notifications') {
     router.push({ name: 'teacher-notifications', query: { classroomId } })
     return
   }

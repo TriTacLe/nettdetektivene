@@ -1,23 +1,107 @@
 <script setup lang="ts">
-import { computed, onMounted, type Component } from 'vue'
+import { ref, computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { CheckCircle, Trophy, Clock, Search, AlertTriangle } from 'lucide-vue-next'
 import SceneComponent from '@/components/SceneComponent.vue'
-import { useNotificationStore } from '@/stores/NotificationStore'
+import {
+  getMyNotificationsOptions,
+  getMyNotificationsQueryKey,
+  markAsReadMutation,
+} from '@/generated-client/@tanstack/vue-query.gen'
 import { NotificationType } from '@/types'
+import type { NotificationResponseDto } from '@/generated-client/types.gen'
 
 const route = useRoute()
-const store = useNotificationStore()
+const queryClient = useQueryClient()
 
 const classroomId = computed(() => route.query.classroomId as string | undefined)
-
 const backRoute = computed(() =>
   classroomId.value ? `/classroom/${classroomId.value}` : '/teacher-home'
 )
 
-onMounted(async () => {
-  await store.fetchNotifications(classroomId.value)
+const REF_TYPE_MAP: Record<string, NotificationType> = {
+  mystery_submission: NotificationType.MYSTERY_SUBMITTED,
+  stop_completed: NotificationType.STOP_COMPLETED,
+  game_completed: NotificationType.CLASS_COMPLETED_GAME,
+  stuck: NotificationType.STUCK,
+  inappropriate_message: NotificationType.INAPPROPRIATE_MESSAGE,
+  inappropriate_username: NotificationType.INAPPROPRIATE_USERNAME,
+}
+
+const activeTypeFilter = ref<NotificationType | 'INAPPROPRIATE' | 'COMPLETED' | null>(null)
+const activeClassroomFilter = ref<string | null>(null)
+const currentPage = ref(1)
+const pageSize = 10
+
+const { data, isLoading, error } = useQuery(getMyNotificationsOptions())
+
+const markRead = useMutation({
+  ...markAsReadMutation(),
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: getMyNotificationsQueryKey() }),
 })
+
+const notifications = computed(() =>
+  (data.value?.data ?? []).map((raw: NotificationResponseDto) => ({
+    ...raw,
+    id: raw.id ?? '',
+    classroomId: raw.classroomId ?? '',
+    msg: raw.msg ?? '',
+    createdAt: raw.createdAt ?? '',
+    isRead: raw.isRead ?? false,
+    type: REF_TYPE_MAP[raw.refType ?? ''] ?? NotificationType.MYSTERY_SUBMITTED,
+  }))
+)
+
+const availableClassrooms = computed(() => {
+  const seen = new Set<string>()
+  return notifications.value
+    .filter((n) => {
+      if (seen.has(n.classroomId)) return false
+      seen.add(n.classroomId)
+      return true
+    })
+    .map((n) => ({ id: n.classroomId }))
+})
+
+const allFiltered = computed(() => {
+  let result = notifications.value
+  if (classroomId.value) result = result.filter((n) => n.classroomId === classroomId.value)
+  if (activeClassroomFilter.value) result = result.filter((n) => n.classroomId === activeClassroomFilter.value)
+  if (activeTypeFilter.value === 'COMPLETED') {
+    result = result.filter((n) =>
+      n.type === NotificationType.STOP_COMPLETED || n.type === NotificationType.CLASS_COMPLETED_GAME
+    )
+  } else if (activeTypeFilter.value === 'INAPPROPRIATE') {
+    result = result.filter((n) =>
+      n.type === NotificationType.INAPPROPRIATE_MESSAGE || n.type === NotificationType.INAPPROPRIATE_USERNAME
+    )
+  } else if (activeTypeFilter.value) {
+    result = result.filter((n) => n.type === activeTypeFilter.value)
+  }
+  return result
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(allFiltered.value.length / pageSize)))
+
+const filteredNotifications = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return allFiltered.value.slice(start, start + pageSize)
+})
+
+function setTypeFilter(type: NotificationType | 'INAPPROPRIATE' | 'COMPLETED' | null) {
+  activeTypeFilter.value = type
+  currentPage.value = 1
+}
+
+function setClassroomFilter(id: string | null) {
+  activeClassroomFilter.value = id
+  currentPage.value = 1
+}
+
+function setPage(page: number) {
+  currentPage.value = page
+}
 
 interface NotificationStyle {
   icon: Component
@@ -89,8 +173,8 @@ function formatTime(iso: string): string {
 
       <div class="flex gap-3 flex-wrap mb-4 mt-2">
         <select
-          @change="store.setTypeFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value as any)"
-          :value="store.activeTypeFilter ?? 'all'"
+          @change="setTypeFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value as any)"
+          :value="activeTypeFilter ?? 'all'"
           class="text-sm px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm"
         >
           <option value="all" class="text-gray-900">Alle varsler</option>
@@ -102,30 +186,30 @@ function formatTime(iso: string): string {
 
         <select
           v-if="!classroomId"
-          @change="store.setClassroomFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value)"
-          :value="store.activeClassroomFilter ?? 'all'"
+          @change="setClassroomFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value)"
+          :value="activeClassroomFilter ?? 'all'"
           class="text-sm px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm"
         >
           <option value="all" class="text-gray-900">Alle klasser</option>
-          <option v-for="classroom in store.availableClassrooms" :key="classroom.id" :value="classroom.id" class="text-gray-900">
-            {{ classroom.name }}
+          <option v-for="classroom in availableClassrooms" :key="classroom.id" :value="classroom.id" class="text-gray-900">
+            {{ classroom.id }}
           </option>
         </select>
       </div>
 
-      <div v-if="store.isLoading" class="text-white text-center py-16 text-lg">
+      <div v-if="isLoading" class="text-white text-center py-16 text-lg">
         Laster varsler...
       </div>
 
       <div
-        v-else-if="store.error"
+        v-else-if="error"
         class="bg-white rounded-2xl shadow px-5 py-4 text-red-700 font-medium"
       >
-        {{ store.error }}
+        Kunne ikke hente varsler
       </div>
 
       <div
-        v-else-if="store.filteredNotifications.length === 0"
+        v-else-if="filteredNotifications.length === 0"
         class="text-white/80 text-center py-16 text-lg"
       >
         Ingen varsler å vise.
@@ -133,7 +217,7 @@ function formatTime(iso: string): string {
 
       <ul v-else class="flex flex-col gap-3">
         <li
-          v-for="notification in store.filteredNotifications"
+          v-for="notification in filteredNotifications"
           :key="notification.id"
           :class="[
             TYPE_STYLES[notification.type].border,
@@ -152,17 +236,8 @@ function formatTime(iso: string): string {
 
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-gray-900 text-sm leading-tight">
-                {{ notification.studentName || notification.classroomName }}
-              </span>
               <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                 {{ TYPE_STYLES[notification.type].label }}
-              </span>
-              <span
-                v-if="!classroomId"
-                class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-200"
-              >
-                {{ notification.classroomName }}
               </span>
               <span
                 v-if="!notification.isRead"
@@ -177,7 +252,7 @@ function formatTime(iso: string): string {
 
           <button
             v-if="!notification.isRead"
-            @click.stop="store.markAsRead(notification.id)"
+            @click.stop="markRead.mutate({ path: { id: notification.id } })"
             style="all: unset; cursor: pointer;"
             class="text-[10px] leading-none text-gray-400 hover:text-gray-600 shrink-0 mt-0.5 transition"
           >
@@ -186,24 +261,23 @@ function formatTime(iso: string): string {
         </li>
       </ul>
 
-      <div v-if="store.totalPages > 1" class="flex items-center justify-center gap-3 mt-6 bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 w-fit mx-auto">
+      <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 mt-6 bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 w-fit mx-auto">
         <button
-          :disabled="store.currentPage === 1"
-          class="text-white font-bold text-base transition disabled:opacity-30 disabled:cursor-not-allowed hover:text-white/70"
+          :disabled="currentPage === 1"
           style="all: unset; cursor: pointer; font-weight: bold; color: white; font-size: 1rem;"
-          :style="store.currentPage === 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
-          @click="store.setPage(store.currentPage - 1)"
+          :style="currentPage === 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+          @click="setPage(currentPage - 1)"
         >
           ←
         </button>
         <span class="text-white text-sm font-medium px-3">
-          Side {{ store.currentPage }} av {{ store.totalPages }}
+          Side {{ currentPage }} av {{ totalPages }}
         </span>
         <button
-          :disabled="store.currentPage === store.totalPages"
+          :disabled="currentPage === totalPages"
           style="all: unset; cursor: pointer; font-weight: bold; color: white; font-size: 1rem;"
-          :style="store.currentPage === store.totalPages ? 'opacity: 0.3; cursor: not-allowed;' : ''"
-          @click="store.setPage(store.currentPage + 1)"
+          :style="currentPage === totalPages ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+          @click="setPage(currentPage + 1)"
         >
           →
         </button>

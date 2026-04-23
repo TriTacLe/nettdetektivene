@@ -138,7 +138,7 @@ const router = createRouter({
     {
       path: '/teacher-notifications',
       name: 'teacher-notifications',
-      component: () => import('../views/NotificationView.vue'),
+      component: () => import('../views/teacher/NotificationView.vue'),
     },
     {
       path: '/achievements',
