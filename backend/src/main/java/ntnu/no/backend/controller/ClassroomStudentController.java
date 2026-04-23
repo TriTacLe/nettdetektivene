@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
 import ntnu.no.backend.dto.classroom.JoinClassroomRequestDTO;
 import ntnu.no.backend.model.auth.User;
@@ -40,6 +41,21 @@ import java.util.UUID;
 public class ClassroomStudentController {
 
   private final ClassroomStudentService classroomStudentService;
+
+
+  /**
+   * Gets the classroom the authenticated student belongs to.
+   *
+   * @param user the authenticated student
+   * @return 200 OK with the classroom
+   */
+  @GetMapping("/me")
+  @Operation(summary = "Get the classroom the authenticated student belongs to")
+  @PreAuthorize("hasAuthority('student')")
+  public ResponseEntity<ApiResponse<ClassroomResponseDTO>> getMyClassroom(
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomStudentService.getMyClassroom(user)));
+  }
 
   /**
    * Joins the authenticated student to a classroom via join code.
