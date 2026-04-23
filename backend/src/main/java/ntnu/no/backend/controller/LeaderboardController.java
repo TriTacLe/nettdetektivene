@@ -23,16 +23,16 @@ import java.util.UUID;
  * @since 0.1
  */
 @RestController
-@RequestMapping("/api/v1/classrooms")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "Leaderboard", description = "Endpoints for classroom leaderboards and student scores")
 public class LeaderboardController {
   private final LeaderboardService leaderboardService;
 
-  @GetMapping("/leaderboard")
+  @GetMapping("/institutions/{institutionId}/classrooms/leaderboard")
   @Operation(summary = "Get all classrooms ranked by total score")
-  public ResponseEntity<ApiResponse<List<ClassroomLeaderboardEntryResponseDTO>>> getClassroomsLeaderboard(){
-    return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomsLeaderboard()));
+  public ResponseEntity<ApiResponse<List<ClassroomLeaderboardEntryResponseDTO>>> getClassroomsLeaderboardByInstitution(@PathVariable UUID institutionId){
+    return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomsLeaderboard(institutionId)));
   }
 
   /**
@@ -41,7 +41,7 @@ public class LeaderboardController {
    * @param classroomId the classroom to fetch the leaderboard for
    * @return 200 with ranked list of {@link LeaderboardEntryResponseDTO}
    */
-  @GetMapping("/{classroomId}/leaderboard")
+  @GetMapping("/classrooms/{classroomId}/leaderboard")
   @Operation(summary = "Get classroom leaderboard ranked by total score")
   public ResponseEntity<ApiResponse<List<LeaderboardEntryResponseDTO>>> getClassroomLeaderboard(@PathVariable UUID classroomId){
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomLeaderboard(classroomId)));
@@ -54,13 +54,13 @@ public class LeaderboardController {
    * @param userId      the student whose scores to retrieve
    * @return 200 with list of {@link TaskBestScoreResponseDTO}
    */
-  @GetMapping("/{classroomId}/leaderboard/{userId}")
+  @GetMapping("/classrooms/{classroomId}/leaderboard/{userId}")
   @Operation(summary = "Get a student's best scores per task within a classroom")
   public ResponseEntity<ApiResponse<List<TaskBestScoreResponseDTO>>> getStudentScore(@PathVariable UUID classroomId, @PathVariable UUID userId){
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getStudentScore(classroomId, userId)));
   }
 
-  @GetMapping("/{classroomId}/leaderboard/{userId}/passed-count")
+  @GetMapping("/classrooms/{classroomId}/leaderboard/{userId}/passed-count")
   @Operation(summary = "Get how many tasks a student has passed in a stop location")
   public ResponseEntity<ApiResponse<Long>> countPassedTasksByStopLocation(
       @PathVariable UUID classroomId,
