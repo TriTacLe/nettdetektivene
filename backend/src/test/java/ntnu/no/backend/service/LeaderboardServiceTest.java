@@ -1,5 +1,6 @@
 package ntnu.no.backend.service;
 
+import ntnu.no.backend.dto.task.ClassroomLeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.LeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.model.Classroom;
@@ -7,6 +8,7 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.TaskBestScoreId;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +28,7 @@ import static org.mockito.Mockito.when;
  * Verifies ranking logic and filtering without hitting the database.
  *
  * @author tri, aninesst
- * @version 0.2
+ * @version 0.3
  * @since 0.1
  */
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +36,9 @@ class LeaderboardServiceTest {
 
   @Mock
   TaskBestScoreRepository taskBestScoreRepository;
+
+  @Mock
+  ClassroomRepository classroomRepository;
 
   @InjectMocks
   LeaderboardService leaderboardService;
@@ -157,5 +162,45 @@ class LeaderboardServiceTest {
         classroomId, userId, stopLocation);
 
     assertThat(result).isEqualTo(7L);
+  }
+
+  /**
+   * Verifies that classrooms are ranked correctly by total score in descending order.
+   */
+  @Test
+  void getClassroomsLeaderboard_returnsRankedList() {
+    Classroom classroom1 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7A").build();
+    Classroom classroom2 = Classroom.builder().id(UUID.randomUUID()).title("Flatåsen 7C").build();
+    User user = User.builder().id(UUID.randomUUID()).displayName("Tri").build();
+    Task task = Task.builder().id(UUID.randomUUID()).title("Ta buss").build();
+
+    TaskBestScore score1 = buildScore(user, task, classroom1, 30);
+    TaskBestScore score2 = buildScore(user, task, classroom2, 80);
+
+    when(taskBestScoreRepository.findAll()).thenReturn(List.of(score1, score2));
+    when(classroomRepository.findAllByDeletedAtIsNull()).thenReturn(List.of(classroom1, classroom2));
+
+    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard();
+
+    assertThat(result).hasSize(2);
+    assertThat(result.getFirst().title()).isEqualTo("Flatåsen 7C");
+    assertThat(result.getFirst().totalScore()).isEqualTo(80);
+    assertThat(result.getFirst().rank()).isEqualTo(1);
+    assertThat(result.get(1).title()).isEqualTo("Flatåsen 7A");
+    assertThat(result.get(1).totalScore()).isEqualTo(30);
+    assertThat(result.get(1).rank()).isEqualTo(2);
+  }
+
+  /**
+   * Verifies that an empty list is returned when no scores exist across any classroom.
+   */
+  @Test
+  void getClassroomsLeaderboard_returnsEmpty_whenNoScores() {
+    when(taskBestScoreRepository.findAll()).thenReturn(List.of());
+    when(classroomRepository.findAllByDeletedAtIsNull()).thenReturn(List.of());
+
+    List<ClassroomLeaderboardEntryResponseDTO> result = leaderboardService.getClassroomsLeaderboard();
+
+    assertThat(result).isEmpty();
   }
 }

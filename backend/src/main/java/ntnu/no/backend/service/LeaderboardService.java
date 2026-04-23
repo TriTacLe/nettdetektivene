@@ -2,11 +2,14 @@ package ntnu.no.backend.service;
 
 
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.task.ClassroomLeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.LeaderboardEntryResponseDTO;
 import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.mapper.TaskBestScoreMapper;
+import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Service for reading leaderboard data within a classroom.
@@ -30,6 +37,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LeaderboardService {
   private final TaskBestScoreRepository taskBestScoreRepository;
+  private final ClassroomRepository classroomRepository;
 
   /**
    * Returns all students in a classroom ranked by their total score,
@@ -45,7 +53,7 @@ public class LeaderboardService {
     // group by user, sum their best score across all tasks
     Map<User, Integer> totalByUser = scores.stream().collect(Collectors.groupingBy(TaskBestScore::getUser, Collectors.summingInt(TaskBestScore::getBestScore)));
 
-    // sort desc  
+    // sort desc
     List<Map.Entry<User, Integer>> sorted = totalByUser.entrySet().stream().sorted(Map.Entry.<User, Integer>comparingByValue().reversed()).toList();
 
     // assign rank
@@ -55,6 +63,32 @@ public class LeaderboardService {
       result.add(new LeaderboardEntryResponseDTO(user.getId(),user.getDisplayName(), sorted.get(i).getValue(),i+1));
     }
 
+    return result;
+  }
+
+  /**
+   * Returns all classrooms ranked by their total score across all students.
+   *
+   * @return ranked list of {@link ClassroomLeaderboardEntryResponseDTO}, sorted descending by total score
+   */
+  @Transactional(readOnly = true)
+  public List<ClassroomLeaderboardEntryResponseDTO> getClassroomsLeaderboard(){
+    Map<UUID, Integer> scoreByClassroom = taskBestScoreRepository.findAll().stream()
+        .collect(groupingBy(tbs -> tbs.getClassroom().getId(), summingInt(TaskBestScore::getBestScore)));
+
+    Map<UUID, String> titlesByClassroom = classroomRepository.findAllByDeletedAtIsNull().stream()
+        .collect(toMap(Classroom::getId, Classroom::getTitle));
+
+    var ranked = scoreByClassroom.entrySet().stream()
+        .filter(e -> titlesByClassroom.containsKey(e.getKey()))
+        .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+        .toList();
+
+    var result = new ArrayList<ClassroomLeaderboardEntryResponseDTO>();
+    for (int i = 0; i < ranked.size(); i++) {
+      var entry = ranked.get(i);
+      result.add(new ClassroomLeaderboardEntryResponseDTO(entry.getKey(), titlesByClassroom.get(entry.getKey()), entry.getValue(), i + 1));
+    }
     return result;
   }
 
