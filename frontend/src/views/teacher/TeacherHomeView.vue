@@ -11,8 +11,8 @@ const menuItems = [
     route: 'classroom-overview',
   },
   {
-    title: 'Varslinger',
-    subtitle: 'Se alle varslinger',
+    title: 'Varsler',
+    subtitle: 'Se alle varsler',
     route: 'teacher-notifications',
   },
   {
