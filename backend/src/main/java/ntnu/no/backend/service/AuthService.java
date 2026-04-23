@@ -54,6 +54,9 @@ public class AuthService {
     if (userRepository.existsByEmail(email)) {
       throw new EmailAlreadyExistsException(email);
     }
+    if (dto.getDisplayName() == null || dto.getDisplayName().isBlank()) {
+      dto.setDisplayName(email.split("@")[0]);
+    }
     Role role = resolveAdminRole(dto.getRole());
     User user = createUser(dto, email, role);
     createLocalCredential(user, dto.getPassword());

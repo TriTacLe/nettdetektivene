@@ -125,6 +125,9 @@ public class FeideAuthService {
     if (userRepository.existsByEmail(email)) {
       throw new EmailAlreadyExistsException(email);
     }
+    if (dto.getDisplayName() == null || dto.getDisplayName().isBlank()) {
+      dto.setDisplayName(email.split("@")[0]);
+    }
     String roleName = resolveRole(dto.getAffiliation());
     User user = createUser(dto, roleName);
     createLocalCredential(user, dto.getPassword());
