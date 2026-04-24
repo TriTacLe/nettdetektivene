@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskUpdateRequestDTO;
 import ntnu.no.backend.model.auth.User;
@@ -111,6 +112,16 @@ public class ClassroomController {
       @PathVariable UUID classroomId,
       @AuthenticationPrincipal User currentUser) {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getUnlockedClassroomTasks(classroomId, currentUser.getId())));
+  }
+
+  @PostMapping("/{classroomId}/tasks")
+  @Operation(summary = "Assign a task to a classroom")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<ClassroomTaskResponseDTO>> createClassroomTask(
+      @PathVariable UUID classroomId,
+      @RequestBody @Valid ClassroomTaskCreateRequestDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(ApiResponse.ok(classroomService.createClassroomTask(classroomId, dto)));
   }
 
   @PostMapping("/{classroomId}/tasks/{taskId}/unlock")

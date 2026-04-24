@@ -130,6 +130,24 @@ class ClassroomControllerTest {
 
   @Test
   @WithMockUser(authorities = "instructor")
+  void createClassroomTask_returnsCreated() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID taskId = UUID.randomUUID();
+    when(classroomService.createClassroomTask(any(), any()))
+      .thenReturn(ClassroomTestFactory.classroomTaskResponseDTO(classroomId, taskId));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/tasks")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.classroomTaskCreateRequestDTO(taskId)))
+        .with(csrf()))
+      .andExpect(status().isCreated())
+      .andExpect(jsonPath("$.data.classroomId").value(classroomId.toString()))
+      .andExpect(jsonPath("$.data.taskId").value(taskId.toString()))
+      .andExpect(jsonPath("$.data.task.title").value("Spot the phishing email"));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
   void deleteClassroom_returnsNoContent() throws Exception {
     UUID id = UUID.randomUUID();
     doNothing().when(classroomService).deleteClassroom(id);

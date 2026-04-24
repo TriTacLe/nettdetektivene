@@ -87,6 +87,23 @@ async function getClassroomTasks(classroomId: string, activeOnly: boolean = true
   return data.data
 }
 
+async function assignTaskToClassroom(
+  classroomId: string,
+  taskId: string,
+  sortOrder?: number,
+  isActive: boolean = true
+): Promise<ClassroomTaskResponseDTO> {
+  const { data } = await apiClient.post<ApiResponse<ClassroomTaskResponseDTO>>(
+    `/classrooms/${classroomId}/tasks`,
+    {
+      taskId,
+      sortOrder,
+      isActive,
+    }
+  )
+  return data.data
+}
+
 export default {
   getMyClassrooms,
   getAllClassrooms,
@@ -99,4 +116,5 @@ export default {
   removeStudent,
   getUnlockedTasks,
   getClassroomTasks,
+  assignTaskToClassroom,
 }

@@ -23,7 +23,7 @@ const menuItems = [
   {
     title: 'Oversikt Oppgaver',
     subtitle: 'Oppgaver i spillet',
-    route: '',
+    route: 'classroom-tasks',
   },
   {
     title: 'Varsler',

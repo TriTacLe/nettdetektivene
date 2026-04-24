@@ -9,6 +9,7 @@ import ntnu.no.backend.dto.task.TaskResponseDTO;
 import ntnu.no.backend.service.TaskService;
 import ntnu.no.backend.shared.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -67,11 +70,27 @@ public class TaskController {
    * @param dto the request body
    * @return 201 Created with the created task
    */
-  @PostMapping
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   @Operation(summary = "Create a new task")
   @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<TaskResponseDTO>> createTask(@RequestBody @Valid TaskRequestDTO dto) {
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(taskService.createTask(dto)));
+  }
+
+  /**
+   * Creates a new task from multipart form data with optional images.
+   *
+   * @param dto    the structured task payload
+   * @param images uploaded images referenced in {@code content} via {@code upload://filename.ext}
+   * @return 201 Created with the created task
+   */
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Create a new task with optional image uploads")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<TaskResponseDTO>> createTaskMultipart(
+      @RequestPart("task") @Valid TaskRequestDTO dto,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(taskService.createTask(dto, images)));
   }
 
   /**
@@ -81,13 +100,31 @@ public class TaskController {
    * @param dto the request body with updated values
    * @return 200 OK with the updated task
    */
-  @PatchMapping("/{id}")
+  @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
   @Operation(summary = "Update a task")
   @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
   public ResponseEntity<ApiResponse<TaskResponseDTO>> updateTask(
       @PathVariable UUID id,
       @RequestBody @Valid TaskRequestDTO dto) {
     return ResponseEntity.ok(ApiResponse.ok(taskService.updateTask(dto, id)));
+  }
+
+  /**
+   * Updates an existing task from multipart form data with optional images.
+   *
+   * @param id     the task ID
+   * @param dto    the structured task payload
+   * @param images uploaded images referenced in {@code content} via {@code upload://filename.ext}
+   * @return 200 OK with the updated task
+   */
+  @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Update a task with optional image uploads")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<TaskResponseDTO>> updateTaskMultipart(
+      @PathVariable UUID id,
+      @RequestPart("task") @Valid TaskRequestDTO dto,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+    return ResponseEntity.ok(ApiResponse.ok(taskService.updateTask(dto, id, images)));
   }
 
   /**

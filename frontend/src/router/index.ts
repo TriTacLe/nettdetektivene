@@ -96,6 +96,16 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/classroom/:id/tasks',
+      name: 'classroom-tasks',
+      component: () => import('../views/teacher/ClassroomTasksView.vue'),
+    },
+    {
+      path: '/classroom/:id/tasks/new',
+      name: 'classroom-task-create',
+      component: () => import('../views/teacher/CreateTaskView.vue'),
+    },
+    {
       path: '/classroom/:id/students',
       name: 'classroom-students',
       component: () => import('../views/teacher/ClassroomStudentsView.vue'),

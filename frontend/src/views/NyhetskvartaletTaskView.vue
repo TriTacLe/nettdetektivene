@@ -15,6 +15,7 @@ const taskId = route.params.taskId as string
 const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
+const submitting = ref(false)
 
 onMounted(async () => {
   try {
@@ -38,17 +39,26 @@ const taskTip = computed(() => task.value?.content?.news?.hint)
 
 async function submitAttempt(score: number) {
   try {
+    submitting.value = true
     const classroomId = await fetchClassroomId()
     if (classroomId) {
       await TaskAttemptService.submitAttempt(taskId, classroomId, score)
+      return true
     }
+    error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
+    return false
   } catch (err) {
     console.error('Failed to submit attempt:', err)
+    error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
+    return false
+  } finally {
+    submitting.value = false
   }
 }
 
 async function onComplete() {
-  await submitAttempt(100)
+  const wasSaved = await submitAttempt(100)
+  if (!wasSaved) return
   router.push({
     name: 'task-finished',
     query: { stop: 'nyhetskvartalet', taskId },
@@ -56,7 +66,8 @@ async function onComplete() {
 }
 
 async function onFailed(reason: string) {
-  await submitAttempt(0)
+  const wasSaved = await submitAttempt(0)
+  if (!wasSaved) return
   router.push({
     name: 'task-failed',
     query: { stop: 'nyhetskvartalet', taskId, reason },
@@ -73,14 +84,16 @@ async function onFailed(reason: string) {
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
     <div v-else-if="!challenge" class="state-msg state-msg--error">Oppgaven mangler innhold.</div>
-    <NyhetskvartaletComponent
-      v-else
-      :challenge="challenge"
-      :question="taskQuestion"
-      :tip="taskTip"
-      @complete="onComplete"
-      @failed="onFailed"
-    />
+    <template v-else>
+      <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
+      <NyhetskvartaletComponent
+        :challenge="challenge"
+        :question="taskQuestion"
+        :tip="taskTip"
+        @complete="onComplete"
+        @failed="onFailed"
+      />
+    </template>
   </SceneComponent>
 </template>
 
@@ -97,4 +110,17 @@ async function onFailed(reason: string) {
 }
 
 .state-msg--error { color: #fca5a5; }
+
+.submit-overlay {
+  position: absolute;
+  top: 5.5rem;
+  right: 1rem;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
 </style>

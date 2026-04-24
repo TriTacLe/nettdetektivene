@@ -28,6 +28,15 @@ public class TaskTestFactory {
       .build();
   }
 
+  public static TaskRequestDTO requestDTOWithUploadReference() {
+    return TaskRequestDTO.builder()
+      .title("Spot the phishing email")
+      .taskType(TaskType.NEWS)
+      .difficulty(1)
+      .content("{\"question\":\"Which article is real?\",\"articles\":[{\"imagePath\":\"upload://real-article-1.png\",\"isReal\":true}]}")
+      .build();
+  }
+
   public static TaskResponseDTO responseDTO(UUID id) {
     return new TaskResponseDTO(
       id, "Spot the phishing email", TaskType.EMAIL,

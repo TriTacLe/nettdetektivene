@@ -2,11 +2,20 @@ package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.model.Classroom;
+import ntnu.no.backend.model.ClassroomTask;
+import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskRepository;
+import ntnu.no.backend.repository.UserRepository;
+import ntnu.no.backend.repository.UserTaskUnlockedRepository;
 import ntnu.no.backend.util.ClassroomTestFactory;
+import ntnu.no.backend.util.TaskTestFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +48,21 @@ class ClassroomServiceTest {
 
   @Mock
   private InstitutionRepository institutionRepository;
+
+  @Mock
+  private ClassroomTaskRepository classroomTaskRepository;
+
+  @Mock
+  private UserTaskUnlockedRepository userTaskUnlockedRepository;
+
+  @Mock
+  private TaskRepository taskRepository;
+
+  @Mock
+  private UserRepository userRepository;
+
+  @Mock
+  private ClassroomStudentRepository classroomStudentRepository;
 
   @InjectMocks
   private ClassroomService classroomService;
@@ -146,5 +170,59 @@ class ClassroomServiceTest {
 
     assertThat(result).hasSize(1);
     assertThat(result.get(0).title()).isEqualTo("Cybersecurity 101");
+  }
+
+  @Test
+  void createClassroomTask_savesAndReturnsDTO() {
+    UUID classroomId = UUID.randomUUID();
+    UUID taskId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId)
+      .title("Cybersecurity 101")
+      .classDesc("Introduction to cybersecurity")
+      .joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution())
+      .createdBy(ClassroomTestFactory.user())
+      .isGameEnabled(false)
+      .build();
+    Task task = Task.builder()
+      .id(taskId)
+      .title("Spot the phishing email")
+      .taskType(TaskTestFactory.task().getTaskType())
+      .difficulty(1)
+      .content("{}")
+      .build();
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+    when(classroomTaskRepository.existsById(any())).thenReturn(false);
+    when(classroomTaskRepository.save(any(ClassroomTask.class))).thenAnswer(i -> i.getArgument(0));
+
+    ClassroomTaskResponseDTO result = classroomService.createClassroomTask(
+      classroomId,
+      ClassroomTestFactory.classroomTaskCreateRequestDTO(taskId)
+    );
+
+    assertThat(result.classroomId()).isEqualTo(classroomId);
+    assertThat(result.taskId()).isEqualTo(taskId);
+    assertThat(result.sortOrder()).isEqualTo((short) 1);
+    verify(classroomTaskRepository).save(any(ClassroomTask.class));
+  }
+
+  @Test
+  void createClassroomTask_throwsWhenAlreadyAssigned() {
+    UUID classroomId = UUID.randomUUID();
+    UUID taskId = UUID.randomUUID();
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId))
+      .thenReturn(Optional.of(ClassroomTestFactory.classroom()));
+    when(taskRepository.findById(taskId)).thenReturn(Optional.of(TaskTestFactory.task()));
+    when(classroomTaskRepository.existsById(any())).thenReturn(true);
+
+    assertThatThrownBy(() -> classroomService.createClassroomTask(
+      classroomId,
+      ClassroomTestFactory.classroomTaskCreateRequestDTO(taskId)
+    ))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("already assigned");
   }
 }

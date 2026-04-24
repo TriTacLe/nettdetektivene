@@ -23,37 +23,47 @@ function choose(article: NewsArticle) {
 </script>
 
 <template>
-  <div class="task-header">
-    <h2 class="question">{{ question ?? 'Hvilken artikkel er ekte?' }}</h2>
-    <GuidanceComponent :tip="tip" />
-  </div>
+  <div class="news-task">
+    <div class="task-header">
+      <h2 class="question">{{ question ?? 'Hvilken artikkel er ekte?' }}</h2>
+      <GuidanceComponent :tip="tip" />
+    </div>
 
-  <div class="articles">
-    <article
-      v-for="(article, i) in props.challenge.articles"
-      :key="i"
-      class="article-card"
-      :class="{ 'is-selected': selected === article }"
-    >
-      <img class="article-image" :src="article.imagePath" alt="Nyhetsartikkel" />
-
-      <button
-        type="button"
-        class="article-choice"
-        :disabled="selected !== null"
-        @click="choose(article)"
+    <div class="articles">
+      <article
+        v-for="(article, i) in props.challenge.articles"
+        :key="i"
+        class="article-card"
+        :class="{ 'is-selected': selected === article }"
       >
-        Dette er den ekte nyheten
-      </button>
-    </article>
+        <img class="article-image" :src="article.imagePath" alt="Nyhetsartikkel" />
+
+        <button
+          type="button"
+          class="article-choice"
+          :disabled="selected !== null"
+          @click="choose(article)"
+        >
+          Dette er den ekte nyheten
+        </button>
+      </article>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.news-task {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .task-header {
   flex-shrink: 0;
   text-align: center;
-  margin: 0 0 1.25rem;
 }
 
 .question {
@@ -81,8 +91,8 @@ function choose(article: NewsArticle) {
 .articles {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  padding: 2rem 5%;
+  gap: 1.25rem;
+  padding: 0 1%;
   align-items: stretch;
 }
 
@@ -93,10 +103,10 @@ function choose(article: NewsArticle) {
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  gap: 1.5rem;
+  gap: 1rem;
   border: 3px solid transparent;
   transition: border-color 0.2s ease, opacity 0.2s ease;
-  min-height: min(72vh, 900px);
+  min-height: 0;
 }
 
 .article-card.is-selected {
@@ -105,8 +115,7 @@ function choose(article: NewsArticle) {
 
 .article-image {
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  max-height: min(52vh, 560px);
   object-fit: contain;
   border-radius: 6px;
   background: #e9e5da;
@@ -144,23 +153,18 @@ function choose(article: NewsArticle) {
 }
 
 @media (max-width: 1100px) {
-  .articles {
-    gap: 1.5rem;
-    padding: 1.5rem 4%;
+  .news-task {
+    padding-inline: 1rem;
   }
 
-  .article-card {
-    min-height: min(64vh, 760px);
+  .articles {
+    padding: 0;
   }
 }
 
 @media (max-width: 800px) {
   .articles {
     grid-template-columns: 1fr;
-  }
-
-  .article-card {
-    min-height: min(70vh, 780px);
   }
 }
 
