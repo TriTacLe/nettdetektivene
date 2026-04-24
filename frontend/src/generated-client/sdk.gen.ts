@@ -555,6 +555,15 @@ export const getAchievement = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
+ * Get achievements earned by the authenticated user
+ */
+export const getMyAchievements = <ThrowOnError extends boolean = false>(options?: Options<GetMyAchievementsData, ThrowOnError>) => (options?.client ?? client).get<GetMyAchievementsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/achievements/me',
+    ...options
+});
+
+/**
  * Get achievements by trigger type
  */
 export const getAchievementsByTrigger = <ThrowOnError extends boolean = false>(options: Options<GetAchievementsByTriggerData, ThrowOnError>) => (options.client ?? client).get<GetAchievementsByTriggerResponses, unknown, ThrowOnError>({

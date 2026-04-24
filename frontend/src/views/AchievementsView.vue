@@ -1,7 +1,30 @@
 <script setup lang="ts">
+import SceneComponent from '@/components/SceneComponent.vue'
+import BadgeCard from '@/components/BadgeCard.vue'
 
-import SceneComponent from "@/components/SceneComponent.vue";
-import BadgeCard from "@/components/BadgeCard.vue";
+import { computed } from 'vue'
+import { useQuery } from '@tanstack/vue-query'
+import {
+  getProfileOptions,
+  getAllAchievementsOptions,
+  getMyAchievementsOptions,
+} from '../generated-client/@tanstack/vue-query.gen'
+
+const { data: profileData } = useQuery(getProfileOptions())
+const { data: allAchivementsData } = useQuery(getAllAchievementsOptions())
+const { data: myAchievementsData } = useQuery(getMyAchievementsOptions())
+
+const profile = computed(() => profileData.value?.data)
+const allAchievements = computed(() => allAchivementsData.value?.data ?? [])
+const earnedIds = computed(
+  () => new Set(myAchievementsData.value?.data?.map((a) => a.achievementId)),
+)
+
+const earned = computed(() => earnedIds.value.size)
+const total = computed(() => allAchievements.value.length)
+const progressPercent = computed(() =>
+  total.value ? Math.round((earned.value / total.value) * 100) : 0,
+)
 </script>
 
 <template>
@@ -10,14 +33,12 @@ import BadgeCard from "@/components/BadgeCard.vue";
       <div class="achievements-card">
         <h1>Mine prestasjoner</h1>
 
-
-
         <!-- Bruker info -->
         <section class="section">
           <div class="profile-info">
-            <p><strong>Detektiv:</strong> <!-- brukernavn --></p>
-            <p><strong>Level:</strong> <!-- Level --></p>
-            <p><strong>Exp:</strong> <!-- 75 /100 --></p>
+            <p><strong>Detektiv:</strong> {{ profile?.displayName }}</p>
+            <p><strong>Level:</strong> {{ profile?.xpLevel }}</p>
+            <p><strong>Exp:</strong> {{ profile?.xp }}</p>
           </div>
         </section>
 
@@ -26,70 +47,31 @@ import BadgeCard from "@/components/BadgeCard.vue";
           <h2>Total progresjon</h2>
           <div class="total-progress">
             <div class="progress-info">
-              <p><strong>Fullført:</strong> <!-- Hent info fra backend "7/33" --></p>
+              <p><strong>Fullført:</strong> {{ earned }} / {{ total }}</p>
             </div>
 
             <div class="progress-bar-container">
               <div class="progress-bar">
-                <div class="progress-fill">
-                  <!-- Hent info fra backend og fyll det inn i <style> -->
-                </div>
+                <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
               </div>
-              <div class="progress-percent">
-                <!-- Hent info fra backend -->
-              </div>
+              <div class="progress-percent">{{ progressPercent }}%</div>
             </div>
           </div>
         </section>
 
-        <!-- Medaljer -->
+        <!-- Medaljer/achivements -->
         <section class="section">
           <h2>Medaljer</h2>
           <div class="badges-container">
             <BadgeCard
-              title="Fullført Nyhetskvartalet"
-              description="Fullfør alle oppgaver i Nyhetskvartalet"
-              :unlocked="true"
-            />
-
-            <BadgeCard
-              title="Perfeksjonist"
-              description="Fullfør et stoppested uten feil"
-              :unlocked="false"
-            />
-
-            <BadgeCard
-              title="På sporet"
-              description="Du har fullført 2 stoppesteder"
-              :unlocked="false"
-            />
-
-            <BadgeCard
-              title="Nybegynner detektiv"
-              description="du har nådd level 2"
-              :unlocked="true"
-            />
-
-            <BadgeCard
-              title="Fullført fotoboksen"
-              description="Fullfør alle oppgaver i fotoboksen"
-              :unlocked="false"
-            />
-            <BadgeCard
-              title="Erfaren detektiv"
-              description="Du har nådd level 5"
-              :unlocked="false"
-            />
-
-            <BadgeCard
-              title="Arrestert datatyven"
-              description="Du har fullført stoppestedet datasenteret"
-              :unlocked="false"
+              v-for="achievement in allAchievements"
+              :key="achievement.id"
+              :title="achievement.title ?? ''"
+              :description="achievement.descAch ?? ''"
+              :unlocked="earnedIds.has(achievement.id)"
             />
           </div>
         </section>
-
-
       </div>
     </div>
   </SceneComponent>
@@ -102,7 +84,6 @@ import BadgeCard from "@/components/BadgeCard.vue";
   padding: 1rem;
   flex: 1;
   min-height: 0;
-
 }
 
 .achievements-card {
@@ -154,8 +135,6 @@ import BadgeCard from "@/components/BadgeCard.vue";
   margin: 0.5rem 0;
 }
 
-
-
 .total-progress {
   display: flex;
   justify-content: space-between;
@@ -188,7 +167,6 @@ import BadgeCard from "@/components/BadgeCard.vue";
 }
 
 .progress-fill {
-  width: 0%; /* settes senere */
   height: 100%;
   background-color: #4caf50;
   transition: width 0.3s ease;

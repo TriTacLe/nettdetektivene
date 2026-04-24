@@ -949,6 +949,24 @@ export const getAchievementOptions = (options: Options<GetAchievementData>) => q
     queryKey: getAchievementQueryKey(options)
 });
 
+export const getMyAchievementsQueryKey = (options?: Options<GetMyAchievementsData>) => createQueryKey('getMyAchievements', options);
+
+/**
+ * Get achievements earned by the authenticated user
+ */
+export const getMyAchievementsOptions = (options?: Options<GetMyAchievementsData>) => queryOptions<GetMyAchievementsResponse, DefaultError, GetMyAchievementsResponse, ReturnType<typeof getMyAchievementsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getMyAchievements({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getMyAchievementsQueryKey(options)
+});
+
 export const getAchievementsByTriggerQueryKey = (options: Options<GetAchievementsByTriggerData>) => createQueryKey('getAchievementsByTrigger', options);
 
 /**
