@@ -34,6 +34,7 @@ const challenge = computed<FotografenChallenge | null>(() => {
 })
 
 const taskQuestion = computed(() => task.value?.content?.photo?.description)
+const taskTip = computed(() => task.value?.content?.photo?.hint)
 
 async function submitAttempt(score: number) {
   try {
@@ -76,6 +77,7 @@ async function onFailed(reason: string) {
       v-else
       :challenge="challenge"
       :question="taskQuestion"
+      :tip="taskTip"
       @complete="onComplete"
       @failed="onFailed"
     />
