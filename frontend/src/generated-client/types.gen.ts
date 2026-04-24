@@ -101,6 +101,7 @@ export type ApiResponseClassroomStudentResponseDto = {
  * Represents a student's membership in a classroom
  */
 export type ClassroomStudentResponseDto = {
+    classroomId?: string;
     userId?: string;
     displayName?: string;
     isAllowed?: boolean;
@@ -418,6 +419,7 @@ export type ClassroomTaskResponseDto = {
     taskId?: string;
     sortOrder?: number;
     isActive?: boolean;
+    isUnlocked?: boolean;
     task?: TaskResponseDto;
 };
 
@@ -447,6 +449,19 @@ export type InstitutionResponseDto = {
     instName?: string;
     createdAt?: string;
     updatedAt?: string;
+};
+
+export type ApiResponseListClassroomLeaderboardEntryResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<ClassroomLeaderboardEntryResponseDto>;
+};
+
+export type ClassroomLeaderboardEntryResponseDto = {
+    classroomId?: string;
+    title?: string;
+    totalScore?: number;
+    rank?: number;
 };
 
 export type ApiResponseListClassroomResponseDto = {
@@ -548,6 +563,22 @@ export type ApiResponseAchievementResponseDto = {
     data?: AchievementResponseDto;
 };
 
+export type ApiResponseListUserAchievementResponseDto = {
+    success?: boolean;
+    message?: string;
+    data?: Array<UserAchievementResponseDto>;
+};
+
+/**
+ * Represents an achievement earned by a user
+ */
+export type UserAchievementResponseDto = {
+    userId?: string;
+    achievementId?: string;
+    classroomId?: string;
+    earnedAt?: string;
+};
+
 export type GetAllTasksData = {
     body?: never;
     path?: never;
@@ -611,6 +642,25 @@ export type CreateClassroomResponses = {
 };
 
 export type CreateClassroomResponse = CreateClassroomResponses[keyof CreateClassroomResponses];
+
+export type UnlockTaskForUserData = {
+    body?: never;
+    path: {
+        classroomId: string;
+        taskId: string;
+    };
+    query: {
+        userId: string;
+    };
+    url: '/api/v1/classrooms/{classroomId}/tasks/{taskId}/unlock';
+};
+
+export type UnlockTaskForUserResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type RejectNameChangeData = {
     body?: never;
@@ -1260,6 +1310,24 @@ export type GetAllInstitutionsResponses = {
 
 export type GetAllInstitutionsResponse = GetAllInstitutionsResponses[keyof GetAllInstitutionsResponses];
 
+export type GetClassroomsLeaderboardByInstitutionData = {
+    body?: never;
+    path: {
+        institutionId: string;
+    };
+    query?: never;
+    url: '/api/v1/institutions/{institutionId}/classrooms/leaderboard';
+};
+
+export type GetClassroomsLeaderboardByInstitutionResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListClassroomLeaderboardEntryResponseDto;
+};
+
+export type GetClassroomsLeaderboardByInstitutionResponse = GetClassroomsLeaderboardByInstitutionResponses[keyof GetClassroomsLeaderboardByInstitutionResponses];
+
 export type GetClassroomTasksData = {
     body?: never;
     path: {
@@ -1267,6 +1335,7 @@ export type GetClassroomTasksData = {
     };
     query?: {
         activeOnly?: boolean;
+        includeUnlocked?: boolean;
     };
     url: '/api/v1/classrooms/{classroomId}/tasks';
 };
@@ -1279,6 +1348,24 @@ export type GetClassroomTasksResponses = {
 };
 
 export type GetClassroomTasksResponse = GetClassroomTasksResponses[keyof GetClassroomTasksResponses];
+
+export type GetUnlockedClassroomTasksData = {
+    body?: never;
+    path: {
+        classroomId: string;
+    };
+    query?: never;
+    url: '/api/v1/classrooms/{classroomId}/tasks/unlocked';
+};
+
+export type GetUnlockedClassroomTasksResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListClassroomTaskResponseDto;
+};
+
+export type GetUnlockedClassroomTasksResponse = GetUnlockedClassroomTasksResponses[keyof GetUnlockedClassroomTasksResponses];
 
 export type GetStudentsData = {
     body?: never;
@@ -1462,6 +1549,22 @@ export type GetMyClassroomsResponses = {
 
 export type GetMyClassroomsResponse = GetMyClassroomsResponses[keyof GetMyClassroomsResponses];
 
+export type GetMyClassroomData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/classrooms/me';
+};
+
+export type GetMyClassroomResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseClassroomResponseDto;
+};
+
+export type GetMyClassroomResponse = GetMyClassroomResponses[keyof GetMyClassroomResponses];
+
 export type GetAllClassroomsByInstitutionData = {
     body?: never;
     path: {
@@ -1550,6 +1653,22 @@ export type GetAchievementResponses = {
 };
 
 export type GetAchievementResponse = GetAchievementResponses[keyof GetAchievementResponses];
+
+export type GetMyAchievementsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/achievements/me';
+};
+
+export type GetMyAchievementsResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListUserAchievementResponseDto;
+};
+
+export type GetMyAchievementsResponse = GetMyAchievementsResponses[keyof GetMyAchievementsResponses];
 
 export type GetAchievementsByTriggerData = {
     body?: never;

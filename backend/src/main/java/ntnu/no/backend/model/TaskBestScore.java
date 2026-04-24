@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
@@ -51,6 +52,7 @@ public class TaskBestScore {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("userId")
+  @JoinColumn(name = "user_id")
   private User user;
 
   /**
@@ -58,6 +60,7 @@ public class TaskBestScore {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("taskId")
+  @JoinColumn(name = "task_id")
   private Task task;
 
   /**
@@ -65,6 +68,7 @@ public class TaskBestScore {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("classroomId")
+  @JoinColumn(name = "classroom_id")
   private Classroom classroom;
 
   /**
