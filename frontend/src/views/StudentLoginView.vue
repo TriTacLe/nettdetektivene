@@ -3,9 +3,11 @@ import { ref } from 'vue'
 import { useRouter } from "vue-router";
 import SceneComponent from '../components/SceneComponent.vue'
 import { useAuthStore } from "@/stores/AuthStore.ts";
+import { useStudentStore } from '@/stores/StudentStore.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const studentStore = useStudentStore()
 
 const email = ref('')
 const password = ref('')
@@ -38,12 +40,29 @@ async function handleLogin(): Promise<void> {
   isLoading.value = true
   try {
     await authStore.feideLogin({ email: email.value, affiliation: "student", password: password.value})
+
     const emailPrefix = authStore.user?.email?.split('@')[0]
     if (authStore.user?.displayName === emailPrefix) {
       router.push({ name: 'set-display-name' })
+      return
+    }
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, {
+      headers: {Authorization: `Bearer ${authStore.token}`},
+    })
+
+    if (res.ok) {
+      const body = await res.json()
+      const classroomId = body.data?.id
+      const institutionId = body.data?.institutionId
+      if (classroomId && institutionId) {
+        studentStore.setClassroom(classroomId, institutionId)
+      }
+      router.push({ name: 'student-home' })
     } else {
       router.push({ name: 'join-classroom' })
     }
+
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
   } finally {
