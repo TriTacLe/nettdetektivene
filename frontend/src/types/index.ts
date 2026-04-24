@@ -147,6 +147,15 @@ export interface ClassroomResponseDTO {
   updatedAt: string
 }
 
+export interface ClassroomTaskResponseDTO {
+  classroomId: string
+  taskId: string
+  sortOrder: number
+  isActive: boolean
+  isUnlocked: boolean
+  task: TaskDTO
+}
+
 export interface ClassroomRequestDTO {
   title: string
   classDesc?: string
@@ -175,8 +184,26 @@ export interface JoinClassroomRequestDTO {
 
 export interface StopTaskDTO {
   taskId: number
+  uuid: string
   title: string
   taskType: string
+  isUnlocked: boolean
+}
+
+export interface TaskAttemptRequestDTO {
+  taskId: string
+  classroomId: string
+  score: number
+}
+
+export interface TaskAttemptResponseDTO {
+  id: string
+  userId: string
+  taskId: string
+  classroomId: string
+  score: number
+  passed: boolean
+  attemptedAt: string
 }
 
 export enum NotificationType {

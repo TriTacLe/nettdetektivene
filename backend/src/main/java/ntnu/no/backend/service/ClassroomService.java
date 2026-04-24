@@ -12,10 +12,18 @@ import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.ClassroomTask;
 import ntnu.no.backend.model.ClassroomTaskId;
 import ntnu.no.backend.model.Institution;
+import ntnu.no.backend.model.Task;
+import ntnu.no.backend.model.UserTaskUnlocked;
+import ntnu.no.backend.model.UserTaskUnlockedId;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskRepository;
+import ntnu.no.backend.repository.UserRepository;
+import ntnu.no.backend.repository.UserTaskUnlockedRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +45,10 @@ public class ClassroomService {
   private final ClassroomRepository classroomRepository;
   private final InstitutionRepository institutionRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
+  private final UserTaskUnlockedRepository userTaskUnlockedRepository;
+  private final TaskRepository taskRepository;
+  private final UserRepository userRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getAllClassroom() {
@@ -75,9 +87,41 @@ public class ClassroomService {
 
     classroom.setTitle(dto.getTitle());
     classroom.setClassDesc(dto.getClassDesc());
+
+    boolean wasDisabled = !classroom.isGameEnabled();
     classroom.setGameEnabled(dto.isGameEnabled());
 
+    if (wasDisabled && dto.isGameEnabled()) {
+      unlockFirstTaskForApprovedStudents(classroom);
+    }
+
     return ClassroomMapper.toDTO(classroom);
+  }
+
+  private void unlockFirstTaskForApprovedStudents(Classroom classroom) {
+    List<ClassroomTask> activeTasks = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+    if (activeTasks.isEmpty()) return;
+
+    ClassroomTask firstTask = activeTasks.get(0);
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+      if (!userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
+          userId, classroom.getId(), firstTask.getTask().getId())) {
+        userTaskUnlockedRepository.save(
+            UserTaskUnlocked.builder()
+                .id(new UserTaskUnlockedId(userId, classroom.getId(), firstTask.getTask().getId()))
+                .user(student.getUser())
+                .classroom(classroom)
+                .task(firstTask.getTask())
+                .unlockedAt(LocalDateTime.now())
+                .build()
+        );
+      }
+    }
   }
 
   @Transactional
@@ -114,6 +158,19 @@ public class ClassroomService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<ClassroomTaskResponseDTO> getActiveClassroomTasksWithUnlocked(UUID classroomId, UUID userId) {
+    if (!classroomRepository.existsById(classroomId)) {
+      throw new EntityNotFoundException("Classroom not found with id: " + classroomId);
+    }
+
+    List<UUID> unlockedTaskIds = getUnlockedTaskIds(classroomId, userId);
+
+    return classroomTaskRepository.findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroomId).stream()
+        .map(ct -> ClassroomTaskMapper.toDTO(ct, unlockedTaskIds))
+        .toList();
+  }
+
   @Transactional
   public ClassroomTaskResponseDTO updateClassroomTask(
       UUID classroomId,
@@ -133,6 +190,60 @@ public class ClassroomService {
     }
 
     return ClassroomTaskMapper.toDTO(classroomTask);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean isTaskUnlockedForUser(UUID classroomId, UUID taskId, UUID userId) {
+    return userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(userId, classroomId, taskId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<UUID> getUnlockedTaskIds(UUID classroomId, UUID userId) {
+    return userTaskUnlockedRepository.findByUser_IdAndClassroom_Id(userId, classroomId)
+        .stream()
+        .map(ut -> ut.getId().getTaskId())
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<ClassroomTaskResponseDTO> getUnlockedClassroomTasks(UUID classroomId, UUID userId) {
+    if (!classroomRepository.existsById(classroomId)) {
+      throw new EntityNotFoundException("Classroom not found with id: " + classroomId);
+    }
+
+    List<UUID> unlockedTaskIds = getUnlockedTaskIds(classroomId, userId);
+
+    return classroomTaskRepository.findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroomId)
+        .stream()
+        .filter(ct -> unlockedTaskIds.contains(ct.getTask().getId()))
+        .map(ct -> ClassroomTaskMapper.toDTO(ct, unlockedTaskIds))
+        .toList();
+  }
+
+  @Transactional
+  public void unlockTaskForUser(UUID classroomId, UUID taskId, UUID userId) {
+    Classroom classroom = classroomRepository.findById(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    Task task = taskRepository.findById(taskId)
+        .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + taskId));
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+    if (isTaskUnlockedForUser(classroomId, taskId, userId)) {
+      return;
+    }
+
+    UserTaskUnlocked unlocked = UserTaskUnlocked.builder()
+        .id(new UserTaskUnlockedId(userId, classroomId, taskId))
+        .user(user)
+        .classroom(classroom)
+        .task(task)
+        .unlockedAt(LocalDateTime.now())
+        .build();
+
+    userTaskUnlockedRepository.save(unlocked);
   }
 
   private String generateJoinCode() {

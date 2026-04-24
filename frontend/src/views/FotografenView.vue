@@ -1,28 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
-import { fetchTasksByStopLocation } from '@/services/TaskService'
-import type { TaskDTO } from '@/types'
+import { useStopStore } from '@/stores/StopStore'
+
+const STOP_ID = 'fotografen'
 
 const router = useRouter()
-const tasks = ref<TaskDTO[]>([])
-const isLoading = ref(true)
-const error = ref('')
+const stopStore = useStopStore()
 
-onMounted(async () => {
-  try {
-    tasks.value = await fetchTasksByStopLocation('fotografen')
-  } catch (err) {
-    error.value = 'Kunne ikke laste oppgaver. Prøv igjen.'
-    console.error(err)
-  } finally {
-    isLoading.value = false
-  }
+const tasks = computed(() => stopStore.tasks[STOP_ID] ?? [])
+const isLoading = computed(() => stopStore.loading[STOP_ID] ?? false)
+const availableTasks = computed(() => tasks.value.filter(t => t.isUnlocked))
+const lockedTasks = computed(() => tasks.value.filter(t => !t.isUnlocked))
+
+onMounted(() => {
+  stopStore.clearTasks(STOP_ID)
+  stopStore.loadTasks(STOP_ID, true)
 })
 
-function selectTask(task: TaskDTO) {
-  router.push({ name: 'fotografen-task', params: { taskId: task.id } })
+function selectTask(uuid: string, taskId: number) {
+  if (!tasks.value.find(t => t.taskId === taskId)?.isUnlocked) {
+    alert('Denne oppgaven er låst. Fullfør tidligere oppgaver for å låse opp.')
+    return
+  }
+  router.push({ name: 'fotografen-task', params: { taskId: uuid } })
 }
 </script>
 
@@ -30,35 +32,48 @@ function selectTask(task: TaskDTO) {
   <SceneComponent title="Fotografen" previous="/game-map" background="/FotografenBackground.png">
     <div class="list-container">
       <div v-if="isLoading" class="state-msg">Laster oppgaver...</div>
-      <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
       <div v-else-if="tasks.length === 0" class="state-msg state-msg--empty">
         Ingen oppgaver funnet for Fotografen
       </div>
       <div v-else class="task-grid">
         <button
-          v-for="(task, index) in tasks"
-          :key="task.id"
+          v-for="task in availableTasks"
+          :key="task.taskId"
           class="task-card"
-          :class="{ 'task-card--inactive': !task.isActive }"
-          :disabled="!task.isActive"
-          @click="selectTask(task)"
+          :class="{ 'task-card--completed': stopStore.isComplete(STOP_ID, task.uuid) }"
+          @click="selectTask(task.uuid, task.taskId)"
         >
-          <div class="card-number">{{ index + 1 }}</div>
+          <div class="card-number">{{ task.taskId }}</div>
           <div class="card-body">
             <h3 class="card-title">{{ task.title }}</h3>
             <div class="card-meta">
               <span class="badge badge-type">{{ task.taskType }}</span>
-              <span class="badge badge-stop">{{ task.stopLocation }}</span>
-              <span class="badge badge-diff">
-                <span v-for="n in 5" :key="n" class="star" :class="{ 'star--filled': n <= task.difficulty }">★</span>
-              </span>
             </div>
           </div>
           <div class="card-action">
-            <span v-if="task.isActive" class="play-btn">&#9654;</span>
-            <span v-else class="locked-label">Inaktiv</span>
+            <span v-if="stopStore.isComplete(STOP_ID, task.uuid)" class="play-btn">&#10003;</span>
+            <span v-else class="play-btn">&#9654;</span>
           </div>
         </button>
+
+        <div
+          v-for="task in lockedTasks"
+          :key="task.taskId"
+          class="task-card task-card--locked"
+        >
+          <div class="card-number">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">{{ task.title }}</h3>
+          </div>
+          <div class="card-action">
+            <span class="locked-label">Låst</span>
+          </div>
+        </div>
       </div>
     </div>
   </SceneComponent>
@@ -122,9 +137,15 @@ function selectTask(task: TaskDTO) {
 
 .task-card:active:not(:disabled) { transform: translateY(0); }
 
-.task-card--inactive {
+.task-card--locked {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
+}
+
+.task-card--completed {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .card-number {
@@ -183,22 +204,6 @@ function selectTask(task: TaskDTO) {
   border: 1px solid rgba(255, 215, 0, 0.5);
 }
 
-.badge-stop {
-  background: rgba(0, 0, 0, 0.08);
-  color: #555;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.badge-diff {
-  background: transparent;
-  border: none;
-  padding: 0;
-  display: flex;
-  gap: 0.1rem;
-}
-
-.star { color: #ccc; font-size: 1rem; }
-.star--filled { color: #FFD700; }
 
 .card-action { flex-shrink: 0; }
 

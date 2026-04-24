@@ -26,9 +26,9 @@ else
     LABEL="all tasks"
 fi
 
-docker exec nd-db mysql -und-usr -pnd-pwd nd-db -e "$SQL" 2>/dev/null
+docker exec nd-db mysql -uroot -proot nd-db -e "$SQL" 2>/dev/null
 
-ROWS=$(docker exec nd-db mysql -und-usr -pnd-pwd nd-db -se \
+ROWS=$(docker exec nd-db mysql -uroot -proot nd-db -se \
     "SELECT ROW_COUNT();" 2>/dev/null)
 
 echo -e "${GREEN}Done. Activated $ROWS task(s) for $LABEL.${NC}"

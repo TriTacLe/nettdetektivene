@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -14,10 +14,39 @@ const stop = computed(() => STOPS[stopId])
 const tasks = computed(() => stopStore.tasks[stopId] ?? [])
 const isLoading = computed(() => stopStore.loading[stopId] ?? false)
 
-onMounted(() => stopStore.loadTasks(stopId))
+const availableTasks = computed(() => {
+  const filtered = tasks.value.filter(t => t.isUnlocked)
+  console.log('[StopView] Available tasks computed:', filtered.length, 'tasks', filtered.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
+  return filtered
+})
+
+const lockedTasks = computed(() => {
+  const filtered = tasks.value.filter(t => !t.isUnlocked)
+  console.log('[StopView] Locked tasks computed:', filtered.length, 'tasks', filtered.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
+  return filtered
+})
+
+watch(tasks, (newTasks) => {
+  console.log('[StopView] Tasks updated:', newTasks.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
+})
+
+onMounted(() => {
+  console.log('[StopView] Component mounted for stopId:', stopId)
+  stopStore.clearTasks()
+  stopStore.loadTasks(stopId, true)
+})
 
 function goToTask(taskId: number) {
-  router.push(`${stop.value.taskRoute}/${taskId}`)
+  console.log('[StopView] goToTask called - taskId:', taskId)
+  const task = tasks.value.find(t => t.taskId === taskId)
+  console.log('[StopView] Task found:', task)
+  if (task && task.isUnlocked) {
+    console.log('[StopView] Task is unlocked, navigating to:', `${stop.value.taskRoute}/${taskId}`)
+    router.push(`${stop.value.taskRoute}/${taskId}`)
+  } else {
+    console.log('[StopView] Task is locked or not found')
+    alert('Denne oppgaven er låst. Fullfør tidligere oppgaver for å låse opp.')
+  }
 }
 </script>
 
@@ -37,15 +66,16 @@ function goToTask(taskId: number) {
       <div v-if="isLoading" class="loading">Laster oppgaver...</div>
 
       <template v-else>
+        <div v-if="availableTasks.length === 0" class="no-tasks">
+          Ingen oppgaver tilgjengelig ennå. Fullfør tidligere oppgaver for å låse opp nye.
+        </div>
         <button
-          v-for="task in tasks"
+          v-for="task in availableTasks"
           :key="task.taskId"
           class="task-btn"
           :class="{
-            'task-btn--completed': stopStore.isComplete(stopId, task.taskId),
-            'task-btn--locked': !stopStore.isUnlocked(stopId, task.taskId),
+            'task-btn--completed': stopStore.isComplete(stopId, task.uuid),
           }"
-          :disabled="!stopStore.isUnlocked(stopId, task.taskId)"
           @click="goToTask(task.taskId)"
         >
           <span class="task-number">{{ task.taskId }}</span>
@@ -56,11 +86,29 @@ function goToTask(taskId: number) {
             </span>
           </span>
           <span class="task-status">
-            <template v-if="stopStore.isComplete(stopId, task.taskId)">&#10003;</template>
-            <template v-else-if="!stopStore.isUnlocked(stopId, task.taskId)">&#128274;</template>
+            <template v-if="stopStore.isComplete(stopId, task.uuid)">&#10003;</template>
             <template v-else>&rarr;</template>
           </span>
         </button>
+
+        <div v-if="lockedTasks.length > 0" class="locked-tasks">
+          <div
+            v-for="task in lockedTasks"
+            :key="task.taskId"
+            class="task-btn task-btn--locked"
+          >
+            <span class="task-number">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <span class="task-body">
+              <span class="task-title">{{ task.title }}</span>
+            </span>
+            <span class="task-status">🔒</span>
+          </div>
+        </div>
       </template>
     </div>
   </SceneComponent>
@@ -113,6 +161,16 @@ function goToTask(taskId: number) {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
+.no-tasks {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
 .task-btn {
   display: flex;
   align-items: center;
@@ -129,18 +187,13 @@ function goToTask(taskId: number) {
   transition: background 0.15s, transform 0.1s, border-color 0.15s;
 }
 
-.task-btn:hover:not(:disabled) {
+.task-btn:hover {
   background: rgba(255, 255, 255, 0.28);
   transform: scale(1.02);
 }
 
-.task-btn:active:not(:disabled) {
+.task-btn:active {
   transform: scale(0.99);
-}
-
-.task-btn:disabled {
-  cursor: default;
-  opacity: 0.5;
 }
 
 .task-btn--completed {
@@ -149,7 +202,18 @@ function goToTask(taskId: number) {
 }
 
 .task-btn--locked {
-  border-color: rgba(255, 255, 255, 0.25);
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.locked-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 520px;
 }
 
 .task-number {

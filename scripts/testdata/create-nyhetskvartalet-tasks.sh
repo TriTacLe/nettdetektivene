@@ -85,11 +85,11 @@ TASK1_CONTENT=$(jq -c -n '{
     hint: "Se etter kildehenvisninger og datoer i artiklene.",
     articles: [
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/fake-article-1.jpg",
             isReal: false
         },
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/real-article-1.png",
             isReal: true
         }
     ]
@@ -100,11 +100,11 @@ TASK2_CONTENT=$(jq -c -n '{
     hint: "Vær oppmerksom på sensasjonelle overskrifter og manglende kilder.",
     articles: [
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/real-article-1.png",
             isReal: true
         },
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/fake-article-1.jpg",
             isReal: false
         }
     ]
@@ -115,11 +115,11 @@ TASK3_CONTENT=$(jq -c -n '{
     hint: "Sjekk om nettstedet er kjent og pålitelig.",
     articles: [
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/fake-article-1.jpg",
             isReal: false
         },
         {
-            imagePath: "/news/real-article-1.jpg",
+            imagePath: "/news/real-article-1.png",
             isReal: true
         }
     ]

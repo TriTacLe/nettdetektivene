@@ -210,10 +210,23 @@ CREATE TABLE classroom_task
     classroom_id CHAR(36)          NOT NULL,
     task_id      CHAR(36)          NOT NULL,
     sort_order   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    is_active    TINYINT(1)       NOT NULL DEFAULT 1,
 
     PRIMARY KEY (classroom_id, task_id),
     CONSTRAINT fk_ct_classroom FOREIGN KEY (classroom_id) REFERENCES classroom (classroom_id),
     CONSTRAINT fk_ct_task      FOREIGN KEY (task_id)      REFERENCES task (task_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE user_task_unlocked
+(
+    user_id      CHAR(36)   NOT NULL,
+    classroom_id CHAR(36)   NOT NULL,
+    task_id      CHAR(36)   NOT NULL,
+    unlocked_at  DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, classroom_id, task_id),
+    CONSTRAINT fk_utu_user      FOREIGN KEY (user_id)      REFERENCES app_user (user_id),
+    CONSTRAINT fk_utu_classroom FOREIGN KEY (classroom_id) REFERENCES classroom (classroom_id),
+    CONSTRAINT fk_utu_task      FOREIGN KEY (task_id)      REFERENCES task (task_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------------

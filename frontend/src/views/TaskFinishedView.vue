@@ -27,10 +27,10 @@ const stopStore = useStopStore()
 const confettiCanvas = ref<HTMLCanvasElement | null>(null)
 
 const stopId = route.query.stop as string | undefined
-const taskId = Number(route.query.taskId) || 0
+const taskUuid = route.query.taskId as string | undefined
 
-if (stopId && taskId) {
-  stopStore.markComplete(stopId, taskId)
+if (stopId && taskUuid) {
+  stopStore.markComplete(stopId, taskUuid)
 }
 
 let animationId: number | null = null

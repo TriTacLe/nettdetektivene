@@ -17,6 +17,33 @@ BEGIN
 END$$
 
 -- -------------------------------------------------------------
+-- trg_student_join_unlock_first_task
+-- Unlocks the first active task in a classroom when a student joins.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_student_join_unlock_first_task$$
+CREATE TRIGGER trg_student_join_unlock_first_task
+AFTER INSERT ON classroom_student
+FOR EACH ROW
+BEGIN
+    DECLARE v_first_task_id CHAR(36) DEFAULT NULL;
+
+    SELECT task_id
+    INTO v_first_task_id
+    FROM classroom_task
+    WHERE classroom_id = NEW.classroom_id
+      AND is_active = 1
+    ORDER BY sort_order ASC
+    LIMIT 1;
+
+    IF v_first_task_id IS NOT NULL THEN
+        INSERT IGNORE INTO user_task_unlocked
+            (user_id, classroom_id, task_id, unlocked_at)
+        VALUES
+            (NEW.user_id, NEW.classroom_id, v_first_task_id, NOW());
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
 -- trg_attempt_sync
 -- -------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_attempt_sync$$
@@ -26,6 +53,8 @@ FOR EACH ROW
 BEGIN
     DECLARE v_existing_first_passed_at DATETIME DEFAULT NULL;
     DECLARE v_xp_per_task INT DEFAULT 10;
+    DECLARE v_current_sort_order SMALLINT;
+    DECLARE v_next_task_id CHAR(36) DEFAULT NULL;
 
     SELECT first_passed_at
     INTO v_existing_first_passed_at
@@ -62,6 +91,29 @@ BEGIN
                 ELSE 5
             END
         WHERE user_id = NEW.user_id;
+
+        SELECT sort_order
+        INTO v_current_sort_order
+        FROM classroom_task
+        WHERE classroom_id = NEW.classroom_id
+          AND task_id = NEW.task_id
+        LIMIT 1;
+
+        SELECT task_id
+        INTO v_next_task_id
+        FROM classroom_task
+        WHERE classroom_id = NEW.classroom_id
+          AND sort_order > v_current_sort_order
+          AND is_active = 1
+        ORDER BY sort_order ASC
+        LIMIT 1;
+
+        IF v_next_task_id IS NOT NULL THEN
+            INSERT IGNORE INTO user_task_unlocked
+                (user_id, classroom_id, task_id, unlocked_at)
+            VALUES
+                (NEW.user_id, NEW.classroom_id, v_next_task_id, NOW());
+        END IF;
     END IF;
 END$$
 

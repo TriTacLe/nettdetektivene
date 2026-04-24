@@ -14,7 +14,7 @@ if ! docker ps --format '{{.Names}}' | grep -q '^nd-db$'; then
 fi
 
 run_sql() {
-    docker exec nd-db mysql -und-usr -pnd-pwd nd-db -e "$1" 2>/dev/null
+    docker exec nd-db mysql -uroot -proot nd-db -e "$1" 2>/dev/null
 }
 
 echo -e "${BLUE}[INFO]${NC} Fixing nyhetskvartalet image paths..."
@@ -30,7 +30,7 @@ UPDATE task SET content =
 WHERE stop_location = 'nyhetskvartalet';
 "
 
-ROWS=$(docker exec nd-db mysql -und-usr -pnd-pwd nd-db -se "SELECT ROW_COUNT();" 2>/dev/null)
+ROWS=$(docker exec nd-db mysql -uroot -proot nd-db -se "SELECT ROW_COUNT();" 2>/dev/null)
 echo -e "${GREEN}[OK]${NC} Updated $ROWS nyhetskvartalet task(s)"
 
 echo -e "${BLUE}[INFO]${NC} Fixing fotografen image paths..."
@@ -47,7 +47,7 @@ UPDATE task SET content =
 WHERE stop_location = 'fotografen';
 "
 
-ROWS=$(docker exec nd-db mysql -und-usr -pnd-pwd nd-db -se "SELECT ROW_COUNT();" 2>/dev/null)
+ROWS=$(docker exec nd-db mysql -uroot -proot nd-db -se "SELECT ROW_COUNT();" 2>/dev/null)
 echo -e "${GREEN}[OK]${NC} Updated $ROWS fotografen task(s)"
 
 echo ""

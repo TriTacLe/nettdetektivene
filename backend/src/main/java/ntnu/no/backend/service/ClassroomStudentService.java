@@ -7,12 +7,17 @@ import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
+import ntnu.no.backend.repository.UserTaskUnlockedRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
 import ntnu.no.backend.mapper.ClassroomMapper;
 import ntnu.no.backend.mapper.ClassroomStudentMapper;
 import ntnu.no.backend.model.Classroom;
+import ntnu.no.backend.model.ClassroomTask;
+import ntnu.no.backend.model.UserTaskUnlocked;
+import ntnu.no.backend.model.UserTaskUnlockedId;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
@@ -24,6 +29,7 @@ import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +51,8 @@ public class ClassroomStudentService {
   private final ClassroomRepository classroomRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
   private final UserProfileRepository userProfileRepository;
+  private final ClassroomTaskRepository classroomTaskRepository;
+  private final UserTaskUnlockedRepository userTaskUnlockedRepository;
   private final JdbcTemplate jdbcTemplate;
   private final EntityManager entityManager;
 
@@ -184,7 +192,34 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     ClassroomStudent student = findMembership(classroomId, userId);
     student.setAllowed(true);
+    unlockFirstTask(classroomId, student);
     return ClassroomStudentMapper.toDTO(student);
+  }
+
+  private void unlockFirstTask(UUID classroomId, ClassroomStudent student) {
+    classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroomId)
+        .stream()
+        .findFirst()
+        .ifPresent(firstTask -> {
+          UserTaskUnlockedId id = new UserTaskUnlockedId(
+              student.getUser().getId(),
+              classroomId,
+              firstTask.getTask().getId()
+          );
+          if (!userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
+              student.getUser().getId(), classroomId, firstTask.getTask().getId())) {
+            userTaskUnlockedRepository.save(
+                UserTaskUnlocked.builder()
+                    .id(id)
+                    .user(student.getUser())
+                    .classroom(student.getClassroom())
+                    .task(firstTask.getTask())
+                    .unlockedAt(LocalDateTime.now())
+                    .build()
+            );
+          }
+        });
   }
 
   /**

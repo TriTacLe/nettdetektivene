@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
 import { fetchTaskById } from '@/services/TaskService'
+import TaskAttemptService from '@/services/TaskAttemptService'
+import { fetchClassroomId } from '@/services/StopService'
 import type { TaskDTO, NewsChallenge } from '@/types'
 
 const route = useRoute()
@@ -34,14 +36,27 @@ const challenge = computed<NewsChallenge | null>(() => {
 const taskQuestion = computed(() => task.value?.content?.news?.question)
 const taskTip = computed(() => task.value?.content?.news?.hint)
 
-function onComplete() {
+async function submitAttempt(score: number) {
+  try {
+    const classroomId = await fetchClassroomId()
+    if (classroomId) {
+      await TaskAttemptService.submitAttempt(taskId, classroomId, score)
+    }
+  } catch (err) {
+    console.error('Failed to submit attempt:', err)
+  }
+}
+
+async function onComplete() {
+  await submitAttempt(100)
   router.push({
     name: 'task-finished',
     query: { stop: 'nyhetskvartalet', taskId },
   })
 }
 
-function onFailed(reason: string) {
+async function onFailed(reason: string) {
+  await submitAttempt(0)
   router.push({
     name: 'task-failed',
     query: { stop: 'nyhetskvartalet', taskId, reason },

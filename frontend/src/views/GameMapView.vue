@@ -1,37 +1,88 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
+import { useStopStore } from '@/stores/StopStore'
+
+const stopStore = useStopStore()
 
 const houses = [
-  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home' },
-  { key: 'news', src: '/NewsObject.png', name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet' },
-  { key: 'photo', src: '/PhotoObject.png', name: 'Fotografen', to: '/stops/fotografen' },
-  { key: 'final-boss', src: '/FinalBossObject.png', name: 'Datasenteret', to: '/stops/datasenteret' },
+  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home', stopId: null,              showStars: false },
+  { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet', stopId: 'nyhetskvartalet', showStars: true },
+  { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',       to: '/stops/fotografen',       stopId: 'fotografen',       showStars: true },
+  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: null,              showStars: false },
 ]
+
+onMounted(() => {
+  // Force reload to get latest unlock status after completing tasks
+  stopStore.loadTasks('nyhetskvartalet', true)
+  stopStore.loadTasks('fotografen', true)
+})
+
+function isAvailable(stopId: string | null): boolean {
+  if (!stopId) return true
+  if (stopStore.loading[stopId]) return true
+  const list = stopStore.tasks[stopId]
+  if (!list) return true
+  return list.some(t => t.isUnlocked)
+}
+
+function isAllDone(stopId: string | null): boolean {
+  if (!stopId) return false
+  return stopStore.isAllComplete(stopId)
+}
+
+function filledStars(stopId: string | null): number {
+  if (!stopId) return 0
+  const total = stopStore.totalTasks(stopId)
+  const completed = stopStore.countComplete(stopId)
+  if (total === 0 || completed === 0) return 0
+  return Math.min(3, Math.ceil(completed * 3 / total))
+}
 </script>
 
 <template>
   <SceneComponent title="Utendørs" previous="/student-home" background="/GameMapBackground.jpg">
     <div class="map-objects">
       <div class="road" aria-hidden="true"></div>
-      <RouterLink
-        v-for="house in houses"
-        :key="house.key"
-        :to="house.to"
-        class="map-object"
-        :class="house.key"
-        :aria-label="house.name"
-      >
-        <div class="house-label">
-          <div class="stars" aria-label="3 av 3 stjerner">
-            <span class="star">★</span>
-            <span class="star">★</span>
-            <span class="star">★</span>
+
+      <template v-for="house in houses" :key="house.key">
+        <RouterLink
+          v-if="isAvailable(house.stopId)"
+          :to="house.to"
+          class="map-object"
+          :class="[house.key, { 'map-object--done': isAllDone(house.stopId) }]"
+          :aria-label="house.name"
+        >
+          <div class="house-label">
+            <div v-if="house.showStars" class="stars">
+              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 1 }">★</span>
+              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 2 }">★</span>
+              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 3 }">★</span>
+            </div>
+            <div class="name">{{ house.name }}</div>
           </div>
-          <div class="name">{{ house.name }}</div>
+          <img class="house-image" :src="house.src" :alt="house.name" />
+        </RouterLink>
+
+        <div
+          v-else
+          class="map-object map-object--locked"
+          :class="house.key"
+          :aria-label="`${house.name} - låst`"
+        >
+          <div class="house-label">
+            <div class="lock-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="name">{{ house.name }}</div>
+          </div>
+          <img class="house-image" :src="house.src" :alt="house.name" />
         </div>
-        <img class="house-image" :src="house.src" :alt="house.name" />
-      </RouterLink>
+      </template>
     </div>
   </SceneComponent>
 </template>
@@ -68,13 +119,13 @@ const houses = [
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.map-object:hover,
-.map-object:focus-visible {
+.map-object:hover:not(.map-object--locked),
+.map-object:focus-visible:not(.map-object--locked) {
   transform: scale(1.05);
   filter: brightness(1.1);
 }
 
-.map-object:active {
+.map-object:active:not(.map-object--locked) {
   transform: scale(1.02);
 }
 
@@ -82,6 +133,15 @@ const houses = [
   outline: 2px solid #ffd447;
   outline-offset: 4px;
   border-radius: 4px;
+}
+
+.map-object--locked {
+  cursor: not-allowed;
+  filter: grayscale(0.6) brightness(0.7);
+}
+
+.map-object--done .house-image {
+  filter: drop-shadow(0 0 8px rgba(255, 212, 71, 0.8));
 }
 
 .house-image {
@@ -104,10 +164,21 @@ const houses = [
 }
 
 .star {
-  color: #ffd447;
+  color: rgba(255, 255, 255, 0.35);
   font-size: 1.25rem;
   line-height: 1;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.star--done {
+  color: #ffd447;
+}
+
+.lock-icon {
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .name {

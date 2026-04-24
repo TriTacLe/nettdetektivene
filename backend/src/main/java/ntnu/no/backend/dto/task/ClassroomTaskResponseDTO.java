@@ -19,5 +19,6 @@ public record ClassroomTaskResponseDTO(
     UUID taskId,
     short sortOrder,
     Boolean isActive,
+    boolean isUnlocked,
     TaskResponseDTO task
 ) {}

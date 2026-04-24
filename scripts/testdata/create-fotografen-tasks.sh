@@ -84,7 +84,7 @@ TASK1_CONTENT=$(jq -c -n '{
     description: "Hvilken type bilde er dette?",
     alternatives: [
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/real-photo-1.jpeg",
             description: "Bilde av en by ved solnedgang",
             correctType: "ekte",
             begrunnelser: [
@@ -94,7 +94,7 @@ TASK1_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Portrett av en person utendors",
             correctType: "ai-generert",
             begrunnelser: [
@@ -104,7 +104,7 @@ TASK1_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Folkemengde pa et torg",
             correctType: "manipulert",
             begrunnelser: [
@@ -120,7 +120,7 @@ TASK2_CONTENT=$(jq -c -n '{
     description: "Sorter disse bildene etter type.",
     alternatives: [
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Dyr i naturen",
             correctType: "ai-generert",
             begrunnelser: [
@@ -130,7 +130,7 @@ TASK2_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/real-photo-1.jpeg",
             description: "Landskap med fjell",
             correctType: "ekte",
             begrunnelser: [
@@ -140,7 +140,7 @@ TASK2_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Politiker pa talerstol",
             correctType: "manipulert",
             begrunnelser: [
@@ -156,7 +156,7 @@ TASK3_CONTENT=$(jq -c -n '{
     description: "Klarer du a identifisere alle tre typer bilder?",
     alternatives: [
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Nyhetsbilde fra en hendelse",
             correctType: "manipulert",
             begrunnelser: [
@@ -166,7 +166,7 @@ TASK3_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/fake-photo-1.jpg",
             description: "Arkitektur og bygninger",
             correctType: "ai-generert",
             begrunnelser: [
@@ -176,7 +176,7 @@ TASK3_CONTENT=$(jq -c -n '{
             ]
         },
         {
-            imagePath: "/photos/ai-photo-1.jpg",
+            imagePath: "/photos/real-photo-1.jpeg",
             description: "Barn som leker i park",
             correctType: "ekte",
             begrunnelser: [

@@ -93,11 +93,35 @@ public class ClassroomController {
   @Operation(summary = "Get tasks assigned to a classroom")
   public ResponseEntity<ApiResponse<List<ClassroomTaskResponseDTO>>> getClassroomTasks(
       @PathVariable UUID classroomId,
-      @RequestParam(defaultValue = "false") boolean activeOnly) {
+      @RequestParam(defaultValue = "false") boolean activeOnly,
+      @RequestParam(defaultValue = "false") boolean includeUnlocked,
+      @AuthenticationPrincipal User currentUser) {
     if (activeOnly) {
+      if (includeUnlocked && currentUser != null) {
+        return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasksWithUnlocked(classroomId, currentUser.getId())));
+      }
       return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasks(classroomId)));
     }
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getClassroomTasks(classroomId)));
+  }
+
+  @GetMapping("/{classroomId}/tasks/unlocked")
+  @Operation(summary = "Get unlocked tasks for authenticated user in a classroom")
+  public ResponseEntity<ApiResponse<List<ClassroomTaskResponseDTO>>> getUnlockedClassroomTasks(
+      @PathVariable UUID classroomId,
+      @AuthenticationPrincipal User currentUser) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomService.getUnlockedClassroomTasks(classroomId, currentUser.getId())));
+  }
+
+  @PostMapping("/{classroomId}/tasks/{taskId}/unlock")
+  @Operation(summary = "Unlock a task for a user in a classroom")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<Void> unlockTaskForUser(
+      @PathVariable UUID classroomId,
+      @PathVariable UUID taskId,
+      @RequestParam UUID userId) {
+    classroomService.unlockTaskForUser(classroomId, taskId, userId);
+    return ResponseEntity.ok().build();
   }
 
   @PatchMapping("/{classroomId}/tasks/{taskId}")
