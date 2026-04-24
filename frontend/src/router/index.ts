@@ -73,6 +73,16 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/teacher-leaderboard',
+      name: 'teacher-leaderboard',
+      component: () => import('../views/teacher/TeacherLeaderboardView.vue'),
+    },
+    {
+      path: '/teacher-leaderboard/:classroomId',
+      name: 'teacher-classroom-leaderboard',
+      component: () => import('../views/teacher/TeacherClassroomLeaderboardView.vue'),
+    },
+    {
       path: '/teacher-settings',
       name: 'settings',
       component: () => import('../views/teacher/TeacherSettingsView.vue'),
