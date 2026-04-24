@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
+import {useAuthStore} from "@/stores/AuthStore.ts";
 
+const authStore = useAuthStore()
 const { data, isLoading } = useQuery(getProfileOptions())
 const profile = computed(() => data.value?.data ?? null)
 </script>
@@ -44,6 +46,13 @@ const profile = computed(() => data.value?.data ?? null)
             </div>
           </div>
         </div>
+
+        <button
+          class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-2x1 shadow transition"
+          @click="authStore.logout()"
+        >
+          Logg ut
+        </button>
       </div>
     </div>
   </SceneComponent>
