@@ -9,6 +9,7 @@ import ntnu.no.backend.dto.task.TaskBestScoreResponseDTO;
 import ntnu.no.backend.service.LeaderboardService;
 import ntnu.no.backend.shared.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +32,8 @@ public class LeaderboardController {
 
   @GetMapping("/institutions/{institutionId}/classrooms/leaderboard")
   @Operation(summary = "Get all classrooms ranked by total score")
-  public ResponseEntity<ApiResponse<List<ClassroomLeaderboardEntryResponseDTO>>> getClassroomsLeaderboardByInstitution(@PathVariable UUID institutionId){
+  @PreAuthorize("hasAnyAuthority('student', 'instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<List<ClassroomLeaderboardEntryResponseDTO>>> getClassroomsLeaderboardByInstitution(@PathVariable UUID institutionId) {
     return ResponseEntity.ok(ApiResponse.ok(leaderboardService.getClassroomsLeaderboard(institutionId)));
   }
 

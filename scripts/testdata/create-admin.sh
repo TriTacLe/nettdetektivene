@@ -47,8 +47,8 @@ add_roles() {
 
 check_server
 
-TEMPLATE_INSTRUCTOR="instructor@test.no|Test Instructor"
-TEMPLATE_ADMIN="admin@test.no|Test Admin"
+TEMPLATE_INSTRUCTOR="instructor@test.no|Test Instructor|instructor"
+TEMPLATE_ADMIN="admin@test.no|Test Admin|instructor"
 
 TEMPLATE_PASSWORD="password123"
 
@@ -56,7 +56,7 @@ echo -e "${COMMENT_COLOR}Creating template admin and instructor...${NC}"
 echo ""
 
 for user_data in "$TEMPLATE_INSTRUCTOR" "$TEMPLATE_ADMIN"; do
-    IFS='|' read -r EMAIL DISPLAY_NAME <<< "$user_data"
+    IFS='|' read -r EMAIL DISPLAY_NAME AFFILIATION <<< "$user_data"
 
     if [ "$EMAIL" = "instructor@test.no" ]; then
         ROLE="instructor"
@@ -66,15 +66,17 @@ for user_data in "$TEMPLATE_INSTRUCTOR" "$TEMPLATE_ADMIN"; do
 
     echo -e "${BLUE}[INFO]${NC} Creating $ROLE: $EMAIL..."
 
-    response=$(make_api_call "POST" "/api/v1/auth/register" \
-        "{\"displayName\":\"$DISPLAY_NAME\",\"email\":\"$EMAIL\",\"password\":\"$TEMPLATE_PASSWORD\",\"role\":\"inst_admin\"}")
+    response=$(make_api_call "POST" "/api/v1/auth/feide" \
+        "{\"displayName\":\"$DISPLAY_NAME\",\"email\":\"$EMAIL\",\"password\":\"$TEMPLATE_PASSWORD\",\"affiliation\":\"$AFFILIATION\"}")
     http_code=$(echo "$response" | tail -n1)
     body=$(echo "$response" | sed '$d')
 
     USER_ID=""
+    TOKEN=""
 
     if [ "$http_code" = "200" ] || [ "$http_code" = "201" ]; then
-        USER_ID=$(get_json_value "$body" ".userId")
+        TOKEN=$(get_json_value "$body" ".token")
+        USER_ID=$(get_json_value "$(make_api_call GET "/api/v1/users/me" "" "$TOKEN" | sed '$d')" ".id")
         add_roles "$USER_ID" "instructor"
         add_roles "$USER_ID" "admin"
         add_roles "$USER_ID" "student"
@@ -82,10 +84,11 @@ for user_data in "$TEMPLATE_INSTRUCTOR" "$TEMPLATE_ADMIN"; do
         echo -e "      ${GREEN}✓${NC} Created (ID: ${USER_ID:0:8}...)"
     elif echo "$body" | grep -q "already exists" || [ "$http_code" = "409" ]; then
         echo -e "      ${GREEN}⊙${NC} Already exists"
-        login_check=$(make_api_call "POST" "/api/v1/auth/login" \
-            "{\"email\":\"$EMAIL\",\"password\":\"$TEMPLATE_PASSWORD\"}")
+        login_check=$(make_api_call "POST" "/api/v1/auth/feide" \
+            "{\"email\":\"$EMAIL\",\"password\":\"$TEMPLATE_PASSWORD\",\"affiliation\":\"$AFFILIATION\"}")
         login_body=$(echo "$login_check" | sed '$d')
-        USER_ID=$(get_json_value "$(make_api_call GET "/api/v1/users/me" "" "$(get_json_value "$login_body" ".token")" | sed '$d')" ".id")
+        TOKEN=$(get_json_value "$login_body" ".token")
+        USER_ID=$(get_json_value "$(make_api_call GET "/api/v1/users/me" "" "$TOKEN" | sed '$d')" ".id")
     else
         echo -e "      ${RED}✗${NC} Failed ($(echo "$body" | head -1))"
     fi

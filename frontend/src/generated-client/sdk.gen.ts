@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddInstructorData, AddInstructorResponses, ApproveData, ApproveNameChangeData, ApproveNameChangeResponses, ApproveResponses, CountPassedTasksByStopLocationData, CountPassedTasksByStopLocationResponses, CreateClassroomData, CreateClassroomResponses, CreateNotebookData, CreateNotebookResponses, CreateTaskData, CreateTaskResponses, DeleteClassroomData, DeleteClassroomResponses, DeleteNotebookData, DeleteNotebookResponses, DeleteTaskData, DeleteTaskResponses, FeideLoginData, FeideLoginErrors, FeideLoginResponses, GetAchievementData, GetAchievementResponses, GetAchievementsByTriggerData, GetAchievementsByTriggerResponses, GetAllAchievementsData, GetAllAchievementsResponses, GetAllClassroomsByInstitutionData, GetAllClassroomsByInstitutionResponses, GetAllClassroomsData, GetAllClassroomsResponses, GetAllInstitutionsData, GetAllInstitutionsResponses, GetAllNotebooksData, GetAllNotebooksResponses, GetAllTasksData, GetAllTasksResponses, GetApprovedStudentsData, GetApprovedStudentsResponses, GetAttemptsByClassroomData, GetAttemptsByClassroomResponses, GetAttemptsByUserAndTaskData, GetAttemptsByUserAndTaskResponses, GetClassroomData, GetClassroomLeaderboardData, GetClassroomLeaderboardResponses, GetClassroomResponses, GetClassroomTasksData, GetClassroomTasksResponses, GetInstructorsData, GetInstructorsResponses, GetMyClassroomsData, GetMyClassroomsResponses, GetMyNotebooksData, GetMyNotebooksResponses, GetMyNotificationsData, GetMyNotificationsResponses, GetPendingNameChangesData, GetPendingNameChangesResponses, GetPendingStudentsData, GetPendingStudentsResponses, GetProfileByFeideIdData, GetProfileByFeideIdResponses, GetProfileData, GetProfileResponses, GetStudentScoreData, GetStudentScoreResponses, GetStudentsData, GetStudentsResponses, GetTaskData, GetTaskResponses, GetUserData, GetUserErrors, GetUserResponses, JoinData, JoinResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkAsReadData, MarkAsReadResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, RejectNameChangeData, RejectNameChangeResponses, RemoveData, RemoveInstructorData, RemoveInstructorResponses, RemoveResponses, SubmitAttemptData, SubmitAttemptResponses, UpdateClassroomData, UpdateClassroomResponses, UpdateClassroomTaskData, UpdateClassroomTaskResponses, UpdateNotebookData, UpdateNotebookResponses, UpdateProfileData, UpdateProfileResponses, UpdateTaskData, UpdateTaskResponses, UpdateUserByIdData, UpdateUserByIdErrors, UpdateUserByIdResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
+import type { AddInstructorData, AddInstructorResponses, ApproveData, ApproveNameChangeData, ApproveNameChangeResponses, ApproveResponses, CountPassedTasksByStopLocationData, CountPassedTasksByStopLocationResponses, CreateClassroomData, CreateClassroomResponses, CreateNotebookData, CreateNotebookResponses, CreateTaskData, CreateTaskResponses, DeleteClassroomData, DeleteClassroomResponses, DeleteNotebookData, DeleteNotebookResponses, DeleteTaskData, DeleteTaskResponses, FeideLoginData, FeideLoginErrors, FeideLoginResponses, GetAchievementData, GetAchievementResponses, GetAchievementsByTriggerData, GetAchievementsByTriggerResponses, GetAllAchievementsData, GetAllAchievementsResponses, GetAllClassroomsByInstitutionData, GetAllClassroomsByInstitutionResponses, GetAllClassroomsData, GetAllClassroomsResponses, GetAllInstitutionsData, GetAllInstitutionsResponses, GetAllNotebooksData, GetAllNotebooksResponses, GetAllTasksData, GetAllTasksResponses, GetApprovedStudentsData, GetApprovedStudentsResponses, GetAttemptsByClassroomData, GetAttemptsByClassroomResponses, GetAttemptsByUserAndTaskData, GetAttemptsByUserAndTaskResponses, GetClassroomData, GetClassroomLeaderboardData, GetClassroomLeaderboardResponses, GetClassroomResponses, GetClassroomsLeaderboardByInstitutionData, GetClassroomsLeaderboardByInstitutionResponses, GetClassroomTasksData, GetClassroomTasksResponses, GetInstructorsData, GetInstructorsResponses, GetMyAchievementsData, GetMyAchievementsResponses, GetMyClassroomData, GetMyClassroomResponses, GetMyClassroomsData, GetMyClassroomsResponses, GetMyNotebooksData, GetMyNotebooksResponses, GetMyNotificationsData, GetMyNotificationsResponses, GetPendingNameChangesData, GetPendingNameChangesResponses, GetPendingStudentsData, GetPendingStudentsResponses, GetProfileByFeideIdData, GetProfileByFeideIdResponses, GetProfileData, GetProfileResponses, GetStudentScoreData, GetStudentScoreResponses, GetStudentsData, GetStudentsResponses, GetTaskData, GetTaskResponses, GetUnlockedClassroomTasksData, GetUnlockedClassroomTasksResponses, GetUserData, GetUserErrors, GetUserResponses, JoinData, JoinResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkAsReadData, MarkAsReadResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, RejectNameChangeData, RejectNameChangeResponses, RemoveData, RemoveInstructorData, RemoveInstructorResponses, RemoveResponses, SubmitAttemptData, SubmitAttemptResponses, UnlockTaskForUserData, UnlockTaskForUserResponses, UpdateClassroomData, UpdateClassroomResponses, UpdateClassroomTaskData, UpdateClassroomTaskResponses, UpdateNotebookData, UpdateNotebookResponses, UpdateProfileData, UpdateProfileResponses, UpdateTaskData, UpdateTaskResponses, UpdateUserByIdData, UpdateUserByIdErrors, UpdateUserByIdResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -60,6 +60,15 @@ export const createClassroom = <ThrowOnError extends boolean = false>(options: O
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Unlock a task for a user in a classroom
+ */
+export const unlockTaskForUser = <ThrowOnError extends boolean = false>(options: Options<UnlockTaskForUserData, ThrowOnError>) => (options.client ?? client).post<UnlockTaskForUserResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/classrooms/{classroomId}/tasks/{taskId}/unlock',
+    ...options
 });
 
 /**
@@ -411,11 +420,29 @@ export const getAllInstitutions = <ThrowOnError extends boolean = false>(options
 });
 
 /**
+ * Get all classrooms ranked by total score
+ */
+export const getClassroomsLeaderboardByInstitution = <ThrowOnError extends boolean = false>(options: Options<GetClassroomsLeaderboardByInstitutionData, ThrowOnError>) => (options.client ?? client).get<GetClassroomsLeaderboardByInstitutionResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/institutions/{institutionId}/classrooms/leaderboard',
+    ...options
+});
+
+/**
  * Get tasks assigned to a classroom
  */
 export const getClassroomTasks = <ThrowOnError extends boolean = false>(options: Options<GetClassroomTasksData, ThrowOnError>) => (options.client ?? client).get<GetClassroomTasksResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/classrooms/{classroomId}/tasks',
+    ...options
+});
+
+/**
+ * Get unlocked tasks for authenticated user in a classroom
+ */
+export const getUnlockedClassroomTasks = <ThrowOnError extends boolean = false>(options: Options<GetUnlockedClassroomTasksData, ThrowOnError>) => (options.client ?? client).get<GetUnlockedClassroomTasksResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/classrooms/{classroomId}/tasks/unlocked',
     ...options
 });
 
@@ -510,6 +537,15 @@ export const getMyClassrooms = <ThrowOnError extends boolean = false>(options?: 
 });
 
 /**
+ * Get the classroom the authenticated student belongs to
+ */
+export const getMyClassroom = <ThrowOnError extends boolean = false>(options?: Options<GetMyClassroomData, ThrowOnError>) => (options?.client ?? client).get<GetMyClassroomResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/classrooms/me',
+    ...options
+});
+
+/**
  * Get classrooms by institution
  */
 export const getAllClassroomsByInstitution = <ThrowOnError extends boolean = false>(options: Options<GetAllClassroomsByInstitutionData, ThrowOnError>) => (options.client ?? client).get<GetAllClassroomsByInstitutionResponses, unknown, ThrowOnError>({
@@ -554,9 +590,6 @@ export const getAchievement = <ThrowOnError extends boolean = false>(options: Op
     ...options
 });
 
-/**
- * Get achievements earned by the authenticated user
- */
 export const getMyAchievements = <ThrowOnError extends boolean = false>(options?: Options<GetMyAchievementsData, ThrowOnError>) => (options?.client ?? client).get<GetMyAchievementsResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/achievements/me',

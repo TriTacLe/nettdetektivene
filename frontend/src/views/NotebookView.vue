@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  createNotebookMutation,
+  getMyNotebooksOptions,
+  getMyNotebooksQueryKey,
+  updateNotebookMutation,
+} from '@/generated-client/@tanstack/vue-query.gen'
+import type { NotebookEntryResponseDto } from '@/generated-client/types.gen'
 import SceneComponent from '@/components/SceneComponent.vue'
-import { useNotebookStore } from '@/stores/NotebookStore'
 import { TaskType } from '@/types'
 
 const route = useRoute()
-const notebookStore = useNotebookStore()
+const queryClient = useQueryClient()
 
 const STOP_LABELS: Record<TaskType, string> = {
   [TaskType.NEWS]: 'Nyhetskvartalet',
@@ -18,24 +25,124 @@ const STOP_LABELS: Record<TaskType, string> = {
   [TaskType.BOSS]: 'Datasenteret',
 }
 
+const STOP_LOCATION_KEY: Record<TaskType, string> = {
+  [TaskType.NEWS]: 'nyhetskvartalet',
+  [TaskType.PHOTO]: 'fotografen',
+  [TaskType.EMAIL]: 'postkontoret',
+  [TaskType.PASSWORD]: 'passordbanken',
+  [TaskType.MARKETPLACE]: 'markedsplassen',
+  [TaskType.SOCIAL]: 'sosiale',
+  [TaskType.BOSS]: 'datasenteret',
+}
+
+const BACKEND_TO_TASK_TYPE: Record<string, TaskType> = Object.fromEntries(
+  Object.entries(STOP_LOCATION_KEY).map(([taskType, backendKey]) => [backendKey, taskType as TaskType]),
+)
+
+// Temporary fallback until backend auto-generates tips on task completion
+const FALLBACK_AUTO_NOTES: Record<TaskType, string[]> = {
+  [TaskType.NEWS]: [
+    'Sjekk alltid kilden før du deler en nyhet',
+    'Falske nyheter bruker ofte dramatiske overskrifter',
+    'Søk opp saken på flere uavhengige nettsteder',
+  ],
+  [TaskType.PHOTO]: [
+    'Bilder kan enkelt manipuleres med AI',
+    'Bruk omvendt bildesøk for å verifisere bilder',
+    'Sjekk metadata og konteksten rundt bildet',
+  ],
+  [TaskType.EMAIL]: [
+    'Ikke klikk på lenker i uventede e-poster',
+    'Sjekk avsenderens faktiske e-postadresse nøye',
+    'Legitime tjenester ber aldri om passord på e-post',
+  ],
+  [TaskType.PASSWORD]: [
+    'Bruk lange passord med tall, bokstaver og symboler',
+    'Ikke bruk samme passord på flere tjenester',
+    'En passordbehandler hjelper deg å holde orden',
+  ],
+  [TaskType.MARKETPLACE]: [
+    'Vær skeptisk til tilbud som virker for gode til å være sanne',
+    'Betal aldri med gavekort eller kryptovaluta til ukjente',
+    'Sjekk selgerens anmeldelser og profil grundig',
+  ],
+  [TaskType.SOCIAL]: [
+    'Del ikke personlig informasjon med ukjente på nett',
+    'Tenk deg om to ganger før du aksepterer venneforespørsler',
+    'Innstillinger for personvern bør gjennomgås jevnlig',
+  ],
+  [TaskType.BOSS]: [
+    'Oppdater alltid programvare og operativsystem',
+    'Totrinnspålogging gir ekstra beskyttelse for kontoene dine',
+    'Vær forsiktig med hvilke apper du gir tilgang til',
+  ],
+}
+
+const classroomId = computed(() => route.query.classroomId as string | undefined)
+
 const reflections = ref<Record<string, string>>({})
 const savingStop = ref<string | null>(null)
 const savedStop = ref<string | null>(null)
 const currentSpread = ref(0)
 
-const stops = computed(() => Object.values(TaskType))
+const stops = computed(() =>
+  Object.values(TaskType).filter((t) => !!entriesByStop.value[t]),
+)
 const totalSpreads = computed(() => Math.ceil(stops.value.length / 2))
 const leftStop = computed(() => stops.value[currentSpread.value * 2] ?? null)
 const rightStop = computed(() => stops.value[currentSpread.value * 2 + 1] ?? null)
 
+const { data, isLoading, error } = useQuery(
+  computed(() =>
+    getMyNotebooksOptions({
+      path: { classroomId: classroomId.value ?? '' },
+    }),
+  ),
+)
+
+const displayError = computed(() => {
+  if (!classroomId.value) return 'Mangler klasserom-ID. Naviger hit fra klasserommet ditt.'
+  return error.value ? 'Kunne ikke hente notatblokkoppføringer' : null
+})
+
 const entriesByStop = computed(() => {
-  return notebookStore.entries.reduce<Record<string, typeof notebookStore.entries[0]>>(
-    (acc, entry) => {
-      acc[entry.stopLocation] = entry
-      return acc
-    },
-    {},
-  )
+  const entries = data.value?.data ?? []
+  return entries.reduce<Record<string, NotebookEntryResponseDto>>((acc, entry) => {
+    if (entry.stopLocation) {
+      const taskType = BACKEND_TO_TASK_TYPE[entry.stopLocation]
+      if (taskType) acc[taskType] = entry
+    }
+    return acc
+  }, {})
+})
+
+const createMutation = useMutation(createNotebookMutation())
+const updateMutation = useMutation(updateNotebookMutation())
+
+const saveMutation = useMutation({
+  mutationFn: async (payload: {
+    stopLocation: string
+    studentReflection: string
+    autoNotes?: string
+  }) => {
+    const taskType = BACKEND_TO_TASK_TYPE[payload.stopLocation]
+    const existing = taskType ? entriesByStop.value[taskType] : undefined
+    if (existing?.id) {
+      return updateMutation.mutateAsync({
+        path: { classroomId: classroomId.value!, notebookId: existing.id },
+        body: payload,
+      })
+    }
+    return createMutation.mutateAsync({
+      path: { classroomId: classroomId.value! },
+      body: payload,
+    })
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({
+      queryKey: getMyNotebooksQueryKey({ path: { classroomId: classroomId.value ?? '' } }),
+    })
+  },
 })
 
 function prevSpread(): void {
@@ -47,13 +154,13 @@ function nextSpread(): void {
 }
 
 function getAutoNotes(stopLocation: string): string[] {
-  const entry = entriesByStop.value[stopLocation]
-  if (!entry?.autoNotes) return []
+  const raw = entriesByStop.value[stopLocation]?.autoNotes
+  if (!raw) return FALLBACK_AUTO_NOTES[stopLocation as TaskType] ?? []
   try {
-    const parsed = JSON.parse(entry.autoNotes)
-    return Array.isArray(parsed) ? parsed : [entry.autoNotes]
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : [raw]
   } catch {
-    return [entry.autoNotes]
+    return [raw]
   }
 }
 
@@ -72,8 +179,8 @@ async function saveReflection(stopLocation: string): Promise<void> {
   savingStop.value = stopLocation
   savedStop.value = null
   try {
-    await notebookStore.saveEntry({
-      stopLocation,
+    await saveMutation.mutateAsync({
+      stopLocation: STOP_LOCATION_KEY[stopLocation as TaskType] ?? stopLocation,
       autoNotes: entriesByStop.value[stopLocation]?.autoNotes ?? undefined,
       studentReflection: reflections.value[stopLocation] ?? '',
     })
@@ -85,30 +192,25 @@ async function saveReflection(stopLocation: string): Promise<void> {
     savingStop.value = null
   }
 }
-
-onMounted(() => {
-  const cid = route.query.classroomId as string | undefined
-  if (cid) {
-    notebookStore.fetchEntries(cid)
-  } else {
-    notebookStore.error = 'Mangler klasserom-ID. Naviger hit fra klasserommet ditt.'
-  }
-})
 </script>
 
 <template>
   <SceneComponent title="Dine notater" previous="/student-home" previous-label="Hjem">
     <div class="notebook-wrapper">
-      <p v-if="notebookStore.isLoading" class="notebook-status" aria-live="polite">
+      <p v-if="isLoading" class="notebook-status" aria-live="polite">
         Laster inn notatblokk...
       </p>
 
-      <p v-else-if="notebookStore.error" class="notebook-error" role="alert">
-        {{ notebookStore.error }}
+      <p v-else-if="displayError" class="notebook-error" role="alert">
+        {{ displayError }}
       </p>
 
       <template v-else>
-        <p v-if="notebookStore.entries.length === 0" class="notebook-empty">
+        <p class="notebook-hint">
+          Flere notater låses opp etter hvert som du fullfører nye stoppesteder i spillet.
+        </p>
+
+        <p v-if="!data?.data?.length" class="notebook-empty">
           Du har ikke fullført noen stoppesteder enda. Tips vil dukke opp her når du spiller!
         </p>
 
@@ -137,46 +239,38 @@ onMounted(() => {
             <div
               v-if="leftStop"
               class="book-page book-page--left"
-              :class="{ 'book-page--locked': !entriesByStop[leftStop] }"
             >
               <div class="card-header">
                 <h2 class="stop-title">{{ STOP_LABELS[leftStop] }}</h2>
               </div>
 
-              <div v-if="!entriesByStop[leftStop]" class="locked-content">
-                <span class="lock-icon">🔒</span>
-                <p class="stop-locked">Fullfør stoppestedet for å få tilgang til notatene dine</p>
+              <div class="lined-section">
+                <p v-for="(note, i) in getAutoNotes(leftStop)" :key="i" class="lined-row">
+                  {{ note }}
+                </p>
+                <p v-if="getAutoNotes(leftStop).length === 0" class="lined-row lined-row--empty">
+                  Ingen tips enda...
+                </p>
+                <div class="reflection-divider">✏️ Dine egne notater</div>
+                <textarea
+                  :id="`reflection-${leftStop}`"
+                  class="reflection-input"
+                  :value="getReflection(leftStop)"
+                  placeholder="Skriv her..."
+                  :aria-label="`Refleksjon for ${STOP_LABELS[leftStop]}`"
+                  @input="onReflectionInput(leftStop, ($event.target as HTMLTextAreaElement).value)"
+                />
               </div>
-
-              <template v-else>
-                <div class="lined-section">
-                  <p v-for="(note, i) in getAutoNotes(leftStop)" :key="i" class="lined-row">
-                    {{ note }}
-                  </p>
-                  <p v-if="getAutoNotes(leftStop).length === 0" class="lined-row lined-row--empty">
-                    Ingen tips enda...
-                  </p>
-                  <div class="reflection-divider">✏️ Dine egne notater</div>
-                  <textarea
-                    :id="`reflection-${leftStop}`"
-                    class="reflection-input"
-                    :value="getReflection(leftStop)"
-                    placeholder="Skriv her..."
-                    :aria-label="`Refleksjon for ${STOP_LABELS[leftStop]}`"
-                    @input="onReflectionInput(leftStop, ($event.target as HTMLTextAreaElement).value)"
-                  />
-                </div>
-                <button
-                  class="save-button"
-                  :disabled="savingStop === leftStop"
-                  :aria-label="`Lagre refleksjon for ${STOP_LABELS[leftStop]}`"
-                  @click="saveReflection(leftStop)"
-                >
-                  <span v-if="savingStop === leftStop">Lagrer...</span>
-                  <span v-else-if="savedStop === leftStop">✓ Lagret!</span>
-                  <span v-else>Lagre</span>
-                </button>
-              </template>
+              <button
+                class="save-button"
+                :disabled="savingStop === leftStop"
+                :aria-label="`Lagre refleksjon for ${STOP_LABELS[leftStop]}`"
+                @click="saveReflection(leftStop)"
+              >
+                <span v-if="savingStop === leftStop">Lagrer...</span>
+                <span v-else-if="savedStop === leftStop">✓ Lagret!</span>
+                <span v-else>Lagre</span>
+              </button>
             </div>
 
             <div class="book-spine" />
@@ -184,54 +278,46 @@ onMounted(() => {
             <div
               v-if="rightStop"
               class="book-page book-page--right"
-              :class="{ 'book-page--locked': !entriesByStop[rightStop] }"
             >
               <div class="card-header">
                 <h2 class="stop-title">{{ STOP_LABELS[rightStop] }}</h2>
               </div>
 
-              <div v-if="!entriesByStop[rightStop]" class="locked-content">
-                <span class="lock-icon">🔒</span>
-                <p class="stop-locked">Fullfør stoppestedet for å få tilgang til notatene dine</p>
-              </div>
-
-              <template v-else>
-                <div class="lined-section">
-                  <p v-for="(note, i) in getAutoNotes(rightStop)" :key="i" class="lined-row">
-                    {{ note }}
-                  </p>
-                  <p
-                    v-if="getAutoNotes(rightStop).length === 0"
-                    class="lined-row lined-row--empty"
-                  >
-                    Ingen tips enda...
-                  </p>
-                  <div class="reflection-divider">✏️ Dine egne notater</div>
-                  <textarea
-                    :id="`reflection-${rightStop}`"
-                    class="reflection-input"
-                    :value="getReflection(rightStop)"
-                    placeholder="Skriv her..."
-                    :aria-label="`Refleksjon for ${STOP_LABELS[rightStop]}`"
-                    @input="
-                      onReflectionInput(
-                        rightStop,
-                        ($event.target as HTMLTextAreaElement).value,
-                      )
-                    "
-                  />
-                </div>
-                <button
-                  class="save-button"
-                  :disabled="savingStop === rightStop"
-                  :aria-label="`Lagre refleksjon for ${STOP_LABELS[rightStop]}`"
-                  @click="saveReflection(rightStop)"
+              <div class="lined-section">
+                <p v-for="(note, i) in getAutoNotes(rightStop)" :key="i" class="lined-row">
+                  {{ note }}
+                </p>
+                <p
+                  v-if="getAutoNotes(rightStop).length === 0"
+                  class="lined-row lined-row--empty"
                 >
-                  <span v-if="savingStop === rightStop">Lagrer...</span>
-                  <span v-else-if="savedStop === rightStop">✓ Lagret!</span>
-                  <span v-else>Lagre</span>
-                </button>
-              </template>
+                  Ingen tips enda...
+                </p>
+                <div class="reflection-divider">✏️ Dine egne notater</div>
+                <textarea
+                  :id="`reflection-${rightStop}`"
+                  class="reflection-input"
+                  :value="getReflection(rightStop)"
+                  placeholder="Skriv her..."
+                  :aria-label="`Refleksjon for ${STOP_LABELS[rightStop]}`"
+                  @input="
+                    onReflectionInput(
+                      rightStop,
+                      ($event.target as HTMLTextAreaElement).value,
+                    )
+                  "
+                />
+              </div>
+              <button
+                class="save-button"
+                :disabled="savingStop === rightStop"
+                :aria-label="`Lagre refleksjon for ${STOP_LABELS[rightStop]}`"
+                @click="saveReflection(rightStop)"
+              >
+                <span v-if="savingStop === rightStop">Lagrer...</span>
+                <span v-else-if="savedStop === rightStop">✓ Lagret!</span>
+                <span v-else>Lagre</span>
+              </button>
             </div>
 
             <div v-else class="book-page book-page--right book-page--blank" aria-hidden="true" />
@@ -262,6 +348,14 @@ onMounted(() => {
   text-align: center;
   font-size: 1rem;
   margin-top: 40px;
+}
+
+.notebook-hint {
+  color: #f5e7c7;
+  text-align: center;
+  font-size: 0.98rem;
+  max-width: 42rem;
+  margin: 0;
 }
 
 .notebook-error {
