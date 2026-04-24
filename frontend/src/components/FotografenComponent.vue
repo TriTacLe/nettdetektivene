@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import GuidanceComponent from './GuidanceComponent.vue'
 import type { FotografenChallenge, PhotoType } from '../types'
 
 const props = defineProps<{ challenge: FotografenChallenge; question?: string; tip?: string }>()
@@ -46,11 +47,11 @@ function submit() {
 
 <template>
   <div class="fotografen-wrapper">
-    <div class="header">
-      <h2 class="title">{{ question ?? 'Er bildene ekte, KI-generert eller manipulert?' }}</h2>
-      <p v-if="tip" class="tip"><span class="tip-label">Tips:</span> {{ tip }}</p>
-      <p v-else class="subtitle">Velg riktig alternativ for hvert bilde</p>
-    </div>
+  <div class="header">
+    <h2 class="title">{{ question ?? 'Er bildene ekte, KI-generert eller manipulert?' }}</h2>
+    <GuidanceComponent :tip="tip" />
+    <p v-if="!tip" class="subtitle">Velg riktig alternativ for hvert bilde</p>
+  </div>
 
     <div class="cards" :style="{ '--count': challenge.alternatives.length }">
       <div

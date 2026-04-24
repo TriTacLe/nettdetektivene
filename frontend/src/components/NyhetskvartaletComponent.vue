@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import GuidanceComponent from './GuidanceComponent.vue'
 import type { NewsChallenge, NewsArticle } from '../types'
 
 const props = defineProps<{ challenge: NewsChallenge; question?: string; tip?: string }>()
@@ -24,7 +25,7 @@ function choose(article: NewsArticle) {
 <template>
   <div class="task-header">
     <h2 class="question">{{ question ?? 'Hvilken artikkel er ekte?' }}</h2>
-    <p v-if="tip" class="tip"><span class="tip-label">Tips:</span> {{ tip }}</p>
+    <GuidanceComponent :tip="tip" />
   </div>
 
   <div class="articles">

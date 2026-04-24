@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
+import GuidanceComponent from '../components/GuidanceComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
 
 const STOP_ID = 'fotografen'
@@ -31,6 +32,7 @@ function selectTask(uuid: string, taskId: number) {
 <template>
   <SceneComponent title="Fotografen" previous="/game-map" background="/FotografenBackground.png">
     <div class="list-container">
+      <GuidanceComponent tip="Her skal du lære å skille ekte bilder fra KI-genererte og manipulerte bilder. Se etter unaturlige detaljer, rare skygger og uskarpe kanter!" />
       <div v-if="isLoading" class="state-msg">Laster oppgaver...</div>
       <div v-else-if="tasks.length === 0" class="state-msg state-msg--empty">
         Ingen oppgaver funnet for Fotografen
