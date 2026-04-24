@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -7,14 +7,15 @@ import { useStopStore } from '@/stores/StopStore'
 const stopStore = useStopStore()
 
 const houses = [
-  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home', stopId: null,              showStars: false },
-  { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet', stopId: 'nyhetskvartalet', showStars: true },
-  { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',       to: '/stops/fotografen',       stopId: 'fotografen',       showStars: true },
-  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: null,              showStars: false },
+  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home', stopId: null,              showStars: false, previousStop: null },
+  { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet', stopId: 'nyhetskvartalet', showStars: true,  previousStop: null },
+  { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',       to: '/stops/fotografen',       stopId: 'fotografen',       showStars: true,  previousStop: 'Nyhetskvartalet' },
+  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: null,              showStars: false, previousStop: null },
 ]
 
+const lockedPopup = ref<string | null>(null)
+
 onMounted(() => {
-  // Force reload to get latest unlock status after completing tasks
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
 })
@@ -38,6 +39,14 @@ function filledStars(stopId: string | null): number {
   const completed = stopStore.countComplete(stopId)
   if (total === 0 || completed === 0) return 0
   return Math.min(3, Math.ceil(completed * 3 / total))
+}
+
+function openLockedPopup(key: string) {
+  lockedPopup.value = key
+}
+
+function closeLockedPopup() {
+  lockedPopup.value = null
 }
 </script>
 
@@ -70,6 +79,10 @@ function filledStars(stopId: string | null): number {
           class="map-object map-object--locked"
           :class="house.key"
           :aria-label="`${house.name} - låst`"
+          role="button"
+          tabindex="0"
+          @click="openLockedPopup(house.key)"
+          @keydown.enter.space.prevent="openLockedPopup(house.key)"
         >
           <div class="house-label">
             <div class="lock-icon" aria-hidden="true">
@@ -81,9 +94,41 @@ function filledStars(stopId: string | null): number {
             <div class="name">{{ house.name }}</div>
           </div>
           <img class="house-image" :src="house.src" :alt="house.name" />
+
+          <Transition name="popup">
+            <div
+              v-if="lockedPopup === house.key"
+              class="locked-popup"
+              role="dialog"
+              :aria-label="`${house.name} er låst`"
+              @click.stop
+            >
+              <button class="locked-popup__close" aria-label="Lukk" @click.stop="closeLockedPopup">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <p class="locked-popup__title">Låst</p>
+              <p class="locked-popup__body">
+                Fullfør alle oppgavene i
+                <strong>{{ house.previousStop ?? 'forrige stopp' }}</strong>
+                for å låse opp dette stedet.
+              </p>
+            </div>
+          </Transition>
         </div>
       </template>
     </div>
+
+    <Transition name="overlay-fade">
+      <div
+        v-if="lockedPopup !== null"
+        class="popup-overlay"
+        aria-hidden="true"
+        @click="closeLockedPopup"
+      ></div>
+    </Transition>
   </SceneComponent>
 </template>
 
@@ -136,8 +181,97 @@ function filledStars(stopId: string | null): number {
 }
 
 .map-object--locked {
-  cursor: not-allowed;
+  cursor: pointer;
   filter: grayscale(0.6) brightness(0.7);
+}
+
+.map-object--locked:hover,
+.map-object--locked:focus-visible {
+  filter: grayscale(0.4) brightness(0.8);
+}
+
+.locked-popup {
+  position: absolute;
+  bottom: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  background: #1a2a2e;
+  border: 1px solid rgba(255, 212, 71, 0.5);
+  border-radius: 8px;
+  padding: 0.75rem;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  text-align: center;
+}
+
+.locked-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(255, 212, 71, 0.5);
+}
+
+.locked-popup__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.15rem;
+  line-height: 1;
+  display: flex;
+}
+
+.locked-popup__close:hover {
+  color: #ffffff;
+}
+
+.locked-popup__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffd447;
+  margin: 0 0 0.35rem;
+}
+
+.locked-popup__body {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+}
+
+.popup-enter-active,
+.popup-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.popup-enter-from,
+.popup-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
 }
 
 .map-object--done .house-image {
