@@ -1,5 +1,6 @@
 package ntnu.no.backend.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import ntnu.no.backend.dto.notification.NotificationResponseDTO;
 import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.NotificationService;
@@ -90,6 +91,32 @@ class NotificationControllerTest {
 
     mockMvc.perform(patch("/api/v1/notifications/" + id + "/read").with(csrf()))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser
+  void markAsRead_returnsNotFound_whenNotificationNotFound() throws Exception {
+    UUID id = UUID.randomUUID();
+
+    when(notificationService.markAsRead(any(), any()))
+        .thenThrow(new EntityNotFoundException("Notification not found: " + id));
+
+    mockMvc.perform(patch("/api/v1/notifications/" + id + "/read").with(csrf()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  @WithMockUser
+  void markAsRead_returnsBadRequest_whenWrongUser() throws Exception {
+    UUID id = UUID.randomUUID();
+
+    when(notificationService.markAsRead(any(), any()))
+        .thenThrow(new IllegalArgumentException("User does not own this notification"));
+
+    mockMvc.perform(patch("/api/v1/notifications/" + id + "/read").with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false));
   }
 
   private NotificationResponseDTO notificationResponseDTO(UUID id, boolean read) {
