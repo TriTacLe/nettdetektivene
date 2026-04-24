@@ -28,7 +28,7 @@ const menuItems = [
   {
     title: 'Ledertavle',
     subtitle: 'Se klassenes resultater',
-    route: 'leaderboard',
+    route: 'teacher-leaderboard',
   },
 ]
 
