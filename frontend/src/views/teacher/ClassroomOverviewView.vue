@@ -1,9 +1,4 @@
 <script setup lang="ts">
-// OLD (manual axios approach)
-// import { ref, onMounted, computed } from 'vue'
-// import ClassroomService from '@/services/ClassroomService.ts'
-// import type { ClassroomResponseDTO } from '@/types'
-//  NEW (generated client + TanStack Query)
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.ts'
@@ -19,48 +14,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 const queryClient = useQueryClient()
 
-// OLD
-// const classrooms = ref<ClassroomResponseDTO[]>([])
-// const loading = ref(false)
-// const error = ref<string | null>(null)
-//
-// const myClassrooms = computed(() =>
-//   classrooms.value.filter((c) => c.createdById === authStore.user?.id),
-// )
-//
-// onMounted(async () => {
-//   loading.value = true
-//   try {
-//     classrooms.value = await ClassroomService.getAllClassrooms()
-//   } catch (e: any) {
-//     error.value = e.message ?? 'Kunne ikke hente klasserom'
-//   } finally {
-//     loading.value = false
-//   }
-// })
-//  NEW
 const { data, isLoading, error } = useQuery(getAllClassroomsOptions())
 
-const myClassrooms = computed(
-  () => data.value?.data?.filter((c) => c.createdById === authStore.user?.id) ?? [],
-)
+const myClassrooms = computed(() => data.value?.data ?? [])
 
 const deleteMutation = useMutation({
   ...deleteClassroomMutation(),
   onSuccess: () => queryClient.invalidateQueries({ queryKey: getAllClassroomsQueryKey() }),
 })
 
-// OLD
-// async function deleteClassroom(id: string) {
-//   if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
-//   try {
-//     await ClassroomService.deleteClassroom(id)
-//     classrooms.value = classrooms.value.filter((c) => c.id !== id)
-//   } catch (e: any) {
-//     error.value = e.message ?? 'Kunne ikke slette klasserommet'
-//   }
-// }
-// NEW
 async function deleteClassroom(id: string) {
   if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
   deleteMutation.mutate({ path: { id } })
@@ -78,6 +40,9 @@ function openClassroom(id: string) {
     previous="teacher-home"
   >
     <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
+      <div class="w-full max-w-md mx-auto flex justify-end mb-2">
+        <span class="text-white text-sm font-semibold opacity-80">{{ authStore.user?.displayName ?? authStore.user?.email }}</span>
+      </div>
       <div class="flex flex-col gap-3 w-full max-w-md mx-auto">
         <div
           v-if="error"

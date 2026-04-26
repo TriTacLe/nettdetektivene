@@ -8,9 +8,11 @@ import ntnu.no.backend.exception.EmailAlreadyExistsException;
 import ntnu.no.backend.model.auth.LocalCredential;
 import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.enums.RoleName;
 import ntnu.no.backend.repository.LocalCredentialRepository;
 import ntnu.no.backend.repository.RoleRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.security.JWTUtil;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,9 @@ class AuthServiceTest {
 
   @Mock
   private LocalCredentialRepository localCredentialRepository;
+
+  @Mock
+  private UserProfileRepository userProfileRepository;
 
   @Mock
   private PasswordEncoder passwordEncoder;
@@ -117,6 +122,7 @@ class AuthServiceTest {
     });
     when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
     when(localCredentialRepository.save(any(LocalCredential.class))).thenReturn(null);
+    when(userProfileRepository.save(any(UserProfile.class))).thenReturn(null);
     when(jwtUtil.generateToken(any(User.class))).thenReturn("jwt.token.here");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token.here");
 
@@ -173,6 +179,7 @@ class AuthServiceTest {
     });
     when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
     when(localCredentialRepository.save(any(LocalCredential.class))).thenReturn(null);
+    when(userProfileRepository.save(any(UserProfile.class))).thenReturn(null);
     when(jwtUtil.generateToken(any(User.class))).thenReturn("jwt.token.here");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token.here");
 

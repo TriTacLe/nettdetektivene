@@ -11,6 +11,7 @@ import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ import static java.util.stream.Collectors.toMap;
 public class LeaderboardService {
   private final TaskBestScoreRepository taskBestScoreRepository;
   private final ClassroomRepository classroomRepository;
+  private final UserProfileRepository userProfileRepository;
 
   /**
    * Returns all students in a classroom ranked by their total score,
@@ -53,6 +55,12 @@ public class LeaderboardService {
     // group by user, sum their best score across all tasks
     Map<User, Integer> totalByUser = scores.stream().collect(Collectors.groupingBy(TaskBestScore::getUser, Collectors.summingInt(TaskBestScore::getBestScore)));
 
+    // fetch xpLevel for all users in one query
+    List<User> users = new ArrayList<>(totalByUser.keySet());
+    record ProfileData(int xpLevel, int xp) {}
+    Map<UUID, ProfileData> profileByUserId = userProfileRepository.findByUserIn(users).stream()
+        .collect(Collectors.toMap(p -> p.getUser().getId(), p -> new ProfileData(p.getXpLevel(), p.getXp())));
+
     // sort desc
     List<Map.Entry<User, Integer>> sorted = totalByUser.entrySet().stream().sorted(Map.Entry.<User, Integer>comparingByValue().reversed()).toList();
 
@@ -60,7 +68,8 @@ public class LeaderboardService {
     List<LeaderboardEntryResponseDTO> result = new ArrayList<>();
     for (int i=0; i<sorted.size();i++){
       User user = sorted.get(i).getKey();
-      result.add(new LeaderboardEntryResponseDTO(user.getId(),user.getDisplayName(), sorted.get(i).getValue(),i+1));
+      var profile = profileByUserId.getOrDefault(user.getId(), new ProfileData(1, 0));
+      result.add(new LeaderboardEntryResponseDTO(user.getId(), user.getDisplayName(), sorted.get(i).getValue(), i+1, profile.xpLevel(), profile.xp()));
     }
 
     return result;

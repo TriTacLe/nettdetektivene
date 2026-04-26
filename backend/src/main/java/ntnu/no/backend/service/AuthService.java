@@ -9,8 +9,10 @@ import ntnu.no.backend.mapper.UserMapper;
 import ntnu.no.backend.model.auth.LocalCredential;
 import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.repository.LocalCredentialRepository;
 import ntnu.no.backend.repository.RoleRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.exception.EmailAlreadyExistsException;
 import ntnu.no.backend.model.enums.RoleName;
@@ -35,6 +37,7 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final LocalCredentialRepository localCredentialRepository;
+  private final UserProfileRepository userProfileRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JWTUtil jwtUtil;
@@ -60,6 +63,7 @@ public class AuthService {
     Role role = resolveAdminRole(dto.getRole());
     User user = createUser(dto, email, role);
     createLocalCredential(user, dto.getPassword());
+    createProfile(user, dto);
     return new AuthResponseDTO(
       jwtUtil.generateToken(user),
       refreshTokenService.create(user),
@@ -108,6 +112,20 @@ public class AuthService {
       .user(user)
       .passwordHash(passwordEncoder.encode(password))
       .build());
+  }
+
+  /**
+   * Creates and persists a {@link UserProfile} for the given user.
+   *
+   * @param user the provisioned user
+   * @param dto  the registration request containing the display name
+   */
+  private void createProfile(User user, RegisterRequestDTO dto) {
+    UserProfile profile = UserProfile.builder()
+      .user(user)
+      .displayName(dto.getDisplayName())
+      .build();
+    userProfileRepository.save(profile);
   }
 
   /**

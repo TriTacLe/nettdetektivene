@@ -37,8 +37,8 @@ import java.util.UUID;
  * Service for managing student classroom membership.
  * Handles join requests, approval, removal and listing.
  *
- * @author norakirknes
- * @version 0.1
+ * @author norakirknes, tri
+ * @version 0.2
  * @since 0.1
  * @see ClassroomStudentRepository
  * @see ClassroomRepository
@@ -61,7 +61,8 @@ public class ClassroomStudentService {
    *
    * @param user the user to fetch the classroom for
    * @return the classroom as DTO
-   * @throws EntityNotFoundException if the student does not have classroom membership
+   * @throws EntityNotFoundException if the student does not have classroom
+   *                                 membership
    */
   @Transactional(readOnly = true)
   public ClassroomResponseDTO getMyClassroom(User user) {
@@ -69,16 +70,17 @@ public class ClassroomStudentService {
         .orElseThrow(() -> new EntityNotFoundException("Student is not in any classroom"));
     return ClassroomMapper.toDTO(membership.getClassroom());
   }
+
   /**
    * Joins a student to a classroom via join code. The student's display name
    * is set from their user profile. Membership is pending until approved
    * by an instructor.
    *
    * @param joinCode the join code of the classroom
-   * @param user the authenticated student
+   * @param user     the authenticated student
    * @return the created membership as a DTO
    * @throws EntityNotFoundException if no active classroom matches the join code
-   * @throws IllegalStateException if the student is already in a classroom
+   * @throws IllegalStateException   if the student is already in a classroom
    * @throws EntityNotFoundException if the student has no user profile
    */
   @Transactional
@@ -87,31 +89,31 @@ public class ClassroomStudentService {
       throw new IllegalStateException("Student is already in a classroom");
     }
     Classroom classroom = classroomRepository.findByJoinCodeAndDeletedAtIsNull(joinCode)
-      .orElseThrow(() -> new EntityNotFoundException("No classroom found with join code: " + joinCode));
+        .orElseThrow(() -> new EntityNotFoundException("No classroom found with join code: " + joinCode));
     UserProfile profile = userProfileRepository.findByUser(user)
-      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+        .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
 
     ClassroomStudent student = ClassroomStudent.builder()
-      .id(ClassroomStudentId.builder()
-        .classroomId(classroom.getId())
-        .userId(user.getId())
-        .build())
-      .classroom(classroom)
-      .user(user)
-      .displayName(profile.getDisplayName())
-      .build();
+        .id(ClassroomStudentId.builder()
+            .classroomId(classroom.getId())
+            .userId(user.getId())
+            .build())
+        .classroom(classroom)
+        .user(user)
+        .displayName(profile.getDisplayName())
+        .build();
 
     classroomStudentRepository.save(student);
-    return ClassroomStudentMapper.toDTO(student);
+    return mapToDTO(student);
   }
 
   /**
    * Lists all students in a classroom.
    *
    * @param classroomId the classroom ID
-   * @param instructor the authenticated instructor
+   * @param instructor  the authenticated instructor
    * @return a list of student memberships
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if no active classroom found
    */
   @Transactional(readOnly = true)
@@ -119,7 +121,7 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
     return classroomStudentRepository.findAllByClassroom(classroom).stream()
-      .map(ClassroomStudentMapper::toDTO)
+      .map(this::mapToDTO)
       .toList();
   }
 
@@ -127,9 +129,9 @@ public class ClassroomStudentService {
    * Lists approved students in a classroom.
    *
    * @param classroomId the classroom ID
-   * @param instructor the authenticated instructor
+   * @param instructor  the authenticated instructor
    * @return a list of approved student memberships
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if no active classroom found
    */
   @Transactional(readOnly = true)
@@ -137,7 +139,7 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
     return classroomStudentRepository.findAllByClassroomAndIsAllowedIsTrue(classroom).stream()
-      .map(ClassroomStudentMapper::toDTO)
+      .map(this::mapToDTO)
       .toList();
   }
 
@@ -145,9 +147,9 @@ public class ClassroomStudentService {
    * Lists pending students in a classroom.
    *
    * @param classroomId the classroom ID
-   * @param instructor the authenticated instructor
+   * @param instructor  the authenticated instructor
    * @return a list of pending student memberships
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if no active classroom found
    */
   @Transactional(readOnly = true)
@@ -155,7 +157,7 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
     return classroomStudentRepository.findAllByClassroomAndIsAllowedIsFalse(classroom).stream()
-      .map(ClassroomStudentMapper::toDTO)
+      .map(this::mapToDTO)
       .toList();
   }
 
@@ -163,28 +165,29 @@ public class ClassroomStudentService {
    * Lists students with pending name change requests in a classroom.
    *
    * @param classroomId the classroom ID
-   * @param instructor the authenticated instructor
+   * @param instructor  the authenticated instructor
    * @return a list of students with pending name changes
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if no active classroom found
    */
   @Transactional(readOnly = true)
   public List<ClassroomStudentResponseDTO> getPendingNameChanges(UUID classroomId, User instructor) {
     verifyInstructor(classroomId, instructor);
     Classroom classroom = findClassroom(classroomId);
-    return classroomStudentRepository.findAllByClassroomAndNameChangeStatus(classroom, NameChangeStatus.PENDING).stream()
-      .map(ClassroomStudentMapper::toDTO)
-      .toList();
+    return classroomStudentRepository.findAllByClassroomAndNameChangeStatus(classroom, NameChangeStatus.PENDING)
+        .stream()
+        .map(this::mapToDTO)
+        .toList();
   }
 
   /**
    * Approves a student's membership in a classroom.
    *
    * @param classroomId the classroom ID
-   * @param userId the student's user ID
-   * @param instructor the authenticated instructor
+   * @param userId      the student's user ID
+   * @param instructor  the authenticated instructor
    * @return the updated membership as a DTO
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
    */
   @Transactional
@@ -193,7 +196,7 @@ public class ClassroomStudentService {
     ClassroomStudent student = findMembership(classroomId, userId);
     student.setAllowed(true);
     unlockFirstTask(classroomId, student);
-    return ClassroomStudentMapper.toDTO(student);
+    return mapToDTO(student);
   }
 
   private void unlockFirstTask(UUID classroomId, ClassroomStudent student) {
@@ -205,8 +208,7 @@ public class ClassroomStudentService {
           UserTaskUnlockedId id = new UserTaskUnlockedId(
               student.getUser().getId(),
               classroomId,
-              firstTask.getTask().getId()
-          );
+              firstTask.getTask().getId());
           if (!userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
               student.getUser().getId(), classroomId, firstTask.getTask().getId())) {
             userTaskUnlockedRepository.save(
@@ -216,8 +218,7 @@ public class ClassroomStudentService {
                     .classroom(student.getClassroom())
                     .task(firstTask.getTask())
                     .unlockedAt(LocalDateTime.now())
-                    .build()
-            );
+                    .build());
           }
         });
   }
@@ -226,9 +227,9 @@ public class ClassroomStudentService {
    * Rejects and removes a student's membership from a classroom.
    *
    * @param classroomId the classroom ID
-   * @param userId the student's user ID
-   * @param instructor the authenticated instructor
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @param userId      the student's user ID
+   * @param instructor  the authenticated instructor
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
    */
   @Transactional
@@ -245,10 +246,10 @@ public class ClassroomStudentService {
    * since the SP does not update {@code user_profile}.
    *
    * @param classroomId the classroom ID
-   * @param userId the student's user ID
-   * @param instructor the authenticated instructor
+   * @param userId      the student's user ID
+   * @param instructor  the authenticated instructor
    * @return the updated membership as a DTO
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
    */
   @Transactional
@@ -261,10 +262,10 @@ public class ClassroomStudentService {
 
     ClassroomStudent student = findMembership(classroomId, userId);
     UserProfile profile = userProfileRepository.findByUser(student.getUser())
-      .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + userId));
+        .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + userId));
     profile.setDisplayName(student.getDisplayName());
 
-    return ClassroomStudentMapper.toDTO(student);
+    return mapToDTO(student);
   }
 
   /**
@@ -272,10 +273,10 @@ public class ClassroomStudentService {
    * {@code sp_review_display_name_change}.
    *
    * @param classroomId the classroom ID
-   * @param userId the student's user ID
-   * @param instructor the authenticated instructor
+   * @param userId      the student's user ID
+   * @param instructor  the authenticated instructor
    * @return the updated membership as a DTO
-   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws AccessDeniedException   if user is not an instructor of the classroom
    * @throws EntityNotFoundException if the student is not in the classroom
    */
   @Transactional
@@ -286,22 +287,23 @@ public class ClassroomStudentService {
     entityManager.flush();
     entityManager.clear();
     ClassroomStudent student = findMembership(classroomId, userId);
-    return ClassroomStudentMapper.toDTO(student);
+    return mapToDTO(student);
   }
 
   /**
    * Verifies that the user is an instructor of the given classroom.
    *
    * @param classroomId the classroom ID
-   * @param user the user to verify
-   * @throws AccessDeniedException if the user is not an instructor of the classroom
+   * @param user        the user to verify
+   * @throws AccessDeniedException if the user is not an instructor of the
+   *                               classroom
    */
   private void verifyInstructor(UUID classroomId, User user) {
     if (!classroomInstructorRepository.existsById(
-      ClassroomInstructorId.builder()
-        .classroomId(classroomId)
-        .userId(user.getId())
-        .build())) {
+        ClassroomInstructorId.builder()
+            .classroomId(classroomId)
+            .userId(user.getId())
+            .build())) {
       throw new AccessDeniedException("You are not an instructor of this classroom");
     }
   }
@@ -315,14 +317,14 @@ public class ClassroomStudentService {
    */
   private Classroom findClassroom(UUID classroomId) {
     return classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
-      .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
   }
 
   /**
    * Looks up a students membership by classroom and user ID.
    *
    * @param classroomId the classroom ID
-   * @param userId the student's user ID
+   * @param userId      the student's user ID
    * @return the membership entity
    * @throws EntityNotFoundException if the student is not in the classroom
    */
@@ -333,5 +335,17 @@ public class ClassroomStudentService {
           .userId(userId)
           .build())
       .orElseThrow(() -> new EntityNotFoundException("Student not found in classroom"));
+  }
+
+  /**
+   * Maps a ClassroomStudent entity to DTO, fetching the feideId from UserProfile.
+   *
+   * @param student the classroom student entity
+   * @return the mapped DTO with feideId populated
+   */
+  private ClassroomStudentResponseDTO mapToDTO(ClassroomStudent student) {
+    UserProfile profile = userProfileRepository.findByUser(student.getUser()).orElse(null);
+    String feideId = profile != null ? profile.getFeideId() : null;
+    return ClassroomStudentMapper.toDTO(student, feideId);
   }
 }

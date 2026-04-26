@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class LeaderboardTestFactory {
   public static LeaderboardEntryResponseDTO entryResponseDTO(UUID userID){
-    return new LeaderboardEntryResponseDTO(userID, "Tri", 100, 1);
+    return new LeaderboardEntryResponseDTO(userID, "Tri", 100, 1, 1, 0);
   }
 
   public static TaskBestScoreResponseDTO scoreResponseDTO(UUID userId, UUID taskId, UUID classroomId){

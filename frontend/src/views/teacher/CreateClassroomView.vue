@@ -1,17 +1,59 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
-import { useMutation } from '@tanstack/vue-query'
-import { createClassroomMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import { useMutation, useQuery } from '@tanstack/vue-query'
+import {
+  createClassroomMutation,
+  updateClassroomMutation,
+  getAllInstitutionsOptions,
+  getClassroomOptions,
+} from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
+const route = useRoute()
+
+const classroomId = route.params.id as string | undefined
+const isEditMode = !!classroomId
 
 const title = ref('')
 const classDesc = ref('')
-const institutionId = ref('')
+const selectedInstitutionId = ref('')
 const isGameEnabled = ref(false)
 const serverError = ref<string | null>(null)
+
+const { data: institutionsData, isLoading: isLoadingInstitutions } = useQuery(getAllInstitutionsOptions())
+
+const institutions = computed(() => {
+  const seen = new Set<string>()
+  return (institutionsData.value?.data ?? []).filter((inst): inst is typeof inst & { instName: string; id: string } => {
+    if (!inst.instName || !inst.id) return false
+    if (seen.has(inst.instName)) return false
+    seen.add(inst.instName)
+    return true
+  })
+})
+
+watch(institutions, (list) => {
+  if (!isEditMode && list.length === 1 && list[0] && !selectedInstitutionId.value) {
+    selectedInstitutionId.value = list[0].id
+  }
+})
+
+// @ts-expect-error - Generated client types have complex type incompatibility
+const { data: classroomData } = useQuery({
+  ...getClassroomOptions({ path: { id: classroomId ?? '' } }),
+  enabled: isEditMode && !!classroomId,
+})
+
+watch(classroomData, (data) => {
+  const c = data?.data
+  if (!c) return
+  title.value = c.title ?? ''
+  classDesc.value = c.classDesc ?? ''
+  selectedInstitutionId.value = c.institutionId ?? ''
+  isGameEnabled.value = c.isGameEnabled ?? false
+}, { immediate: true })
 
 interface FieldErrors {
   title?: string
@@ -22,7 +64,7 @@ const fieldErrors = ref<FieldErrors>({})
 function validate(): boolean {
   fieldErrors.value = {}
   if (!title.value.trim()) fieldErrors.value.title = 'Navn på klasserom kreves'
-  if (!institutionId.value.trim()) fieldErrors.value.institutionId = 'Institusjons-ID kreves'
+  if (!selectedInstitutionId.value) fieldErrors.value.institutionId = 'Velg en institusjon'
   return Object.keys(fieldErrors.value).length === 0
 }
 
@@ -36,31 +78,46 @@ const createMutation = useMutation({
   },
 })
 
+const updateMutation = useMutation({
+  ...updateClassroomMutation(),
+  onSuccess: () => {
+    router.push({ name: 'classroom-detail', params: { id: classroomId } })
+  },
+  onError: (e: any) => {
+    serverError.value = e.message ?? 'Kunne ikke oppdatere klasserom'
+  },
+})
+
 function submit() {
   serverError.value = null
   if (!validate()) return
-  createMutation.mutate({
-    body: {
-      title: title.value.trim(),
-      classDesc: classDesc.value.trim() || undefined,
-      institutionId: institutionId.value.trim(),
-      gameEnabled: isGameEnabled.value,
-    },
-  })
-}
 
+  const body = {
+    title: title.value.trim(),
+    classDesc: classDesc.value.trim() || undefined,
+    institutionId: selectedInstitutionId.value,
+    gameEnabled: isGameEnabled.value,
+  }
+
+  if (isEditMode) {
+    updateMutation.mutate({ path: { id: classroomId! }, body })
+  } else {
+    createMutation.mutate({ body })
+  }
+}
 </script>
 
 <template>
   <SceneComponent
-    title="Opprett klasserom"
+    :title="isEditMode ? 'Rediger klasserom' : 'Opprett klasserom'"
     background="/StartBackground.jpg"
-    previous="classroom-overview"
-    next="/classroom/:id"
+    :previous="isEditMode ? `/classroom/${classroomId}` : '/classroom-overview'"
   >
     <div class="min-h-screen flex flex-col items-center justify-center p-8">
       <div class="bg-amber-50 rounded-2x1 shadow-xl p-8 w-full max-w-md">
-        <h1 class="text-2xl font-bold text-amber-900 mb-6">Opprett klasserom</h1>
+        <h1 class="text-2xl font-bold text-amber-900 mb-6">
+          {{ isEditMode ? 'Rediger klasserom' : 'Opprett klasserom' }}
+        </h1>
 
         <div
           v-if="serverError"
@@ -98,13 +155,29 @@ function submit() {
           </div>
 
           <div>
-            <label class="block text-sm font-semibold text-amber-900 mb-1"> Institusjons-ID </label>
-            <input
-              v-model="institutionId"
-              type="text"
-              placeholder="ID for din skole"
-              class="w-full border border-amber-300 rounded-lg px-4 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
+            <label class="block text-sm font-semibold text-amber-900 mb-1">
+              Institusjon
+            </label>
+            <select
+              v-model="selectedInstitutionId"
+              :disabled="isLoadingInstitutions"
+              class="w-full border border-amber-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+            >
+              <option value="" disabled>Velg institusjon...</option>
+              <option
+                v-for="inst in institutions"
+                :key="inst.id"
+                :value="inst.id"
+              >
+                {{ inst.instName }}
+              </option>
+            </select>
+            <p v-if="isLoadingInstitutions" class="text-amber-700 text-xs mt-1">
+              Laster institusjoner...
+            </p>
+            <p v-else-if="institutions.length === 0" class="text-red-600 text-xs mt-1">
+              Ingen institusjoner funnet. Kontakt administrator.
+            </p>
             <p v-if="fieldErrors.institutionId" class="text-red-600 text-xs mt-1">
               {{ fieldErrors.institutionId }}
             </p>
@@ -117,10 +190,14 @@ function submit() {
 
           <button
             type="submit"
-            :disabled="createMutation.isPending.value"
+            :disabled="createMutation.isPending.value || updateMutation.isPending.value"
             class="w-full bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition mt-2"
           >
-            {{ createMutation.isPending.value ? 'Oppretter...' : 'Opprett klasserom' }}
+            {{
+              isEditMode
+                ? updateMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer'
+                : createMutation.isPending.value ? 'Oppretter...' : 'Opprett klasserom'
+            }}
           </button>
         </form>
       </div>

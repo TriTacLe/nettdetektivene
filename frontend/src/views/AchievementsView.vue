@@ -10,9 +10,12 @@ import {
   getMyAchievementsOptions,
 } from '../generated-client/@tanstack/vue-query.gen'
 
-const { data: profileData } = useQuery(getProfileOptions())
-const { data: allAchivementsData } = useQuery(getAllAchievementsOptions())
-const { data: myAchievementsData } = useQuery(getMyAchievementsOptions())
+const { data: profileData, isLoading: isLoadingProfile, isError: isErrorProfile } = useQuery(getProfileOptions())
+const { data: allAchivementsData, isLoading: isLoadingAll, isError: isErrorAll } = useQuery(getAllAchievementsOptions())
+const { data: myAchievementsData, isLoading: isLoadingMine, isError: isErrorMine } = useQuery(getMyAchievementsOptions())
+
+const isLoading = computed(() => isLoadingProfile.value || isLoadingAll.value || isLoadingMine.value)
+const isError = computed(() => isErrorProfile.value || isErrorAll.value || isErrorMine.value)
 
 const profile = computed(() => profileData.value?.data)
 const allAchievements = computed(() => allAchivementsData.value?.data ?? [])
@@ -33,45 +36,61 @@ const progressPercent = computed(() =>
       <div class="achievements-card">
         <h1>Mine prestasjoner</h1>
 
-        <!-- Bruker info -->
-        <section class="section">
-          <div class="profile-info">
-            <p><strong>Detektiv:</strong> {{ profile?.displayName }}</p>
-            <p><strong>Level:</strong> {{ profile?.xpLevel }}</p>
-            <p><strong>Exp:</strong> {{ profile?.xp }}</p>
-          </div>
-        </section>
+        <!-- Loading state -->
+        <div v-if="isLoading" class="loading-state">
+          <p>Laster medaljer...</p>
+        </div>
 
-        <!-- total fremgang -->
-        <section class="section">
-          <h2>Total progresjon</h2>
-          <div class="total-progress">
-            <div class="progress-info">
-              <p><strong>Fullført:</strong> {{ earned }} / {{ total }}</p>
+        <!-- Error state -->
+        <div v-else-if="isError" class="error-state">
+          <p>Kunne ikke laste medaljer. Prøv igjen senere.</p>
+        </div>
+
+        <!-- Content -->
+        <template v-else>
+          <!-- Bruker info -->
+          <section class="section">
+            <div class="profile-info">
+              <p><strong>Detektiv:</strong> {{ profile?.displayName }}</p>
+              <p><strong>Level:</strong> {{ profile?.xpLevel }}</p>
+              <p><strong>Exp:</strong> {{ profile?.xp }}</p>
             </div>
+          </section>
 
-            <div class="progress-bar-container">
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+          <!-- total fremgang -->
+          <section class="section">
+            <h2>Total progresjon</h2>
+            <div class="total-progress">
+              <div class="progress-info">
+                <p><strong>Fullført:</strong> {{ earned }} / {{ total }}</p>
               </div>
-              <div class="progress-percent">{{ progressPercent }}%</div>
-            </div>
-          </div>
-        </section>
 
-        <!-- Medaljer/achivements -->
-        <section class="section">
-          <h2>Medaljer</h2>
-          <div class="badges-container">
-            <BadgeCard
-              v-for="achievement in allAchievements"
-              :key="achievement.id"
-              :title="achievement.title ?? ''"
-              :description="achievement.descAch ?? ''"
-              :unlocked="earnedIds.has(achievement.id)"
-            />
-          </div>
-        </section>
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+                </div>
+                <div class="progress-percent">{{ progressPercent }}%</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Medaljer/achivements -->
+          <section class="section">
+            <h2>Medaljer</h2>
+            <div v-if="allAchievements.length === 0" class="empty-state">
+              <p>Ingen medaljer tilgjengelig.</p>
+            </div>
+            <div v-else class="badges-container">
+              <BadgeCard
+                v-for="achievement in allAchievements"
+                :key="achievement.id"
+                :title="achievement.title ?? ''"
+                :description="achievement.descAch ?? ''"
+                :unlocked="earnedIds.has(achievement.id)"
+              />
+            </div>
+          </section>
+        </template>
       </div>
     </div>
   </SceneComponent>
@@ -176,6 +195,18 @@ const progressPercent = computed(() =>
   min-width: 40px;
   text-align: right;
   font-weight: bold;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error-state {
+  color: #e03131;
 }
 
 .achievements-card::-webkit-scrollbar-track {

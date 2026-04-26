@@ -136,7 +136,7 @@ BEGIN
              'Bidraget ditt ble godkjent av læreren! Du har fått en medalje.',
              'mystery_submission', NEW.submission_id, 0, NOW());
 
-        SELECT achievement_id
+         SELECT achievement_id
         INTO v_achievement_id
         FROM achievement
         WHERE trigger_type = 'ukens_mysterium'

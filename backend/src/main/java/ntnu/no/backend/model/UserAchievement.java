@@ -53,6 +53,7 @@ public class UserAchievement {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("userId")
+  @JoinColumn(name = "user_id")
   private User user;
 
   /**
@@ -61,6 +62,7 @@ public class UserAchievement {
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("achievementId")
+  @JoinColumn(name = "achievement_id")
   private Achievement achievement;
 
   /**

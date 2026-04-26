@@ -72,7 +72,6 @@ public class NotebookController {
    *
    * @param classroomId the classroom ID
    * @param dto the notebook entry data
-   * @param userDetails the authenticated user
    * @return the created notebook entry
    */
   @Operation(summary = "Create a new notebook entry")

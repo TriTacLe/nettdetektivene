@@ -19,6 +19,7 @@ import ntnu.no.backend.model.UserTaskUnlockedId;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
@@ -50,6 +51,14 @@ public class ClassroomService {
   private final TaskRepository taskRepository;
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
+
+  @Transactional(readOnly = true)
+  public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
+    return classroomInstructorRepository.findAllByUser(instructor).stream()
+        .map(ci -> ClassroomMapper.toDTO(ci.getClassroom()))
+        .toList();
+  }
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getAllClassroom() {

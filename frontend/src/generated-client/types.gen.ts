@@ -108,6 +108,7 @@ export type ClassroomStudentResponseDto = {
     nameChangeStatus?: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
     requestedDisplayName?: string;
     joinedAt?: string;
+    feideId?: string;
 };
 
 /**
@@ -499,6 +500,8 @@ export type LeaderboardEntryResponseDto = {
     displayName?: string;
     totalScore?: number;
     rank?: number;
+    xpLevel?: number;
+    xp?: number;
 };
 
 export type ApiResponseListTaskBestScoreResponseDto = {
@@ -575,6 +578,7 @@ export type ApiResponseListUserAchievementResponseDto = {
 export type UserAchievementResponseDto = {
     userId?: string;
     achievementId?: string;
+    achievementName?: string;
     classroomId?: string;
     earnedAt?: string;
 };
@@ -1653,6 +1657,24 @@ export type GetAchievementResponses = {
 };
 
 export type GetAchievementResponse = GetAchievementResponses[keyof GetAchievementResponses];
+
+export type GetAchievementsForStudentData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/achievements/user/{userId}';
+};
+
+export type GetAchievementsForStudentResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseListUserAchievementResponseDto;
+};
+
+export type GetAchievementsForStudentResponse = GetAchievementsForStudentResponses[keyof GetAchievementsForStudentResponses];
 
 export type GetMyAchievementsData = {
     body?: never;

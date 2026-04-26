@@ -9,9 +9,11 @@ import java.util.UUID;
  * @param displayName the student's display name
  * @param totalScore  sum of best scores across all tasks in the classroom
  * @param rank        leaderboard position, starting at 1 (highest score)
+ * @param xpLevel     current XP level of the student
+ * @param xp          total raw XP points earned by the student
  *
  * @author tri
- * @version 0.1
+ * @version 0.3
  * @since 0.1
  */
-public record LeaderboardEntryResponseDTO(UUID userId, String displayName, int totalScore, int rank){ }
+public record LeaderboardEntryResponseDTO(UUID userId, String displayName, int totalScore, int rank, int xpLevel, int xp){ }

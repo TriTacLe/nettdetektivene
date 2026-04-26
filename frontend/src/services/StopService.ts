@@ -75,7 +75,10 @@ export async function fetchStopTasks(stopId: string): Promise<StopTaskDTO[]> {
 export async function fetchClassroomId(): Promise<string | null> {
   try {
     const classrooms = await ClassroomService.getMyClassrooms()
-    return classrooms && classrooms.length > 0 ? classrooms[0].id : null
+    if (classrooms && classrooms.length > 0 && classrooms[0]) {
+      return classrooms[0].id ?? null
+    }
+    return null
   } catch {
     return null
   }
