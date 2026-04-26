@@ -9,6 +9,7 @@ import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
+import ntnu.no.backend.repository.UserRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Service for user profile management.
  *
  * @author norakirknes
- * @version 0.1
+ * @version 0.2
  * @since 0.1
  * @see UserProfileRepository
  */
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserProfileService {
 
   private final UserProfileRepository userProfileRepository;
+  private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final JdbcTemplate jdbcTemplate;
 
@@ -68,7 +70,7 @@ public class UserProfileService {
    * is only updated when the instructor approves the request.
    *
    * @param user the authenticated user whose profile should be updated
-   * @param dto  the update request containing new display name and avatar config
+   * @param dto the update request containing new display name and avatar config
    * @return a {@link UserProfileResponseDTO} with the updated profile data
    * @throws EntityNotFoundException if no profile exists for the given user
    */
@@ -82,6 +84,8 @@ public class UserProfileService {
             user.getId().toString(), dto.getDisplayName());
       } else {
         profile.setDisplayName(dto.getDisplayName());
+        user.setDisplayName(dto.getDisplayName());
+        userRepository.save(user);
       }
     }
     UserProfileMapper.updateEntity(profile, dto);

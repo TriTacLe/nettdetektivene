@@ -21,6 +21,8 @@
     "generate-api": "openapi-ts"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@hey-api/client-fetch": "^0.13.1",
     "@tanstack/vue-query": "^5.99.2",
     "axios": "1.15.0",
