@@ -81,7 +81,7 @@ function goToTask(taskId: number) {
           <span class="task-number">{{ task.taskId }}</span>
           <span class="task-body">
             <span class="task-title">{{ task.title }}</span>
-            <span v-if="stop.taskHints && String(task.taskId) in stop.taskHints && stop.taskHints[String(task.taskId)]?.hint && !stopStore.isComplete(stopId, task.uuid)" class="task-hint">
+            <span v-if="(stop.taskHints as Record<string, {hint?: string}> | undefined)?.[String(task.taskId)]?.hint && !stopStore.isComplete(stopId, task.uuid)" class="task-hint">
               {{ (stop.taskHints as Record<string, {hint?: string}>)?.[String(task.taskId)]?.hint }}
             </span>
           </span>
