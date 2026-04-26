@@ -58,6 +58,20 @@ public class ClassroomStudentController {
   }
 
   /**
+   * Returns the students membership status regardless of approval.
+   *
+   * @param user the authenticated student
+   * @return 200 OK with the membership, or 404 if none exists
+   */
+  @GetMapping("/me/status")
+  @Operation(summary = "Get the authenticated students membership status")
+  @PreAuthorize("hasAuthority('student')")
+  public ResponseEntity<ApiResponse<ClassroomStudentResponseDTO>> getMyMembership(
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomStudentService.getMyMembership(user)));
+  }
+
+  /**
    * Joins the authenticated student to a classroom via join code.
    *
    * @param dto the request body containing the join code

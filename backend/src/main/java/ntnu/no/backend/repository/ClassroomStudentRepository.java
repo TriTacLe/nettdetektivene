@@ -70,4 +70,12 @@ public interface ClassroomStudentRepository extends JpaRepository<ClassroomStude
    * @return a list of matching student memberships
    */
   List<ClassroomStudent> findAllByClassroomAndNameChangeStatus(Classroom classroom, NameChangeStatus nameChangeStatus);
+
+  /**
+   * Retrieves an approved student membership by user.
+   *
+   * @param user the student user
+   * @return an {@link Optional} containing the approved membership, or empty
+   */
+  Optional<ClassroomStudent> findByUserAndIsAllowedIsTrue(User user);
 }

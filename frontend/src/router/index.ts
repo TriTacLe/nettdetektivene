@@ -67,6 +67,11 @@ const router = createRouter({
       component: () => import('../views/StudentProfileView.vue'),
     },
     {
+      //path: '/student-profile/avatar',
+      //name: 'edit-avatar',
+      //component: () => import('../views/EditAvatarView.vue'),
+    },
+    {
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
@@ -144,6 +149,11 @@ const router = createRouter({
       path: '/student-leaderboard',
       name: 'student-leaderboard',
       component: () => import('../views/StudentLeaderboardView.vue'),
+    },
+    {
+      path: '/awaiting-approval',
+      name: 'awaiting-approval',
+      component: () => import('../views/AwaitingApprovalView.vue'),
     },
     {
       path: '/introduction',

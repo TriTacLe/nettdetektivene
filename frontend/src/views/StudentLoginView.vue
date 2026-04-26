@@ -49,9 +49,8 @@ async function handleLogin(): Promise<void> {
       return
     }
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, {
-      headers: {Authorization: `Bearer ${authStore.token}`},
-    })
+    const headers = { Authorization: `Bearer ${authStore.token}` }
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, { headers })
 
     if (res.ok) {
       const body = await res.json()
@@ -62,7 +61,12 @@ async function handleLogin(): Promise<void> {
       }
       router.push({ name: 'student-home' })
     } else {
-      router.push({ name: 'join-classroom' })
+      const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, { headers })
+      if (statusRes.ok) {
+        router.push({ name: 'awaiting-approval' })
+      } else {
+        router.push({ name: 'join-classroom' })
+      }
     }
 
   } catch (e) {
