@@ -11,6 +11,7 @@ import ntnu.no.backend.model.TaskBestScoreId;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
+import ntnu.no.backend.repository.UserProfileRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,6 +41,9 @@ class LeaderboardServiceTest {
 
   @Mock
   ClassroomRepository classroomRepository;
+
+  @Mock
+  UserProfileRepository userProfileRepository;
 
   @InjectMocks
   LeaderboardService leaderboardService;
@@ -76,6 +80,8 @@ class LeaderboardServiceTest {
 
     when(taskBestScoreRepository.findByClassroomId(classroomId))
         .thenReturn(List.of(score1, score2));
+    when(userProfileRepository.findByUserIn(org.mockito.ArgumentMatchers.anyList()))
+        .thenReturn(List.of());
 
     List<LeaderboardEntryResponseDTO> result = leaderboardService.getClassroomLeaderboard(classroomId);
 
@@ -94,6 +100,8 @@ class LeaderboardServiceTest {
   void getClassroomLeaderboard_returnsEmpty_whenNoScores() {
     UUID classroomId = UUID.randomUUID();
     when(taskBestScoreRepository.findByClassroomId(classroomId)).thenReturn(List.of());
+    when(userProfileRepository.findByUserIn(org.mockito.ArgumentMatchers.anyList()))
+        .thenReturn(List.of());
 
     List<LeaderboardEntryResponseDTO> result = leaderboardService.getClassroomLeaderboard(classroomId);
 

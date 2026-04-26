@@ -27,6 +27,7 @@ public class UserAchievementMapper {
     return new UserAchievementResponseDTO(
       userAchievement.getUser().getId(),
       userAchievement.getAchievement().getId(),
+      userAchievement.getAchievement().getTitle(),
       userAchievement.getClassroom() != null ? userAchievement.getClassroom().getId() : null,
       userAchievement.getEarnedAt()
     );

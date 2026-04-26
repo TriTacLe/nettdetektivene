@@ -38,7 +38,7 @@ check_server() {
 
 check_server
 
-EMAIL="${1:-instructor@test.no}"
+EMAIL="${1:-laerer@ntnu.no}"
 PASSWORD="${2:-password123}"
 
 echo -e "${BLUE}[INFO]${NC} Logging in as $EMAIL..."

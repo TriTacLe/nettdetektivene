@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import SceneComponent from '../components/SceneComponent.vue'
 import BoardNote from '../components/BoardNote.vue'
 import ClassroomService from '@/services/ClassroomService'
+import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const corkboardImage = '/corkboard.jpg'
 const router = useRouter()
 const classroomId = ref<string | null>(null)
+
+// Fetch profile to get display name (same source as StudentProfileView)
+const { data: profileData } = useQuery(getProfileOptions())
+const studentName = computed(() => {
+  return profileData.value?.data?.displayName || 'Detektiv'
+})
 
 function goTo(route: string) {
   router.push(route)
@@ -45,7 +53,7 @@ onMounted(async () => {
             width="13rem"
             @click="goTo('/student-profile')"
           >
-            <p class="note-title">Detektiv Kari</p>
+            <p class="note-title">{{ studentName }}</p>
           </BoardNote>
         </div>
 

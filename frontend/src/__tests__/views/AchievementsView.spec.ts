@@ -26,7 +26,11 @@ vi.mock('@tanstack/vue-query', () => ({ useQuery: mockUseQuery }))
 
 function setup() {
   mockUseQuery
-    .mockReturnValueOnce({ data: ref({ data: { displayName: 'Tri', xp: 100, xpLevel: 2 } }) })
+    .mockReturnValueOnce({
+      data: ref({ data: { displayName: 'Tri', xp: 100, xpLevel: 2 } }),
+      isLoading: ref(false),
+      isError: ref(false),
+    })
     .mockReturnValueOnce({
       data: ref({
         data: [
@@ -35,8 +39,14 @@ function setup() {
           { id: 'ach3', title: 'Perfeksjonist', descAch: 'Fullfør uten feil' },
         ],
       }),
+      isLoading: ref(false),
+      isError: ref(false),
     })
-    .mockReturnValueOnce({ data: ref({ data: [{ achievementId: 'ach1' }] }) })
+    .mockReturnValueOnce({
+      data: ref({ data: [{ achievementId: 'ach1' }] }),
+      isLoading: ref(false),
+      isError: ref(false),
+    })
 
   return mount(AchievementsView)
 }
@@ -79,12 +89,90 @@ describe('AchievementsView', () => {
 
   it('renders empty badge list when no achievements exist', () => {
     mockUseQuery
-      .mockReturnValueOnce({ data: ref({ data: { displayName: 'Tri', xp: 0, xpLevel: 1 } }) })
-      .mockReturnValueOnce({ data: ref({ data: [] }) })
-      .mockReturnValueOnce({ data: ref({ data: [] }) })
+      .mockReturnValueOnce({
+        data: ref({ data: { displayName: 'Tri', xp: 0, xpLevel: 1 } }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref({ data: [] }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref({ data: [] }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
 
     const wrapper = mount(AchievementsView)
     expect(wrapper.findAll('.badge-card')).toHaveLength(0)
     expect(wrapper.text()).toContain('0 / 0')
+  })
+
+  it('shows loading state while fetching data', () => {
+    mockUseQuery
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(true),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(true),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(true),
+        isError: ref(false),
+      })
+
+    const wrapper = mount(AchievementsView)
+    expect(wrapper.text()).toContain('Laster medaljer')
+  })
+
+  it('shows error state when API fails', () => {
+    mockUseQuery
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(false),
+        isError: ref(true),
+      })
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(false),
+        isError: ref(true),
+      })
+      .mockReturnValueOnce({
+        data: ref(null),
+        isLoading: ref(false),
+        isError: ref(true),
+      })
+
+    const wrapper = mount(AchievementsView)
+    expect(wrapper.text()).toContain('Kunne ikke laste medaljer')
+  })
+
+  it('shows empty state when no achievements available', () => {
+    mockUseQuery
+      .mockReturnValueOnce({
+        data: ref({ data: { displayName: 'Tri', xp: 0, xpLevel: 1 } }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref({ data: [] }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
+      .mockReturnValueOnce({
+        data: ref({ data: [] }),
+        isLoading: ref(false),
+        isError: ref(false),
+      })
+
+    const wrapper = mount(AchievementsView)
+    expect(wrapper.text()).toContain('Ingen medaljer tilgjengelig')
   })
 })

@@ -60,17 +60,25 @@ describe('StudentLoginView', () => {
   })
 
   it('shows error if empty submit', async () => {
+    await wrapper.find('input[type="email"]').setValue('')
+    await wrapper.find('input[type="password"]').setValue('')
     await submit(wrapper)
     expect(wrapper.text()).toContain('Epost kreves')
     expect(wrapper.text()).toContain('Passord kreves')
   })
 
   it('doesnt call on feideLogin if validation error', async () => {
+    await wrapper.find('input[type="email"]').setValue('')
+    await wrapper.find('input[type="password"]').setValue('')
     await submit(wrapper)
     expect(authStore.feideLogin).not.toHaveBeenCalled()
   })
 
   it('calls on feideLogin if valid input and affiliation student', async () => {
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+    } as Response)
     await fillForm(wrapper, 'kari@skole.no', 'passord123')
     await submit(wrapper)
     expect(authStore.feideLogin).toHaveBeenCalledWith({
@@ -80,8 +88,26 @@ describe('StudentLoginView', () => {
     })
   })
 
-  it('navigates to join-classroom after successful login', async () => {
+  it('navigates to set-display-name when displayName equals email prefix', async () => {
     vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    Object.defineProperty(authStore, 'user', {
+      get: () => ({ email: 'kari@skole.no', displayName: 'kari' }),
+      configurable: true
+    })
+    await fillForm(wrapper, 'kari@skole.no', 'passord123')
+    await submit(wrapper)
+    expect(mockPush).toHaveBeenCalledWith({ name: 'set-display-name' })
+  })
+
+  it('navigates to join-classroom when student has no classroom', async () => {
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    Object.defineProperty(authStore, 'user', {
+      get: () => ({ email: 'kari@skole.no', displayName: 'Kari Nordmann' }),
+      configurable: true
+    })
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+    } as Response)
     await fillForm(wrapper, 'kari@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'join-classroom' })
@@ -107,26 +133,25 @@ describe('TeacherLoginView', () => {
     authStore = useAuthStore()
   })
 
-  it('calls feideLogin with affiliation instructor', async () => {
-    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+  it('calls login with email and password', async () => {
+    vi.mocked(authStore.login).mockResolvedValueOnce(undefined)
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
-    expect(authStore.feideLogin).toHaveBeenCalledWith({
+    expect(authStore.login).toHaveBeenCalledWith({
       email: 'lars@skole.no',
-      affiliation: 'instructor',
       password: 'passord123'
     })
   })
 
   it('navigates to teacher-home after successful login', async() => {
-    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    vi.mocked(authStore.login).mockResolvedValueOnce(undefined)
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'teacher-home' })
   })
 
   it('shows error if unsuccessful login', async () => {
-    vi.mocked(authStore.feideLogin).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
+    vi.mocked(authStore.login).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
     expect(wrapper.text()).toContain('Ugyldig epost eller passord')

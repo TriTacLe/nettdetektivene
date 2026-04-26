@@ -45,8 +45,8 @@ function handleBack() {
 .scene {
   position: relative;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 .scene-background {
@@ -70,14 +70,13 @@ function handleBack() {
 .scene-content {
   position: relative;
   z-index: 20;
-  height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .scene-body {
   flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }

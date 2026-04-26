@@ -23,6 +23,14 @@ export const useAuthStore = defineStore(
       return null
     })
 
+    async function login(credentials: { email: string; password: string }): Promise<void> {
+      const response = await AuthService.login(credentials)
+      sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
+      token.value = response.token
+      refreshToken.value = response.refreshToken
+      await fetchMe()
+    }
+
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
       const response = await AuthService.feideLogin(credentials)
       sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
@@ -65,6 +73,7 @@ export const useAuthStore = defineStore(
       isTeacher,
       isStudent,
       userRole,
+      login,
       feideLogin,
       fetchMe,
       refresh,

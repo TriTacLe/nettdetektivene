@@ -45,9 +45,11 @@ public class ClassroomController {
   private final ClassroomService classroomService;
 
   @GetMapping
-  @Operation(summary = "Get all classrooms")
-  public ResponseEntity<ApiResponse<List<ClassroomResponseDTO>>> getAllClassrooms() {
-    return ResponseEntity.ok(ApiResponse.ok(classroomService.getAllClassroom()));
+  @Operation(summary = "Get classrooms for the authenticated instructor")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<List<ClassroomResponseDTO>>> getAllClassrooms(
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomService.getClassroomsForInstructor(user)));
   }
 
   @GetMapping("/{id}")
@@ -112,6 +114,15 @@ public class ClassroomController {
       @PathVariable UUID classroomId,
       @AuthenticationPrincipal User currentUser) {
     return ResponseEntity.ok(ApiResponse.ok(classroomService.getUnlockedClassroomTasks(classroomId, currentUser.getId())));
+  }
+
+  @GetMapping("/{classroomId}/tasks/unlocked/{userId}")
+  @Operation(summary = "Get unlocked tasks for a specific user (instructor only)")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<List<ClassroomTaskResponseDTO>>> getUnlockedClassroomTasksForUser(
+      @PathVariable UUID classroomId,
+      @PathVariable UUID userId) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomService.getUnlockedClassroomTasks(classroomId, userId)));
   }
 
   @PostMapping("/{classroomId}/tasks")

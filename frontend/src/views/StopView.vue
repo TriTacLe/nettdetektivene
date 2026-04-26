@@ -40,7 +40,7 @@ function goToTask(taskId: number) {
   console.log('[StopView] goToTask called - taskId:', taskId)
   const task = tasks.value.find(t => t.taskId === taskId)
   console.log('[StopView] Task found:', task)
-  if (task && task.isUnlocked) {
+  if (task && task.isUnlocked && stop.value) {
     console.log('[StopView] Task is unlocked, navigating to:', `${stop.value.taskRoute}/${taskId}`)
     router.push(`${stop.value.taskRoute}/${taskId}`)
   } else {
@@ -80,9 +80,9 @@ function goToTask(taskId: number) {
         >
           <span class="task-number">{{ task.taskId }}</span>
           <span class="task-body">
-            <span class="task-title">{{ stop.taskHints?.[task.taskId]?.description ?? task.title }}</span>
-            <span v-if="stop.taskHints?.[task.taskId]?.hint && !stopStore.isComplete(stopId, task.taskId)" class="task-hint">
-              {{ stop.taskHints[task.taskId].hint }}
+            <span class="task-title">{{ task.title }}</span>
+            <span v-if="(stop.taskHints as Record<string, {hint?: string}> | undefined)?.[String(task.taskId)]?.hint && !stopStore.isComplete(stopId, task.uuid)" class="task-hint">
+              {{ (stop.taskHints as Record<string, {hint?: string}>)?.[String(task.taskId)]?.hint }}
             </span>
           </span>
           <span class="task-status">
