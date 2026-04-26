@@ -67,11 +67,12 @@ async function getUnlockedTasks(classroomId: string): Promise<ClassroomTaskRespo
   return data.data
 }
 
-async function getClassroomTasks(classroomId: string, activeOnly: boolean = true, includeUnlocked: boolean = true): Promise<ClassroomTaskResponseDTO[]> {
-  console.log('[ClassroomService] getClassroomTasks - classroomId:', classroomId, 'activeOnly:', activeOnly, 'includeUnlocked:', includeUnlocked)
+async function getClassroomTasks(classroomId: string, activeOnly: boolean = true, includeUnlocked: boolean = true, testMode: boolean = false): Promise<ClassroomTaskResponseDTO[]> {
+  console.log('[ClassroomService] getClassroomTasks - classroomId:', classroomId, 'activeOnly:', activeOnly, 'includeUnlocked:', includeUnlocked, 'testMode:', testMode)
   const params: Record<string, boolean> = {}
   if (activeOnly) params.activeOnly = true
   if (includeUnlocked) params.includeUnlocked = true
+  if (testMode) params.testMode = true
 
   const queryString = new URLSearchParams(params as any).toString()
   const url = queryString ? `/classrooms/${classroomId}/tasks?${queryString}` : `/classrooms/${classroomId}/tasks`

@@ -78,6 +78,12 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/teacher-test-game',
+      name: 'teacher-test-game',
+      component: () => import('../views/teacher/TeacherTestGameView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
       path: '/teacher-leaderboard',
       name: 'teacher-leaderboard',
       component: () => import('../views/teacher/TeacherLeaderboardView.vue'),

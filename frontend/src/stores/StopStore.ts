@@ -30,6 +30,28 @@ export const useStopStore = defineStore('stop', () => {
     }
   }
 
+  async function loadTasksTestMode(classroomId: string, stopId: string) {
+    console.log('[StopStore] loadTasksTestMode called - classroomId:', classroomId, 'stopId:', stopId)
+    loading.value[stopId] = true
+    try {
+      const allClassroomTasks = await ClassroomService.getClassroomTasks(classroomId, true, true, true)
+      const filteredTasks = allClassroomTasks.filter(task => task.task.stopLocation === stopId)
+
+      const result = filteredTasks.map((task, index) => ({
+        taskId: index + 1,
+        uuid: task.task.id,
+        title: task.task.title,
+        taskType: task.task.taskType,
+        isUnlocked: task.isUnlocked,
+      }))
+
+      tasks.value[stopId] = result
+      console.log('[StopStore] Test mode tasks loaded:', result.length, 'tasks, all unlocked')
+    } finally {
+      loading.value[stopId] = false
+    }
+  }
+
   function clearTasks(stopId?: string) {
     console.log('[StopStore] clearTasks called - stopId:', stopId)
     if (stopId) {
@@ -68,5 +90,5 @@ export const useStopStore = defineStore('stop', () => {
     return tasks.value[stopId]?.length ?? 0
   }
 
-  return { tasks, loading, completedTasks, loadTasks, clearTasks, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
+  return { tasks, loading, completedTasks, loadTasks, loadTasksTestMode, clearTasks, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
 })

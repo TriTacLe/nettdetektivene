@@ -30,6 +30,11 @@ const menuItems = [
     subtitle: 'Se klassenes resultater',
     route: 'teacher-leaderboard',
   },
+  {
+    title: 'Test Spill',
+    subtitle: 'Spill som en elev (test modus)',
+    route: 'teacher-test-game',
+  },
 ]
 
 </script>
