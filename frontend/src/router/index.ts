@@ -111,6 +111,11 @@ const router = createRouter({
       component: () => import('../views/teacher/CreateClassroomView.vue'),
     },
     {
+      path: '/classroom/:id/progress/:userId',
+      name: 'classroom-student-progress',
+      component: () => import('../views/teacher/ClassroomStudentProgressView.vue'),
+    },
+    {
       path: '/notebook',
       name: 'notebook',
       component: () => import('../views/NotebookView.vue'),

@@ -14,24 +14,28 @@ import ntnu.no.backend.model.classroom.ClassroomStudent;
  */
 public class ClassroomStudentMapper {
 
-  private ClassroomStudentMapper() {}
+  private ClassroomStudentMapper() {
+  }
 
   /**
-   * Converts a {@link ClassroomStudent} entity to a {@link ClassroomStudentResponseDTO}.
+   * Converts a {@link ClassroomStudent} entity to a
+   * {@link ClassroomStudentResponseDTO}.
    *
    * @param student the classroom student entity to convert
-   * @return a {@link ClassroomStudentResponseDTO}, or {@code null} if {@code student} is null
+   * @return a {@link ClassroomStudentResponseDTO}, or {@code null} if
+   *         {@code student} is null
    */
-  public static ClassroomStudentResponseDTO toDTO(ClassroomStudent student) {
-    if (student == null) return null;
+  public static ClassroomStudentResponseDTO toDTO(ClassroomStudent student, String feideId) {
+    if (student == null)
+      return null;
     return new ClassroomStudentResponseDTO(
-      student.getId().getClassroomId(),
-      student.getId().getUserId(),
-      student.getDisplayName(),
-      student.isAllowed(),
-      student.getNameChangeStatus(),
-      student.getRequestedDisplayName(),
-      student.getJoinedAt()
-    );
+        student.getId().getClassroomId(),
+        student.getId().getUserId(),
+        student.getDisplayName(),
+        student.isAllowed(),
+        student.getNameChangeStatus(),
+        student.getRequestedDisplayName(),
+        student.getJoinedAt(),
+        feideId);
   }
 }

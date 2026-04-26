@@ -73,6 +73,10 @@ cd idatt2106-v26-05
 **Option A: Docker (Recommended)**
 
 ```bash
+# Start all services (MySQL, Backend, Frontend)
+docker-compose up -d
+
+# Or start only MySQL
 docker-compose up -d mysql
 ```
 
@@ -103,6 +107,61 @@ npm run dev
 ```
 
 Frontend runs at: http://localhost:5173
+
+---
+
+## Demo Data Seeding
+
+The backend includes an automatic `DataSeeder` that populates the database with comprehensive mock data on first startup.
+
+### What Gets Created
+
+- **3 Institutions** - NTNU, OsloMet, UiB
+- **3 Teachers** - with different institution affiliations
+- **3 Classrooms** - with unique join codes
+- **11 Tasks** - across different types (NEWS, PHOTO, EMAIL, PASSWORD, MARKETPLACE, SOCIAL, BOSS)
+- **8 Students** - with varied progress levels (high achievers, average, struggling)
+- **Task Attempts** - with realistic scores and pass/fail status
+- **Notebook Entries** - student reflections
+- **Achievements** - various badges
+
+### Default Demo Credentials
+
+The seeder runs automatically on startup when the database is empty. Use these accounts to log in:
+
+**Teacher:**
+- Email: `nora@ntnu.no`
+- Password: `password123`
+
+**Student (High Achiever):**
+- Email: `kari@elev.no`
+- Password: `password123`
+
+**Student (Struggling):**
+- Email: `christoffer@elev.no`
+- Password: `password123`
+
+### Disable Seeding
+
+To prevent seeding (e.g., in production):
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
+### Reset Demo Data
+
+To re-seed with fresh data:
+
+```bash
+# Drop and recreate the database
+mysql -u root -p -e "DROP DATABASE nd-db; CREATE DATABASE nd-db;"
+
+# Restart the backend - Flyway and DataSeeder will run automatically
+./mvnw spring-boot:run
+```
+
+See [backend/src/main/java/ntnu/no/backend/config/README.md](backend/src/main/java/ntnu/no/backend/config/README.md) for complete documentation.
 
 ---
 

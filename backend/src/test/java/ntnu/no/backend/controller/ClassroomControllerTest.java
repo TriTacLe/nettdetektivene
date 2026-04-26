@@ -57,10 +57,10 @@ class ClassroomControllerTest {
   private UserDetailsService userDetailsService;
 
   @Test
-  @WithMockUser
+  @WithMockUser(authorities = "instructor")
   void getAllClassrooms_returnsOk() throws Exception {
     UUID id = UUID.randomUUID();
-    when(classroomService.getAllClassroom()).thenReturn(List.of(ClassroomTestFactory.responseDTO(id)));
+    when(classroomService.getClassroomsForInstructor(any())).thenReturn(List.of(ClassroomTestFactory.responseDTO(id)));
 
     mockMvc.perform(get("/api/v1/classrooms"))
       .andExpect(status().isOk())

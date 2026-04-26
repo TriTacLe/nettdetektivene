@@ -9,8 +9,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
-const email = ref('')
-const password = ref('')
+// init verdi må fjernes før innlevering
+const email = ref('student1@test.no')
+const password = ref('password123')
+
 const serverError = ref('')
 const isLoading = ref(false)
 

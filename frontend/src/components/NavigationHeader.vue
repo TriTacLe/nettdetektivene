@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/AuthStore.ts'
 
 defineProps<{
   previous?: string
@@ -9,6 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{ back: [] }>()
 const router = useRouter()
+const authStore = useAuthStore()
 
 function goTo(path?: string) {
   if (path) {
@@ -39,21 +41,26 @@ function goTo(path?: string) {
 
     <h1 class="nav-title">{{ title }}</h1>
 
-    <div v-if="next" class="nav-next" @click="goTo(next!)">
-      <button class="nav-button" aria-label="Go forward">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="12" fill="white" />
-          <path
-            d="M10 8L14 12L10 16"
-            stroke="black"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+    <div class="nav-right">
+      <span v-if="authStore.isTeacher && authStore.user" class="nav-user">
+        {{ authStore.user.displayName ?? authStore.user.email }}
+      </span>
+      <div v-if="next" class="nav-next" @click="goTo(next!)">
+        <button class="nav-button" aria-label="Go forward">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="white" />
+            <path
+              d="M10 8L14 12L10 16"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <div v-else class="nav-placeholder" />
     </div>
-    <div v-else class="nav-placeholder" />
   </header>
 </template>
 
@@ -97,6 +104,20 @@ function goTo(path?: string) {
 }
 
 .nav-previous:hover {
+  opacity: 0.8;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-user {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
   opacity: 0.8;
 }
 

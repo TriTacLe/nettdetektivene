@@ -41,11 +41,6 @@ const menuItems = [
     route: 'classroom-settings',
   },
   {
-    title: 'Elev Progresjon',
-    subtitle: 'Fremgang per elev',
-    route: '',
-  },
-  {
     title: 'Test Spillet',
     subtitle: 'Spill som elev',
     route: '',
