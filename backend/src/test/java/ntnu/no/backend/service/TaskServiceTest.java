@@ -45,7 +45,7 @@ class TaskServiceTest {
 
   @Test
   void getAllTask_returnsMappedDTOs() {
-    when(taskRepository.findAll()).thenReturn(List.of(TaskTestFactory.task()));
+    when(taskRepository.findAllActive()).thenReturn(List.of(TaskTestFactory.task()));
 
     List<TaskResponseDTO> result = taskService.getAllTask();
 
@@ -56,7 +56,7 @@ class TaskServiceTest {
   @Test
   void getTask_returnsDTO_whenFound() {
     UUID id = UUID.randomUUID();
-    when(taskRepository.findById(id)).thenReturn(Optional.of(TaskTestFactory.task()));
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(TaskTestFactory.task()));
 
     TaskResponseDTO result = taskService.getTask(id);
 
@@ -66,11 +66,11 @@ class TaskServiceTest {
   @Test
   void getTask_throwsEntityNotFoundException_whenNotFound() {
     UUID id = UUID.randomUUID();
-    when(taskRepository.findById(id)).thenReturn(Optional.empty());
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> taskService.getTask(id))
       .isInstanceOf(EntityNotFoundException.class)
-      .hasMessageContaining(id.toString());
+      .hasMessageContaining("No active task found with id: " + id);
   }
 
   @Test
@@ -112,7 +112,7 @@ class TaskServiceTest {
       .content("{}")
       .build();
 
-    when(taskRepository.findById(id)).thenReturn(Optional.of(TaskTestFactory.task()));
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(TaskTestFactory.task()));
 
     TaskResponseDTO result = taskService.updateTask(dto, id);
 
@@ -128,7 +128,7 @@ class TaskServiceTest {
       "image/png",
       "png".getBytes()
     );
-    when(taskRepository.findById(id)).thenReturn(Optional.of(TaskTestFactory.task()));
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(TaskTestFactory.task()));
     when(taskImageStorageService.replaceUploadReferences(any(), any()))
       .thenReturn("{\"articles\":[{\"imagePath\":\"/uploads/tasks/batch/image.png\"}]}");
 
@@ -139,22 +139,25 @@ class TaskServiceTest {
   }
 
   @Test
-  void deleteTask_deletesWhenFound() {
+  void deleteTask_softDeletesWhenFound() {
     UUID id = UUID.randomUUID();
-    when(taskRepository.existsById(id)).thenReturn(true);
+    Task task = TaskTestFactory.task();
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(task));
+    when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 
     taskService.deleteTask(id);
 
-    verify(taskRepository).deleteById(id);
+    assertThat(task.getDeletedAt()).isNotNull();
+    verify(taskRepository).save(task);
   }
 
   @Test
   void deleteTask_throwsEntityNotFoundException_whenNotFound() {
     UUID id = UUID.randomUUID();
-    when(taskRepository.existsById(id)).thenReturn(false);
+    when(taskRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> taskService.deleteTask(id))
       .isInstanceOf(EntityNotFoundException.class)
-      .hasMessageContaining(id.toString());
+      .hasMessageContaining("No active task found with id: " + id);
   }
 }
