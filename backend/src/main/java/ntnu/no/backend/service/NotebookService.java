@@ -10,8 +10,13 @@ import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.NotebookEntry;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotebookEntryRepository;
 import ntnu.no.backend.repository.UserRepository;
+
+import ntnu.no.backend.model.classroom.ClassroomStudent;
+import ntnu.no.backend.model.classroom.ClassroomStudentId;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,15 +38,18 @@ public class NotebookService {
   private final NotebookEntryRepository notebookEntryRepository;
   private final ClassroomRepository classroomRepository;
   private final UserRepository userRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
 
   /**
    * Creates a new notebook entry for a student in a classroom.
+   * Verifies that the student is an approved member of the classroom.
    *
    * @param classroomId the classroom ID
    * @param dto the notebook entry data
    * @param userId the ID of the student creating the entry
    * @return the created notebook entry
    * @throws EntityNotFoundException if the classroom or user is not found
+   * @throws AccessDeniedException if the student is not an approved member
    * @see ClassroomRepository#findByIdAndDeletedAtIsNull(UUID)
    */
   @Transactional
@@ -51,6 +59,8 @@ public class NotebookService {
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+    verifyStudentMembership(classroomId, user);
 
     NotebookEntry notebook = NotebookEntry.builder()
         .user(user)
@@ -65,17 +75,22 @@ public class NotebookService {
 
   /**
    * Updates the content of an existing notebook entry.
+   * Verifies that the authenticated user owns the notebook entry.
    *
    * @param dto the updated notebook entry data
    * @param id the entry ID
+   * @param userId the ID of the user attempting to update
    * @return the updated notebook entry
    * @throws EntityNotFoundException if the entry is not found
+   * @throws AccessDeniedException if the user does not own the notebook entry
    * @see #createNotebook(UUID, NotebookEntryRequestDTO, UUID)
    */
   @Transactional
-  public NotebookEntryResponseDTO updateNotebook(NotebookEntryRequestDTO dto, UUID id) {
+  public NotebookEntryResponseDTO updateNotebook(NotebookEntryRequestDTO dto, UUID id, UUID userId) {
     NotebookEntry notebook = notebookEntryRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Notebook not found with id: " + id));
+
+    verifyNotebookOwnership(notebook, userId);
 
     notebook.setAutoNotes(dto.getAutoNotes());
     notebook.setStopLocation(dto.getStopLocation());
@@ -86,14 +101,20 @@ public class NotebookService {
 
   /**
    * Deletes a notebook entry.
+   * Verifies that the authenticated user owns the notebook entry.
    *
    * @param id the entry ID
+   * @param userId the ID of the user attempting to delete
    * @throws EntityNotFoundException if the entry is not found
+   * @throws AccessDeniedException if the user does not own the notebook entry
    */
   @Transactional
-  public void deleteNotebook(UUID id) {
+  public void deleteNotebook(UUID id, UUID userId) {
     NotebookEntry notebook = notebookEntryRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Notebook not found with id: " + id));
+
+    verifyNotebookOwnership(notebook, userId);
+
     notebookEntryRepository.delete(notebook);
   }
 
@@ -120,5 +141,38 @@ public class NotebookService {
   public List<NotebookEntryResponseDTO> getNotebooksByClassroom(UUID classroomId) {
     return notebookEntryRepository.findByClassroom_Id(classroomId)
         .stream().map(NotebookEntryMapper::toDTO).toList();
+  }
+
+  /**
+   * Verifies that the student is an approved member of the classroom.
+   *
+   * @param classroomId the classroom ID
+   * @param user the student to verify
+   * @throws AccessDeniedException if the student is not an approved member
+   */
+  private void verifyStudentMembership(UUID classroomId, User user) {
+    ClassroomStudent membership = classroomStudentRepository.findById(
+        ClassroomStudentId.builder()
+            .classroomId(classroomId)
+            .userId(user.getId())
+            .build()
+    ).orElse(null);
+
+    if (membership == null || !membership.isAllowed()) {
+      throw new AccessDeniedException("You are not an approved member of this classroom");
+    }
+  }
+
+  /**
+   * Verifies that the user owns the notebook entry.
+   *
+   * @param notebook the notebook entry to verify
+   * @param userId the ID of the user attempting access
+   * @throws AccessDeniedException if the user does not own the notebook entry
+   */
+  private void verifyNotebookOwnership(NotebookEntry notebook, UUID userId) {
+    if (!notebook.getUser().getId().equals(userId)) {
+      throw new AccessDeniedException("You do not own this notebook entry");
+    }
   }
 }

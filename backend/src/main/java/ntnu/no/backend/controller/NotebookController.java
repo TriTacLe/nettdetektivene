@@ -69,12 +69,15 @@ public class NotebookController {
 
   /**
    * Creates a new notebook entry for the authenticated student.
+   * Requires student role and verifies classroom membership.
    *
    * @param classroomId the classroom ID
    * @param dto the notebook entry data
+   * @param user the authenticated student
    * @return the created notebook entry
    */
   @Operation(summary = "Create a new notebook entry")
+  @PreAuthorize("hasAuthority('student')")
   @PostMapping
   public ResponseEntity<ApiResponse<NotebookEntryResponseDTO>> createNotebook(
       @PathVariable UUID classroomId,
@@ -86,10 +89,12 @@ public class NotebookController {
 
   /**
    * Updates an existing notebook entry.
+   * Verifies that the authenticated user owns the notebook entry.
    *
    * @param classroomId the classroom ID
    * @param notebookId the entry ID
    * @param dto the updated notebook entry data
+   * @param user the authenticated user
    * @return the updated notebook entry
    */
   @Operation(summary = "Update a notebook entry")
@@ -97,22 +102,26 @@ public class NotebookController {
   public ResponseEntity<ApiResponse<NotebookEntryResponseDTO>> updateNotebook(
       @PathVariable UUID classroomId,
       @PathVariable UUID notebookId,
-      @RequestBody @Valid NotebookEntryRequestDTO dto) {
-    return ResponseEntity.ok(ApiResponse.ok(notebookService.updateNotebook(dto, notebookId)));
+      @RequestBody @Valid NotebookEntryRequestDTO dto,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(notebookService.updateNotebook(dto, notebookId, user.getId())));
   }
 
   /**
    * Deletes a notebook entry.
+   * Verifies that the authenticated user owns the notebook entry.
    *
    * @param classroomId the classroom ID
    * @param notebookId the entry ID
+   * @param user the authenticated user
    */
   @Operation(summary = "Delete a notebook entry")
   @DeleteMapping("/{notebookId}")
   public ResponseEntity<Void> deleteNotebook(
       @PathVariable UUID classroomId,
-      @PathVariable UUID notebookId) {
-    notebookService.deleteNotebook(notebookId);
+      @PathVariable UUID notebookId,
+      @AuthenticationPrincipal User user) {
+    notebookService.deleteNotebook(notebookId, user.getId());
     return ResponseEntity.noContent().build();
   }
 }

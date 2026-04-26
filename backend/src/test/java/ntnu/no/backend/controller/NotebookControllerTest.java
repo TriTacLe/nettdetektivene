@@ -123,16 +123,17 @@ class NotebookControllerTest {
   }
 
   @Test
-  @WithMockUser(authorities = "student")
   void updateNotebook_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID notebookId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
+    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    User principal = testUser(userId, "student");
 
-    when(notebookService.updateNotebook(any(), eq(notebookId)))
+    when(notebookService.updateNotebook(any(), eq(notebookId), eq(userId)))
         .thenReturn(notebookResponseDTO(notebookId, userId, classroomId));
 
     mockMvc.perform(patch("/api/v1/classrooms/{classroomId}/notebooks/{notebookId}", classroomId, notebookId)
+            .with(user(principal))
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(notebookRequestDTO()))
             .with(csrf()))
@@ -142,14 +143,16 @@ class NotebookControllerTest {
   }
 
   @Test
-  @WithMockUser(authorities = "student")
   void deleteNotebook_returnsNoContent() throws Exception {
     UUID classroomId = UUID.randomUUID();
     UUID notebookId = UUID.randomUUID();
+    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    User principal = testUser(userId, "student");
 
-    doNothing().when(notebookService).deleteNotebook(notebookId);
+    doNothing().when(notebookService).deleteNotebook(eq(notebookId), eq(userId));
 
     mockMvc.perform(delete("/api/v1/classrooms/{classroomId}/notebooks/{notebookId}", classroomId, notebookId)
+            .with(user(principal))
             .with(csrf()))
         .andExpect(status().isNoContent());
   }

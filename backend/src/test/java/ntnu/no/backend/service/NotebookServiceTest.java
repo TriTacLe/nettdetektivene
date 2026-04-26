@@ -7,6 +7,7 @@ import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.NotebookEntry;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotebookEntryRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.util.NotebookTestFactory;
@@ -46,6 +47,9 @@ class NotebookServiceTest {
   @Mock
   UserRepository userRepository;
 
+  @Mock
+  ClassroomStudentRepository classroomStudentRepository;
+
   @InjectMocks
   NotebookService notebookService;
 
@@ -71,6 +75,11 @@ class NotebookServiceTest {
 
     when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(classroomStudentRepository.findById(any())).thenReturn(
+        Optional.of(ntnu.no.backend.model.classroom.ClassroomStudent.builder()
+            .isAllowed(true)
+            .build())
+    );
     when(notebookEntryRepository.save(any())).thenReturn(saved);
 
     NotebookEntryResponseDTO result = notebookService.createNotebook(classroomId, dto, userId);
@@ -100,7 +109,8 @@ class NotebookServiceTest {
   @Test
   void updateNotebook_updatesAndReturnsDTO() {
     UUID entryId = UUID.randomUUID();
-    User user = buildUser();
+    UUID userId = UUID.randomUUID();
+    User user = User.builder().id(userId).displayName("Tri").build();
     Classroom classroom = buildClassroom();
     NotebookEntry existing = NotebookTestFactory.entity(entryId, user, classroom);
     NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
@@ -114,7 +124,7 @@ class NotebookServiceTest {
     when(notebookEntryRepository.findById(entryId)).thenReturn(Optional.of(existing));
     when(notebookEntryRepository.save(any())).thenReturn(updated);
 
-    NotebookEntryResponseDTO result = notebookService.updateNotebook(dto, entryId);
+    NotebookEntryResponseDTO result = notebookService.updateNotebook(dto, entryId, userId);
 
     assertThat(result.stopLocation()).isEqualTo("stop_5");
     verify(notebookEntryRepository).save(existing);
@@ -126,9 +136,10 @@ class NotebookServiceTest {
   @Test
   void updateNotebook_throwsEntityNotFoundException_whenNotFound() {
     UUID entryId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
     when(notebookEntryRepository.findById(entryId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> notebookService.updateNotebook(NotebookTestFactory.requestDTO(), entryId))
+    assertThatThrownBy(() -> notebookService.updateNotebook(NotebookTestFactory.requestDTO(), entryId, userId))
         .isInstanceOf(EntityNotFoundException.class);
   }
 
@@ -138,11 +149,12 @@ class NotebookServiceTest {
   @Test
   void deleteNotebook_deletesEntry_whenFound() {
     UUID entryId = UUID.randomUUID();
-    NotebookEntry entry = NotebookTestFactory.entity(entryId, buildUser(), buildClassroom());
+    UUID userId = UUID.randomUUID();
+    NotebookEntry entry = NotebookTestFactory.entity(entryId, User.builder().id(userId).build(), buildClassroom());
 
     when(notebookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
-    notebookService.deleteNotebook(entryId);
+    notebookService.deleteNotebook(entryId, userId);
 
     verify(notebookEntryRepository).delete(entry);
   }
@@ -153,9 +165,10 @@ class NotebookServiceTest {
   @Test
   void deleteNotebook_throwsEntityNotFoundException_whenNotFound() {
     UUID entryId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
     when(notebookEntryRepository.findById(entryId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> notebookService.deleteNotebook(entryId))
+    assertThatThrownBy(() -> notebookService.deleteNotebook(entryId, userId))
         .isInstanceOf(EntityNotFoundException.class);
   }
 
