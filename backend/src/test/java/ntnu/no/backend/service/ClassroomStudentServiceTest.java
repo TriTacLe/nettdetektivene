@@ -10,10 +10,13 @@ import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
+import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
 import org.junit.jupiter.api.Test;
@@ -38,8 +41,8 @@ import static org.mockito.Mockito.when;
  * Unit tests for {@link ClassroomStudentService}.
  * Verifies student membership operations and feideId mapping.
  *
- * @author tri
- * @version 0.1
+ * @author tri, norakirknes
+ * @version 0.2
  * @since 0.1
  */
 @ExtendWith(MockitoExtension.class)
@@ -62,6 +65,9 @@ class ClassroomStudentServiceTest {
 
   @Mock
   private UserTaskUnlockedRepository userTaskUnlockedRepository;
+
+  @Mock
+  private NotificationRepository notificationRepository;
 
   @Mock
   private JdbcTemplate jdbcTemplate;
@@ -95,6 +101,7 @@ class ClassroomStudentServiceTest {
       .classDesc("Introduction to cybersecurity")
       .joinCode("ABC12")
       .institution(Institution.builder().instName("NTNU").build())
+      .createdBy(createUser(UUID.randomUUID(), "Creator"))
       .isGameEnabled(false)
       .build();
   }
@@ -114,6 +121,112 @@ class ClassroomStudentServiceTest {
       .isAllowed(allowed)
       .nameChangeStatus(NameChangeStatus.NONE)
       .build();
+  }
+
+  /**
+   * Verifies that getMyClassroom only returns classroom when student is approved.
+   */
+  @Test
+  void getMyClassroom_returnsClassroom_whenStudentIsAllowed() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    User user = createUser(userId, "Nora");
+    ClassroomStudent student = createClassroomStudent(classroomId, userId, "Nora", true);
+
+    when(classroomStudentRepository.findByUserAndIsAllowedIsTrue(user)).thenReturn(Optional.of(student));
+
+    var result = classroomStudentService.getMyClassroom(user);
+
+    assertThat(result).isNotNull();
+    assertThat(result.id()).isEqualTo(classroomId);
+  }
+
+  /**
+   * Verifies that getMyClassroom throws when student is not approved.
+   */
+  @Test
+  void getMyClassroom_throwsEntityNotFoundException_whenStudentNotAllowed() {
+    UUID userId = UUID.randomUUID();
+    User user = createUser(userId, "Nora");
+
+    when(classroomStudentRepository.findByUserAndIsAllowedIsTrue(user)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> classroomStudentService.getMyClassroom(user))
+      .isInstanceOf(EntityNotFoundException.class)
+      .hasMessageContaining("not in any classroom");
+  }
+
+  /**
+   * Verifies that getMyMembership returns membership regardless of approval status.
+   */
+  @Test
+  void getMyMembership_returnsDTO_whenMembershipExists() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    User user = createUser(userId, "Anine");
+    ClassroomStudent student = createClassroomStudent(classroomId, userId, "Anine", false);
+    UserProfile profile = createUserProfile(student.getUser(), "anine@ntnu.no");
+
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(student));
+    when(userProfileRepository.findByUser(student.getUser())).thenReturn(Optional.of(profile));
+
+    ClassroomStudentResponseDTO result = classroomStudentService.getMyMembership(user);
+
+    assertThat(result.userId()).isEqualTo(userId);
+    assertThat(result.displayName()).isEqualTo("Anine");
+    assertThat(result.isAllowed()).isFalse();
+  }
+
+  /**
+   * Verifies that getMyMembership throws when no membership exists.
+   */
+  @Test
+  void getMyMembership_throwsEntityNotFoundException_whenNoMembership() {
+    UUID userId = UUID.randomUUID();
+    User user = createUser(userId, "Anine");
+
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> classroomStudentService.getMyMembership(user))
+      .isInstanceOf(EntityNotFoundException.class)
+      .hasMessageContaining("no membership");
+  }
+
+  /**
+   * Verifies that join notifies all instructors of the classroom.
+   */
+  @Test
+  void join_notifiesInstructors() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
+    String joinCode = "ABC12";
+
+    User user = createUser(userId, "Tri");
+    User instructorUser = createUser(instructorId, "Nora");
+    Classroom classroom = createClassroom(classroomId);
+    UserProfile profile = createUserProfile(user, "tri@ntnu.no");
+
+    ClassroomInstructor instructor = ClassroomInstructor.builder()
+      .id(ClassroomInstructorId.builder()
+        .classroomId(classroomId)
+        .userId(instructorId)
+        .build())
+      .classroom(classroom)
+      .user(instructorUser)
+      .build();
+
+    when(classroomStudentRepository.existsByUser(user)).thenReturn(false);
+    when(classroomRepository.findByJoinCodeAndDeletedAtIsNull(joinCode)).thenReturn(Optional.of(classroom));
+    when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
+    when(classroomStudentRepository.save(any(ClassroomStudent.class))).thenAnswer(i -> i.getArgument(0));
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of(instructor));
+
+    classroomStudentService.join(joinCode, user);
+
+    verify(notificationRepository).save(any(ntnu.no.backend.model.Notification.class));
   }
 
   /**
