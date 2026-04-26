@@ -65,9 +65,11 @@ public class TaskAttemptController {
 
   /**
    * Retrieves all attempts for a specific user and task combination.
+   * Students can only view their own attempts. Instructors can only view attempts of students in their classroom.
    *
    * @param userId the user's unique identifier
    * @param taskId the task's unique identifier
+   * @param user the authenticated user
    * @return {@code 200 OK} with the list of attempts
    */
   @Operation(summary = "Get attempts for a user/task combination")
@@ -75,21 +77,25 @@ public class TaskAttemptController {
   @GetMapping("/user/{userId}/task/{taskId}")
   public ResponseEntity<ApiResponse<List<TaskAttemptResponseDTO>>> getAttemptsByUserAndTask(
       @PathVariable UUID userId,
-      @PathVariable UUID taskId) {
-    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getAttemptsByUserAndTask(userId, taskId)));
+      @PathVariable UUID taskId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getAttemptsByUserAndTask(userId, taskId, user)));
   }
 
   /**
    * Retrieves all attempts within a classroom.
+   * Only instructors of the classroom can access this endpoint.
    *
    * @param classroomId the classroom's unique identifier
+   * @param user the authenticated instructor
    * @return {@code 200 OK} with the list of attempts
    */
   @Operation(summary = "Get all attempts in a classroom")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize("hasAuthority('instructor')")
   @GetMapping("/classroom/{classroomId}")
   public ResponseEntity<ApiResponse<List<TaskAttemptResponseDTO>>> getAttemptsByClassroom(
-      @PathVariable UUID classroomId) {
-    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getAttemptsByClassroom(classroomId)));
+      @PathVariable UUID classroomId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getAttemptsByClassroom(classroomId, user)));
   }
 }
