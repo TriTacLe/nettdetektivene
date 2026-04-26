@@ -1,6 +1,7 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import ntnu.no.backend.dto.user.UserResponseDTO;
 import ntnu.no.backend.dto.user.UserUpdateDTO;
 import ntnu.no.backend.model.auth.Role;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -175,7 +177,7 @@ class UserControllerTest {
         .roles(List.of("student"))
         .createdAt(LocalDateTime.of(2025, 1, 1, 12, 0))
         .build();
-    when(userService.updateUser(eq(studentId), any(UserUpdateDTO.class))).thenReturn(updatedResponse);
+    when(userService.updateStudentByInstructor(eq(studentId), any(UserUpdateDTO.class), eq(instructor))).thenReturn(updatedResponse);
 
     mockMvc.perform(patch("/api/v1/users/" + studentId)
             .with(csrf())
@@ -230,5 +232,45 @@ class UserControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateUserById_instructorUnauthorizedForOtherClassroom_forbidden() throws Exception {
+    User instructor = sampleUser("instructor");
+    setAuthenticatedUser(instructor);
+
+    UUID otherStudentId = UUID.randomUUID();
+    UserUpdateDTO updateDTO = UserUpdateDTO.builder()
+        .displayName("Should Not Work")
+        .build();
+
+    when(userService.updateStudentByInstructor(eq(otherStudentId), any(UserUpdateDTO.class), eq(instructor)))
+        .thenThrow(new AccessDeniedException("You can only update students in your own classrooms"));
+
+    mockMvc.perform(patch("/api/v1/users/" + otherStudentId)
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void updateUserById_instructorUpdatingStudentNotFound_notFound() throws Exception {
+    User instructor = sampleUser("instructor");
+    setAuthenticatedUser(instructor);
+
+    UUID nonExistentStudentId = UUID.randomUUID();
+    UserUpdateDTO updateDTO = UserUpdateDTO.builder()
+        .displayName("Should Not Work")
+        .build();
+
+    when(userService.updateStudentByInstructor(eq(nonExistentStudentId), any(UserUpdateDTO.class), eq(instructor)))
+        .thenThrow(new EntityNotFoundException("Student not found with id: " + nonExistentStudentId));
+
+    mockMvc.perform(patch("/api/v1/users/" + nonExistentStudentId)
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isNotFound());
   }
 }
