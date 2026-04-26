@@ -1,6 +1,9 @@
 package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.task.TaskRequestDTO;
 import ntnu.no.backend.dto.task.TaskResponseDTO;
@@ -10,9 +13,6 @@ import ntnu.no.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Service for managing tasks.
@@ -29,26 +29,26 @@ public class TaskService {
   private final TaskImageStorageService taskImageStorageService;
 
   /**
-   * Returns all tasks.
+   * Returns all active tasks (excluding soft-deleted).
    *
-   * @return list of all tasks as DTOs
+   * @return list of all active tasks as DTOs
    */
   @Transactional(readOnly = true)
   public List<TaskResponseDTO> getAllTask() {
-    return taskRepository.findAll().stream().map(TaskMapper::toDTO).toList();
+    return taskRepository.findAllActive().stream().map(TaskMapper::toDTO).toList();
   }
 
   /**
-   * Returns a single task by ID.
+   * Returns a single active task by ID (excluding soft-deleted).
    *
    * @param id the task ID
    * @return the task as a DTO
-   * @throws EntityNotFoundException if no task found with the given ID
+   * @throws EntityNotFoundException if no active task found with the given ID
    */
   @Transactional(readOnly = true)
   public TaskResponseDTO getTask(UUID id) {
-    Task task = taskRepository.findById(id)
-      .orElseThrow(() -> new EntityNotFoundException("No task found with id: " + id));
+    Task task = taskRepository.findByIdAndDeletedAtIsNull(id)
+      .orElseThrow(() -> new EntityNotFoundException("No active task found with id: " + id));
     return TaskMapper.toDTO(task);
   }
 
@@ -79,47 +79,49 @@ public class TaskService {
   }
 
   /**
-   * Updates an existing task.
+   * Soft deletes a task by ID (sets deletedAt timestamp instead of hard delete).
+   * This preserves foreign key references in classroom_task, task_attempt, and task_best_score tables.
+   *
+   * @param id the task ID
+   * @throws EntityNotFoundException if no active task found with the given ID
+   */
+  @Transactional
+  public void deleteTask(UUID id) {
+    Task task = taskRepository.findByIdAndDeletedAtIsNull(id)
+      .orElseThrow(() -> new EntityNotFoundException("No active task found with id: " + id));
+    task.setDeletedAt(LocalDateTime.now());
+    taskRepository.save(task);
+  }
+
+  /**
+   * Updates an existing active task.
    *
    * @param dto the request DTO with updated values
    * @param id  the task ID
    * @return the updated task as a DTO
-   * @throws EntityNotFoundException if no task found with the given ID
+   * @throws EntityNotFoundException if no active task found with the given ID
    */
   @Transactional
   public TaskResponseDTO updateTask(TaskRequestDTO dto, UUID id) {
-    Task task = taskRepository.findById(id)
-      .orElseThrow(() -> new EntityNotFoundException("No task found with id: " + id));
+    Task task = taskRepository.findByIdAndDeletedAtIsNull(id)
+      .orElseThrow(() -> new EntityNotFoundException("No active task found with id: " + id));
     TaskMapper.updateEntity(task, dto);
     return TaskMapper.toDTO(task);
   }
 
   /**
-   * Updates an existing task with optional image uploads.
+   * Updates an existing active task with optional image uploads.
    *
    * @param dto    the request DTO with updated values
    * @param id     the task ID
    * @param images uploaded images referenced from content
    * @return the updated task as a DTO
+   * @throws EntityNotFoundException if no active task found with the given ID
    */
   @Transactional
   public TaskResponseDTO updateTask(TaskRequestDTO dto, UUID id, List<MultipartFile> images) {
     TaskRequestDTO resolvedDto = withResolvedContent(dto, images);
     return updateTask(resolvedDto, id);
-  }
-
-  /**
-   * Deletes a task by ID.
-   *
-   * @param id the task ID
-   * @throws EntityNotFoundException if no task found with the given ID
-   */
-  @Transactional
-  public void deleteTask(UUID id) {
-    if (!taskRepository.existsById(id)) {
-      throw new EntityNotFoundException("No task found with id: " + id);
-    }
-    taskRepository.deleteById(id);
   }
 
   private TaskRequestDTO withResolvedContent(TaskRequestDTO dto, List<MultipartFile> images) {
