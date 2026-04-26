@@ -9,6 +9,9 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskAttempt;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.TaskAttemptRepository;
+import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * Controller tests for {@link TaskAttemptService}.
@@ -41,10 +45,19 @@ import static org.mockito.Mockito.when;
 class TaskAttemptServiceTest {
 
   @Mock
-  private TaskAttemptRepository taskAttemptRepository;
+  TaskAttemptRepository taskAttemptRepository;
 
   @Mock
-  private JdbcTemplate jdbcTemplate;
+  JdbcTemplate jdbcTemplate;
+
+  @Mock
+  ClassroomRepository classroomRepository;
+
+  @Mock
+  ClassroomStudentRepository classroomStudentRepository;
+
+  @Mock
+  ClassroomInstructorRepository classroomInstructorRepository;
 
   @InjectMocks
   private TaskAttemptService taskAttemptService;
@@ -177,9 +190,10 @@ class TaskAttemptServiceTest {
 
     when(taskAttemptRepository.findByUserIdAndTaskId(userId, taskId))
         .thenReturn(List.of(attempt1, attempt2));
+    User requestingUser = userWithId(userId);
 
     List<TaskAttemptResponseDTO> result =
-        taskAttemptService.getAttemptsByUserAndTask(userId, taskId);
+        taskAttemptService.getAttemptsByUserAndTask(userId, taskId, requestingUser);
 
     assertThat(result).hasSize(2);
 
@@ -197,6 +211,8 @@ class TaskAttemptServiceTest {
 
   @Test
   void getAttemptsByClassroom_returnsMappedDtos() {
+    UUID classroomId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
     UUID otherUserId = UUID.randomUUID();
     UUID otherTaskId = UUID.randomUUID();
 
@@ -211,9 +227,15 @@ class TaskAttemptServiceTest {
 
     when(taskAttemptRepository.findByClassroomId(classroomId))
         .thenReturn(List.of(attempt1, attempt2));
+    User requestingInstructor = instructorWithId(classroomId, instructorId);
+
+    Classroom classroom = classroomEntity(classroomId);
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, requestingInstructor))
+        .thenReturn(true);
 
     List<TaskAttemptResponseDTO> result =
-        taskAttemptService.getAttemptsByClassroom(classroomId);
+        taskAttemptService.getAttemptsByClassroom(classroomId, requestingInstructor);
 
     assertThat(result).hasSize(2);
 
@@ -234,6 +256,30 @@ class TaskAttemptServiceTest {
     User user = new User();
     setIdReflectively(user, id);
     return user;
+  }
+
+  private User instructorWithId(UUID classroomId, UUID instructorId) {
+    User user = new User();
+    setIdReflectively(user, instructorId);
+
+    org.springframework.security.core.authority.SimpleGrantedAuthority authority =
+        new org.springframework.security.core.authority.SimpleGrantedAuthority("instructor");
+
+    try {
+      java.lang.reflect.Field rolesField = User.class.getDeclaredField("roles");
+      rolesField.setAccessible(true);
+      rolesField.set(user, java.util.List.of(authority));
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to set instructor authority", e);
+    }
+
+    return user;
+  }
+
+  private Classroom classroomEntity(UUID id) {
+    Classroom classroom = new Classroom();
+    setIdReflectively(classroom, id);
+    return classroom;
   }
 
   private TaskAttempt taskAttempt(

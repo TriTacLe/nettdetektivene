@@ -5,9 +5,16 @@ import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.task.TaskAttemptRequestDTO;
 import ntnu.no.backend.dto.task.TaskAttemptResponseDTO;
 import ntnu.no.backend.model.TaskAttempt;
+import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
+import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.repository.TaskAttemptRepository;
+import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +41,9 @@ public class TaskAttemptService {
 
   private final TaskAttemptRepository taskAttemptRepository;
   private final JdbcTemplate jdbcTemplate;
+  private final ClassroomRepository classroomRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
 
   /**
    * Submits a task attempt by calling the {@code sp_submit_attempt} stored procedure.
@@ -66,13 +76,17 @@ public class TaskAttemptService {
 
   /**
    * Retrieves all attempts for a given user and task combination.
+   * Verifies that the requesting user is authorized to view the attempts.
    *
    * @param userId the user's unique identifier
    * @param taskId the task's unique identifier
+   * @param requestingUser the authenticated user making the request
    * @return a list of {@link TaskAttemptResponseDTO} for the user/task pair
+   * @throws AccessDeniedException if the requesting user is not authorized
    */
   @Transactional(readOnly = true)
-  public List<TaskAttemptResponseDTO> getAttemptsByUserAndTask(UUID userId, UUID taskId) {
+  public List<TaskAttemptResponseDTO> getAttemptsByUserAndTask(UUID userId, UUID taskId, User requestingUser) {
+    verifyAttemptAccess(userId, requestingUser);
     return taskAttemptRepository.findByUserIdAndTaskId(userId, taskId)
         .stream()
         .map(this::toDTO)
@@ -81,16 +95,102 @@ public class TaskAttemptService {
 
   /**
    * Retrieves all attempts within a given classroom.
+   * Verifies that the requesting user is an instructor of the classroom.
    *
    * @param classroomId the classroom's unique identifier
+   * @param requestingUser the authenticated instructor
    * @return a list of {@link TaskAttemptResponseDTO} for the classroom
+   * @throws AccessDeniedException if the requesting user is not an instructor of the classroom
    */
   @Transactional(readOnly = true)
-  public List<TaskAttemptResponseDTO> getAttemptsByClassroom(UUID classroomId) {
+  public List<TaskAttemptResponseDTO> getAttemptsByClassroom(UUID classroomId, User requestingUser) {
+    verifyInstructor(classroomId, requestingUser);
     return taskAttemptRepository.findByClassroomId(classroomId)
         .stream()
         .map(this::toDTO)
         .toList();
+  }
+
+  /**
+   * Verifies that the requesting user is authorized to view attempts for a specific user.
+   * Students can only see their own attempts. Instructors can only see attempts of students
+   * in their classroom.
+   *
+   * @param targetUserId the user whose attempts are being requested
+   * @param requestingUser the authenticated user making the request
+   * @throws AccessDeniedException if the requesting user is not authorized
+   */
+  private void verifyAttemptAccess(UUID targetUserId, User requestingUser) {
+    boolean isInstructor = requestingUser.getAuthorities().stream()
+        .anyMatch(a -> "instructor".equals(a.getAuthority()));
+
+    if (isInstructor) {
+      verifyInstructorByStudent(classroomRepository, classroomStudentRepository, targetUserId, requestingUser);
+    } else {
+      if (!targetUserId.equals(requestingUser.getId())) {
+        throw new AccessDeniedException("You can only view your own attempts");
+      }
+    }
+  }
+
+  /**
+   * Verifies that an instructor is allowed to view a student's attempts.
+   * The instructor must be in a classroom that the student belongs to.
+   *
+   * @param classroomRepository the classroom repository
+   * @param classroomStudentRepository the classroom student repository
+   * @param targetUserId the student's user ID
+   * @param requestingInstructor the authenticated instructor
+   * @throws AccessDeniedException if the instructor and student are not in the same classroom
+   */
+  private void verifyInstructorByStudent(ClassroomRepository classroomRepository,
+                                          ClassroomStudentRepository classroomStudentRepository,
+                                          UUID targetUserId,
+                                          User requestingInstructor) {
+    ClassroomStudent membership = classroomStudentRepository.findByUser(
+      requestingInstructor
+    ).orElseThrow(() -> new AccessDeniedException("You must be an instructor with a classroom"));
+
+    Classroom instructorClassroom = classroomRepository.findByIdAndDeletedAtIsNull(membership.getClassroom().getId())
+        .orElseThrow(() -> new AccessDeniedException("Classroom not found"));
+
+    boolean studentInClass = classroomStudentRepository.existsById(
+      ClassroomStudentId.builder()
+        .classroomId(instructorClassroom.getId())
+        .userId(targetUserId)
+        .build()
+    );
+
+    if (!studentInClass) {
+      throw new AccessDeniedException("You can only view attempts of students in your classroom");
+    }
+  }
+
+  /**
+   * Verifies that the user is an instructor of the given classroom.
+   *
+   * @param classroomId the classroom ID
+   * @param user the user to verify
+   * @throws AccessDeniedException if the user is not an instructor of the classroom
+   */
+  private void verifyInstructor(UUID classroomId, User user) {
+    boolean isInstructor = user.getAuthorities().stream()
+        .anyMatch(a -> "instructor".equals(a.getAuthority()));
+
+    if (!isInstructor) {
+      throw new AccessDeniedException("Only instructors can view classroom attempts");
+    }
+
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new AccessDeniedException("Classroom not found"));
+
+    boolean isInstructorOfClassroom = classroomInstructorRepository.existsByClassroomAndUser(
+        classroom, user
+    );
+
+    if (!isInstructorOfClassroom) {
+      throw new AccessDeniedException("You are not an instructor of this classroom");
+    }
   }
 
   private TaskAttemptResponseDTO toDTO(TaskAttempt attempt) {
