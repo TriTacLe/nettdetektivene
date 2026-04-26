@@ -2,6 +2,8 @@ package ntnu.no.backend.util;
 
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Institution;
 import ntnu.no.backend.model.auth.User;
@@ -49,6 +51,25 @@ public class ClassroomTestFactory {
       id, "Cybersecurity 101", "Introduction to cybersecurity",
       "ABC12", UUID.randomUUID(), UUID.randomUUID(),
       false, LocalDateTime.now(), LocalDateTime.now()
+    );
+  }
+
+  public static ClassroomTaskCreateRequestDTO classroomTaskCreateRequestDTO(UUID taskId) {
+    return ClassroomTaskCreateRequestDTO.builder()
+      .taskId(taskId)
+      .sortOrder((short) 1)
+      .isActive(true)
+      .build();
+  }
+
+  public static ClassroomTaskResponseDTO classroomTaskResponseDTO(UUID classroomId, UUID taskId) {
+    return new ClassroomTaskResponseDTO(
+      classroomId,
+      taskId,
+      (short) 1,
+      true,
+      false,
+      TaskTestFactory.responseDTO(taskId)
     );
   }
 }

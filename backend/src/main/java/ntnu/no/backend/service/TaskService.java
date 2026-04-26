@@ -9,6 +9,7 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class TaskService {
 
   private final TaskRepository taskRepository;
+  private final TaskImageStorageService taskImageStorageService;
 
   /**
    * Returns all tasks.
@@ -64,6 +66,19 @@ public class TaskService {
   }
 
   /**
+   * Creates a new task with optional image uploads.
+   *
+   * @param dto    the request DTO
+   * @param images uploaded images referenced from content
+   * @return the created task as a DTO
+   */
+  @Transactional
+  public TaskResponseDTO createTask(TaskRequestDTO dto, List<MultipartFile> images) {
+    TaskRequestDTO resolvedDto = withResolvedContent(dto, images);
+    return createTask(resolvedDto);
+  }
+
+  /**
    * Updates an existing task.
    *
    * @param dto the request DTO with updated values
@@ -80,6 +95,20 @@ public class TaskService {
   }
 
   /**
+   * Updates an existing task with optional image uploads.
+   *
+   * @param dto    the request DTO with updated values
+   * @param id     the task ID
+   * @param images uploaded images referenced from content
+   * @return the updated task as a DTO
+   */
+  @Transactional
+  public TaskResponseDTO updateTask(TaskRequestDTO dto, UUID id, List<MultipartFile> images) {
+    TaskRequestDTO resolvedDto = withResolvedContent(dto, images);
+    return updateTask(resolvedDto, id);
+  }
+
+  /**
    * Deletes a task by ID.
    *
    * @param id the task ID
@@ -91,5 +120,19 @@ public class TaskService {
       throw new EntityNotFoundException("No task found with id: " + id);
     }
     taskRepository.deleteById(id);
+  }
+
+  private TaskRequestDTO withResolvedContent(TaskRequestDTO dto, List<MultipartFile> images) {
+    if (dto == null) {
+      return null;
+    }
+
+    return TaskRequestDTO.builder()
+      .title(dto.getTitle())
+      .taskType(dto.getTaskType())
+      .stopLocation(dto.getStopLocation())
+      .difficulty(dto.getDifficulty())
+      .content(taskImageStorageService.replaceUploadReferences(dto.getContent(), images))
+      .build();
   }
 }

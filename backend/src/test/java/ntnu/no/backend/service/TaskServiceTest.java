@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,9 @@ class TaskServiceTest {
 
   @Mock
   private TaskRepository taskRepository;
+
+  @Mock
+  private TaskImageStorageService taskImageStorageService;
 
   @InjectMocks
   private TaskService taskService;
@@ -80,6 +84,25 @@ class TaskServiceTest {
   }
 
   @Test
+  void createTask_withImages_resolvesContentBeforeSaving() {
+    MockMultipartFile image = new MockMultipartFile(
+      "images",
+      "real-article-1.png",
+      "image/png",
+      "png".getBytes()
+    );
+    when(taskImageStorageService.replaceUploadReferences(any(), any()))
+      .thenReturn("{\"articles\":[{\"imagePath\":\"/uploads/tasks/batch/image.png\"}]}");
+    when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
+
+    TaskResponseDTO result = taskService.createTask(TaskTestFactory.requestDTOWithUploadReference(), List.of(image));
+
+    assertThat(result.content()).contains("/uploads/tasks/batch/image.png");
+    verify(taskImageStorageService).replaceUploadReferences(any(), any());
+    verify(taskRepository).save(any(Task.class));
+  }
+
+  @Test
   void updateTask_updatesAndReturnsDTO() {
     UUID id = UUID.randomUUID();
     TaskRequestDTO dto = TaskRequestDTO.builder()
@@ -94,6 +117,25 @@ class TaskServiceTest {
     TaskResponseDTO result = taskService.updateTask(dto, id);
 
     assertThat(result.title()).isEqualTo("New title");
+  }
+
+  @Test
+  void updateTask_withImages_resolvesContentBeforeUpdating() {
+    UUID id = UUID.randomUUID();
+    MockMultipartFile image = new MockMultipartFile(
+      "images",
+      "real-article-1.png",
+      "image/png",
+      "png".getBytes()
+    );
+    when(taskRepository.findById(id)).thenReturn(Optional.of(TaskTestFactory.task()));
+    when(taskImageStorageService.replaceUploadReferences(any(), any()))
+      .thenReturn("{\"articles\":[{\"imagePath\":\"/uploads/tasks/batch/image.png\"}]}");
+
+    TaskResponseDTO result = taskService.updateTask(TaskTestFactory.requestDTOWithUploadReference(), id, List.of(image));
+
+    assertThat(result.content()).contains("/uploads/tasks/batch/image.png");
+    verify(taskImageStorageService).replaceUploadReferences(any(), any());
   }
 
   @Test

@@ -38,6 +38,7 @@ public class SecurityConfig {
     "/swagger-ui/**",
     "/swagger-ui.html",
     "/v3/api-docs/**",
+    "/uploads/**",
     "/api/v1/auth/feide",
     "/api/v1/auth/login",
     "/api/v1/auth/register",
@@ -86,6 +87,10 @@ public class SecurityConfig {
           .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
           .allowedHeaders("*")
           .allowCredentials(true);
+        registry.addMapping("/uploads/**")
+          .allowedOrigins("http://localhost", "http://localhost:5173")
+          .allowedMethods("GET")
+          .allowedHeaders("*");
       }
     };
   }

@@ -73,6 +73,16 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
+      path: '/teacher-leaderboard',
+      name: 'teacher-leaderboard',
+      component: () => import('../views/teacher/TeacherLeaderboardView.vue'),
+    },
+    {
+      path: '/teacher-leaderboard/:classroomId',
+      name: 'teacher-classroom-leaderboard',
+      component: () => import('../views/teacher/TeacherClassroomLeaderboardView.vue'),
+    },
+    {
       path: '/teacher-settings',
       name: 'settings',
       component: () => import('../views/teacher/TeacherSettingsView.vue'),
@@ -94,6 +104,16 @@ const router = createRouter({
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
       // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/tasks',
+      name: 'classroom-tasks',
+      component: () => import('../views/teacher/ClassroomTasksView.vue'),
+    },
+    {
+      path: '/classroom/:id/tasks/new',
+      name: 'classroom-task-create',
+      component: () => import('../views/teacher/CreateTaskView.vue'),
     },
     {
       path: '/classroom/:id/students',

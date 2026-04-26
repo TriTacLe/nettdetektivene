@@ -93,6 +93,7 @@ export interface NewsChallengeContent {
 
 export interface PhotoChallengeContent {
   description?: string;
+  hint?: string;
   alternatives?: any[];
 }
 
@@ -134,6 +135,39 @@ export interface PhotoAlternative {
 export interface FotografenChallenge {
   alternatives: PhotoAlternative[];
 }
+
+export interface TeacherNewsArticleDraft {
+  image: File | null
+  isReal: boolean
+}
+
+export interface TeacherPhotoAlternativeDraft {
+  image: File | null
+  description: string
+  correctType: PhotoType
+  begrunnelserText: string
+}
+
+export interface TeacherTaskBaseDraft {
+  title: string
+  difficulty: number
+}
+
+export interface TeacherNewsTaskDraft extends TeacherTaskBaseDraft {
+  type: TaskType.NEWS
+  question: string
+  hint: string
+  articles: TeacherNewsArticleDraft[]
+}
+
+export interface TeacherPhotoTaskDraft extends TeacherTaskBaseDraft {
+  type: TaskType.PHOTO
+  description: string
+  hint: string
+  alternatives: TeacherPhotoAlternativeDraft[]
+}
+
+export type TeacherTaskDraft = TeacherNewsTaskDraft | TeacherPhotoTaskDraft
 
 export interface ClassroomResponseDTO {
   id: string

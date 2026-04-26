@@ -116,6 +116,7 @@ function submit() {
   padding: 1.25rem 2rem 1.5rem;
   gap: 1rem;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .header {
@@ -158,7 +159,6 @@ function submit() {
   grid-template-columns: repeat(var(--count), minmax(0, 260px));
   justify-content: center;
   gap: 1.25rem;
-  overflow-y: auto;
 }
 
 .card {
@@ -270,10 +270,13 @@ function submit() {
 }
 
 .lever-row {
+  position: sticky;
+  bottom: 0;
   display: flex;
   justify-content: center;
   flex-shrink: 0;
   padding-top: 0.5rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.32) 42%, rgba(0, 0, 0, 0.55));
 }
 
 .lever-btn {
@@ -296,5 +299,21 @@ function submit() {
 .lever-btn:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+  }
+}
+
+@media (max-width: 800px) {
+  .fotografen-wrapper {
+    padding: 1rem;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

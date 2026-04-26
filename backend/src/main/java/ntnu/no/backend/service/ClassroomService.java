@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskUpdateRequestDTO;
 import ntnu.no.backend.mapper.ClassroomMapper;
@@ -178,6 +179,35 @@ public class ClassroomService {
     return classroomTaskRepository.findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroomId).stream()
         .map(ct -> ClassroomTaskMapper.toDTO(ct, unlockedTaskIds))
         .toList();
+  }
+
+  @Transactional
+  public ClassroomTaskResponseDTO createClassroomTask(UUID classroomId, ClassroomTaskCreateRequestDTO dto) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+      .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    Task task = taskRepository.findById(dto.getTaskId())
+      .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + dto.getTaskId()));
+
+    ClassroomTaskId classroomTaskId = new ClassroomTaskId(classroomId, task.getId());
+    if (classroomTaskRepository.existsById(classroomTaskId)) {
+      throw new IllegalArgumentException("Task is already assigned to this classroom");
+    }
+
+    short sortOrder = dto.getSortOrder() != null
+      ? dto.getSortOrder()
+      : (short) (classroomTaskRepository.findAllByClassroom_IdOrderBySortOrderAsc(classroomId).size() + 1);
+
+    ClassroomTask classroomTask = ClassroomTask.builder()
+      .id(classroomTaskId)
+      .classroom(classroom)
+      .task(task)
+      .sortOrder(sortOrder)
+      .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
+      .build();
+
+    classroomTaskRepository.save(classroomTask);
+    return ClassroomTaskMapper.toDTO(classroomTask);
   }
 
   @Transactional

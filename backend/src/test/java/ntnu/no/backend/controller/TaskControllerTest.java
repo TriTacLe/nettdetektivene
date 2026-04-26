@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,7 +25,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -99,6 +102,63 @@ class TaskControllerTest {
         .content(objectMapper.writeValueAsString(TaskTestFactory.requestDTO()))
         .with(csrf()))
       .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void createTaskMultipart_returnsCreated() throws Exception {
+    when(taskService.createTask(any(), any())).thenReturn(TaskTestFactory.responseDTO(UUID.randomUUID()));
+
+    MockMultipartFile task = new MockMultipartFile(
+      "task",
+      "",
+      MediaType.APPLICATION_JSON_VALUE,
+      objectMapper.writeValueAsBytes(TaskTestFactory.requestDTOWithUploadReference())
+    );
+    MockMultipartFile image = new MockMultipartFile(
+      "images",
+      "real-article-1.png",
+      MediaType.IMAGE_PNG_VALUE,
+      "png".getBytes()
+    );
+
+    mockMvc.perform(multipart("/api/v1/tasks")
+        .file(task)
+        .file(image)
+        .with(csrf()))
+      .andExpect(status().isCreated())
+      .andExpect(jsonPath("$.data.title").value("Spot the phishing email"));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void updateTaskMultipart_returnsOk() throws Exception {
+    UUID id = UUID.randomUUID();
+    when(taskService.updateTask(any(), any(), any())).thenReturn(TaskTestFactory.responseDTO(id));
+
+    MockMultipartFile task = new MockMultipartFile(
+      "task",
+      "",
+      MediaType.APPLICATION_JSON_VALUE,
+      objectMapper.writeValueAsBytes(TaskTestFactory.requestDTOWithUploadReference())
+    );
+    MockMultipartFile image = new MockMultipartFile(
+      "images",
+      "real-article-1.png",
+      MediaType.IMAGE_PNG_VALUE,
+      "png".getBytes()
+    );
+
+    mockMvc.perform(multipart("/api/v1/tasks/" + id)
+        .file(task)
+        .file(image)
+        .with(request -> {
+          request.setMethod("PATCH");
+          return request;
+        })
+        .with(csrf()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.title").value("Spot the phishing email"));
   }
 
   @Test
