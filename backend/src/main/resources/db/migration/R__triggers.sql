@@ -152,4 +152,107 @@ BEGIN
     END IF;
 END$$
 
+-- -------------------------------------------------------------
+-- trg_notify_stop_completed
+-- Notifies instructors when a student completes all tasks in a stop location
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_stop_completed$$
+CREATE TRIGGER trg_notify_stop_completed
+AFTER UPDATE ON task_best_score
+FOR EACH ROW
+BEGIN
+    DECLARE v_task_count INT DEFAULT 0;
+    DECLARE v_passed_count INT DEFAULT 0;
+    DECLARE v_stop_tasks INT DEFAULT 0;
+    DECLARE v_stop_passed INT DEFAULT 0;
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_stop_name VARCHAR(100) DEFAULT NULL;
+    
+    -- Only trigger when a task is first passed
+    IF NEW.first_passed_at IS NOT NULL AND (OLD.first_passed_at IS NULL OR OLD.first_passed_at <> NEW.first_passed_at) THEN
+    
+        -- Get total number of tasks in this stop location
+        SELECT COUNT(DISTINCT task_id)
+        INTO v_stop_tasks
+        FROM task
+        WHERE stop_location = (SELECT stop_location FROM task WHERE task_id = NEW.task_id)
+          AND is_active = 1;
+        
+        -- Get number of tasks this student has passed in this stop location
+        SELECT COUNT(*)
+        INTO v_stop_passed
+        FROM task_best_score tbs
+        JOIN task t ON t.task_id = tbs.task_id
+        WHERE tbs.user_id = NEW.user_id
+          AND tbs.classroom_id = NEW.classroom_id
+          AND t.stop_location = (SELECT stop_location FROM task WHERE task_id = NEW.task_id)
+          AND tbs.first_passed_at IS NOT NULL;
+        
+        -- Check if this completes the stop
+        IF v_stop_passed >= v_stop_tasks AND v_stop_tasks > 0 THEN
+            
+            -- Get student display name
+            SELECT display_name
+            INTO v_student_name
+            FROM app_user
+            WHERE user_id = NEW.user_id;
+            
+            -- Get stop location (use readable name if possible, or the stop_location value)
+            SELECT stop_location
+            INTO v_stop_name
+            FROM task
+            WHERE task_id = NEW.task_id;
+            
+            -- Notify all instructors of this classroom
+            INSERT INTO notification
+                (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+            SELECT 
+                UUID(),
+                ci.user_id,
+                NEW.classroom_id,
+                CONCAT(v_student_name, ' har fullført ', v_stop_name, '!'),
+                'stop_completed',
+                NEW.user_id,
+                0,
+                NOW()
+            FROM classroom_instructor ci
+            WHERE ci.classroom_id = NEW.classroom_id;
+            
+        END IF;
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
+-- trg_notify_mystery_submitted
+-- Notifies instructors when a student submits a mystery
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_mystery_submitted$$
+CREATE TRIGGER trg_notify_mystery_submitted
+AFTER INSERT ON mystery_submission
+FOR EACH ROW
+BEGIN
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    
+    -- Get student display name
+    SELECT display_name
+    INTO v_student_name
+    FROM app_user
+    WHERE user_id = NEW.submitted_by;
+    
+    -- Notify all instructors of this classroom
+    INSERT INTO notification
+        (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+    SELECT 
+        UUID(),
+        ci.user_id,
+        NEW.classroom_id,
+        CONCAT(v_student_name, ' har sendt inn et bidrag til ukens mysterium.'),
+        'mystery_submission',
+        NEW.submission_id,
+        0,
+        NOW()
+    FROM classroom_instructor ci
+    WHERE ci.classroom_id = NEW.classroom_id;
+END$$
+
 DELIMITER ;
