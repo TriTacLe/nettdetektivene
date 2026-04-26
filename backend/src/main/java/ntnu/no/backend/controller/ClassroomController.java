@@ -98,7 +98,11 @@ public class ClassroomController {
       @PathVariable UUID classroomId,
       @RequestParam(defaultValue = "false") boolean activeOnly,
       @RequestParam(defaultValue = "false") boolean includeUnlocked,
+      @RequestParam(defaultValue = "false") boolean testMode,
       @AuthenticationPrincipal User currentUser) {
+    if (testMode && currentUser != null) {
+      return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasksTestMode(classroomId, currentUser.getId())));
+    }
     if (activeOnly) {
       if (includeUnlocked && currentUser != null) {
         return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasksWithUnlocked(classroomId, currentUser.getId())));

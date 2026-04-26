@@ -53,6 +53,17 @@ public class TaskService {
   }
 
   /**
+   * Returns all active tasks for instructor test mode.
+   * Used by teachers to play through the game without progression constraints.
+   *
+   * @return list of all active tasks as DTOs
+   */
+  @Transactional(readOnly = true)
+  public List<TaskResponseDTO> getAllTasksTestMode() {
+    return taskRepository.findAllActive().stream().map(TaskMapper::toDTO).toList();
+  }
+
+  /**
    * Creates a new task.
    *
    * @param dto the request DTO
