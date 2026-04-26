@@ -2,28 +2,17 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { joinMutation, getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
-import { useStudentStore } from '@/stores/StudentStore.ts'
-import { getClassroom } from '@/generated-client'
+import { useMutation } from '@tanstack/vue-query'
+import { joinMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
-const studentStore = useStudentStore()
 const joinCode = ref('')
 const fieldError = ref('')
 
 const join = useMutation({
   ...joinMutation(),
-  onSuccess: async (res) => {
-    const classroomId = res.data?.classroomId
-    if (classroomId) {
-      const classroomRes = await getClassroom({ path: { id: classroomId } })
-      const institutionId = classroomRes.data?.data?.institutionId
-      if (institutionId) {
-        studentStore.setClassroom(classroomId, institutionId)
-      }
-    }
-    router.push({ name: 'introduction' })
+  onSuccess: () => {
+    router.push({ name: 'awaiting-approval' })
   },
   onError: (e: any) => {
     fieldError.value = e.message ?? 'Kunne ikke bli med i klasserommet'
@@ -45,13 +34,7 @@ function handleJoin() {
     <div class="flex flex-col items-center justify-center flex-1 px-6">
       <div class="flex flex-col gap-4 w-full max-w-sm">
         <div class="field">
-          <label
-            for="join-code"
-            class="text-white font-bold text-lg"
-            style="-webkit-text-stroke: 1.5px #000; paint-order: stroke fill"
-          >
-            Klasseromskode
-          </label>
+          <label for="join-code">Klasseromskode</label>
           <input
             id="join-code"
             v-model="joinCode"
@@ -81,13 +64,11 @@ function handleJoin() {
 </template>
 
 <style scoped>
-.join-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 2rem;
+label {
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+  -webkit-text-stroke: 2px #000000;
+  paint-order: stroke fill;
 }
 </style>
