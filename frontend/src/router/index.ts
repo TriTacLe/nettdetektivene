@@ -67,9 +67,9 @@ const router = createRouter({
       component: () => import('../views/StudentProfileView.vue'),
     },
     {
-      //path: '/student-profile/avatar',
-      //name: 'edit-avatar',
-      //component: () => import('../views/EditAvatarView.vue'),
+      path: '/student-profile/avatar',
+      name: 'edit-avatar',
+      component: () => import('../views/EditAvatarView.vue'),
     },
     {
       path: '/teacher-home',
