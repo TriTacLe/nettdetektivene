@@ -28,6 +28,14 @@ const total = computed(() => allAchievements.value.length)
 const progressPercent = computed(() =>
   total.value ? Math.round((earned.value / total.value) * 100) : 0,
 )
+
+const earnedAchievements = computed(() =>
+  allAchievements.value.filter((a) => a.id && earnedIds.value.has(a.id))
+)
+
+const notEarnedAchievements = computed(() =>
+  allAchievements.value.filter((a) => a.id && !earnedIds.value.has(a.id))
+)
 </script>
 
 <template>
@@ -74,20 +82,38 @@ const progressPercent = computed(() =>
             </div>
           </section>
 
-          <!-- Medaljer/achivements -->
-          <section class="section">
-            <h2>Medaljer</h2>
-            <div v-if="allAchievements.length === 0" class="empty-state">
-              <p>Ingen medaljer tilgjengelig.</p>
-            </div>
-            <div v-else class="badges-container">
+          <!-- Opna medaljer -->
+          <section class="section" v-if="earnedAchievements.length > 0">
+            <h2>Opna medaljer</h2>
+            <div class="badges-container">
               <BadgeCard
-                v-for="achievement in allAchievements"
+                v-for="achievement in earnedAchievements"
                 :key="achievement.id"
                 :title="achievement.title ?? ''"
                 :description="achievement.descAch ?? ''"
-                :unlocked="earnedIds.has(achievement.id)"
+                :unlocked="true"
               />
+            </div>
+          </section>
+
+          <!-- Låste medaljer -->
+          <section class="section" v-if="notEarnedAchievements.length > 0">
+            <h2>Låste medaljer</h2>
+            <div class="badges-container locked-container">
+              <BadgeCard
+                v-for="achievement in notEarnedAchievements"
+                :key="achievement.id"
+                :title="achievement.title ?? ''"
+                :description="achievement.descAch ?? ''"
+                :unlocked="false"
+              />
+            </div>
+          </section>
+
+          <!-- Ingen medaljer -->
+          <section class="section" v-if="allAchievements.length === 0">
+            <div class="empty-state">
+              <p>Ingen medaljer tilgjengelig.</p>
             </div>
           </section>
         </template>
@@ -137,6 +163,12 @@ const progressPercent = computed(() =>
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+}
+
+.locked-container {
+  border-color: #999;
+  background-color: #f5f5f5;
+  opacity: 0.8;
 }
 
 .profile-info {
