@@ -30,19 +30,9 @@ const menuItems = [
     route: 'teacher-notifications',
   },
   {
-    title: 'Innstillinger',
-    subtitle: 'Konto og lydinnstillinger',
-    route: 'settings',
-  },
-  {
     title: 'Ledertavle',
     subtitle: 'Se klassenes resultater',
     route: 'teacher-leaderboard',
-  },
-  {
-    title: 'Test Spill',
-    subtitle: 'Spill som en elev (test modus)',
-    route: 'teacher-test-game',
   },
 ]
 

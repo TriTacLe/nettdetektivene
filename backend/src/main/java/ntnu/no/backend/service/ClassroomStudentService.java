@@ -40,7 +40,7 @@ import java.util.UUID;
  * Handles join requests, approval, removal and listing.
  *
  * @author norakirknes, tri
- * @version 0.2
+ * @version 0.3
  * @since 0.1
  * @see ClassroomStudentRepository
  * @see ClassroomRepository
@@ -318,6 +318,35 @@ public class ClassroomStudentService {
     entityManager.flush();
     entityManager.clear();
     ClassroomStudent student = findMembership(classroomId, userId);
+    return mapToDTO(student);
+  }
+
+  /**
+   * Resets a student's display name to their email prefix.
+   * Used by instructors to override inappropriate display names.
+   *
+   * @param classroomId the classroom ID
+   * @param userId the student's user ID
+   * @param instructor the authenticated instructor
+   * @return the updated membership as a DTO
+   * @throws AccessDeniedException if user is not an instructor of the classroom
+   * @throws EntityNotFoundException if the student is not in the classroom
+   */
+  @Transactional
+  public ClassroomStudentResponseDTO resetDisplayName(UUID classroomId, UUID userId, User instructor) {
+    verifyInstructor(classroomId, instructor);
+    ClassroomStudent student = findMembership(classroomId, userId);
+
+    String emailPrefix = student.getUser().getEmail().split("@")[0];
+    student.setDisplayName(emailPrefix);
+
+    User studentUser = student.getUser();
+    studentUser.setDisplayName(emailPrefix);
+
+    UserProfile profile = userProfileRepository.findByUser(studentUser)
+        .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + userId));
+    profile.setDisplayName(emailPrefix);
+
     return mapToDTO(student);
   }
 

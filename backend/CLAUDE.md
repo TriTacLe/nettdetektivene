@@ -117,6 +117,7 @@ See testing section below.
 | `trg_classroom_auto_instructor`  | AFTER INSERT classroom          | Auto-inserts creator as instructor — do NOT do this in `ClassroomService`                 |
 | `trg_attempt_sync`               | AFTER INSERT task_attempt       | Upserts `task_best_score`, awards 10 XP on first pass, updates `xp_level`                 |
 | `trg_mystery_approved`           | AFTER UPDATE mystery_submission | Creates notification + awards achievement on approval (idempotent via INSERT IGNORE)      |
+| `trg_notify_attempt_failed`      | AFTER INSERT task_attempt       | Notifies all classroom instructors when a student fails a task attempt                    |
 | `sp_submit_attempt`              | Stored procedure                | Only entry point for registering attempts — call via `JdbcTemplate`, then read back state |
 | `sp_request_display_name_change` | Stored procedure                | Student requests a display name change, creates pending review                            |
 | `sp_review_display_name_change`  | Stored procedure                | Teacher approves/rejects display name change request                                      |
