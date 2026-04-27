@@ -1,4 +1,4 @@
-.PHONY: dev prod down clean logs status
+.PHONY: dev prod down clean logs status test test-backend test-frontend test-e2e test-coverage
 
 # configurable
 SERVICES_DEV = mysql backend frontend
@@ -91,3 +91,25 @@ clean:
 logs:
 	@echo "Tailing logs..."
 	docker compose logs -f $(filter-out $@,$(MAKECMDGOALS))
+
+# Testing
+test: test-backend test-frontend
+	@echo "All tests completed"
+
+test-backend:
+	@echo "Running backend tests..."
+	cd backend && ./mvnw clean test -q
+
+test-frontend:
+	@echo "Running frontend unit tests..."
+	cd frontend && npm run test:unit -- --run
+
+test-e2e:
+	@echo "Running E2E tests..."
+	@echo "Make sure the app is running (make dev) before running E2E tests"
+	cd frontend && npx cypress run
+
+test-coverage:
+	@echo "Running backend tests with coverage..."
+	cd backend && ./mvnw clean verify -q
+	@echo "Coverage report: backend/target/site/jacoco/index.html"

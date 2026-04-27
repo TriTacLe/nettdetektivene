@@ -255,6 +255,67 @@ BEGIN
 END$$
 
 -- -------------------------------------------------------------
+-- trg_notify_game_completed
+-- Notifies instructors when a student completes all tasks in a classroom
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_game_completed$$
+CREATE TRIGGER trg_notify_game_completed
+AFTER INSERT ON task_best_score
+FOR EACH ROW
+BEGIN
+    DECLARE v_total_tasks INT DEFAULT 0;
+    DECLARE v_passed_tasks INT DEFAULT 0;
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_classroom_title VARCHAR(255) DEFAULT NULL;
+
+    IF NEW.first_passed_at IS NOT NULL THEN
+        -- Count total active tasks in this classroom
+        SELECT COUNT(*)
+        INTO v_total_tasks
+        FROM classroom_task
+        WHERE classroom_id = NEW.classroom_id
+          AND is_active = 1;
+
+        -- Count tasks this student has passed in this classroom
+        SELECT COUNT(*)
+        INTO v_passed_tasks
+        FROM task_best_score tbs
+        JOIN classroom_task ct ON tbs.task_id = ct.task_id
+        WHERE tbs.user_id = NEW.user_id
+          AND ct.classroom_id = NEW.classroom_id
+          AND ct.is_active = 1
+          AND tbs.first_passed_at IS NOT NULL;
+
+        -- If student has completed all tasks, notify instructors
+        IF v_passed_tasks >= v_total_tasks AND v_total_tasks > 0 THEN
+            SELECT u.display_name
+            INTO v_student_name
+            FROM app_user u
+            WHERE u.user_id = NEW.user_id;
+
+            SELECT c.title
+            INTO v_classroom_title
+            FROM classroom c
+            WHERE c.classroom_id = NEW.classroom_id;
+
+            INSERT INTO notification
+                (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+            SELECT
+                UUID(),
+                ci.user_id,
+                NEW.classroom_id,
+                CONCAT(v_student_name, ' har fullført spillet i klasserommet "', v_classroom_title, '".'),
+                'game_completed',
+                NEW.user_id,
+                0,
+                NOW()
+            FROM classroom_instructor ci
+            WHERE ci.classroom_id = NEW.classroom_id;
+        END IF;
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
 -- trg_notify_mystery_submitted
 -- Notifies instructors when a student submits a mystery
 -- -------------------------------------------------------------
@@ -264,17 +325,17 @@ AFTER INSERT ON mystery_submission
 FOR EACH ROW
 BEGIN
     DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
-    
+
     -- Get student display name
     SELECT display_name
     INTO v_student_name
     FROM app_user
     WHERE user_id = NEW.submitted_by;
-    
+
     -- Notify all instructors of this classroom
     INSERT INTO notification
         (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
-    SELECT 
+    SELECT
         UUID(),
         ci.user_id,
         NEW.classroom_id,
