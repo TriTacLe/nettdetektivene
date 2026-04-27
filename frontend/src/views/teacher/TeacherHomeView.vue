@@ -30,11 +30,6 @@ const menuItems = [
     route: 'teacher-notifications',
   },
   {
-    title: 'Innstillinger',
-    subtitle: 'Konto og lydinnstillinger',
-    route: 'settings',
-  },
-  {
     title: 'Ledertavle',
     subtitle: 'Se klassenes resultater',
     route: 'teacher-leaderboard',
