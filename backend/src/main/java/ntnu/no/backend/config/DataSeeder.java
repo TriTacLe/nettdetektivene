@@ -68,22 +68,29 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Starting Demo Data Seeder");
     log.info("========================================");
 
-    if (userRepository.count() > 0) {
-      log.info("Database already has users — skipping seed.");
-      return;
+    boolean isFullSeed = userRepository.count() == 0;
+
+    if (isFullSeed) {
+      log.info("Database is empty — running full seed.");
+    } else {
+      log.info("Database already has data — seeding only missing entities.");
     }
 
     try {
       loadRoles();
-      seedInstitutions();
-      seedInstructors();
-      seedClassrooms();
-      seedTasks();
-      seedStudents();
-      seedEnrollments();
-      seedTaskAttempts();
-      seedNotebookEntries();
-      seedAchievements();
+
+      if (isFullSeed) {
+        seedInstitutions();
+        seedInstructors();
+        seedClassrooms();
+        seedTasks();
+        seedStudents();
+        seedEnrollments();
+        seedTaskAttempts();
+        seedNotebookEntries();
+      }
+
+      seedAchievementsIfMissing();
       verifyTaskAssignments();
       verifyEnrollments();
       printSummary();
@@ -414,6 +421,15 @@ Task task = taskRepository.save(Task.builder()
   // -----------------------------------------------------------------------
   // Helpers
   // -----------------------------------------------------------------------
+
+  private void seedAchievementsIfMissing() {
+    if (achievementRepository.count() > 0) {
+      log.info("Achievements already exist — skipping achievement seed.");
+      return;
+    }
+    log.info("Seeding achievements...");
+    seedAchievements();
+  }
 
   private User createUser(String email, String displayName, List<Role> roles) {
     User user = userRepository.save(User.builder()
