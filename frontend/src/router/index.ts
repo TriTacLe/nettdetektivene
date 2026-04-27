@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { requireTeacher } from "@/router/guards.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -119,6 +118,11 @@ const router = createRouter({
       path: '/classroom/:id/tasks/new',
       name: 'classroom-task-create',
       component: () => import('../views/teacher/CreateTaskView.vue'),
+    },
+    {
+      path: '/classroom/:id/tasks/:taskId/edit',
+      name: 'classroom-task-edit',
+      component: () => import('../views/teacher/EditClassroomTaskView.vue'),
     },
     {
       path: '/classroom/:id/students',

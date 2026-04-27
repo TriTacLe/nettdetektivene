@@ -101,6 +101,17 @@ export async function createTeacherTask(classroomId: string, draft: TeacherTaskD
   }
 }
 
+export async function updateTeacherTask(
+  taskId: string,
+  updates: { title?: string; difficulty?: number }
+): Promise<TaskDTO> {
+  const { data } = await apiClient.patch<ApiResponse<TaskDTO>>(`/tasks/${taskId}`, {
+    ...(updates.title !== undefined && { title: updates.title.trim() }),
+    ...(updates.difficulty !== undefined && { difficulty: updates.difficulty }),
+  })
+  return data.data
+}
+
 export function parseTaskContent(contentString: string, taskType: string) {
   try {
     const content = typeof contentString === 'string' ? JSON.parse(contentString) : contentString
