@@ -255,4 +255,41 @@ BEGIN
     WHERE ci.classroom_id = NEW.classroom_id;
 END$$
 
+-- -------------------------------------------------------------
+-- trg_notify_name_change_request
+-- Notifies instructors when a student requests a display name change
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_name_change_request$$
+CREATE TRIGGER trg_notify_name_change_request
+AFTER UPDATE ON classroom_student
+FOR EACH ROW
+BEGIN
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_requested_name VARCHAR(255) DEFAULT NULL;
+    
+    IF NEW.name_change_status = 'PENDING' AND OLD.name_change_status <> 'PENDING' THEN
+        -- Get student display name and requested name
+        SELECT u.display_name, cs.requested_display_name
+        INTO v_student_name, v_requested_name
+        FROM app_user u
+        INNER JOIN classroom_student cs ON u.user_id = cs.user_id
+        WHERE u.user_id = NEW.user_id AND cs.classroom_id = NEW.classroom_id;
+        
+        -- Notify all instructors of this classroom
+        INSERT INTO notification
+            (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+        SELECT 
+            UUID(),
+            ci.user_id,
+            NEW.classroom_id,
+            CONCAT(v_student_name, ' ønsker å endre navnet sitt til "', v_requested_name, '".'),
+            'name_change',
+            NEW.user_id,
+            0,
+            NOW()
+        FROM classroom_instructor ci
+        WHERE ci.classroom_id = NEW.classroom_id;
+    END IF;
+END$$
+
 DELIMITER ;
