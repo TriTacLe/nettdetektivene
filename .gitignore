@@ -18,10 +18,10 @@ Thumbs.db
 .idea_modules/
 out/
 
-# Claude AI Skills (project-specific instructions)
 .claude/
 .claude/skills/
-
+skills
+skills-lock.json
 
 # IDE - VS Code
 .vscode/*
