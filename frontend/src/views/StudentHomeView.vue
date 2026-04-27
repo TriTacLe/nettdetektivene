@@ -6,7 +6,6 @@ import SceneComponent from '../components/SceneComponent.vue'
 import BoardNote from '../components/BoardNote.vue'
 import ClassroomService from '@/services/ClassroomService'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
-import { KeyboardEvent } from 'happy-dom'
 
 const corkboardImage = '/corkboard.jpg'
 const router = useRouter()
@@ -41,7 +40,7 @@ function closeHelp() {
 }
 
 function onKeydown(e: Event) {
-  if ((e as unknown as KeyboardEvent).key === 'Escape') closeHelp()
+  if ('key' in e && e.key === 'Escape') closeHelp()
 }
 
 onMounted(async () => {

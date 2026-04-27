@@ -17,8 +17,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'stream': 'stream-browserify',
-      'perf_hooks': fileURLToPath(new URL('./node_modules/happy-dom/lib-esm/polyfills/perf_hooks.js', import.meta.url)),
     },
   },
   server: {
