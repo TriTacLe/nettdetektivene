@@ -43,11 +43,6 @@ const menuItems = [
     subtitle: 'Spill som elev',
     route: 'classroom-test-game',
   },
-  {
-    title: 'Vis Klasseromskode',
-    subtitle: 'Del kode med elever',
-    route: 'join-code',
-  },
 ]
 
 function handleMenuItem(item: (typeof menuItems)[0]) {
