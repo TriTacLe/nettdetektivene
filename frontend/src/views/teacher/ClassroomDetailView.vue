@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useQuery } from '@tanstack/vue-query'
-import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import { getClassroomOptions, getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const route = useRoute()
 const router = useRouter()
 const classroomId = route.params.id as string
 
-const showJoinCodeModal = ref(false)
-
 const { data } = useQuery(getClassroomOptions({ path: { id: classroomId } }))
 const classroom = computed(() => data.value?.data ?? null)
+
+const { data: notificationsData } = useQuery(getMyNotificationsOptions())
+const unreadCount = computed(() =>
+  (notificationsData.value?.data ?? []).filter((n) => !n.isRead && n.classroomId === classroomId).length
+)
 
 const menuItems = [
   {
@@ -45,19 +48,10 @@ const menuItems = [
     subtitle: 'Spill som elev',
     route: '',
   },
-  {
-    title: 'Vis Klasseromskode',
-    subtitle: 'Del kode med elever',
-    route: 'join-code',
-  },
 ]
 
 function handleMenuItem(item: (typeof menuItems)[0]) {
   if (!item.route) return
-  if (item.route === 'join-code') {
-    showJoinCodeModal.value = true
-    return
-  }
   if (item.route === 'notifications') {
     router.push({ name: 'teacher-notifications', query: { classroomId } })
     return
@@ -72,41 +66,33 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
     previous="/classroom-overview"
     background="/StartBackground.jpg"
   >
-    <div class="p-6 grid grid-cols-2 gap-3">
+    <div class="p-6 flex flex-col gap-3">
+      <div class="text-center mb-3">
+        <h2 class="text-white text-sm font-medium mb-1">Klasseromskode</h2>
+        <p class="text-4xl font-mono font-black tracking-widest text-white">{{ classroom?.joinCode }}</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
       <button
         v-for="item in menuItems"
         :key="item.title"
         :disabled="!item.route"
-        class="bg-white rounded-xl p-4 flex items-center justify-between text-left shadow transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="relative bg-white rounded-xl p-4 flex items-center justify-between text-left shadow transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
         @click="handleMenuItem(item)"
       >
         <div>
           <p class="font-bold text-gray-900 text-sm">{{ item.title }}</p>
           <p class="text-gray-500 text-xs mt-0.5">{{ item.subtitle }}</p>
         </div>
+        <span
+          v-if="item.route === 'notifications' && unreadCount > 0"
+          class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5"
+        >
+          {{ unreadCount }}
+        </span>
         <span class="text-gray-400 text-lg">›</span>
       </button>
-    </div>
-  </SceneComponent>
-
-  <Teleport to="body">
-    <div
-      v-if="showJoinCodeModal"
-      class="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-      @click.self="showJoinCodeModal = false"
-    >
-      <div class="bg-white rounded-2xl p-8 text-center shadow-xl max-w-xs w-full mx-4">
-        <h2 class="text-xl font-bold mb-2">Klasseromskode</h2>
-        <p class="text-5xl font-mono font-black tracking-widest text-indigo-600 my-6">
-          {{ classroom?.joinCode }}
-        </p>
-        <button
-          class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl"
-          @click="showJoinCodeModal = false"
-        >
-          Lukk
-        </button>
       </div>
     </div>
-  </Teleport>
+  </SceneComponent>
 </template>

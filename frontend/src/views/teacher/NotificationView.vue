@@ -2,12 +2,17 @@
 import { ref, computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { CheckCircle, Trophy, Clock, Search, AlertTriangle } from 'lucide-vue-next'
+import { CheckCircle, Trophy, Clock, Search, AlertTriangle, UserPlus, Pencil } from 'lucide-vue-next'
 import SceneComponent from '@/components/SceneComponent.vue'
 import {
   getMyNotificationsOptions,
   getMyNotificationsQueryKey,
+  getAllClassroomsOptions,
   markAsReadMutation,
+  approveMutation,
+  removeMutation,
+  approveNameChangeMutation,
+  rejectNameChangeMutation,
 } from '@/generated-client/@tanstack/vue-query.gen'
 import { NotificationType } from '@/types'
 import type { NotificationResponseDto } from '@/generated-client/types.gen'
@@ -27,6 +32,8 @@ const REF_TYPE_MAP: Record<string, NotificationType> = {
   stuck: NotificationType.STUCK,
   inappropriate_message: NotificationType.INAPPROPRIATE_MESSAGE,
   inappropriate_username: NotificationType.INAPPROPRIATE_USERNAME,
+  classroom_student: NotificationType.JOIN_REQUEST,
+  name_change: NotificationType.NAME_CHANGE,
 }
 
 const activeTypeFilter = ref<NotificationType | 'INAPPROPRIATE' | 'COMPLETED' | null>(null)
@@ -35,17 +42,70 @@ const currentPage = ref(1)
 const pageSize = 10
 
 const { data, isLoading, error } = useQuery(getMyNotificationsOptions())
+const { data: classroomsData } = useQuery(getAllClassroomsOptions())
+
+const classroomNameMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const c of classroomsData.value?.data ?? []) {
+    if (c.id && c.title) map.set(c.id, c.title)
+  }
+  return map
+})
+
+const invalidateNotifications = () =>
+  queryClient.invalidateQueries({ queryKey: getMyNotificationsQueryKey() })
 
 const markRead = useMutation({
   ...markAsReadMutation(),
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: getMyNotificationsQueryKey() }),
+  onSuccess: invalidateNotifications,
 })
+
+const approveStudent = useMutation({
+  ...approveMutation(),
+  onSuccess: invalidateNotifications,
+})
+
+const removeStudent = useMutation({
+  ...removeMutation(),
+  onSuccess: invalidateNotifications,
+})
+
+const approveName = useMutation({
+  ...approveNameChangeMutation(),
+  onSuccess: invalidateNotifications,
+})
+
+const rejectName = useMutation({
+  ...rejectNameChangeMutation(),
+  onSuccess: invalidateNotifications,
+})
+
+function handleApproveStudent(notification: { classroomId: string; refId: string; id: string }) {
+  approveStudent.mutate({ path: { classroomId: notification.classroomId, userId: notification.refId } })
+  markRead.mutate({ path: { id: notification.id } })
+}
+
+function handleRejectStudent(notification: { classroomId: string; refId: string; id: string }) {
+  removeStudent.mutate({ path: { classroomId: notification.classroomId, userId: notification.refId } })
+  markRead.mutate({ path: { id: notification.id } })
+}
+
+function handleApproveName(notification: { classroomId: string; refId: string; id: string }) {
+  approveName.mutate({ path: { classroomId: notification.classroomId, userId: notification.refId } })
+  markRead.mutate({ path: { id: notification.id } })
+}
+
+function handleRejectName(notification: { classroomId: string; refId: string; id: string }) {
+  rejectName.mutate({ path: { classroomId: notification.classroomId, userId: notification.refId } })
+  markRead.mutate({ path: { id: notification.id } })
+}
 
 const notifications = computed(() =>
   (data.value?.data ?? []).map((raw: NotificationResponseDto) => ({
     ...raw,
     id: raw.id ?? '',
     classroomId: raw.classroomId ?? '',
+    refId: raw.refId ?? '',
     msg: raw.msg ?? '',
     createdAt: raw.createdAt ?? '',
     isRead: raw.isRead ?? false,
@@ -61,7 +121,7 @@ const availableClassrooms = computed(() => {
       seen.add(n.classroomId)
       return true
     })
-    .map((n) => ({ id: n.classroomId }))
+    .map((n) => ({ id: n.classroomId, name: classroomNameMap.value.get(n.classroomId) ?? n.classroomId }))
 })
 
 const allFiltered = computed(() => {
@@ -154,6 +214,20 @@ const TYPE_STYLES: Record<NotificationType, NotificationStyle> = {
     iconBg: 'bg-red-100',
     label: 'Upassende brukernavn',
   },
+  [NotificationType.JOIN_REQUEST]: {
+    icon: UserPlus,
+    iconColor: 'text-teal-600',
+    border: 'border-l-teal-400',
+    iconBg: 'bg-teal-100',
+    label: 'Forespørsel om å bli med',
+  },
+  [NotificationType.NAME_CHANGE]: {
+    icon: Pencil,
+    iconColor: 'text-orange-600',
+    border: 'border-l-orange-400',
+    iconBg: 'bg-orange-100',
+    label: 'Navneendring',
+  },
 }
 
 function formatTime(iso: string): string {
@@ -182,6 +256,8 @@ function formatTime(iso: string): string {
           <option :value="NotificationType.STUCK" class="text-gray-900">Elev står fast</option>
           <option :value="NotificationType.MYSTERY_SUBMITTED" class="text-gray-900">Ukens mysterium</option>
           <option value="INAPPROPRIATE" class="text-gray-900">Upassende innhold</option>
+          <option :value="NotificationType.JOIN_REQUEST" class="text-gray-900">Forespørsler</option>
+          <option :value="NotificationType.NAME_CHANGE" class="text-gray-900">Navneendring</option>
         </select>
 
         <select
@@ -192,7 +268,7 @@ function formatTime(iso: string): string {
         >
           <option value="all" class="text-gray-900">Alle klasser</option>
           <option v-for="classroom in availableClassrooms" :key="classroom.id" :value="classroom.id" class="text-gray-900">
-            {{ classroom.id }}
+            {{ classroom.name }}
           </option>
         </select>
       </div>
@@ -248,6 +324,42 @@ function formatTime(iso: string): string {
             </div>
             <p class="text-gray-700 mt-1 text-sm">{{ notification.msg }}</p>
             <p class="text-xs text-gray-400 mt-1">{{ formatTime(notification.createdAt) }}</p>
+
+            <div
+              v-if="!notification.isRead && notification.type === NotificationType.JOIN_REQUEST"
+              class="flex gap-2 mt-2"
+            >
+              <button
+                @click.stop="handleApproveStudent(notification)"
+                class="text-xs font-bold text-green-700 hover:text-green-500 bg-green-50 px-3 py-1 rounded-lg"
+              >
+                Godkjenn
+              </button>
+              <button
+                @click.stop="handleRejectStudent(notification)"
+                class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-lg"
+              >
+                Avvis
+              </button>
+            </div>
+
+            <div
+              v-if="!notification.isRead && notification.type === NotificationType.NAME_CHANGE"
+              class="flex gap-2 mt-2"
+            >
+              <button
+                @click.stop="handleApproveName(notification)"
+                class="text-xs font-bold text-green-700 hover:text-green-500 bg-green-50 px-3 py-1 rounded-lg"
+              >
+                Godkjenn
+              </button>
+              <button
+                @click.stop="handleRejectName(notification)"
+                class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded-lg"
+              >
+                Avvis
+              </button>
+            </div>
           </div>
 
           <button
