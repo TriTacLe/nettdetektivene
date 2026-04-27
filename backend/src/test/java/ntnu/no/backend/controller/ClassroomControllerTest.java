@@ -184,25 +184,13 @@ class ClassroomControllerTest {
       .andExpect(status().isUnauthorized());
   }
 
-  @Test
-  @WithMockUser(authorities = "instructor")
-  void getClassroomTasks_testMode_requiresAuthentication_skipsTestMode() throws Exception {
-    UUID classroomId = UUID.randomUUID();
-    when(classroomService.getActiveClassroomTasks(classroomId))
-      .thenReturn(List.of(ClassroomTestFactory.classroomTaskResponseDTO(classroomId, UUID.randomUUID())));
-
-    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/tasks?testMode=true"))
-      .andExpect(status().isOk());
-  }
-
-  @Test
+@Test
   @WithMockUser(authorities = "student")
-  void getClassroomTasks_testMode_asStudent_requiresAuthentication_skipsTestMode() throws Exception {
+  void getClassroomTasks_testMode_asStudent_returnsForbidden() throws Exception {
     UUID classroomId = UUID.randomUUID();
-    when(classroomService.getActiveClassroomTasks(classroomId))
-      .thenReturn(List.of(ClassroomTestFactory.classroomTaskResponseDTO(classroomId, UUID.randomUUID())));
 
     mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/tasks?testMode=true"))
-      .andExpect(status().isOk());
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.message").value("Access denied"));
   }
 }
