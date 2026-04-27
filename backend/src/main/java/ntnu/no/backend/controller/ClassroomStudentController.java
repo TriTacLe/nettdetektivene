@@ -209,6 +209,25 @@ public class ClassroomStudentController {
   }
 
   /**
+   * Resets a student's display name to their email.
+   *
+   * @param classroomId the classroom ID
+   * @param userId the student's user ID
+   * @param user the authenticated instructor
+   * @return 200 OK with the updated membership
+   */
+  @PostMapping("/{classroomId}/students/{userId}/reset-name")
+  @Operation(summary = "Reset a student's display name")
+  @PreAuthorize("hasAuthority('instructor')")
+  public ResponseEntity<ApiResponse<ClassroomStudentResponseDTO>> resetDisplayName(
+      @PathVariable UUID classroomId,
+      @PathVariable UUID userId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(
+        ApiResponse.ok(classroomStudentService.resetDisplayName(classroomId, userId, user)));
+  }
+
+  /**
    * Removes a student from a classroom.
    *
    * @param classroomId the classroom ID
