@@ -2,7 +2,7 @@
 import { ref, computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { CheckCircle, Trophy, Clock, Search, AlertTriangle, UserPlus, Pencil } from 'lucide-vue-next'
+import { CheckCircle, Trophy, Clock, Search, AlertTriangle, UserPlus, Pencil, XCircle, Check } from 'lucide-vue-next'
 import SceneComponent from '@/components/SceneComponent.vue'
 import {
   getMyNotificationsOptions,
@@ -34,6 +34,8 @@ const REF_TYPE_MAP: Record<string, NotificationType> = {
   inappropriate_username: NotificationType.INAPPROPRIATE_USERNAME,
   classroom_student: NotificationType.JOIN_REQUEST,
   name_change: NotificationType.NAME_CHANGE,
+  task_attempt_failed: NotificationType.FAILED,
+  task_attempt_correct: NotificationType.CORRECT,
 }
 
 const activeTypeFilter = ref<NotificationType | 'INAPPROPRIATE' | 'COMPLETED' | null>(null)
@@ -101,16 +103,18 @@ function handleRejectName(notification: { classroomId: string; refId: string; id
 }
 
 const notifications = computed(() =>
-  (data.value?.data ?? []).map((raw: NotificationResponseDto) => ({
-    ...raw,
-    id: raw.id ?? '',
-    classroomId: raw.classroomId ?? '',
-    refId: raw.refId ?? '',
-    msg: raw.msg ?? '',
-    createdAt: raw.createdAt ?? '',
-    isRead: raw.isRead ?? false,
-    type: REF_TYPE_MAP[raw.refType ?? ''] ?? NotificationType.MYSTERY_SUBMITTED,
-  }))
+  (data.value?.data ?? [])
+    .map((raw: NotificationResponseDto) => ({
+      ...raw,
+      id: raw.id ?? '',
+      classroomId: raw.classroomId ?? '',
+      refId: raw.refId ?? '',
+      msg: raw.msg ?? '',
+      createdAt: raw.createdAt ?? '',
+      isRead: raw.isRead ?? false,
+      type: REF_TYPE_MAP[raw.refType ?? ''] ?? NotificationType.CORRECT,
+    }))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 )
 
 const availableClassrooms = computed(() => {
@@ -228,6 +232,20 @@ const TYPE_STYLES: Record<NotificationType, NotificationStyle> = {
     iconBg: 'bg-orange-100',
     label: 'Navneendring',
   },
+  [NotificationType.FAILED]: {
+    icon: XCircle,
+    iconColor: 'text-red-600',
+    border: 'border-l-red-400',
+    iconBg: 'bg-red-100',
+    label: 'Feilet',
+  },
+  [NotificationType.CORRECT]: {
+    icon: Check,
+    iconColor: 'text-emerald-600',
+    border: 'border-l-emerald-400',
+    iconBg: 'bg-emerald-100',
+    label: 'Riktig',
+  },
 }
 
 function formatTime(iso: string): string {
@@ -258,6 +276,8 @@ function formatTime(iso: string): string {
           <option value="INAPPROPRIATE" class="text-gray-900">Upassende innhold</option>
           <option :value="NotificationType.JOIN_REQUEST" class="text-gray-900">Forespørsler</option>
           <option :value="NotificationType.NAME_CHANGE" class="text-gray-900">Navneendring</option>
+          <option :value="NotificationType.FAILED" class="text-gray-900">Feilet</option>
+          <option :value="NotificationType.CORRECT" class="text-gray-900">Riktig</option>
         </select>
 
         <select

@@ -30,6 +30,11 @@ export const useStopStore = defineStore('stop', () => {
     }
   }
 
+  function clearCompleted() {
+    completedTasks.value = {}
+    sessionStorage.removeItem('stop-completed')
+  }
+
   function clearTasks(stopId?: string) {
     console.log('[StopStore] clearTasks called - stopId:', stopId)
     if (stopId) {
@@ -68,5 +73,5 @@ export const useStopStore = defineStore('stop', () => {
     return tasks.value[stopId]?.length ?? 0
   }
 
-  return { tasks, loading, completedTasks, loadTasks, clearTasks, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
+  return { tasks, loading, completedTasks, loadTasks, clearTasks, clearCompleted, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
 })
