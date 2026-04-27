@@ -47,6 +47,16 @@ const router = createRouter({
       component: () => import('../views/FotografenTaskView.vue'),
     },
     {
+      path: '/stops/datasenteret/:taskId',
+      name: 'datasenteret-task',
+      component: () => import('../views/TaskView.vue'),
+    },
+    {
+      path: '/stops/:stopId/:taskId',
+      name: 'stop-task',
+      component: () => import('../views/TaskView.vue'),
+    },
+    {
       path: '/stops/:stopId',
       name: 'stop',
       component: () => import('../views/StopView.vue'),
@@ -78,10 +88,9 @@ const router = createRouter({
       // beforeEnter: requireTeacher,
     },
     {
-      path: '/teacher-test-game',
-      name: 'teacher-test-game',
+      path: '/classroom/:id/test-game',
+      name: 'classroom-test-game',
       component: () => import('../views/teacher/TeacherTestGameView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/teacher-leaderboard',

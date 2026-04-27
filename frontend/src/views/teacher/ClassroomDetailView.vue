@@ -34,11 +34,6 @@ const menuItems = [
     route: 'notifications',
   },
   {
-    title: 'Ukens Mysterium',
-    subtitle: 'Se og godkjenn innlegg',
-    route: '',
-  },
-  {
     title: 'Klasseromsstyring',
     subtitle: 'Rediger innstillinger',
     route: 'classroom-settings',
@@ -46,7 +41,12 @@ const menuItems = [
   {
     title: 'Test Spillet',
     subtitle: 'Spill som elev',
-    route: '',
+    route: 'classroom-test-game',
+  },
+  {
+    title: 'Vis Klasseromskode',
+    subtitle: 'Del kode med elever',
+    route: 'join-code',
   },
 ]
 

@@ -7,7 +7,7 @@ import { getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-quer
 
 const router = useRouter()
 
-const { data: notificationsData } = useQuery(getMyNotificationsOptions())
+const { data: notificationsData } = useQuery({ ...getMyNotificationsOptions(), refetchInterval: 5000 })
 
 const unreadCount = computed(() =>
   (notificationsData.value?.data ?? []).filter((n) => !n.isRead).length

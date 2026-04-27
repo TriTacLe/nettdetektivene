@@ -1,38 +1,38 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
-import ClassroomService from '@/services/ClassroomService'
 
+const route = useRoute()
+const classroomId = route.params.id as string
 const stopStore = useStopStore()
 
-const houses = [
-  { key: 'teacher-home', src: '/StudentHomeObject.png', name: 'Tilbake til Lærerportal', to: '/teacher-home', stopId: null, showStars: false, previousStop: null },
-  { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet', stopId: 'nyhetskvartalet', showStars: true,  previousStop: null },
-  { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',       to: '/stops/fotografen',       stopId: 'fotografen',       showStars: true,  previousStop: 'Nyhetskvartalet' },
-  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: null,              showStars: false, previousStop: null },
-]
+const testGamePath = `/classroom/${classroomId}/test-game`
+
+const houses = computed(() => [
+  { key: 'classroom-back', src: '/StudentHomeObject.png', name: 'Tilbake til Klasserom', to: `/classroom/${classroomId}`, stopId: null, showStars: false, previousStop: null },
+  { key: 'news', src: '/NewsObject.png', name: 'Nyhetskvartalet', to: `/stops/nyhetskvartalet?test=true&classroomId=${classroomId}`, stopId: 'nyhetskvartalet', showStars: true, previousStop: null },
+  { key: 'photo', src: '/PhotoObject.png', name: 'Fotografen', to: `/stops/fotografen?test=true&classroomId=${classroomId}`, stopId: 'fotografen', showStars: true, previousStop: 'Nyhetskvartalet' },
+  { key: 'final-boss', src: '/FinalBossObject.png', name: 'Datasenteret', to: `/stops/datasenteret?test=true&classroomId=${classroomId}`, stopId: null, showStars: false, previousStop: null },
+])
 
 const lockedPopup = ref<string | null>(null)
 
-async function initializeTestMode() {
+onMounted(async () => {
+  stopStore.setTestMode(classroomId)
   try {
-    const classrooms = await ClassroomService.getMyClassrooms()
-    if (classrooms && classrooms.length > 0) {
-      const classroom = classrooms[0]
-      await stopStore.loadTasksTestMode(classroom.id, 'nyhetskvartalet')
-      await stopStore.loadTasksTestMode(classroom.id, 'fotografen')
-    }
+    await Promise.all([
+      stopStore.loadTasksTestMode(classroomId, 'nyhetskvartalet'),
+      stopStore.loadTasksTestMode(classroomId, 'fotografen'),
+    ])
   } catch (error) {
     console.error('Failed to load test mode tasks:', error)
   }
-}
-
-initializeTestMode()
+})
 
 function isAvailable(stopId: string | null): boolean {
-  return true // All stops are available in test mode
+  return true
 }
 
 function openLockedPopup(key: string) {
@@ -45,7 +45,7 @@ function closeLockedPopup() {
 </script>
 
 <template>
-  <SceneComponent title="Test Modus" previous="/teacher-home" background="/GameMapBackground.jpg">
+  <SceneComponent title="Test Modus" :previous="`/classroom/${classroomId}`" background="/GameMapBackground.jpg">
     <div class="test-mode-badge">TEST MODUS - Alle oppgaver åpne</div>
 
     <div class="map-objects">

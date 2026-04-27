@@ -42,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
   private final UserRepository userRepository;
   private final UserProfileRepository userProfileRepository;
   private final LocalCredentialRepository localCredentialRepository;
+  private final AppUserIdentityRepository appUserIdentityRepository;
   private final RoleRepository roleRepository;
   private final InstitutionRepository institutionRepository;
   private final ClassroomRepository classroomRepository;
@@ -83,6 +84,8 @@ public class DataSeeder implements CommandLineRunner {
       seedTaskAttempts();
       seedNotebookEntries();
       seedAchievements();
+      verifyTaskAssignments();
+      verifyEnrollments();
       printSummary();
       log.info("Demo data seeding complete.");
     } catch (Exception e) {
@@ -197,10 +200,12 @@ public class DataSeeder implements CommandLineRunner {
         {"Digital Sikkerhetsmester",       TaskType.BOSS,        "datasenteret",    5, "nora"},
     };
 
-    Classroom class1 = classrooms.get("class1");
+Classroom class1 = classrooms.get("class1");
+    Classroom class2 = classrooms.get("class2");
+    Classroom class3 = classrooms.get("class3");
     short order = 0;
     for (Object[] row : taskDefs) {
-      Task task = taskRepository.save(Task.builder()
+Task task = taskRepository.save(Task.builder()
           .title((String) row[0])
           .taskType((TaskType) row[1])
           .stopLocation((String) row[2])
@@ -212,10 +217,26 @@ public class DataSeeder implements CommandLineRunner {
 
       allTasks.add(task);
 
-      // Assign every task to class1 so attempts/progress work end-to-end.
+      // Assign every task to all classrooms so attempts/progress work end-to-end.
       classroomTaskRepository.save(ClassroomTask.builder()
           .id(new ClassroomTaskId(class1.getId(), task.getId()))
           .classroom(class1)
+          .task(task)
+          .sortOrder(order)
+          .isActive(true)
+          .build());
+
+      classroomTaskRepository.save(ClassroomTask.builder()
+          .id(new ClassroomTaskId(class2.getId(), task.getId()))
+          .classroom(class2)
+          .task(task)
+          .sortOrder(order)
+          .isActive(true)
+          .build());
+
+      classroomTaskRepository.save(ClassroomTask.builder()
+          .id(new ClassroomTaskId(class3.getId(), task.getId()))
+          .classroom(class3)
           .task(task)
           .sortOrder(order++)
           .isActive(true)
@@ -270,15 +291,16 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   private void enroll(User student, Classroom classroom) {
-    classroomStudentRepository.save(ClassroomStudent.builder()
+    ClassroomStudent studentMember = ClassroomStudent.builder()
         .id(new ClassroomStudentId(classroom.getId(), student.getId()))
         .classroom(classroom)
         .user(student)
         .displayName(student.getDisplayName())
         .isAllowed(true)
         .nameChangeStatus(NameChangeStatus.NONE)
-        .build());
-    log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
+        .build();
+    classroomStudentRepository.saveAndFlush(studentMember);
+    log.info("Enrolled {} in {} - isAllowed: {}", student.getDisplayName(), classroom.getTitle(), studentMember.isAllowed());
   }
 
   // -----------------------------------------------------------------------
@@ -408,9 +430,19 @@ public class DataSeeder implements CommandLineRunner {
         .failedAttempts(0)
         .build());
 
+    String feideId = UUID.randomUUID().toString();
+
+    appUserIdentityRepository.save(AppUserIdentity.builder()
+        .user(user)
+        .providerName("feide")
+        .providerUserId(feideId)
+        .providerEmail(email)
+        .build());
+
     userProfileRepository.save(UserProfile.builder()
         .user(user)
         .displayName(displayName)
+        .feideId(feideId)
         .xp(0)
         .xpLevel(1)
         .build());
@@ -442,5 +474,45 @@ public class DataSeeder implements CommandLineRunner {
     log.info("CLASSROOM JOIN CODES:");
     classrooms.forEach((key, c) -> log.info("  {} : {}", c.getTitle(), c.getJoinCode()));
     log.info("========================================");
+  }
+
+  private void verifyEnrollments() {
+    log.info("");
+    log.info("Verifying student enrollments...");
+    List<String> studentKeys = List.of("anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward");
+    for (String key : studentKeys) {
+      User student = users.get(key);
+      ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
+      if (membership == null) {
+        log.error("  ERROR: Student {} has no classroom membership!", key);
+      } else {
+        log.info("  Student {} -> Classroom: {}, isAllowed: {}, DisplayName: {}",
+                 student.getDisplayName(),
+                 membership.getClassroom().getTitle(),
+                 membership.isAllowed(),
+                 membership.getDisplayName());
+      }
+    }
+    log.info("Enrollment verification complete.");
+    log.info("");
+  }
+
+  private void verifyTaskAssignments() {
+    log.info("");
+    log.info("Verifying task assignments...");
+    classrooms.forEach((key, classroom) -> {
+      List<ClassroomTask> tasks = classroomTaskRepository.findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+      log.info("  Classroom '{}' ({}): {} active tasks assigned", classroom.getTitle(), key, tasks.size());
+      if (tasks.isEmpty()) {
+        log.warn("    WARNING: No tasks assigned to classroom {}!", classroom.getTitle());
+      } else {
+        log.info("    Tasks: {}", tasks.stream()
+            .map(ct -> String.format("%s (stop: %s, order: %d)",
+                ct.getTask().getTitle(), ct.getTask().getStopLocation(), ct.getSortOrder()))
+            .toList());
+      }
+    });
+    log.info("Task assignment verification complete.");
+    log.info("");
   }
 }

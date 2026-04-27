@@ -100,7 +100,13 @@ public class ClassroomController {
       @RequestParam(defaultValue = "false") boolean includeUnlocked,
       @RequestParam(defaultValue = "false") boolean testMode,
       @AuthenticationPrincipal User currentUser) {
-    if (testMode && currentUser != null) {
+    if (testMode) {
+      if (currentUser == null || currentUser.getAuthorities().stream()
+          .noneMatch(a -> a.getAuthority().equals("instructor")
+              || a.getAuthority().equals("inst_admin")
+              || a.getAuthority().equals("sys_admin"))) {
+        return ResponseEntity.status(403).body(ApiResponse.error("Access denied"));
+      }
       return ResponseEntity.ok(ApiResponse.ok(classroomService.getActiveClassroomTasksTestMode(classroomId, currentUser.getId())));
     }
     if (activeOnly) {

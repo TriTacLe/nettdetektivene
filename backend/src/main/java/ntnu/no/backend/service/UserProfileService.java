@@ -10,6 +10,7 @@ import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
+import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
@@ -48,7 +49,10 @@ public class UserProfileService {
   public UserProfileResponseDTO getByUser(User user) {
     UserProfile profile = userProfileRepository.findByUser(user)
       .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
-    return UserProfileMapper.toDTO(profile);
+    String nameChangeStatus = classroomStudentRepository.findByUser(user)
+        .map(m -> m.getNameChangeStatus().name())
+        .orElse(null);
+    return UserProfileMapper.toDTO(profile, nameChangeStatus);
   }
 
   /**
@@ -85,10 +89,13 @@ public class UserProfileService {
     UserProfile profile = userProfileRepository.findByUser(user)
       .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
     if (dto.getDisplayName() != null) {
-      if (classroomStudentRepository.existsByUser(user)) {
-        jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
-            user.getId().toString(), dto.getDisplayName());
-        notifyInstructorsOfNameChange(user, dto.getDisplayName());
+      ClassroomStudent membership = classroomStudentRepository.findByUser(user).orElse(null);
+      if (membership != null) {
+        if (membership.getNameChangeStatus() != NameChangeStatus.PENDING) {
+          jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
+              user.getId().toString(), dto.getDisplayName());
+          notifyInstructorsOfNameChange(user, dto.getDisplayName());
+        }
       } else {
         profile.setDisplayName(dto.getDisplayName());
         user.setDisplayName(dto.getDisplayName());
@@ -96,7 +103,9 @@ public class UserProfileService {
       }
     }
     UserProfileMapper.updateEntity(profile, dto);
-    return UserProfileMapper.toDTO(profile);
+    ClassroomStudent updatedMembership = classroomStudentRepository.findByUser(user).orElse(null);
+    String nameChangeStatus = updatedMembership != null ? updatedMembership.getNameChangeStatus().name() : null;
+    return UserProfileMapper.toDTO(profile, nameChangeStatus);
   }
 
   /**

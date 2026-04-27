@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import GuidanceComponent from '../components/GuidanceComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -8,7 +8,13 @@ import { useStopStore } from '@/stores/StopStore'
 const STOP_ID = 'fotografen'
 
 const router = useRouter()
+const route = useRoute()
 const stopStore = useStopStore()
+
+const testClassroomId = stopStore.testModeClassroomId
+const previousRoute = computed(() =>
+  testClassroomId ? `/classroom/${testClassroomId}/test-game` : '/game-map'
+)
 
 const tasks = computed(() => stopStore.tasks[STOP_ID] ?? [])
 const isLoading = computed(() => stopStore.loading[STOP_ID] ?? false)
@@ -16,8 +22,12 @@ const availableTasks = computed(() => tasks.value.filter(t => t.isUnlocked))
 const lockedTasks = computed(() => tasks.value.filter(t => !t.isUnlocked))
 
 onMounted(() => {
-  stopStore.clearTasks(STOP_ID)
-  stopStore.loadTasks(STOP_ID, true)
+  if (testClassroomId) {
+    stopStore.loadTasksTestMode(testClassroomId, STOP_ID)
+  } else {
+    stopStore.clearTasks(STOP_ID)
+    stopStore.loadTasks(STOP_ID, true)
+  }
 })
 
 function selectTask(uuid: string, taskId: number) {
@@ -25,12 +35,16 @@ function selectTask(uuid: string, taskId: number) {
     alert('Denne oppgaven er låst. Fullfør tidligere oppgaver for å låse opp.')
     return
   }
-  router.push({ name: 'fotografen-task', params: { taskId: uuid } })
+  router.push({
+    name: 'fotografen-task',
+    params: { taskId: uuid },
+    query: testClassroomId ? { classroomId: testClassroomId } : {},
+  })
 }
 </script>
 
 <template>
-  <SceneComponent title="Fotografen" previous="/game-map" background="/FotografenBackground.png">
+  <SceneComponent title="Fotografen" :previous="previousRoute" background="/FotografenBackground.png">
     <div class="list-container">
       <GuidanceComponent tip="Her skal du lære å skille ekte bilder fra KI-genererte og manipulerte bilder. Se etter unaturlige detaljer, rare skygger og uskarpe kanter!" />
       <div v-if="isLoading" class="state-msg">Laster oppgaver...</div>
