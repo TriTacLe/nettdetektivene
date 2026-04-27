@@ -14,6 +14,7 @@ import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserRepository;
+import ntnu.no.backend.shared.CensoredWords;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,13 +79,18 @@ public class UserProfileService {
    * @param user the authenticated user whose profile should be updated
    * @param dto the update request containing new display name and avatar config
    * @return a {@link UserProfileResponseDTO} with the updated profile data
+   * @throws IllegalArgumentException if display name contains inappropriate words
    * @throws EntityNotFoundException if no profile exists for the given user
    */
-  @Transactional
+  @Transactional(noRollbackFor = IllegalArgumentException.class)
   public UserProfileResponseDTO update(User user, UserProfileUpdateRequestDTO dto) {
     UserProfile profile = userProfileRepository.findByUser(user)
       .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
     if (dto.getDisplayName() != null) {
+      if (CensoredWords.containsBlockedWord(dto.getDisplayName())) {
+        notifyInstructorsOfInappropriateName(user, dto.getDisplayName());
+        throw new IllegalArgumentException("Brukernavnet inneholder upassende ord");
+      }
       if (classroomStudentRepository.existsByUser(user)) {
         jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
             user.getId().toString(), dto.getDisplayName());
@@ -97,6 +103,30 @@ public class UserProfileService {
     }
     UserProfileMapper.updateEntity(profile, dto);
     return UserProfileMapper.toDTO(profile);
+  }
+
+  /**
+   * Creates a notification for each instructor in the classroom
+   * of the student requesting the name change to an inappropriate name.
+   *
+   * @param student the student requesting a name change
+   * @param requestedName the requested name
+   */
+  private void notifyInstructorsOfInappropriateName(User student, String requestedName) {
+    ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
+    if (membership == null) return;
+
+    classroomInstructorRepository.findAllByClassroom(membership.getClassroom())
+        .forEach(instructor -> notificationRepository.save(
+            Notification.builder()
+                .user(instructor.getUser())
+                .classroom(membership.getClassroom())
+                .msg(student.getDisplayName() + " forsøkte å sette brukernavn til \"" + requestedName + "\"")
+                .refType("inappropriate_username")
+                .refId(student.getId())
+                .isRead(false)
+                .build()
+        ));
   }
 
   /**
