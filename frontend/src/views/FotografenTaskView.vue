@@ -8,6 +8,7 @@ import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
 import type { TaskDTO, FotografenChallenge } from '@/types'
+import { TaskType } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
