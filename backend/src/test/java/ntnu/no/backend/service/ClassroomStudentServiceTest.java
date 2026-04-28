@@ -437,4 +437,46 @@ class ClassroomStudentServiceTest {
       .isInstanceOf(EntityNotFoundException.class)
       .hasMessageContaining("Classroom not found");
   }
+
+  /**
+   * Verifies that resetDisplayName sets the display name to the email prefix.
+   */
+  @Test
+  void resetDisplayName_resetsToEmailPrefix() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
+
+    User instructor = createUser(instructorId, "Test");
+    ClassroomStudent student = createClassroomStudent(classroomId, userId, "BadName", true);
+    student.getUser().setEmail("test@ntnu.no");
+    UserProfile profile = createUserProfile(student.getUser(), "test@ntnu.no");
+
+    when(classroomInstructorRepository.existsById(any())).thenReturn(true);
+    when(classroomStudentRepository.findById(any(ClassroomStudentId.class))).thenReturn(Optional.of(student));
+    when(userProfileRepository.findByUser(student.getUser())).thenReturn(Optional.of(profile));
+
+    ClassroomStudentResponseDTO result = classroomStudentService.resetDisplayName(classroomId, userId, instructor);
+
+    assertThat(result.displayName()).isEqualTo("test");
+    assertThat(student.getUser().getDisplayName()).isEqualTo("test");
+    assertThat(profile.getDisplayName()).isEqualTo("test");
+  }
+
+  /**
+   * Verifies that resetDisplayName throws AccessDeniedException when user is not an instructor.
+   */
+  @Test
+  void resetDisplayName_throwsAccessDenied_whenNotInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID notInstructorId = UUID.randomUUID();
+    User notInstructor = createUser(notInstructorId, "NotAnInstructor");
+
+    when(classroomInstructorRepository.existsById(any())).thenReturn(false);
+
+    assertThatThrownBy(() -> classroomStudentService.resetDisplayName(classroomId, userId, notInstructor))
+      .isInstanceOf(AccessDeniedException.class)
+      .hasMessageContaining("not an instructor");
+  }
 }

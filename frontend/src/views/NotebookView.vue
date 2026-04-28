@@ -83,6 +83,7 @@ const classroomId = computed(() => route.query.classroomId as string | undefined
 const reflections = ref<Record<string, string>>({})
 const savingStop = ref<string | null>(null)
 const savedStop = ref<string | null>(null)
+const saveError = ref<string | null>(null)
 const currentSpread = ref(0)
 
 const stops = computed(() =>
@@ -142,6 +143,15 @@ const saveMutation = useMutation({
     queryClient.invalidateQueries({
       queryKey: getMyNotebooksQueryKey({ path: { classroomId: classroomId.value ?? '' } }),
     })
+    savedStop.value = savingStop.value
+    savingStop.value = null
+    setTimeout(() => {
+      savedStop.value = null
+    }, 2000)
+  },
+  onError: (e: any) => {
+    saveError.value = e?.message ?? 'Kunne ikke lagre'
+    savingStop.value = null
   },
 })
 
@@ -175,22 +185,15 @@ function onReflectionInput(stopLocation: string, value: string): void {
   reflections.value[stopLocation] = value
 }
 
-async function saveReflection(stopLocation: string): Promise<void> {
+function saveReflection(stopLocation: string): void {
   savingStop.value = stopLocation
   savedStop.value = null
-  try {
-    await saveMutation.mutateAsync({
-      stopLocation: STOP_LOCATION_KEY[stopLocation as TaskType] ?? stopLocation,
-      autoNotes: entriesByStop.value[stopLocation]?.autoNotes ?? undefined,
-      studentReflection: reflections.value[stopLocation] ?? '',
-    })
-    savedStop.value = stopLocation
-    setTimeout(() => {
-      savedStop.value = null
-    }, 2000)
-  } finally {
-    savingStop.value = null
-  }
+  saveError.value = null
+  saveMutation.mutate({
+    stopLocation: STOP_LOCATION_KEY[stopLocation as TaskType] ?? stopLocation,
+    autoNotes: entriesByStop.value[stopLocation]?.autoNotes ?? undefined,
+    studentReflection: reflections.value[stopLocation] ?? '',
+  })
 }
 </script>
 
@@ -261,6 +264,9 @@ async function saveReflection(stopLocation: string): Promise<void> {
                   @input="onReflectionInput(leftStop, ($event.target as HTMLTextAreaElement).value)"
                 />
               </div>
+              <p v-if="saveError && savingStop === null && savedStop !== leftStop" class="text-red-600 text-xs font-semibold mt-1">
+                {{ saveError }}
+              </p>
               <button
                 class="save-button"
                 :disabled="savingStop === leftStop"
@@ -308,6 +314,9 @@ async function saveReflection(stopLocation: string): Promise<void> {
                   "
                 />
               </div>
+              <p v-if="saveError && savingStop === null && savedStop !== rightStop" class="text-red-600 text-xs font-semibold mt-1">
+                {{ saveError }}
+              </p>
               <button
                 class="save-button"
                 :disabled="savingStop === rightStop"

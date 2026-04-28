@@ -93,6 +93,22 @@ async function assignTaskToClassroom(
   return data.data
 }
 
+async function removeClassroomTask(classroomId: string, taskId: string): Promise<void> {
+  await apiClient.delete(`/classrooms/${classroomId}/tasks/${taskId}`)
+}
+
+async function updateClassroomTask(
+  classroomId: string,
+  taskId: string,
+  payload: { sortOrder?: number; isActive?: boolean }
+): Promise<ClassroomTaskResponseDTO> {
+  const { data } = await apiClient.patch<ApiResponse<ClassroomTaskResponseDTO>>(
+    `/classrooms/${classroomId}/tasks/${taskId}`,
+    payload
+  )
+  return data.data
+}
+
 export default {
   getMyClassrooms,
   getAllClassrooms,
@@ -106,4 +122,6 @@ export default {
   getUnlockedTasks,
   getClassroomTasks,
   assignTaskToClassroom,
+  removeClassroomTask,
+  updateClassroomTask,
 }

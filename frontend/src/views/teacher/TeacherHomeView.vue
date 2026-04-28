@@ -20,11 +20,6 @@ const menuItems = [
     route: 'classroom-overview',
   },
   {
-    title: 'Oppgaver',
-    subtitle: 'Se alle oppgaver',
-    route: 'tasks',
-  },
-  {
     title: 'Varsler',
     subtitle: 'Se alle varsler',
     route: 'teacher-notifications',

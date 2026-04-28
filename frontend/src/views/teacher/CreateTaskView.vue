@@ -82,6 +82,11 @@ function handleImageChange(target: { image: File | null }, event: Event) {
 }
 
 function addPhotoAlternative() {
+  if (photoDraft.value.alternatives.length >= 4) {
+    serverError.value = 'Maksimalt 4 bildealternativer tillatt'
+    return
+  }
+  serverError.value = null
   photoDraft.value.alternatives.push(makePhotoAlternative())
 }
 
@@ -153,7 +158,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
         </div>
       </section>
 
-      <form v-else class="task-create-panel task-create-form" @submit.prevent="submit">
+      <form v-else class="task-create-panel task-create-form" :class="{ 'task-create-panel--photo': selectedType === TaskType.PHOTO }" @submit.prevent="submit">
         <div class="task-create-topbar">
           <div>
             <p class="task-create-eyebrow">Oppgavemal</p>
@@ -299,12 +304,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                   <textarea v-model="alternative.begrunnelserText" rows="4" />
                 </label>
 
-                <button type="button" class="task-upload-remove" @click="removePhotoAlternative(index)">
+                <button type="button" class="task-upload-remove" :disabled="photoDraft.alternatives.length <= 2" @click="removePhotoAlternative(index)">
                   Fjern
                 </button>
               </article>
 
-              <button type="button" class="task-create-add task-create-add--column" @click="addPhotoAlternative">
+              <button v-if="photoDraft.alternatives.length < 4" type="button" class="task-create-add task-create-add--column" @click="addPhotoAlternative">
                 +
               </button>
             </div>
@@ -331,6 +336,10 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   padding: 1.5rem;
   max-height: calc(100vh - 8rem);
   overflow-y: auto;
+}
+
+.task-create-panel--photo {
+  max-width: 1400px;
 }
 
 .task-create-panel--picker {
@@ -544,7 +553,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .task-card-grid--photo {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) 92px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
   align-items: start;
 }
 
@@ -690,6 +699,11 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 @media (max-width: 720px) {
+  .task-create-panel,
+  .task-create-panel--photo {
+    max-width: 100%;
+  }
+
   .task-field-grid,
   .task-create-topbar {
     grid-template-columns: 1fr;
@@ -710,6 +724,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   .task-template__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 1100px) {
+  .task-card-grid--photo {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 280px));
   }
 }
 </style>
