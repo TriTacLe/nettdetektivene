@@ -219,7 +219,7 @@ onUnmounted(() => {
           >
             <div class="image-note">
               <img :src="mapImage" alt="kart" class="map-image" />
-              <p class="image-note-title">Kartet</p>
+              <p class="image-note-title">Gå utendørs</p>
             </div>
           </BoardNote>
         </div>

@@ -11,7 +11,7 @@ function getToken(): string | undefined {
   }
 }
 
-client.setConfig({ baseUrl: 'http://localhost:8080' })
+client.setConfig({ baseUrl: '' })
 
 client.interceptors.request.use((request) => {
   const token = getToken()

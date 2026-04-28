@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useAuthStore } from '@/stores/AuthStore.ts'
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 const menuItems = [

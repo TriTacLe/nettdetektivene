@@ -72,4 +72,15 @@ public class ClassroomTestFactory {
       TaskTestFactory.responseDTO(taskId)
     );
   }
+
+  public static ClassroomTaskResponseDTO classroomTaskResponseDTO(UUID classroomId, UUID taskId, boolean isUnlocked) {
+    return new ClassroomTaskResponseDTO(
+      classroomId,
+      taskId,
+      (short) 1,
+      true,
+      isUnlocked,
+      TaskTestFactory.responseDTO(taskId)
+    );
+  }
 }

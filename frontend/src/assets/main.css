@@ -37,7 +37,14 @@ input {
   font-weight: 700;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
+  color: #ffffff;
+  font-weight: 700;
+  -webkit-text-stroke: 5px #000000;
+  paint-order: stroke fill;
+}
+
+h4, h5, h6 {
   color: #ffffff;
   font-weight: 700;
   -webkit-text-stroke: 3px #000000;

@@ -1,0 +1,17 @@
+[Unit]
+Description=Nettdetektivene Application
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/orbit/services.devops/nettdetektivene
+ExecStartPre=/usr/bin/docker compose -f compose.prod.yaml pull
+ExecStart=/usr/bin/docker compose -f compose.prod.yaml up -d
+ExecStop=/usr/bin/docker compose -f compose.prod.yaml down
+TimeoutStartSec=120
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
