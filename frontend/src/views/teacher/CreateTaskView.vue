@@ -25,13 +25,6 @@ const selectedType = computed<TaskType.NEWS | TaskType.PHOTO | null>(() => {
 
 const serverError = ref<string | null>(null)
 
-const difficultyLevels = [
-  { value: 1, stars: '★', label: '1 stjerne' },
-  { value: 2, stars: '★★', label: '2 stjerner' },
-  { value: 3, stars: '★★★', label: '3 stjerner' },
-  { value: 4, stars: '⬡', label: 'Datasenteret' },
-] as const
-
 const newsDraft = ref<TeacherNewsTaskDraft>({
   type: TaskType.NEWS,
   title: '',

@@ -25,9 +25,7 @@ const route = useRoute()
 const router = useRouter()
 
 const stopId = route.query.stop as string | undefined
-const taskId = route.query.taskId as string | undefined
 const reason = (route.query.reason as string | undefined) ?? 'Sjekk svarene dine og prøv igjen.'
-const returnTo = route.query.returnTo as string | undefined
 
 function retry() {
   if (stopId) {

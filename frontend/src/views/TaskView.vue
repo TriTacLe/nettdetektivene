@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import { fetchTaskById } from '@/services/TaskService'
 import { useStopStore } from '@/stores/StopStore'
+import type { TaskDTO } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,7 +15,7 @@ const previousRoute = testClassroomId
   ? `/stops/${route.params.stopId}?test=true&classroomId=${testClassroomId}`
   : `/stops/${route.params.stopId}`
 
-const task = ref<any>(null)
+const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
 
@@ -39,7 +40,7 @@ onMounted(async () => {
           isActive: true,
           stopLocation: stopId,
           content: taskFromStore.content
-        }
+        } as TaskDTO
         console.log('[TaskView] Task from store content:', task.value?.content)
       } else {
         console.warn('[TaskView] Task not found in store, fetching from API')
@@ -59,10 +60,6 @@ onMounted(async () => {
   }
 })
 
-async function submitAttempt() {
-  alert('Oppgaveinsending er ikke implementert ennå for denne oppgavetypen.')
-}
-
 function goBack() {
   router.push(previousRoute)
 }
@@ -71,7 +68,7 @@ function goBack() {
 <template>
   <SceneComponent
     v-if="task"
-    :title="task.title"
+    :title="task.title ?? ''"
     :previous="previousRoute"
     background="/GameMapBackground.jpg"
   >

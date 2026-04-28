@@ -7,7 +7,8 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import type { TaskDTO, FotografenChallenge } from '@/types'
+import { parseTaskContent } from '@/services/TaskService'
+import type { FotografenChallenge, PhotoChallengeContent, NewsChallengeContent, TaskDTO } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -35,6 +36,7 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[FotografenTaskView] Found task in store:', taskFromStore)
+        const content = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -42,7 +44,7 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'fotografen',
-          content: taskFromStore.content
+          content: content as PhotoChallengeContent | NewsChallengeContent | unknown
         }
         console.log('[FotografenTaskView] Task from store content:', task.value?.content)
       } else {
@@ -64,13 +66,13 @@ onMounted(async () => {
 })
 
 const challenge = computed<FotografenChallenge | null>(() => {
-  const content = task.value?.content?.photo
+  const content = (task.value?.content as { photo?: PhotoChallengeContent })?.photo
   if (!content?.alternatives?.length) return null
   return { alternatives: content.alternatives }
 })
 
-const taskQuestion = computed(() => task.value?.content?.photo?.description)
-const taskTip = computed(() => task.value?.content?.photo?.hint)
+const taskQuestion = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.description)
+const taskTip = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.hint)
 
 async function submitAttempt(score: number) {
   try {

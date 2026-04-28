@@ -226,7 +226,7 @@ export function parseTaskContent(contentString: string, taskType: string): Parse
     } else if (taskType === 'PHOTO') {
       return { photo: normalizedContent as PhotoChallengeContent }
     }
-    return normalizedContent
+    return normalizedContent as NewsChallengeContent | PhotoChallengeContent
   } catch (error) {
     console.error('Failed to parse task content:', error)
     return null

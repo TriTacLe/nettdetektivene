@@ -80,21 +80,21 @@ export interface TaskDTO {
   difficulty: number;
   isActive: boolean;
   stopLocation: string | null;
-  content: any;
+  content: NewsChallengeContent | PhotoChallengeContent | unknown;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface NewsChallengeContent {
   hint?: string;
-  articles?: any[];
+  articles?: NewsArticle[];
   question?: string;
 }
 
 export interface PhotoChallengeContent {
   description?: string;
   hint?: string;
-  alternatives?: any[];
+  alternatives?: PhotoAlternative[];
 }
 
 export interface NotebookEntryDTO {
@@ -259,7 +259,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
-  content?: any
+  content?: NewsChallengeContent | PhotoChallengeContent | unknown
 }
 
 export interface TaskAttemptRequestDTO {

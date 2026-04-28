@@ -18,7 +18,7 @@ const avatarConfig = ref<AvatarConfig>({ ...DEFAULT_AVATAR_CONFIG })
 const update = useMutation({
   ...updateProfileMutation(),
   onSuccess: () => router.push({ name: 'join-classroom' }),
-  onError: (e: any) => {
+  onError: (e: Error) => {
     fieldError.value = e.message ?? 'Kunne ikke lagre profilen'
   },
 })

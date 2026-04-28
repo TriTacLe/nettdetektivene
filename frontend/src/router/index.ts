@@ -182,7 +182,7 @@ const router = createRouter({
     {
       path: '/introduction',
       name: 'introduction',
-      component: () => import('../views/Introduction.vue'),
+      component: () => import('../views/IntroductionView.vue'),
     },
     {
       path: '/task-finished',

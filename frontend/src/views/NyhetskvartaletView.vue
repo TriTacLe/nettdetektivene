@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import GuidanceComponent from '../components/GuidanceComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -8,7 +8,6 @@ import { useStopStore } from '@/stores/StopStore'
 const STOP_ID = 'nyhetskvartalet'
 
 const router = useRouter()
-const route = useRoute()
 const stopStore = useStopStore()
 
 const testClassroomId = stopStore.testModeClassroomId

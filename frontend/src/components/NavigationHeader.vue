@@ -21,10 +21,9 @@ const settingsOpen = ref(false)
 const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login', 'join-classroom', 'set-display-name'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
-const notificationOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
-  ...notificationOpts,
-  queryKey: notificationOpts.queryKey as any,
+  queryKey: getMyNotificationsOptions().queryKey,
+  queryFn: getMyNotificationsOptions().queryFn,
   enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
 })
 

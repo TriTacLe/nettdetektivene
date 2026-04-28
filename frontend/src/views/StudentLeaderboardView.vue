@@ -1,22 +1,31 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { getClassroomsLeaderboardByInstitutionOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStudentStore } from '@/stores/StudentStore'
 
 const studentStore = useStudentStore()
 const institutionId = computed(() => studentStore.institutionId)
 
-const { data, isLoading, isError } = useQuery(
-  institutionId.value
-    ? getClassroomsLeaderboardByInstitutionOptions({
-        path: { institutionId: institutionId.value },
-      })
-    : { enabled: false } as any,
-)
+const queryResult = useQuery({
+  queryKey: ['leaderboard', institutionId],
+  queryFn: async () => {
+    if (!institutionId.value) {
+      return { data: [] }
+    }
+    const client = (await import('@/services/ApiService')).default
+    const response = await client.get(`/classrooms/leaderboard/institution/${institutionId.value}`)
+    return response.data
+  },
+  enabled: !!institutionId.value,
+})
 
-const entries = computed(() => (data.value as any)?.data ?? [])
+const entries = computed(() => {
+  const data = queryResult.data.value as { data?: unknown[] } | undefined
+  return (data?.data as Array<{ classroomId?: string; rank?: number; title?: string; totalScore?: number }>) ?? []
+})
+const isLoading = queryResult.isLoading
+const isError = queryResult.isError
 </script>
 
 <template>

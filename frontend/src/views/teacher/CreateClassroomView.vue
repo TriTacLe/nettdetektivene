@@ -73,7 +73,7 @@ const createMutation = useMutation({
   onSuccess: (res) => {
     router.push({ name: 'classroom-detail', params: { id: res.data?.id } })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     serverError.value = e.message ?? 'Kunne ikke opprette klasserom'
   },
 })
@@ -83,7 +83,7 @@ const updateMutation = useMutation({
   onSuccess: () => {
     router.push({ name: 'classroom-detail', params: { id: classroomId } })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     serverError.value = e.message ?? 'Kunne ikke oppdatere klasserom'
   },
 })
