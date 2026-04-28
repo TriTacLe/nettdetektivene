@@ -14,7 +14,7 @@ function goToTeacher() {
 
 <template>
   <SceneComponent
-      title="Start"
+      title=""
       background="/StartBackground.jpg">
 
     <div class="start-content">
@@ -36,13 +36,15 @@ function goToTeacher() {
 
 <style scoped>
 .start-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
   gap: 1.5rem;
   padding: 2rem;
+  padding-top: 25vh;
 }
 
 .start-content h1 {
@@ -50,6 +52,13 @@ function goToTeacher() {
 }
 .start-content h4 {
   font-size: 1.25rem;
+}
+
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 </style>

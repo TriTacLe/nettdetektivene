@@ -2,12 +2,23 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAudioStore } from '@/stores/AudioStore'
+import { useAuthStore } from '@/stores/AuthStore'
+import { useStopStore } from '@/stores/StopStore'
 import Toast from '@/components/Toast.vue'
 import { useToast } from '@/composables/UseToast'
 
 const route = useRoute()
 const audioStore = useAudioStore()
+const authStore = useAuthStore()
+const stopStore = useStopStore()
 const { toast } = useToast()
+
+// Warm-boot: if the persisted auth survives a tab reload, fetch this
+// user's completed task IDs from the backend so the map renders the
+// correct stars without ever consulting sessionStorage for completion.
+if (authStore.isAuthenticated) {
+  stopStore.loadCompleted()
+}
 
 // Per-track music. Each stop has its own loop; everything else gets `main`.
 const MUSIC_TRACKS: Record<string, string> = {

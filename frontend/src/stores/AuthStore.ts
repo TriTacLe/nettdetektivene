@@ -39,6 +39,7 @@ export const useAuthStore = defineStore(
       refreshToken.value = response.refreshToken
       resetStopState()
       await fetchMe()
+      await useStopStore().loadCompleted()
     }
 
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
@@ -48,6 +49,7 @@ export const useAuthStore = defineStore(
       refreshToken.value = response.refreshToken
       resetStopState()
       await fetchMe()
+      await useStopStore().loadCompleted()
     }
 
     async function fetchMe(): Promise<void> {

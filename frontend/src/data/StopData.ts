@@ -17,7 +17,7 @@ export const STOPS: Record<string, StopConfig> = {
     stopId: 'nyhetskvartalet',
     name: 'Nyhetskvartalet',
     intro: 'Her jobber nettdetektivene med å avsløre falske nyheter. Klarer du å skille ekte journalistikk fra løgn og manipulasjon?',
-    background: '/NyhetskvartaletBackground.png',
+    background: '/NyhetskvartaletBackground.jpg',
     taskRoute: '/stops/nyhetskvartalet',
     taskHints: {
       1: {

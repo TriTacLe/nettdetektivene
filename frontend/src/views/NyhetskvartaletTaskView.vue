@@ -130,7 +130,7 @@ async function onFailed(reason: string) {
   <SceneComponent
     :title="task?.title ?? 'Nyhetskvartalet'"
     :previous="previousRoute"
-    background="/NyhetskvartaletBackground.png"
+    background="/NyhetskvartaletBackground.jpg"
   >
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>

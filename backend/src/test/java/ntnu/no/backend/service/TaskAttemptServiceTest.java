@@ -9,6 +9,7 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskAttempt;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.TaskAttemptRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -46,6 +47,9 @@ class TaskAttemptServiceTest {
 
   @Mock
   TaskAttemptRepository taskAttemptRepository;
+
+  @Mock
+  TaskBestScoreRepository taskBestScoreRepository;
 
   @Mock
   JdbcTemplate jdbcTemplate;
@@ -250,6 +254,20 @@ class TaskAttemptServiceTest {
     assertThat(result.get(1).taskId()).isEqualTo(otherTaskId);
     assertThat(result.get(1).score()).isEqualTo(40);
     assertThat(result.get(1).passed()).isFalse();
+  }
+
+  @Test
+  void getMyPassedTaskIds_delegatesToRepository_scopedToCallingUser() {
+    User user = userWithId(userId);
+    UUID t1 = UUID.randomUUID();
+    UUID t2 = UUID.randomUUID();
+    when(taskBestScoreRepository.findPassedTaskIdsByUserId(userId))
+        .thenReturn(List.of(t1, t2));
+
+    List<UUID> result = taskAttemptService.getMyPassedTaskIds(user);
+
+    assertThat(result).containsExactly(t1, t2);
+    verify(taskBestScoreRepository).findPassedTaskIdsByUserId(userId);
   }
 
   private User userWithId(UUID id) {

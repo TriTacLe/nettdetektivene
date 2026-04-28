@@ -20,6 +20,18 @@ INSTITUTION_NAME="NTNU"
 PASSWORD="password123"
 CLASSROOM_TITLE="Testklasse 1"
 
+# Local source for task images. Files here are uploaded to the backend
+# via the multipart task endpoint so created tasks reference
+# /uploads/tasks/<batchId>/... URLs served by the backend, not direct
+# paths into the frontend's public/ directory.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ASSETS_ROOT="${ASSETS_ROOT:-${REPO_ROOT}/frontend/public}"
+NEWS_FAKE_1="${ASSETS_ROOT}/news/fake-article-1.jpg"
+NEWS_REAL_1="${ASSETS_ROOT}/news/real-article-1.png"
+PHOTO_REAL_1="${ASSETS_ROOT}/photos/real-photo-1.jpeg"
+PHOTO_FAKE_1="${ASSETS_ROOT}/photos/fake-photo-1.jpg"
+
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; RED='\033[0;31m'; YELLOW='\033[0;33m'; NC='\033[0m'
 # All logging goes to stderr so command-substitution (id capture) is clean.
 info()  { echo -e "${BLUE}[INFO]${NC} $*" >&2; }
@@ -181,6 +193,12 @@ join_students() {
 
 create_task_if_missing() {
   local token=$1 title=$2 type=$3 stop=$4 difficulty=$5 content=$6
+  shift 6
+  # Remaining args are absolute paths to image files referenced from
+  # $content via "upload://<filename>". They are uploaded as multipart
+  # parts so the backend stores them under /uploads/tasks/<batchId>/...
+  # and rewrites the content paths accordingly.
+  local image_paths=("$@")
 
   local list; list=$(http_body "$(api GET /api/v1/tasks "" "$token")")
   local existing; existing=$(echo "$list" | jq -r --arg t "$title" '(.data // .) | (if type=="array" then . else (.[] // []) end) | .[]? | select(.title==$t) | .id' | head -n1)
@@ -195,8 +213,44 @@ create_task_if_missing() {
     --arg title "$title" --arg type "$type" --arg stop "$stop" \
     --arg content "$content" --argjson difficulty "$difficulty" \
     '{title:$title, taskType:$type, difficulty:$difficulty, isActive:true, stopLocation:$stop, content:$content}')
-  local resp; resp=$(api POST /api/v1/tasks "$payload" "$token")
-  local code; code=$(http_code "$resp"); local body; body=$(http_body "$resp")
+
+  local resp code body
+  if [ ${#image_paths[@]} -eq 0 ]; then
+    resp=$(api POST /api/v1/tasks "$payload" "$token")
+  else
+    # Multipart upload: backend expects a "task" JSON part and one or
+    # more "images" file parts whose original filenames match the
+    # upload://<filename> references in content.
+    local task_json; task_json=$(mktemp -t factory_task.XXXXXX.json)
+    printf '%s' "$payload" > "$task_json"
+
+    local curl_args=(-s -w "\n%{http_code}" -X POST
+      -H "Authorization: Bearer $token"
+      -F "task=@${task_json};type=application/json")
+
+    # Deduplicate so a filename referenced multiple times is uploaded once.
+    local seen=""
+    local img
+    for img in "${image_paths[@]}"; do
+      [ -z "$img" ] && continue
+      if [ ! -f "$img" ]; then
+        rm -f "$task_json"
+        fail "Task '$title' image not found: $img"
+        return 1
+      fi
+      local base; base=$(basename "$img")
+      case ",$seen," in
+        *",$base,"*) continue ;;
+      esac
+      seen="$seen,$base"
+      curl_args+=(-F "images=@${img}")
+    done
+
+    resp=$(curl "${curl_args[@]}" "${BASE_URL}/api/v1/tasks")
+    rm -f "$task_json"
+  fi
+
+  code=$(http_code "$resp"); body=$(http_body "$resp")
   if [ "$code" != "200" ] && [ "$code" != "201" ]; then
     fail "Task '$title' create failed ($code): $(echo "$body" | head -c 200)"
     return 1
@@ -239,12 +293,13 @@ seed_tasks() {
       question: "Hvilken av disse nyhetene er ekte?",
       hint: "Se etter kildehenvisninger og datoer i artiklene.",
       articles: [
-        { imagePath: "/news/fake-article-1.jpg", isReal: false },
-        { imagePath: "/news/real-article-1.png", isReal: true  }
+        { imagePath: "upload://fake-article-1.jpg", isReal: false },
+        { imagePath: "upload://real-article-1.png", isReal: true  }
       ]
     }')
     local title="Ekte eller falsk nyhet (nivå ${level})"
-    local task_id; task_id=$(create_task_if_missing "$token" "$title" "NEWS" "nyhetskvartalet" "$level" "$content")
+    local task_id; task_id=$(create_task_if_missing "$token" "$title" "NEWS" "nyhetskvartalet" "$level" "$content" \
+      "$NEWS_FAKE_1" "$NEWS_REAL_1")
     if [ -n "$task_id" ]; then
       attach_task_to_classroom "$token" "$cid" "$task_id" "$sort_order"
       sort_order=$((sort_order+1))
@@ -257,16 +312,17 @@ seed_tasks() {
     content=$(jq -c -n '{
       description: "Hvilken type bilde er dette?",
       alternatives: [
-        { imagePath: "/photos/real-photo-1.jpeg", description: "Bilde av en by ved solnedgang", correctType: "ekte",
+        { imagePath: "upload://real-photo-1.jpeg", description: "Bilde av en by ved solnedgang", correctType: "ekte",
           begrunnelser: ["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"] },
-        { imagePath: "/photos/fake-photo-1.jpg",  description: "Portrett av en person utendørs", correctType: "ai-generert",
+        { imagePath: "upload://fake-photo-1.jpg",  description: "Portrett av en person utendørs", correctType: "ai-generert",
           begrunnelser: ["Urealistiske detaljer i bakgrunnen","Feil antall fingre","Unaturlig tekstur på huden"] },
-        { imagePath: "/photos/fake-photo-1.jpg",  description: "Folkemengde på et torg", correctType: "manipulert",
+        { imagePath: "upload://fake-photo-1.jpg",  description: "Folkemengde på et torg", correctType: "manipulert",
           begrunnelser: ["Inkonsistente skygger","Synlig kloning av personer","Feil perspektiv"] }
       ]
     }')
     local title="Ekte, AI eller manipulert (nivå ${level})"
-    local task_id; task_id=$(create_task_if_missing "$token" "$title" "PHOTO" "fotografen" "$level" "$content")
+    local task_id; task_id=$(create_task_if_missing "$token" "$title" "PHOTO" "fotografen" "$level" "$content" \
+      "$PHOTO_REAL_1" "$PHOTO_FAKE_1")
     if [ -n "$task_id" ]; then
       attach_task_to_classroom "$token" "$cid" "$task_id" "$sort_order"
       sort_order=$((sort_order+1))
@@ -284,8 +340,8 @@ seed_tasks() {
     question: "Datatyven har plantet en falsk nyhet. Hvilken er ekte?",
     hint: "Sjekk kilden, forfatteren og datoen — de svakeste signalene avslører løgnen.",
     articles: [
-      { imagePath: "/news/fake-article-1.jpg", isReal: false },
-      { imagePath: "/news/real-article-1.png", isReal: true  }
+      { imagePath: "upload://fake-article-1.jpg", isReal: false },
+      { imagePath: "upload://real-article-1.png", isReal: true  }
     ]
   }')
 
@@ -294,11 +350,11 @@ seed_tasks() {
   photo_content=$(jq -c -n '{
     description: "Datatyven har manipulert bevismateriale. Klassifiser hvert bilde riktig.",
     alternatives: [
-      { imagePath: "/photos/real-photo-1.jpeg", description: "Bilde fra et serverrom",     correctType: "ekte",
+      { imagePath: "upload://real-photo-1.jpeg", description: "Bilde fra et serverrom",     correctType: "ekte",
         begrunnelser: ["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"] },
-      { imagePath: "/photos/fake-photo-1.jpg",  description: "Portrett av en mistenkt",     correctType: "ai-generert",
+      { imagePath: "upload://fake-photo-1.jpg",  description: "Portrett av en mistenkt",     correctType: "ai-generert",
         begrunnelser: ["Urealistiske detaljer","Feil antall fingre","Unaturlig hudtekstur"] },
-      { imagePath: "/photos/fake-photo-1.jpg",  description: "Bilde fra et åsted",          correctType: "manipulert",
+      { imagePath: "upload://fake-photo-1.jpg",  description: "Bilde fra et åsted",          correctType: "manipulert",
         begrunnelser: ["Inkonsistente skygger","Synlig kloning","Feil perspektiv"] }
     ]
   }')
@@ -314,7 +370,14 @@ seed_tasks() {
 
   for spec in "${boss_specs[@]}"; do
     IFS='|' read -r title type difficulty content <<<"$spec"
-    local task_id; task_id=$(create_task_if_missing "$token" "$title" "$type" "datasenteret" "$difficulty" "$content")
+    local task_id
+    if [ "$type" = "NEWS" ]; then
+      task_id=$(create_task_if_missing "$token" "$title" "$type" "datasenteret" "$difficulty" "$content" \
+        "$NEWS_FAKE_1" "$NEWS_REAL_1")
+    else
+      task_id=$(create_task_if_missing "$token" "$title" "$type" "datasenteret" "$difficulty" "$content" \
+        "$PHOTO_REAL_1" "$PHOTO_FAKE_1")
+    fi
     if [ -n "$task_id" ]; then
       attach_task_to_classroom "$token" "$cid" "$task_id" "$sort_order"
       sort_order=$((sort_order+1))
