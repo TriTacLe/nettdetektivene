@@ -5,6 +5,14 @@ import { fetchStopTasks, fetchClassroomId } from '@/services/StopService'
 import ClassroomService from '@/services/ClassroomService'
 import { parseTaskContent } from '@/services/TaskService'
 
+// Drop persisted progress on a cold load when there's no active session,
+// so a logged-out user (or a fresh login in the same tab) never inherits
+// the previous user's stop completions or test-mode flag.
+if (!sessionStorage.getItem('auth')) {
+  sessionStorage.removeItem('stop-completed')
+  sessionStorage.removeItem('test-mode-classroom-id')
+}
+
 export const useStopStore = defineStore('stop', () => {
   const tasks = ref<Record<string, StopTaskDTO[]>>({})
   const loading = ref<Record<string, boolean>>({})
