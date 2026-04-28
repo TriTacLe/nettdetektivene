@@ -9,9 +9,11 @@ const props = withDefaults(
     previous?: string
     next?: string
     background?: string
+    dimOverlay?: boolean
   }>(),
   {
     background: '/StartBackground.jpg',
+    dimOverlay: false,
   },
 )
 
@@ -31,7 +33,7 @@ function handleBack() {
 <template>
   <div class="scene">
     <img class="scene-background" :src="background" alt="" aria-hidden="true" />
-    <div class="scene-overlay" />
+    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }" />
     <div class="scene-content">
       <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
       <div class="scene-body">
@@ -65,6 +67,10 @@ function handleBack() {
   opacity: 0.5;
   z-index: 10;
   pointer-events: none;
+}
+
+.scene-overlay--dim {
+  opacity: 0.8;
 }
 
 .scene-content {

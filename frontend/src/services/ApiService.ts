@@ -92,10 +92,13 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
+const AUTH_PATHS = ['/auth/login', '/auth/feide']
+
 apiClient.interceptors.response.use((response) => response, async (error: AxiosError) => {
   const original = error.config as AxiosRequestConfig & { _retry?: boolean }
+  const isAuthEndpoint = AUTH_PATHS.some(p => original?.url?.includes(p))
 
-  if (error.response?.status !== 401 || original._retry) {
+  if (error.response?.status !== 401 || original._retry || isAuthEndpoint) {
     return Promise.reject(new Error(toUserMessage(error.response?.status)))
   }
 
