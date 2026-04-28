@@ -171,7 +171,6 @@ class UserProfileServiceTest {
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
     when(classroomStudentRepository.existsByUser(user)).thenReturn(true);
-    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
 
     userProfileService.update(user, dto);
 
