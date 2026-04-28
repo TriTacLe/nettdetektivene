@@ -25,7 +25,7 @@ const notificationOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
   ...notificationOpts,
   queryKey: notificationOpts.queryKey as any,
-  enabled: computed(() => authStore.isTeacher),
+  enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
 })
 
 const unreadCount = computed(() =>
