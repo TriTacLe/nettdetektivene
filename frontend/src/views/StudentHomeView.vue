@@ -112,17 +112,17 @@ async function updateStringPaths() {
   }
 
   const pinCenters = noteOrder
-    .map((className) => {
-      const pin = board.querySelector(`.${className} .board-note-pin`) as HTMLElement | null
-      if (!pin) return initialPinCenters[className]
+  .map((className) => {
+    const pin = board.querySelector(`.${className} .board-note-pin`) as HTMLElement | null
+    if (!pin) return initialPinCenters[className]
 
-      const pinRect = pin.getBoundingClientRect()
-      return {
-        x: ((pinRect.left + pinRect.width / 2 - boardRect.left) / boardRect.width) * 100,
-        y: ((pinRect.top + pinRect.height / 2 - boardRect.top) / boardRect.height) * 100,
-      }
-    })
-    .filter((point): point is { x: number; y: number } => point !== null)
+    const pinRect = pin.getBoundingClientRect()
+    return {
+      x: ((pinRect.left + pinRect.width / 2 - boardRect.left) / boardRect.width) * 100,
+      y: ((pinRect.top + pinRect.height / 2 - boardRect.top) / boardRect.height) * 100,
+    }
+  })
+  .filter((point): point is { x: number; y: number } => point !== null)
 
   stringPaths.value = buildPathsFromPinCenters(pinCenters)
 }
