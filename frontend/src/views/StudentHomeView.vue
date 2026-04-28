@@ -37,8 +37,8 @@ type NoteKey = (typeof noteOrder)[number]
 const noteRefs: Partial<Record<NoteKey, HTMLElement>> = {}
 
 function setNoteRef(key: NoteKey) {
-  return (el: Element | null) => {
-    if (el) noteRefs[key] = el as HTMLElement
+  return (el: any) => {
+    if (el && el instanceof HTMLElement) noteRefs[key] = el
     else delete noteRefs[key]
   }
 }
