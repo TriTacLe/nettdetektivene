@@ -52,6 +52,7 @@ public class DataSeeder implements CommandLineRunner {
   private final AchievementRepository achievementRepository;
   private final PasswordEncoder passwordEncoder;
   private final JdbcTemplate jdbcTemplate;
+  private final AppUserIdentityRepository identityRepository;
 
   private final Map<String, User> users = new HashMap<>();
   private final Map<String, Institution> institutions = new HashMap<>();
@@ -415,6 +416,14 @@ public class DataSeeder implements CommandLineRunner {
         .xpLevel(1)
         .build());
 
+    String feideId = UUID.randomUUID().toString();
+    identityRepository.save(AppUserIdentity.builder()
+        .user(user)
+        .providerName("feide")
+        .providerUserId(feideId)
+        .providerEmail(email)
+        .build());
+    
     return user;
   }
 

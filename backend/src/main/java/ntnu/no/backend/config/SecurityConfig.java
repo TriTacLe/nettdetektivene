@@ -83,12 +83,12 @@ public class SecurityConfig {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-          .allowedOrigins("http://localhost", "http://localhost:5173")
+          .allowedOrigins("http://localhost", "http://localhost:5173", "http://localhost:4173")
           .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
           .allowedHeaders("*")
           .allowCredentials(true);
         registry.addMapping("/uploads/**")
-          .allowedOrigins("http://localhost", "http://localhost:5173")
+          .allowedOrigins("http://localhost", "http://localhost:5173", "http://localhost:4173")
           .allowedMethods("GET")
           .allowedHeaders("*");
       }
