@@ -80,6 +80,7 @@ class UserProfileControllerTest {
         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(auth);
   }
+
   private final UserProfileResponseDTO profile = new UserProfileResponseDTO(
       userId,
       "Test User",

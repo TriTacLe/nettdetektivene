@@ -73,6 +73,7 @@ class UserAchievementControllerTest {
         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(auth);
   }
+
   private final UUID achievementId = UUID.randomUUID();
   private final UserAchievementResponseDTO achievement = new UserAchievementResponseDTO(
       userId,
