@@ -9,5 +9,8 @@ export default defineConfig({
     viewportHeight: 1080,
     defaultCommandTimeout: 10000,
     responseTimeout: 10000,
+    env: {
+      apiUrl: 'http://localhost:8080/api/v1',
+    },
   },
 })
