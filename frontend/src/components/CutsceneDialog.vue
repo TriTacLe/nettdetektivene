@@ -164,7 +164,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0.35) 100%);
+    linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.75) 45%, rgba(0, 0, 0, 0.6) 100%);
 }
 
 .cutscene-character {
@@ -176,18 +176,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   width: auto;
   object-fit: contain;
   object-position: bottom right;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.6));
   z-index: 2;
   pointer-events: none;
   animation: portrait-idle 4.5s ease-in-out infinite;
   transform-origin: bottom center;
-  transition: filter 0.3s ease;
 }
-
-.cutscene-character.mood-happy { filter: drop-shadow(0 12px 28px rgba(56, 189, 124, 0.45)) brightness(1.05); }
-.cutscene-character.mood-angry { filter: drop-shadow(0 12px 28px rgba(229, 72, 77, 0.45)) brightness(1.02) saturate(1.15); }
-.cutscene-character.mood-sus   { filter: drop-shadow(0 12px 28px rgba(245, 166, 35, 0.45)) brightness(0.95); }
-.cutscene-character.mood-thinking { filter: drop-shadow(0 12px 28px rgba(120, 180, 255, 0.45)) brightness(0.98); }
 
 @keyframes portrait-idle {
   0%, 100% { transform: translateY(0); }
