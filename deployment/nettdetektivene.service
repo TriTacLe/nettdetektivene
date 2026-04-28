@@ -1,0 +1,17 @@
+[Unit]
+Description=Nettdetektivene Application
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/nettdetektivene
+ExecStartPre=/usr/bin/docker compose pull
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=120
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
