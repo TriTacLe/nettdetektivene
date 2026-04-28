@@ -307,27 +307,27 @@ onUnmounted(() => {
 
         <Transition name="fade">
           <div v-if="showHelp" class="help-overlay" @click.self="closeHelp">
-            <div class="help-note" style="top: 12%; left: 13%; transform: translate(-50%, 30%) rotate(-2deg)">
+            <div class="help-note help-note--overlay" style="top: 12%; left: 13%; transform: translate(-50%, 30%) rotate(-2deg)">
               <p class="help-note-title">Detektivprofil</p>
               <p class="help-note-text">Se profilen din, endre avatar og navn</p>
             </div>
-            <div class="help-note" style="top: 50%; left: 52%">
+            <div class="help-note help-note--overlay" style="top: 50%; left: 52%">
               <p class="help-note-title">Kartet</p>
               <p class="help-note-text">Utforsk kartet og finn detektivoppdrag ute</p>
             </div>
-            <div class="help-note" style="top: 10%; left: 86%; transform: translate(-50%, 30%) rotate(-2deg)">
+            <div class="help-note help-note--overlay" style="top: 10%; left: 86%; transform: translate(-50%, 30%) rotate(-2deg)">
               <p class="help-note-title">Prestasjoner</p>
               <p class="help-note-text">Se medaljer og prestasjoner du har oppnådd</p>
             </div>
-            <div class="help-note" style="top: 85%; left: 86%">
+            <div class="help-note help-note--overlay" style="top: 85%; left: 86%">
               <p class="help-note-title">Notatblokk</p>
               <p class="help-note-text">Skriv og les egne notater fra oppdragene</p>
             </div>
-            <div class="help-note" style="top: 89%; left: 14%">
+            <div class="help-note help-note--overlay" style="top: 89%; left: 14%">
               <p class="help-note-title">Ledertavle</p>
               <p class="help-note-text">Se hvilken klasse på skolen din som har flest poeng</p>
             </div>
-            <div class="help-note" style="top: 90%; left: 52%">
+            <div class="help-note help-note--overlay" style="top: 90%; left: 52%">
               <p class="help-note-title">Ukens Mysterium</p>
               <p class="help-note-text">Send inn funn fra nettet og vinn en medalje</p>
             </div>
@@ -491,6 +491,20 @@ onUnmounted(() => {
   top: 48%;
   left: 94%;
 }
+
+.help-note--overlay {
+  position: absolute;
+  transform: translate(-50%, -130%) rotate(-2deg);
+  background: linear-gradient(180deg, #fffdf0 0%, #fdf6d8 100%);
+  padding: 0.6rem 0.9rem 0.7rem;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.18);
+  border-radius: 2px;
+  width: 11rem;
+  pointer-events: none;
+}
+
 .note-map {
   top: 50%;
   left: 50%;
@@ -522,18 +536,7 @@ onUnmounted(() => {
   z-index: 50;
 }
 
-.help-note {
-  position: absolute;
-  transform: translate(-50%, -130%) rotate(-2deg);
-  background: linear-gradient(180deg, #fffdf0 0%, #fdf6d8 100%);
-  padding: 0.6rem 0.9rem 0.7rem;
-  box-shadow:
-    0 6px 12px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.18);
-  border-radius: 2px;
-  width: 11rem;
-  pointer-events: none;
-}
+
 
 .help-note-title {
   margin: 0 0 0.2rem;
