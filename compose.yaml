@@ -4,7 +4,7 @@ services:
     image: mysql:8.0
     container_name: nd-db
     restart: unless-stopped
-    command: --log-bin-trust-function-creators=1
+    command: --log-bin-trust-function-creators=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -39,7 +39,7 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
       SERVER_PORT: 8080
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: seed
     ports:
       - "8080:8080"
     volumes:
