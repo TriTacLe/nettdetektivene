@@ -272,6 +272,54 @@ seed_tasks() {
       sort_order=$((sort_order+1))
     fi
   done
+
+  # ----- Datasenteret — final boss area, 5 mixed tasks -----
+  # Reuses NEWS and PHOTO content shapes so the existing renderers in
+  # NyhetskvartaletComponent / FotografenComponent can drive them. Mix is
+  # 3 NEWS + 2 PHOTO with high difficulty (4-5).
+
+  # NEWS content for the boss area — same shape as nyhetskvartalet seeds.
+  local news_content
+  news_content=$(jq -c -n '{
+    question: "Datatyven har plantet en falsk nyhet. Hvilken er ekte?",
+    hint: "Sjekk kilden, forfatteren og datoen — de svakeste signalene avslører løgnen.",
+    articles: [
+      { imagePath: "/news/fake-article-1.jpg", isReal: false },
+      { imagePath: "/news/real-article-1.png", isReal: true  }
+    ]
+  }')
+
+  # PHOTO content for the boss area — same shape as fotografen seeds.
+  local photo_content
+  photo_content=$(jq -c -n '{
+    description: "Datatyven har manipulert bevismateriale. Klassifiser hvert bilde riktig.",
+    alternatives: [
+      { imagePath: "/photos/real-photo-1.jpeg", description: "Bilde fra et serverrom",     correctType: "ekte",
+        begrunnelser: ["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"] },
+      { imagePath: "/photos/fake-photo-1.jpg",  description: "Portrett av en mistenkt",     correctType: "ai-generert",
+        begrunnelser: ["Urealistiske detaljer","Feil antall fingre","Unaturlig hudtekstur"] },
+      { imagePath: "/photos/fake-photo-1.jpg",  description: "Bilde fra et åsted",          correctType: "manipulert",
+        begrunnelser: ["Inkonsistente skygger","Synlig kloning","Feil perspektiv"] }
+    ]
+  }')
+
+  # 3 NEWS + 2 PHOTO, difficulty 4-5.
+  local boss_specs=(
+    "Datatyven sin første løgn|NEWS|4|$news_content"
+    "Avslør den falske rapporten|NEWS|5|$news_content"
+    "Manipulert bevismateriale|PHOTO|4|$photo_content"
+    "Sannhetens øyeblikk|NEWS|5|$news_content"
+    "Endelig konfrontasjon|PHOTO|5|$photo_content"
+  )
+
+  for spec in "${boss_specs[@]}"; do
+    IFS='|' read -r title type difficulty content <<<"$spec"
+    local task_id; task_id=$(create_task_if_missing "$token" "$title" "$type" "datasenteret" "$difficulty" "$content")
+    if [ -n "$task_id" ]; then
+      attach_task_to_classroom "$token" "$cid" "$task_id" "$sort_order"
+      sort_order=$((sort_order+1))
+    fi
+  done
 }
 
 activate_all_tasks() {

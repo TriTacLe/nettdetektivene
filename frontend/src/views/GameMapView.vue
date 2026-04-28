@@ -10,7 +10,7 @@ const houses = [
   { key: 'student-home', src: '/StudentHomeObject.png', name: 'Detektivkontoret', to: '/student-home', stopId: null,              showStars: false, previousStop: null },
   { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet', to: '/stops/nyhetskvartalet', stopId: 'nyhetskvartalet', showStars: true,  previousStop: null },
   { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',       to: '/stops/fotografen',       stopId: 'fotografen',       showStars: true,  previousStop: 'Nyhetskvartalet' },
-  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: null,              showStars: false, previousStop: null },
+  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',     to: '/stops/datasenteret',     stopId: 'datasenteret',     showStars: true,  previousStop: 'Fotografen' },
 ]
 
 const lockedPopup = ref<string | null>(null)
@@ -18,6 +18,7 @@ const lockedPopup = ref<string | null>(null)
 onMounted(() => {
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
+  stopStore.loadTasks('datasenteret', true)
 })
 
 function isAvailable(stopId: string | null): boolean {
@@ -33,12 +34,15 @@ function isAllDone(stopId: string | null): boolean {
   return stopStore.isAllComplete(stopId)
 }
 
+// One filled star per completed task (no longer capped at 3).
+function totalStars(stopId: string | null): number {
+  if (!stopId) return 0
+  return stopStore.totalTasks(stopId)
+}
+
 function filledStars(stopId: string | null): number {
   if (!stopId) return 0
-  const total = stopStore.totalTasks(stopId)
-  const completed = stopStore.countComplete(stopId)
-  if (total === 0 || completed === 0) return 0
-  return Math.min(3, Math.ceil(completed * 3 / total))
+  return stopStore.countComplete(stopId)
 }
 
 function openLockedPopup(key: string) {
@@ -64,10 +68,13 @@ function closeLockedPopup() {
           :aria-label="house.name"
         >
           <div class="house-label">
-            <div v-if="house.showStars" class="stars">
-              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 1 }">★</span>
-              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 2 }">★</span>
-              <span class="star" :class="{ 'star--done': filledStars(house.stopId) >= 3 }">★</span>
+            <div v-if="house.showStars && totalStars(house.stopId) > 0" class="stars">
+              <span
+                v-for="n in totalStars(house.stopId)"
+                :key="n"
+                class="star"
+                :class="{ 'star--done': filledStars(house.stopId) >= n }"
+              >★</span>
             </div>
             <div class="name">{{ house.name }}</div>
           </div>

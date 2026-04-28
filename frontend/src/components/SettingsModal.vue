@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAudioStore } from '@/stores/AudioStore'
 import { useAuthStore } from '@/stores/AuthStore'
 
-defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: [] }>()
 
 const audio = useAudioStore()
 const auth = useAuthStore()
+const router = useRouter()
 
 const musicVolume = ref(Math.round(audio.musicVolume * 100))
 const sfxVolume = ref(Math.round(audio.sfxVolume * 100))
+const textSpeed = ref(audio.textSpeed)
 
 
 function onMusicInput() {
@@ -18,6 +21,15 @@ function onMusicInput() {
 
 function onSfxInput() {
   audio.setSfxVolume(sfxVolume.value / 100)
+}
+
+function onTextSpeedInput() {
+  audio.setTextSpeed(textSpeed.value)
+}
+
+function backToStart() {
+  emit('close')
+  router.push({ name: 'start' })
 }
 
 function logout() {
@@ -106,6 +118,46 @@ function logout() {
           </div>
         </section>
 
+        <section class="setting-section">
+          <div class="setting-row">
+            <label for="text-speed">Tekstfart</label>
+            <span class="speed-readout">{{ textSpeed }}/s</span>
+          </div>
+          <div class="slider-row">
+            <div class="slider-track-wrapper">
+              <div class="slider-track">
+                <div class="slider-fill" :style="{ width: ((textSpeed - 10) / 80 * 100) + '%' }" />
+              </div>
+              <div class="slider-thumb" :style="{ left: ((textSpeed - 10) / 80 * 100) + '%' }" />
+              <input
+                id="text-speed"
+                v-model.number="textSpeed"
+                type="range"
+                min="10"
+                max="90"
+                step="1"
+                class="volume-slider"
+                aria-label="Tekstfart"
+                @input="onTextSpeedInput"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="setting-section">
+          <div class="setting-row">
+            <label>Auto-fortsett</label>
+            <button
+              class="mute-button"
+              :aria-pressed="audio.autoAdvance"
+              @click="audio.toggleAutoAdvance()"
+            >
+              {{ audio.autoAdvance ? 'På' : 'Av' }}
+            </button>
+          </div>
+        </section>
+
+        <button class="back-button" @click="backToStart">Tilbake til start</button>
         <button class="logout-button" @click="logout">Logg ut</button>
       </div>
     </div>
@@ -274,10 +326,10 @@ function logout() {
   opacity: 0.3;
 }
 
+.back-button,
 .logout-button {
   margin-top: 4px;
   padding: 10px;
-  background: var(--color-nd-danger);
   color: white;
   border: none;
   border-radius: 8px;
@@ -286,7 +338,22 @@ function logout() {
   cursor: pointer;
 }
 
+.back-button {
+  background: var(--color-nd-navy, #1a2744);
+}
+
+.logout-button {
+  background: var(--color-nd-danger);
+}
+
+.back-button:hover,
 .logout-button:hover {
   filter: brightness(0.88);
+}
+
+.speed-readout {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #555;
 }
 </style>

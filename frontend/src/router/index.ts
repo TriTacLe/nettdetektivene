@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import './types'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,21 +27,9 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet',
-      name: 'nyhetskvartalet',
-      component: () => import('../views/NyhetskvartaletView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
       path: '/stops/nyhetskvartalet/:taskId',
       name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletTaskView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
-      path: '/stops/fotografen',
-      name: 'fotografen',
-      component: () => import('../views/FotografenView.vue'),
       meta: { music: 'dark' },
     },
     {

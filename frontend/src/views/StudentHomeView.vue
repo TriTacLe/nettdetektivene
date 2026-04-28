@@ -358,7 +358,25 @@ onUnmounted(() => {
   margin: 0 auto;
   overflow: hidden;
   border: 0.6rem solid #5c3a1e;
-  box-shadow: 0 0 0 2px #3b2512 inset;
+  box-shadow:
+    0 0 0 2px #3b2512 inset,
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Soft directional light from upper-left, plus a corner vignette so the
+   board has visible depth. Sits above the cork image, below the notes. */
+.board-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 60% 50% at 28% 18%, rgba(255, 235, 180, 0.18), rgba(255, 235, 180, 0) 70%),
+    radial-gradient(ellipse 80% 80% at 50% 110%, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(ellipse 80% 80% at 50% -10%, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0) 60%);
+  mix-blend-mode: multiply;
 }
 
 .corkboard-image {

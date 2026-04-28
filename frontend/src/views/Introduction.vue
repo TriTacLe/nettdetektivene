@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
-import introductionDialogs from '@/data/IntroductionDialogs'
+import { useDialogRunner } from '@/composables/UseDialogRunner'
+import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
+import type { DialogChoice } from '@/types/cutscene'
 
 const router = useRouter()
-const currentScene = ref(0)
-const activeScene = computed(() => introductionDialogs[currentScene.value])
+const runner = useDialogRunner(introductionDialogs, introductionStartId)
 
-function onSceneDone() {
-  if (currentScene.value < introductionDialogs.length - 1) {
-    currentScene.value++
-  } else {
+function onDone() {
+  runner.advance()
+  if (runner.isFinished.value) {
+    router.push({ name: 'student-home' })
+  }
+}
+
+function onChoose(choice: DialogChoice) {
+  runner.advance(choice)
+  if (runner.isFinished.value) {
     router.push({ name: 'student-home' })
   }
 }
@@ -21,10 +27,11 @@ function onSceneDone() {
   <div class="introduction-cutscene">
     <img class="intro-background" src="/StartBackground.jpg" alt="" aria-hidden="true" />
     <CutsceneDialog
-      v-if="activeScene"
-      :key="currentScene"
-      :scene="activeScene"
-      @done="onSceneDone"
+      v-if="runner.currentScene.value"
+      :key="runner.currentScene.value.id"
+      :scene="runner.currentScene.value"
+      @done="onDone"
+      @choose="onChoose"
     />
   </div>
 </template>

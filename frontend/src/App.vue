@@ -20,6 +20,10 @@ watch(
 </script>
 
 <template>
-  <RouterView />
+  <RouterView v-slot="{ Component }">
+    <Transition name="scene-fade" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </RouterView>
   <Toast v-bind="toast" />
 </template>

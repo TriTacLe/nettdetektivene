@@ -437,6 +437,51 @@ BEGIN
 END$$
 
 -- -------------------------------------------------------------
+-- trg_notify_attempt_failed
+-- Notifies all classroom instructors when a student fails a task attempt
+-- for the first time. Subsequent failures on the same (user, task, classroom)
+-- are not re-notified — the teacher already knows the student is struggling.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_attempt_failed$$
+CREATE TRIGGER trg_notify_attempt_failed
+AFTER INSERT ON task_attempt
+FOR EACH ROW
+BEGIN
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_task_title   VARCHAR(255) DEFAULT NULL;
+    DECLARE v_fail_count   INT DEFAULT 0;
+    DECLARE v_msg          VARCHAR(500);
+
+    IF NEW.passed = 0 THEN
+        SELECT COUNT(*)
+        INTO v_fail_count
+        FROM task_attempt
+        WHERE user_id      = NEW.user_id
+          AND task_id      = NEW.task_id
+          AND classroom_id = NEW.classroom_id
+          AND passed       = 0;
+
+        IF v_fail_count = 1 THEN
+            SELECT display_name INTO v_student_name
+            FROM app_user WHERE user_id = NEW.user_id;
+
+            SELECT title INTO v_task_title
+            FROM task WHERE task_id = NEW.task_id;
+
+            SET v_msg = CONCAT(v_student_name, ' feilet oppgaven "', v_task_title, '".');
+
+            INSERT INTO notification
+                (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+            SELECT
+                UUID(), ci.user_id, NEW.classroom_id,
+                v_msg, 'task_attempt_failed', NEW.attempt_id, 0, NOW()
+            FROM classroom_instructor ci
+            WHERE ci.classroom_id = NEW.classroom_id;
+        END IF;
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
 -- trg_award_achievements
 -- Awards achievements based on task completion criteria
 -- -------------------------------------------------------------
