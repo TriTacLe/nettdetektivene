@@ -6,9 +6,14 @@ import ntnu.no.backend.dto.notebook.NotebookEntryResponseDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.NotebookEntry;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
+import ntnu.no.backend.model.Notification;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotebookEntryRepository;
+import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.util.NotebookTestFactory;
 import org.junit.jupiter.api.Test;
@@ -49,6 +54,12 @@ class NotebookServiceTest {
 
   @Mock
   ClassroomStudentRepository classroomStudentRepository;
+
+  @Mock
+  ClassroomInstructorRepository classroomInstructorRepository;
+
+  @Mock
+  NotificationRepository notificationRepository;
 
   @InjectMocks
   NotebookService notebookService;
@@ -213,5 +224,94 @@ class NotebookServiceTest {
     List<NotebookEntryResponseDTO> result = notebookService.getNotebooksByClassroom(classroomId);
 
     assertThat(result).hasSize(2);
+  }
+
+  /**
+   * Verifies that createNotebook throws IllegalArgumentException when reflection contains censored word.
+   */
+  @Test
+  void createNotebook_throwsIllegalArgument_whenReflectionContainsCensoredWord() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    User user = User.builder().id(userId).displayName("Tri").build();
+    Classroom classroom = Classroom.builder().id(classroomId).build();
+    NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .studentReflection("dette var faen meg vanskelig")
+        .build();
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(classroomStudentRepository.findById(any())).thenReturn(
+        Optional.of(ntnu.no.backend.model.classroom.ClassroomStudent.builder()
+            .isAllowed(true)
+            .build())
+    );
+
+    assertThatThrownBy(() -> notebookService.createNotebook(classroomId, dto, userId))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("upassende ord");
+  }
+
+  /**
+   * Verifies that createNotebook notifies instructors when censored word is used.
+   */
+  @Test
+  void createNotebook_notifiesInstructors_whenReflectionContainsCensoredWord() {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
+    User user = User.builder().id(userId).displayName("Tri").build();
+    Classroom classroom = Classroom.builder().id(classroomId).build();
+    User instructorUser = User.builder().id(instructorId).displayName("Nora").build();
+    NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .studentReflection("dette var faen meg vanskelig")
+        .build();
+
+    ClassroomInstructor instructor = ClassroomInstructor.builder()
+        .id(ClassroomInstructorId.builder()
+            .classroomId(classroomId)
+            .userId(instructorId)
+            .build())
+        .classroom(classroom)
+        .user(instructorUser)
+        .build();
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(classroomStudentRepository.findById(any())).thenReturn(
+        Optional.of(ntnu.no.backend.model.classroom.ClassroomStudent.builder()
+            .isAllowed(true)
+            .build())
+    );
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of(instructor));
+
+    assertThatThrownBy(() -> notebookService.createNotebook(classroomId, dto, userId))
+        .isInstanceOf(IllegalArgumentException.class);
+
+    verify(notificationRepository).save(any(Notification.class));
+  }
+
+  /**
+   * Verifies that updateNotebook throws IllegalArgumentException when reflection contains censored word.
+   */
+  @Test
+  void updateNotebook_throwsIllegalArgument_whenReflectionContainsCensoredWord() {
+    UUID entryId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    User user = User.builder().id(userId).displayName("Tri").build();
+    Classroom classroom = buildClassroom();
+    NotebookEntry existing = NotebookTestFactory.entity(entryId, user, classroom);
+    NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .studentReflection("dette var helvete vanskelig")
+        .build();
+
+    when(notebookEntryRepository.findById(entryId)).thenReturn(Optional.of(existing));
+
+    assertThatThrownBy(() -> notebookService.updateNotebook(dto, entryId, userId))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("upassende ord");
   }
 }
