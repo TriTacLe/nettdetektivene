@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, onBeforeUnmount, watch, type ComponentPublicInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import SceneComponent from '../components/SceneComponent.vue'
@@ -37,8 +37,8 @@ type NoteKey = (typeof noteOrder)[number]
 const noteRefs: Partial<Record<NoteKey, HTMLElement>> = {}
 
 function setNoteRef(key: NoteKey) {
-  return (el: Element | null) => {
-    if (el) noteRefs[key] = el as HTMLElement
+  return (el: Element | ComponentPublicInstance | null) => {
+    if (el instanceof HTMLElement) noteRefs[key] = el
     else delete noteRefs[key]
   }
 }
