@@ -25,6 +25,13 @@ const selectedType = computed<TaskType.NEWS | TaskType.PHOTO | null>(() => {
 
 const serverError = ref<string | null>(null)
 
+const difficultyLevels = [
+  { value: 1, stars: '★', label: '1 stjerne' },
+  { value: 2, stars: '★★', label: '2 stjerner' },
+  { value: 3, stars: '★★★', label: '3 stjerner' },
+  { value: 4, stars: '⬡', label: 'Datasenteret' },
+] as const
+
 const newsDraft = ref<TeacherNewsTaskDraft>({
   type: TaskType.NEWS,
   title: '',
@@ -193,10 +200,22 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                   <span>Tittel</span>
                   <input v-model="newsDraft.title" type="text" />
                 </label>
-                <label class="task-field">
+                <div class="task-field">
                   <span>Vanskelighetsgrad</span>
-                  <input v-model.number="newsDraft.difficulty" type="number" min="1" max="5" />
-                </label>
+                  <div class="difficulty-picker">
+                    <button
+                      v-for="level in difficultyLevels"
+                      :key="level.value"
+                      type="button"
+                      class="difficulty-option"
+                      :class="[`difficulty-option--${level.value}`, { 'difficulty-option--active': newsDraft.difficulty === level.value }]"
+                      @click="newsDraft.difficulty = level.value"
+                    >
+                      <span class="difficulty-stars">{{ level.stars }}</span>
+                      <span class="difficulty-label">{{ level.label }}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               <label class="task-field">
                 <span>Spørsmål</span>
@@ -258,10 +277,22 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                   <span>Tittel</span>
                   <input v-model="photoDraft.title" type="text" />
                 </label>
-                <label class="task-field">
+                <div class="task-field">
                   <span>Vanskelighetsgrad</span>
-                  <input v-model.number="photoDraft.difficulty" type="number" min="1" max="5" />
-                </label>
+                  <div class="difficulty-picker">
+                    <button
+                      v-for="level in difficultyLevels"
+                      :key="level.value"
+                      type="button"
+                      class="difficulty-option"
+                      :class="[`difficulty-option--${level.value}`, { 'difficulty-option--active': photoDraft.difficulty === level.value }]"
+                      @click="photoDraft.difficulty = level.value"
+                    >
+                      <span class="difficulty-stars">{{ level.stars }}</span>
+                      <span class="difficulty-label">{{ level.label }}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               <label class="task-field">
                 <span>Oppgavetekst</span>
@@ -730,6 +761,61 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 @media (max-width: 1100px) {
   .task-card-grid--photo {
     grid-template-columns: repeat(auto-fit, minmax(240px, 280px));
+  }
+}
+
+.difficulty-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.difficulty-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 0.75rem;
+  border: 2px solid #d1d5db;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.difficulty-stars {
+  font-size: 1rem;
+  color: #f59e0b;
+  letter-spacing: -0.05em;
+}
+
+.difficulty-option--4 .difficulty-stars {
+  color: #6366f1;
+  font-size: 1.1rem;
+}
+
+.difficulty-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.difficulty-option--active {
+  border-color: #9a3412;
+  background: #fff7ed;
+}
+
+.difficulty-option--4.difficulty-option--active {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+
+@media (max-width: 720px) {
+  .difficulty-picker {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

@@ -38,7 +38,9 @@ export async function createTeacherTask(classroomId: string, draft: TeacherTaskD
   const taskPayload = {
     title: draft.title.trim(),
     taskType: draft.type,
-    stopLocation: draft.type === TaskType.NEWS ? 'nyhetskvartalet' : 'fotografen',
+    stopLocation: draft.difficulty === 4
+      ? 'datasenteret'
+      : draft.type === TaskType.NEWS ? 'nyhetskvartalet' : 'fotografen',
     difficulty: draft.difficulty,
     content: JSON.stringify(content),
   }
