@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/AuthStore.ts'
+import { getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-query.gen'
 
 defineProps<{
   previous?: string
@@ -11,6 +14,15 @@ defineProps<{
 const emit = defineEmits<{ back: [] }>()
 const router = useRouter()
 const authStore = useAuthStore()
+
+const { data: notificationsData } = useQuery({
+  ...getMyNotificationsOptions(),
+  enabled: computed(() => authStore.isTeacher),
+})
+
+const unreadCount = computed(() =>
+  (notificationsData.value?.data ?? []).filter((n) => !n.isRead).length
+)
 
 function goTo(path?: string) {
   if (path) {
@@ -42,8 +54,20 @@ function goTo(path?: string) {
     <h1 class="nav-title">{{ title }}</h1>
 
     <div class="nav-right">
-      <span v-if="authStore.isTeacher && authStore.user" class="nav-user">
-        {{ authStore.user.displayName ?? authStore.user.email }}
+      <button
+        v-if="authStore.isTeacher && unreadCount > 0"
+        class="nav-bell"
+        :aria-label="`${unreadCount} uleste varsler`"
+        @click="router.push({ name: 'teacher-notifications' })"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        <span class="nav-bell-badge">{{ unreadCount }}</span>
+      </button>
+      <span v-if="!authStore.isTeacher && authStore.user" class="nav-user">
+        {{ authStore.user.displayName }}
       </span>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
         <button class="nav-button" aria-label="Go forward">
@@ -115,10 +139,9 @@ function goTo(path?: string) {
 }
 
 .nav-user {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  opacity: 0.8;
 }
 
 .nav-next {
@@ -131,6 +154,38 @@ function goTo(path?: string) {
 
 .nav-next:hover {
   opacity: 0.8;
+}
+
+.nav-bell {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bell:hover {
+  opacity: 0.8;
+}
+
+.nav-bell-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
 }
 
 .nav-title {
