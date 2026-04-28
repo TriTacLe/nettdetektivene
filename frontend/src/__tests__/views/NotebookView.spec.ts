@@ -69,7 +69,7 @@ function setup(entries = [mockEntry], queryError: Error | null = null, loading =
     isLoading: ref(loading),
     error: ref(queryError),
   })
-  mockUseMutation.mockImplementation(() => ({ mutate: mockMutateAsync, mutateAsync: mockMutateAsync }))
+  mockUseMutation.mockImplementation(() => ({ mutateAsync: mockMutateAsync, mutate: mockMutateAsync }))
   return mount(NotebookView)
 }
 
