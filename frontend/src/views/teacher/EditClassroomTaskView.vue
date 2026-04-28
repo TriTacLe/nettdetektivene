@@ -37,7 +37,7 @@ watch(classroomTask, (task) => {
   const parsed = parseTaskContent(t.content, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
-    const content = parsed?.news ?? parsed
+    const content = (parsed as any)?.news ?? parsed as any
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
@@ -53,7 +53,7 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = parsed?.photo ?? parsed
+    const content = (parsed as any)?.photo ?? parsed as any
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,

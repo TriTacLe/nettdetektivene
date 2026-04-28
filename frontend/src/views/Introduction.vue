@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import introductionDialogs from '@/data/IntroductionDialogs'
 
 const router = useRouter()
 const currentScene = ref(0)
+const activeScene = computed(() => introductionDialogs[currentScene.value])
 
 function onSceneDone() {
   if (currentScene.value < introductionDialogs.length - 1) {
@@ -20,8 +21,9 @@ function onSceneDone() {
   <div class="introduction-cutscene">
     <img class="intro-background" src="/StartBackground.jpg" alt="" aria-hidden="true" />
     <CutsceneDialog
+      v-if="activeScene"
       :key="currentScene"
-      :scene="introductionDialogs[currentScene]"
+      :scene="activeScene"
       @done="onSceneDone"
     />
   </div>

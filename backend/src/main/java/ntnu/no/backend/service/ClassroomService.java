@@ -56,7 +56,9 @@ public class ClassroomService {
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
     return classroomInstructorRepository.findAllByUser(instructor).stream()
-        .map(ci -> ClassroomMapper.toDTO(ci.getClassroom()))
+        .map(ci -> ci.getClassroom())
+        .filter(c -> c.getDeletedAt() == null)
+        .map(ClassroomMapper::toDTO)
         .toList();
   }
 

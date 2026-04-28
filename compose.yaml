@@ -15,7 +15,7 @@ services:
     volumes:
       - nettdetektivene_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -39,7 +39,7 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
       SERVER_PORT: 8080
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
     ports:
       - "8080:8080"
     volumes:
