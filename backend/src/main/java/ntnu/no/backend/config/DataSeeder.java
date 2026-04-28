@@ -53,7 +53,6 @@ public class DataSeeder implements CommandLineRunner {
   private final AchievementRepository achievementRepository;
   private final PasswordEncoder passwordEncoder;
   private final JdbcTemplate jdbcTemplate;
-  private final AppUserIdentityRepository identityRepository;
 
   private final Map<String, User> users = new HashMap<>();
   private final Map<String, Institution> institutions = new HashMap<>();
@@ -69,28 +68,16 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Starting Demo Data Seeder");
     log.info("========================================");
 
-    boolean isFullSeed = userRepository.count() == 0;
-
-    if (isFullSeed) {
-      log.info("Database is empty — running full seed.");
-    } else {
-      log.info("Database already has data — seeding only missing entities.");
-    }
-
     try {
       loadRoles();
-
-      if (isFullSeed) {
-        seedInstitutions();
-        seedInstructors();
-        seedClassrooms();
-        seedTasks();
-        seedStudents();
-        seedEnrollments();
-        seedTaskAttempts();
-        seedNotebookEntries();
-      }
-
+      seedInstitutions();
+      seedInstructors();
+      seedClassrooms();
+      seedTasks();
+      seedStudents();
+      seedEnrollments();
+      seedTaskAttempts();
+      seedNotebookEntries();
       seedAchievementsIfMissing();
       verifyTaskAssignments();
       verifyEnrollments();
@@ -125,9 +112,11 @@ public class DataSeeder implements CommandLineRunner {
         {"OsloMet",        "oslomet"},
     };
     for (String[] row : data) {
-      Institution inst = institutionRepository.save(Institution.builder().instName(row[0]).build());
+      Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
+        log.info("Institution: {}", row[0]);
+        return institutionRepository.save(Institution.builder().instName(row[0]).build());
+      });
       institutions.put(row[1], inst);
-      log.info("Institution: {}", row[0]);
     }
   }
 
@@ -158,16 +147,19 @@ public class DataSeeder implements CommandLineRunner {
         {"7C - Cybersecurity",     "Grunnleggende cybersecurity",          "lars", "oslomet", "class3"},
     };
     for (Object[] row : data) {
-      Classroom c = classroomRepository.save(Classroom.builder()
-          .title((String) row[0])
-          .classDesc((String) row[1])
-          .createdBy(users.get(row[2]))
-          .institution(institutions.get(row[3]))
-          .joinCode(randomCode())
-          .isGameEnabled(true)
-          .build());
+      Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
+        Classroom created = classroomRepository.save(Classroom.builder()
+            .title((String) row[0])
+            .classDesc((String) row[1])
+            .createdBy(users.get(row[2]))
+            .institution(institutions.get(row[3]))
+            .joinCode(randomCode())
+            .isGameEnabled(true)
+            .build());
+        log.info("Classroom: {} (join code: {})", row[0], created.getJoinCode());
+        return created;
+      });
       classrooms.put((String) row[4], c);
-      log.info("Classroom: {} (join code: {})", row[0], c.getJoinCode());
     }
   }
 
@@ -213,44 +205,37 @@ Classroom class1 = classrooms.get("class1");
     Classroom class3 = classrooms.get("class3");
     short order = 0;
     for (Object[] row : taskDefs) {
-Task task = taskRepository.save(Task.builder()
-          .title((String) row[0])
-          .taskType((TaskType) row[1])
-          .stopLocation((String) row[2])
-          .difficulty((Integer) row[3])
-          .content("{\"description\": \"" + row[0] + "\", \"difficulty\": " + row[3] + "}")
-          .owner(users.get(row[4]))
-          .isActive(true)
-          .build());
+      Task task = taskRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
+        log.info("Task: {} @ {}", row[0], row[2]);
+        return taskRepository.save(Task.builder()
+            .title((String) row[0])
+            .taskType((TaskType) row[1])
+            .stopLocation((String) row[2])
+            .difficulty((Integer) row[3])
+            .content("{\"description\": \"" + row[0] + "\", \"difficulty\": " + row[3] + "}")
+            .owner(users.get(row[4]))
+            .isActive(true)
+            .build());
+      });
 
       allTasks.add(task);
 
-      // Assign every task to all classrooms so attempts/progress work end-to-end.
-      classroomTaskRepository.save(ClassroomTask.builder()
-          .id(new ClassroomTaskId(class1.getId(), task.getId()))
-          .classroom(class1)
-          .task(task)
-          .sortOrder(order)
-          .isActive(true)
-          .build());
-
-      classroomTaskRepository.save(ClassroomTask.builder()
-          .id(new ClassroomTaskId(class2.getId(), task.getId()))
-          .classroom(class2)
-          .task(task)
-          .sortOrder(order)
-          .isActive(true)
-          .build());
-
-      classroomTaskRepository.save(ClassroomTask.builder()
-          .id(new ClassroomTaskId(class3.getId(), task.getId()))
-          .classroom(class3)
-          .task(task)
-          .sortOrder(order++)
-          .isActive(true)
-          .build());
-
-      log.info("Task: {} @ {}", row[0], row[2]);
+      ClassroomTaskId id1 = new ClassroomTaskId(class1.getId(), task.getId());
+      if (!classroomTaskRepository.existsById(id1)) {
+        classroomTaskRepository.save(ClassroomTask.builder()
+            .id(id1).classroom(class1).task(task).sortOrder(order).isActive(true).build());
+      }
+      ClassroomTaskId id2 = new ClassroomTaskId(class2.getId(), task.getId());
+      if (!classroomTaskRepository.existsById(id2)) {
+        classroomTaskRepository.save(ClassroomTask.builder()
+            .id(id2).classroom(class2).task(task).sortOrder(order).isActive(true).build());
+      }
+      ClassroomTaskId id3 = new ClassroomTaskId(class3.getId(), task.getId());
+      if (!classroomTaskRepository.existsById(id3)) {
+        classroomTaskRepository.save(ClassroomTask.builder()
+            .id(id3).classroom(class3).task(task).sortOrder(order).isActive(true).build());
+      }
+      order++;
     }
   }
 
@@ -299,8 +284,12 @@ Task task = taskRepository.save(Task.builder()
   }
 
   private void enroll(User student, Classroom classroom) {
+    ClassroomStudentId id = new ClassroomStudentId(classroom.getId(), student.getId());
+    if (classroomStudentRepository.existsById(id)) {
+      return;
+    }
     ClassroomStudent studentMember = ClassroomStudent.builder()
-        .id(new ClassroomStudentId(classroom.getId(), student.getId()))
+        .id(id)
         .classroom(classroom)
         .user(student)
         .displayName(student.getDisplayName())
@@ -308,7 +297,7 @@ Task task = taskRepository.save(Task.builder()
         .nameChangeStatus(NameChangeStatus.NONE)
         .build();
     classroomStudentRepository.saveAndFlush(studentMember);
-    log.info("Enrolled {} in {} - isAllowed: {}", student.getDisplayName(), classroom.getTitle(), studentMember.isAllowed());
+    log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
   }
 
   // -----------------------------------------------------------------------
@@ -322,6 +311,7 @@ Task task = taskRepository.save(Task.builder()
     // Star students: all 21 tasks, score 95-100
     for (String key : List.of("anine", "nora-student", "gustav")) {
       User u = users.get(key);
+      if (hasAttempts(u.getId(), classroomId)) continue;
       for (int i = 0; i < allTasks.size(); i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
       }
@@ -330,12 +320,20 @@ Task task = taskRepository.save(Task.builder()
     // Good students: first 12 tasks, score 80-92
     for (String key : List.of("tri", "silje")) {
       User u = users.get(key);
+      if (hasAttempts(u.getId(), classroomId)) continue;
       for (int i = 0; i < 12; i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 80 + (i % 13));
       }
     }
 
     log.info("Task attempts seeded via sp_submit_attempt");
+  }
+
+  private boolean hasAttempts(UUID userId, UUID classroomId) {
+    Integer count = jdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM task_best_score WHERE user_id = ? AND classroom_id = ?",
+        Integer.class, userId.toString(), classroomId.toString());
+    return count != null && count > 0;
   }
 
   private void submitAttempt(UUID userId, UUID taskId, UUID classroomId, int score) {
@@ -375,15 +373,21 @@ Task task = taskRepository.save(Task.builder()
     };
 
     for (Object[] row : entries) {
+      Classroom classroom = (Classroom) row[0];
       User student = users.get((String) row[1]);
+      String stopLocation = (String) row[2];
+      boolean exists = notebookEntryRepository
+          .findByClassroom_IdAndUser_Id(classroom.getId(), student.getId())
+          .stream().anyMatch(e -> stopLocation.equals(e.getStopLocation()));
+      if (exists) continue;
       notebookEntryRepository.save(NotebookEntry.builder()
           .user(student)
-          .classroom((Classroom) row[0])
-          .stopLocation((String) row[2])
+          .classroom(classroom)
+          .stopLocation(stopLocation)
           .studentReflection((String) row[3])
           .autoNotes("{\"hints_used\": 1, \"time_spent\": 300}")
           .build());
-      log.info("Notebook: {} @ {}", student.getDisplayName(), row[2]);
+      log.info("Notebook: {} @ {}", student.getDisplayName(), stopLocation);
     }
   }
 
@@ -408,6 +412,7 @@ Task task = taskRepository.save(Task.builder()
     };
 
     for (String[] row : data) {
+      if (achievementRepository.existsByTitle(row[0])) continue;
       achievementRepository.save(Achievement.builder()
           .title(row[0])
           .descAch(row[1])
@@ -424,15 +429,16 @@ Task task = taskRepository.save(Task.builder()
   // -----------------------------------------------------------------------
 
   private void seedAchievementsIfMissing() {
-    if (achievementRepository.count() > 0) {
-      log.info("Achievements already exist — skipping achievement seed.");
-      return;
-    }
     log.info("Seeding achievements...");
     seedAchievements();
   }
 
   private User createUser(String email, String displayName, List<Role> roles) {
+    Optional<User> existing = userRepository.findByEmail(email);
+    if (existing.isPresent()) {
+      return existing.get();
+    }
+
     User user = userRepository.save(User.builder()
         .email(email)
         .displayName(displayName)
@@ -464,14 +470,6 @@ Task task = taskRepository.save(Task.builder()
         .xpLevel(1)
         .build());
 
-    String feideId = UUID.randomUUID().toString();
-    identityRepository.save(AppUserIdentity.builder()
-        .user(user)
-        .providerName("feide")
-        .providerUserId(feideId)
-        .providerEmail(email)
-        .build());
-    
     return user;
   }
 

@@ -23,4 +23,5 @@ public interface AchievementRepository extends JpaRepository<Achievement, UUID> 
    * @return a list of achievements with the given trigger type
    */
   List<Achievement> findByTriggerType(String triggerType);
+  boolean existsByTitle(String title);
 }
