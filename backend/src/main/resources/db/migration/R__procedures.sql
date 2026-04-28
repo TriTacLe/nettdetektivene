@@ -9,10 +9,10 @@ DELIMITER $$
 -- -------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_submit_attempt$$
 CREATE PROCEDURE sp_submit_attempt(
-    IN p_attempt_id   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_user_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_task_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_attempt_id   CHAR(36),
+    IN p_user_id      CHAR(36),
+    IN p_task_id      CHAR(36),
+    IN p_classroom_id CHAR(36),
     IN p_score        SMALLINT UNSIGNED,
     IN p_passed       TINYINT(1)
 )
@@ -57,12 +57,12 @@ END$$
 -- -------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_request_display_name_change$$
 CREATE PROCEDURE sp_request_display_name_change(
-    IN p_user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_requested_display_name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    IN p_user_id CHAR(36),
+    IN p_requested_display_name VARCHAR(255)
 )
 BEGIN
-    DECLARE v_current_display_name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-    DECLARE v_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    DECLARE v_current_display_name VARCHAR(255);
+    DECLARE v_classroom_id CHAR(36);
 
 SELECT classroom_id, display_name
 INTO v_classroom_id, v_current_display_name
@@ -110,14 +110,14 @@ END$$
 -- -------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_review_display_name_change$$
 CREATE PROCEDURE sp_review_display_name_change(
-    IN p_teacher_user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_student_user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_decision VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    IN p_teacher_user_id CHAR(36),
+    IN p_student_user_id CHAR(36),
+    IN p_decision VARCHAR(20)
 )
 BEGIN
-    DECLARE v_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-    DECLARE v_requested_display_name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-    DECLARE v_pending_status VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    DECLARE v_classroom_id CHAR(36);
+    DECLARE v_requested_display_name VARCHAR(255);
+    DECLARE v_pending_status VARCHAR(20);
     DECLARE v_teacher_assigned INT DEFAULT 0;
 
 SELECT classroom_id, requested_display_name, name_change_status

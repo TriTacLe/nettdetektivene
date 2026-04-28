@@ -5,14 +5,11 @@ import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.profile.UserProfileResponseDTO;
 import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.mapper.UserProfileMapper;
-import ntnu.no.backend.model.Notification;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
-import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
-import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import ntnu.no.backend.repository.UserRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,8 +31,6 @@ public class UserProfileService {
   private final UserProfileRepository userProfileRepository;
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
-  private final ClassroomInstructorRepository classroomInstructorRepository;
-  private final NotificationRepository notificationRepository;
   private final JdbcTemplate jdbcTemplate;
 
   /**
@@ -94,7 +89,6 @@ public class UserProfileService {
         if (membership.getNameChangeStatus() != NameChangeStatus.PENDING) {
           jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
               user.getId().toString(), dto.getDisplayName());
-          notifyInstructorsOfNameChange(user, dto.getDisplayName());
         }
       } else {
         profile.setDisplayName(dto.getDisplayName());
@@ -108,27 +102,4 @@ public class UserProfileService {
     return UserProfileMapper.toDTO(profile, nameChangeStatus);
   }
 
-  /**
-   * Creates a notification for each instructor in the classroom
-   * of the student requesting the name change
-   *
-   * @param student the student requesting a name change
-   * @param requestedName the requested name
-   */
-  private void notifyInstructorsOfNameChange(User student, String requestedName) {
-    ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
-    if (membership == null) return;
-
-    classroomInstructorRepository.findAllByClassroom(membership.getClassroom())
-        .forEach(instructor -> notificationRepository.save(
-            Notification.builder()
-                .user(instructor.getUser())
-                .classroom(membership.getClassroom())
-                .msg(student.getDisplayName() + " ønsker å bytte navn til \"" + requestedName + "\"")
-                .refType("name_change")
-                .refId(student.getId())
-                .isRead(false)
-                .build()
-        ));
   }
-}

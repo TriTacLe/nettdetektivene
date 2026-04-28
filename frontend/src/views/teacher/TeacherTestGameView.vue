@@ -8,8 +8,6 @@ const route = useRoute()
 const classroomId = route.params.id as string
 const stopStore = useStopStore()
 
-const testGamePath = `/classroom/${classroomId}/test-game`
-
 const houses = computed(() => [
   { key: 'classroom-back', src: '/StudentHomeObject.png', name: 'Tilbake til Klasserom', to: `/classroom/${classroomId}`, stopId: null, showStars: false, previousStop: null },
   { key: 'news', src: '/NewsObject.png', name: 'Nyhetskvartalet', to: `/stops/nyhetskvartalet?test=true&classroomId=${classroomId}`, stopId: 'nyhetskvartalet', showStars: true, previousStop: null },
@@ -31,8 +29,9 @@ onMounted(async () => {
   }
 })
 
-function isAvailable(stopId: string | null): boolean {
-  return true
+function isAvailable(_stopId: string | null): boolean {
+  void _stopId;
+  return true;
 }
 
 function openLockedPopup(key: string) {
