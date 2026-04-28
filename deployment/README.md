@@ -66,13 +66,10 @@ cd ..
 ### 3. Setup Nginx
 ```bash
 # Copy nginx config
-sudo cp deployment/nginx.conf /etc/nginx/sites-available/nettdetektivene
+sudo cp deployment/nginx.conf /etc/nginx/conf.d/nettdetektivene.conf
 
 # Edit domain name
-sudo nano /etc/nginx/sites-available/nettdetektivene
-
-# Enable site
-sudo ln -s /etc/nginx/sites-available/nettdetektivene /etc/nginx/sites-enabled/
+sudo nano /etc/nginx/conf.d/nettdetektivene.conf
 
 # Test configuration
 sudo nginx -t
