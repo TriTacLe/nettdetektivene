@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/AuthStore.ts'
 import { getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import SettingsModal from './SettingsModal.vue'
@@ -19,13 +21,15 @@ const settingsOpen = ref(false)
 const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login', 'join-classroom', 'set-display-name'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
+const notificationOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
-  ...getMyNotificationsOptions(),
+  ...notificationOpts,
+  queryKey: notificationOpts.queryKey as any,
   enabled: computed(() => authStore.isTeacher),
 })
 
 const unreadCount = computed(() =>
-  (notificationsData.value?.data ?? []).filter((n) => !n.isRead).length
+  (notificationsData.value?.data ?? []).filter((n: { isRead?: boolean }) => !n.isRead).length
 )
 
 function goTo(path?: string) {
@@ -59,16 +63,16 @@ function goTo(path?: string) {
 
     <div class="nav-right">
       <button
-        v-if="authStore.isTeacher && unreadCount > 0"
+        v-if="authStore.isTeacher && showSettings"
         class="nav-bell"
-        :aria-label="`${unreadCount} uleste varsler`"
+        :aria-label="unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Ingen uleste varsler'"
         @click="router.push({ name: 'teacher-notifications' })"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        <span class="nav-bell-badge">{{ unreadCount }}</span>
+        <span v-if="unreadCount > 0" class="nav-bell-badge">{{ unreadCount }}</span>
       </button>
       <span v-if="!authStore.isTeacher && authStore.user" class="nav-user">
         {{ authStore.user.displayName }}
