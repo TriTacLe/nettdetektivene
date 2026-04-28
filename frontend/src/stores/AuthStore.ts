@@ -25,12 +25,19 @@ export const useAuthStore = defineStore(
       return null
     })
 
+    function resetStopState(): void {
+      const stop = useStopStore()
+      stop.exitTestMode()
+      stop.clearCompleted()
+      stop.clearTasks()
+    }
+
     async function login(credentials: { email: string; password: string }): Promise<void> {
       const response = await AuthService.login(credentials)
       sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
-      useStopStore().exitTestMode()
+      resetStopState()
       await fetchMe()
     }
 
@@ -39,7 +46,7 @@ export const useAuthStore = defineStore(
       sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
-      useStopStore().exitTestMode()
+      resetStopState()
       await fetchMe()
     }
 
@@ -66,7 +73,7 @@ export const useAuthStore = defineStore(
       token.value = null
       refreshToken.value = null
       user.value = null
-      useStopStore().exitTestMode()
+      resetStopState()
       const { showSuccess } = useToast()
       showSuccess('Du er logget ut')
       router.push({ name: 'start' })
