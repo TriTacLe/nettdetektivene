@@ -16,24 +16,12 @@ const questionmarkImage = '/questionmarkIcon.png'
 const notebookImage = '/notebook.jpg'
 const leaderboardImage = '/leaderboard.jpg'
 
-
 const router = useRouter()
 const classroomId = ref<string | null>(null)
 const showHelp = ref(false)
 const boardFrame = ref<HTMLElement | null>(null)
 const stringPaths = ref<string[]>([])
 let boardResizeObserver: ResizeObserver | null = null
-let boardMutationObserver: MutationObserver | null = null
-
-const initialPinCenters = {
-  'note-profile': { x: 16, y: 9.5 },
-  'note-map': { x: 50, y: 34 },
-  'note-achievements': { x: 81, y: 13 },
-  'note-help': { x: 94, y: 42.5 },
-  'note-notebook': { x: 84, y: 74.5 },
-  'note-leaderboard': { x: 16, y: 67.5 },
-  'note-mystery': { x: 52, y: 84.5 },
-} as const
 
 const noteOrder = [
   'note-profile',
@@ -45,13 +33,20 @@ const noteOrder = [
   'note-mystery',
 ] as const
 
-// Fetch profile data from the same source as StudentProfileView.
+type NoteKey = (typeof noteOrder)[number]
+const noteRefs: Partial<Record<NoteKey, HTMLElement>> = {}
+
+function setNoteRef(key: NoteKey) {
+  return (el: Element | null) => {
+    if (el) noteRefs[key] = el as HTMLElement
+    else delete noteRefs[key]
+  }
+}
+
 const { data: profileData } = useQuery(getProfileOptions())
 const profile = computed(() => profileData.value?.data ?? null)
 const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?? null))
-const studentName = computed(() => {
-  return profile.value?.displayName || 'Detektiv'
-})
+const studentName = computed(() => profile.value?.displayName || 'Detektiv')
 
 function goTo(route: string) {
   router.push(route)
@@ -62,7 +57,6 @@ function buildSaggingPath(
   end: { x: number; y: number },
   sag = 7,
 ) {
-
   const dx = end.x - start.x
   const dy = end.y - start.y
   const length = Math.hypot(dx, dy)
@@ -80,23 +74,14 @@ function buildSaggingPath(
   return `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`
 }
 
-function buildPathsFromPinCenters(
-  pinCenters: Array<{ x: number; y: number }>,
-) {
-  const nextPaths: string[] = []
-  for (let index = 0; index < pinCenters.length - 1; index += 1) {
-    const start = pinCenters[index]
-    const end = pinCenters[index + 1]
-    if (!start || !end) continue
-    nextPaths.push(buildSaggingPath(start, end))
+function buildPathsFromPinCenters(pinCenters: Array<{ x: number; y: number }>) {
+  const paths: string[] = []
+  for (let i = 0; i < pinCenters.length - 1; i++) {
+    const start = pinCenters[i]
+    const end = pinCenters[i + 1]
+    if (start && end) paths.push(buildSaggingPath(start, end))
   }
-  return nextPaths
-}
-
-function setInitialStringPaths() {
-  stringPaths.value = buildPathsFromPinCenters(
-    noteOrder.map((className) => initialPinCenters[className]),
-  )
+  return paths
 }
 
 async function updateStringPaths() {
@@ -106,25 +91,25 @@ async function updateStringPaths() {
   if (!board) return
 
   const boardRect = board.getBoundingClientRect()
-  if (!boardRect.width || !boardRect.height) {
-    setInitialStringPaths()
-    return
-  }
+  if (!boardRect.width || !boardRect.height) return
 
   const pinCenters = noteOrder
-  .map((className) => {
-    const pin = board.querySelector(`.${className} .board-note-pin`) as HTMLElement | null
-    if (!pin) return initialPinCenters[className]
+    .map((key) => {
+      const noteEl = noteRefs[key]
+      if (!noteEl) return null
+      const pin = noteEl.querySelector('.board-note-pin') as HTMLElement | null
+      if (!pin) return null
+      const pinRect = pin.getBoundingClientRect()
+      return {
+        x: ((pinRect.left + pinRect.width / 2 - boardRect.left) / boardRect.width) * 100,
+        y: ((pinRect.top + pinRect.height / 2 - boardRect.top) / boardRect.height) * 100,
+      }
+    })
+    .filter((p): p is { x: number; y: number } => p !== null)
 
-    const pinRect = pin.getBoundingClientRect()
-    return {
-      x: ((pinRect.left + pinRect.width / 2 - boardRect.left) / boardRect.width) * 100,
-      y: ((pinRect.top + pinRect.height / 2 - boardRect.top) / boardRect.height) * 100,
-    }
-  })
-  .filter((point): point is { x: number; y: number } => point !== null)
-
-  stringPaths.value = buildPathsFromPinCenters(pinCenters)
+  if (pinCenters.length >= 2) {
+    stringPaths.value = buildPathsFromPinCenters(pinCenters)
+  }
 }
 
 async function goToNotebook() {
@@ -132,7 +117,6 @@ async function goToNotebook() {
     router.push({ name: 'notebook' })
     return
   }
-
   router.push({ name: 'notebook', query: { classroomId: classroomId.value } })
 }
 
@@ -149,45 +133,34 @@ function onKeydown(e: Event) {
 }
 
 onMounted(async () => {
-  setInitialStringPaths()
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('resize', updateStringPaths)
 
+  await nextTick()
   updateStringPaths()
 
-  window.addEventListener('keydown', onKeydown)
+  boardFrame.value?.querySelectorAll('img').forEach((img) => {
+    if (!img.complete) img.addEventListener('load', updateStringPaths, { once: true })
+  })
+
   try {
     const classrooms = await ClassroomService.getMyClassrooms()
     classroomId.value = classrooms[0]?.id ?? null
   } catch {
     classroomId.value = null
   }
-  window.addEventListener('resize', updateStringPaths)
 
   if (boardFrame.value) {
-    boardResizeObserver = new ResizeObserver(() => {
-      updateStringPaths()
-    })
+    boardResizeObserver = new ResizeObserver(updateStringPaths)
     boardResizeObserver.observe(boardFrame.value)
-
-    boardMutationObserver = new MutationObserver(() => {
-      updateStringPaths()
-    })
-    boardMutationObserver.observe(boardFrame.value, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ['class', 'style'],
-    })
   }
 })
 
-watch(studentName, () => {
-  updateStringPaths()
-})
+watch(studentName, () => updateStringPaths())
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateStringPaths)
   boardResizeObserver?.disconnect()
-  boardMutationObserver?.disconnect()
 })
 
 onUnmounted(() => {
@@ -209,7 +182,7 @@ onUnmounted(() => {
           />
         </svg>
 
-        <div class="note-slot note-profile">
+        <div :ref="setNoteRef('note-profile')" class="note-slot note-profile">
           <BoardNote
             :rotation="-5"
             pin-color="#2f9e44"
@@ -223,7 +196,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-help">
+        <div :ref="setNoteRef('note-help')" class="note-slot note-help">
           <BoardNote
             :rotation="4"
             pin-color="#1c7ed6"
@@ -237,7 +210,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-map">
+        <div :ref="setNoteRef('note-map')" class="note-slot note-map">
           <BoardNote
             :rotation="-2"
             pin-color="#1c7ed6"
@@ -251,7 +224,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-achievements">
+        <div :ref="setNoteRef('note-achievements')" class="note-slot note-achievements">
           <BoardNote
             :rotation="5"
             pin-color="#f59f00"
@@ -265,7 +238,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-notebook">
+        <div :ref="setNoteRef('note-notebook')" class="note-slot note-notebook">
           <BoardNote
             :rotation="-4"
             pin-color="#7048e8"
@@ -279,7 +252,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-leaderboard">
+        <div :ref="setNoteRef('note-leaderboard')" class="note-slot note-leaderboard">
           <BoardNote
             :rotation="3"
             pin-color="#f59f00"
@@ -293,7 +266,7 @@ onUnmounted(() => {
           </BoardNote>
         </div>
 
-        <div class="note-slot note-mystery">
+        <div :ref="setNoteRef('note-mystery')" class="note-slot note-mystery">
           <BoardNote
             :rotation="-1"
             pin-color="#e03131"
