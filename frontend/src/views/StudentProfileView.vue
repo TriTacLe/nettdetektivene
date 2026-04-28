@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
@@ -14,18 +14,29 @@ const router = useRouter()
 const { data, isLoading } = useQuery(getProfileOptions())
 const profile = computed(() => data.value?.data ?? null)
 const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?? null))
+
+const viewportHeight = ref(window.innerHeight)
+function onResize() { viewportHeight.value = window.innerHeight }
+onMounted(() => window.addEventListener('resize', onResize))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
+const avatarSize = computed(() => {
+  if (viewportHeight.value < 550) return 64
+  if (viewportHeight.value < 700) return 88
+  return 120
+})
 </script>
 
 <template>
-  <SceneComponent title="Min Profil" background="/StartBackground.jpg">
-    <div class="flex flex-col items-center flex-1 w-full px-4 lg:px-6 pb-10 pt-6">
+  <SceneComponent title="Min Profil" previous="/student-home" background="/StartBackground.jpg">
+    <div class="profile-scroll-area">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
       <div v-else-if="profile" class="w-full max-w-sm">
         <CaseFile tab-label="MIN DETEKTIV">
           <template #left>
-            <div class="flex flex-col items-center gap-4 p-6">
-              <AvatarPreview :config="avatarCfg" :size="120" />
+            <div class="profile-card-inner">
+              <AvatarPreview :config="avatarCfg" :size="avatarSize" />
               <button
                 class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition"
                 @click="router.push({ name: 'edit-avatar' })"
@@ -33,15 +44,15 @@ const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?
                 Rediger Detektiv
               </button>
 
-              <div class="w-full flex flex-col gap-4">
+              <div class="w-full flex flex-col profile-stats">
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">Brukernavn</p>
-                  <p class="text-xl font-bold text-stone-900">{{ profile.displayName ?? '---' }}</p>
+                  <p class="profile-value font-bold text-stone-900">{{ profile.displayName ?? '---' }}</p>
                 </div>
 
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">Niva</p>
-                  <p class="text-xl font-bold text-amber-800">Niva {{ profile.xpLevel ?? 1 }}</p>
+                  <p class="profile-value font-bold text-amber-800">Niva {{ profile.xpLevel ?? 1 }}</p>
                 </div>
 
                 <div>
@@ -71,3 +82,63 @@ const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.profile-scroll-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+}
+
+.profile-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.profile-stats {
+  gap: 1rem;
+}
+
+.profile-value {
+  font-size: 1.25rem;
+}
+
+@media (max-height: 700px) {
+  .profile-scroll-area {
+    padding: 0.75rem 1rem;
+    justify-content: flex-start;
+  }
+
+  .profile-card-inner {
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+
+  .profile-stats {
+    gap: 0.5rem;
+  }
+
+  .profile-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-height: 550px) {
+  .profile-card-inner {
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+
+  .profile-stats {
+    gap: 0.25rem;
+  }
+}
+</style>
