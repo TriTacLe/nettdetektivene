@@ -6,11 +6,18 @@ import FotografenComponent from '../components/FotografenComponent.vue'
 import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
+import { useStopStore } from '@/stores/StopStore'
 import type { TaskDTO, FotografenChallenge } from '@/types'
+import { TaskType } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 const taskId = route.params.taskId as string
+const stopStore = useStopStore()
+const testClassroomId = stopStore.testModeClassroomId
+const previousRoute = testClassroomId
+  ? `/stops/fotografen?test=true&classroomId=${testClassroomId}`
+  : '/stops/fotografen'
 
 const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
@@ -18,11 +25,39 @@ const error = ref('')
 const submitting = ref(false)
 
 onMounted(async () => {
+  console.log('[FotografenTaskView] Loading task with ID:', taskId)
+  console.log('[FotografenTaskView] Test mode classroom ID:', testClassroomId)
+  
   try {
-    task.value = await fetchTaskById(taskId)
+    if (testClassroomId) {
+      const stopTasks = stopStore.tasks['fotografen'] || []
+      const taskFromStore = stopTasks.find(t => t.uuid === taskId)
+      
+      if (taskFromStore) {
+        console.log('[FotografenTaskView] Found task in store:', taskFromStore)
+        task.value = {
+          id: taskFromStore.uuid,
+          title: taskFromStore.title,
+          taskType: taskFromStore.taskType as TaskType,
+          difficulty: 1,
+          isActive: true,
+          stopLocation: 'fotografen',
+          content: taskFromStore.content
+        }
+        console.log('[FotografenTaskView] Task from store content:', task.value?.content)
+      } else {
+        console.warn('[FotografenTaskView] Task not found in store, fetching from API')
+        task.value = await fetchTaskById(taskId)
+      }
+    } else {
+      task.value = await fetchTaskById(taskId)
+    }
+    
+    console.log('[FotografenTaskView] Final task content:', task.value?.content)
+
   } catch (err) {
     error.value = 'Kunne ikke laste oppgaven. Prøv igjen.'
-    console.error(err)
+    console.error('[FotografenTaskView] Error loading task:', err)
   } finally {
     isLoading.value = false
   }
@@ -57,20 +92,24 @@ async function submitAttempt(score: number) {
 }
 
 async function onComplete() {
-  const wasSaved = await submitAttempt(100)
-  if (!wasSaved) return
+  if (!testClassroomId) {
+    const wasSaved = await submitAttempt(100)
+    if (!wasSaved) return
+  }
   router.push({
     name: 'task-finished',
-    query: { stop: 'fotografen', taskId },
+    query: { stop: 'fotografen', taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
   })
 }
 
 async function onFailed(reason: string) {
-  const wasSaved = await submitAttempt(0)
-  if (!wasSaved) return
+  if (!testClassroomId) {
+    const wasSaved = await submitAttempt(0)
+    if (!wasSaved) return
+  }
   router.push({
     name: 'task-failed',
-    query: { stop: 'fotografen', taskId, reason },
+    query: { stop: 'fotografen', taskId, reason, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
   })
 }
 </script>
@@ -78,7 +117,7 @@ async function onFailed(reason: string) {
 <template>
   <SceneComponent
     :title="task?.title ?? 'Fotografen'"
-    previous="/stops/fotografen"
+    :previous="previousRoute"
     background="/FotografenBackground.png"
   >
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>

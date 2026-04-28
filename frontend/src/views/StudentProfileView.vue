@@ -1,23 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
 import CaseFile from '@/components/CaseFile.vue'
 import { useAuthStore } from "@/stores/AuthStore.ts"
+import { useToast } from '@/composables/UseToast'
 import AvatarPreview from '@/components/avatar/AvatarPreview.vue'
 import { parseAvatarConfig } from '@/utils/avatar'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const { data, isLoading } = useQuery(getProfileOptions())
+const { showSuccess, showError } = useToast()
+
+const { data, isLoading } = useQuery({ ...getProfileOptions(), refetchInterval: 5000 })
 const profile = computed(() => data.value?.data ?? null)
 const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?? null))
+const hasPendingNameChange = computed(() => profile.value?.nameChangeStatus === 'PENDING')
+
+watch(
+  () => profile.value?.nameChangeStatus,
+  (newStatus, oldStatus) => {
+    if (oldStatus === 'PENDING' && newStatus && oldStatus !== newStatus) {
+      if (newStatus === 'APPROVED') {
+        showSuccess('Navneendring godkjent')
+      } else if (newStatus === 'REJECTED') {
+        showError('Navneendring avvist')
+      }
+    }
+  }
+)
 </script>
 
 <template>
-  <SceneComponent title="Min Profil" background="/StartBackground.jpg">
+  <SceneComponent title="Min Profil" previous="/student-home" background="/StartBackground.jpg">
     <div class="flex flex-col items-center flex-1 w-full px-4 lg:px-6 pb-10 pt-6">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
@@ -37,6 +54,9 @@ const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">Brukernavn</p>
                   <p class="text-xl font-bold text-stone-900">{{ profile.displayName ?? '---' }}</p>
+                  <p v-if="hasPendingNameChange" class="text-xs text-amber-700 font-semibold mt-1">
+                    Navneendring venter på godkjenning
+                  </p>
                 </div>
 
                 <div>

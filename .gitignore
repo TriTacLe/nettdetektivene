@@ -160,6 +160,10 @@ docker-volumes/
 .env.*.local
 .env.development
 .env.test
+.env.local
+.env.*.local
+.env.development
+.env.test
 .env.production
 
 # Secrets

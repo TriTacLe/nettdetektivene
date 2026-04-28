@@ -38,12 +38,21 @@ const REF_TYPE_MAP: Record<string, NotificationType> = {
   task_attempt_correct: NotificationType.CORRECT,
 }
 
+const toastMsg = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(msg: string) {
+  toastMsg.value = msg
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastMsg.value = '' }, 3000)
+}
+
 const activeTypeFilter = ref<NotificationType | 'INAPPROPRIATE' | 'COMPLETED' | null>(null)
 const activeClassroomFilter = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = 10
 
-const { data, isLoading, error } = useQuery(getMyNotificationsOptions())
+const { data, isLoading, error } = useQuery({ ...getMyNotificationsOptions(), refetchInterval: 5000 })
 const { data: classroomsData } = useQuery(getAllClassroomsOptions())
 
 const classroomNameMap = computed(() => {
@@ -74,12 +83,12 @@ const removeStudent = useMutation({
 
 const approveName = useMutation({
   ...approveNameChangeMutation(),
-  onSuccess: invalidateNotifications,
+  onSuccess: () => { invalidateNotifications(); showToast('Navneendring godkjent') },
 })
 
 const rejectName = useMutation({
   ...rejectNameChangeMutation(),
-  onSuccess: invalidateNotifications,
+  onSuccess: () => { invalidateNotifications(); showToast('Navneendring avvist') },
 })
 
 function handleApproveStudent(notification: { classroomId: string; refId: string; id: string }) {
@@ -261,6 +270,15 @@ function formatTime(iso: string): string {
 
 <template>
   <SceneComponent title="Varsler" background="/StartBackground.jpg" :previous="backRoute">
+    <transition name="toast">
+      <div
+        v-if="toastMsg"
+        class="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl bg-green-600 text-white font-semibold shadow-xl text-sm"
+      >
+        {{ toastMsg }}
+      </div>
+    </transition>
+
     <div class="overflow-y-auto flex-1 px-6 pb-10 w-full max-w-2xl mx-auto">
 
       <div class="flex gap-3 flex-wrap mb-4 mt-2">
@@ -417,3 +435,15 @@ function formatTime(iso: string): string {
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.25s, transform 0.25s;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+}
+</style>

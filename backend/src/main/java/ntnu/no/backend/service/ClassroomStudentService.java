@@ -291,6 +291,8 @@ public class ClassroomStudentService {
     entityManager.flush();
     entityManager.clear();
 
+    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
+
     ClassroomStudent student = findMembership(classroomId, userId);
     UserProfile profile = userProfileRepository.findByUser(student.getUser())
         .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + userId));
@@ -317,6 +319,7 @@ public class ClassroomStudentService {
         instructor.getId().toString(), userId.toString(), "REJECTED");
     entityManager.flush();
     entityManager.clear();
+    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
     ClassroomStudent student = findMembership(classroomId, userId);
     return mapToDTO(student);
   }
