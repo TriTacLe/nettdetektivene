@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - dev
-      - staging
+      - prod-test
   workflow_dispatch:
 
 env:
