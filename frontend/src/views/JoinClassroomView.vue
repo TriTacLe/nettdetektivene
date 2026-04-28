@@ -30,7 +30,7 @@ function handleJoin() {
 </script>
 
 <template>
-  <SceneComponent title="Bli med i klasserom" previous="/student-login" next="/introduction">
+  <SceneComponent title="Bli med i klasserom" previous="/student-login">
     <div class="flex flex-col items-center justify-center flex-1 px-6">
       <div class="flex flex-col gap-4 w-full max-w-sm">
         <div class="field">

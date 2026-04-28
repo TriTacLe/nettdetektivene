@@ -81,7 +81,6 @@ async function handleLogin(): Promise<void> {
   <SceneComponent
     title="Elev innlogging"
     previous="/start"
-    next="/join-classroom"
     background="/StartBackground.jpg"
   >
     <div class="login-container">

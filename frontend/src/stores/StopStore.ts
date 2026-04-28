@@ -36,7 +36,6 @@ export const useStopStore = defineStore('stop', () => {
   }
 
   async function loadTasksTestMode(classroomId: string, stopId: string) {
-    console.log('[StopStore] loadTasksTestMode called - classroomId:', classroomId, 'stopId:', stopId)
     setTestMode(classroomId)
     loading.value[stopId] = true
     try {
@@ -45,21 +44,16 @@ export const useStopStore = defineStore('stop', () => {
         .filter(task => task.task.stopLocation === stopId)
         .sort((a, b) => a.sortOrder - b.sortOrder)
 
-      const result = filteredTasks.map((task, index) => {
-        const parsedContent = parseTaskContent(task.task.content as string, task.task.taskType)
-        console.log('[StopStore] Parsed content for task', index, ':', parsedContent)
-        return {
-          taskId: index + 1,
-          uuid: task.task.id,
-          title: task.task.title,
-          taskType: task.task.taskType,
-          isUnlocked: task.isUnlocked,
-          content: parsedContent,
-        }
-      })
-      
+      const result = filteredTasks.map((task, index) => ({
+        taskId: index + 1,
+        uuid: task.task.id,
+        title: task.task.title,
+        taskType: task.task.taskType,
+        isUnlocked: task.isUnlocked,
+        content: parseTaskContent(task.task.content as string, task.task.taskType),
+      }))
+
       tasks.value[stopId] = result
-      console.log('[StopStore] Test mode tasks loaded:', result.length, 'tasks')
     } finally {
       loading.value[stopId] = false
     }
@@ -71,6 +65,22 @@ export const useStopStore = defineStore('stop', () => {
     } else {
       tasks.value = {}
     }
+  }
+
+  function clearCompleted() {
+    completedTasks.value = {}
+    sessionStorage.removeItem('stop-completed')
+  }
+
+  // Drop the test-mode flag and any local "completed" marks left behind by
+  // loadTasksTestMode. Called by the router guard when the teacher leaves
+  // the test-mode flow so a real student in the same tab doesn't inherit
+  // pre-marked completion state.
+  function exitTestMode() {
+    if (testModeClassroomId.value === null) return
+    setTestMode(null)
+    clearTasks()
+    clearCompleted()
   }
 
   function markComplete(stopId: string, uuid: string) {
@@ -101,5 +111,5 @@ export const useStopStore = defineStore('stop', () => {
     return tasks.value[stopId]?.length ?? 0
   }
 
-  return { tasks, loading, completedTasks, testModeClassroomId, setTestMode, loadTasks, loadTasksTestMode, clearTasks, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
+  return { tasks, loading, completedTasks, testModeClassroomId, setTestMode, loadTasks, loadTasksTestMode, clearTasks, clearCompleted, exitTestMode, markComplete, isComplete, isAllComplete, countComplete, totalTasks, fetchClassroomId }
 })
