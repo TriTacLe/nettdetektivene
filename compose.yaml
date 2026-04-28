@@ -11,7 +11,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - nettdetektivene_mysql_data:/var/lib/mysql
     healthcheck:
@@ -39,7 +39,7 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
       SERVER_PORT: 8080
-      SPRING_PROFILES_ACTIVE: seed
+      SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8080:8080"
     depends_on:
@@ -52,12 +52,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: production
     container_name: nd-frontend
     restart: on-failure
     ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+      - "5173:80"
     networks:
       - nd-network
 
