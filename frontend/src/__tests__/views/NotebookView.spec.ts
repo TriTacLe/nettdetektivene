@@ -92,7 +92,7 @@ describe('NotebookView', () => {
       isLoading: ref(false),
       error: ref(new Error('Nettverksfeil')),
     })
-    mockUseMutation.mockReturnValue({ mutateAsync: mockMutateAsync })
+    mockUseMutation.mockReturnValue({ mutate: mockMutateAsync, mutateAsync: mockMutateAsync })
     const wrapper = mount(NotebookView)
     expect(wrapper.text()).toContain('Kunne ikke hente notatblokkoppføringer')
   })
@@ -105,7 +105,7 @@ describe('NotebookView', () => {
       isLoading: ref(false),
       error: ref(null),
     })
-    mockUseMutation.mockReturnValue({ mutateAsync: mockMutateAsync })
+    mockUseMutation.mockReturnValue({ mutate: mockMutateAsync, mutateAsync: mockMutateAsync })
     const wrapper = mount(NotebookView)
     expect(wrapper.text()).toContain('Mangler klasserom-ID')
   })
