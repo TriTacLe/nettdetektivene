@@ -46,4 +46,5 @@ public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
    * @return the classroom if found and not soft-deleted
    */
   Optional<Classroom> findByJoinCodeAndDeletedAtIsNull(String joinCode);
+  Optional<Classroom> findByTitleAndDeletedAtIsNull(String title);
 }
