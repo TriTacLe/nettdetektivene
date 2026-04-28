@@ -182,11 +182,18 @@ function closeLockedPopup() {
 
 .map-object--locked {
   cursor: pointer;
-  filter: grayscale(0.6) brightness(0.7);
 }
 
-.map-object--locked:hover,
-.map-object--locked:focus-visible {
+.map-object--locked .house-image,
+.map-object--locked .house-label {
+  filter: grayscale(0.6) brightness(0.7);
+  transition: filter 0.2s ease;
+}
+
+.map-object--locked:hover .house-image,
+.map-object--locked:hover .house-label,
+.map-object--locked:focus-visible .house-image,
+.map-object--locked:focus-visible .house-label {
   filter: grayscale(0.4) brightness(0.8);
 }
 
@@ -195,25 +202,13 @@ function closeLockedPopup() {
   bottom: calc(100% + 0.75rem);
   left: 50%;
   transform: translateX(-50%);
-  width: 180px;
-  background: #1a2a2e;
-  border: 1px solid rgba(255, 212, 71, 0.5);
-  border-radius: 8px;
-  padding: 0.75rem;
+  width: 11rem;
+  background: linear-gradient(180deg, #fffdf0 0%, #fdf6d8 100%);
+  border-radius: 2px;
+  padding: 0.6rem 0.9rem 0.7rem;
   z-index: 10;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-  color: #ffffff;
-  text-align: center;
-}
-
-.locked-popup::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: rgba(255, 212, 71, 0.5);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.18);
+  text-align: left;
 }
 
 .locked-popup__close {
@@ -222,7 +217,7 @@ function closeLockedPopup() {
   right: 0.35rem;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(45, 55, 72, 0.5);
   cursor: pointer;
   padding: 0.15rem;
   line-height: 1;
@@ -230,21 +225,21 @@ function closeLockedPopup() {
 }
 
 .locked-popup__close:hover {
-  color: #ffffff;
+  color: #2d3748;
 }
 
 .locked-popup__title {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: #ffd447;
-  margin: 0 0 0.35rem;
+  color: #1a365d;
+  margin: 0 0 0.2rem;
 }
 
 .locked-popup__body {
   font-size: 0.75rem;
-  line-height: 1.4;
+  line-height: 1.3;
   margin: 0;
-  color: rgba(255, 255, 255, 0.85);
+  color: #2d3748;
 }
 
 .popup-overlay {

@@ -49,6 +49,8 @@ function handleBack() {
   width: 100%;
   min-height: 100vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .scene-background {
@@ -79,6 +81,7 @@ function handleBack() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .scene-body {

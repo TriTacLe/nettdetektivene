@@ -151,6 +151,7 @@ export interface TeacherPhotoAlternativeDraft {
 export interface TeacherTaskBaseDraft {
   title: string
   difficulty: number
+  stopLocation?: string
 }
 
 export interface TeacherNewsTaskDraft extends TeacherTaskBaseDraft {
@@ -168,6 +169,42 @@ export interface TeacherPhotoTaskDraft extends TeacherTaskBaseDraft {
 }
 
 export type TeacherTaskDraft = TeacherNewsTaskDraft | TeacherPhotoTaskDraft
+
+export interface EditArticleDraft {
+  existingImagePath: string | null
+  image: File | null
+  isReal: boolean
+}
+
+export interface EditAlternativeDraft {
+  existingImagePath: string | null
+  image: File | null
+  description: string
+  correctType: PhotoType
+  begrunnelserText: string
+}
+
+export interface EditNewsTaskDraft {
+  type: TaskType.NEWS
+  title: string
+  difficulty: number
+  stopLocation: string
+  question: string
+  hint: string
+  articles: EditArticleDraft[]
+}
+
+export interface EditPhotoTaskDraft {
+  type: TaskType.PHOTO
+  title: string
+  difficulty: number
+  stopLocation: string
+  description: string
+  hint: string
+  alternatives: EditAlternativeDraft[]
+}
+
+export type EditTaskDraft = EditNewsTaskDraft | EditPhotoTaskDraft
 
 export interface ClassroomResponseDTO {
   id: string
