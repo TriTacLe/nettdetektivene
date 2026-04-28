@@ -227,6 +227,13 @@ public class ClassroomService {
       .build();
 
     classroomTaskRepository.save(classroomTask);
+
+    // If students were already approved when this task was added, the
+    // join-time trigger already fired with no tasks available. Re-run the
+    // first-task unlock so they get access. Idempotent for students who
+    // already have the first task unlocked.
+    unlockFirstTaskForApprovedStudents(classroom);
+
     return ClassroomTaskMapper.toDTO(classroomTask);
   }
 
