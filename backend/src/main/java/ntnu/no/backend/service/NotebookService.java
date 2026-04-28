@@ -7,15 +7,19 @@ import ntnu.no.backend.dto.notebook.NotebookEntryRequestDTO;
 import ntnu.no.backend.dto.notebook.NotebookEntryResponseDTO;
 import ntnu.no.backend.mapper.NotebookEntryMapper;
 import ntnu.no.backend.model.Classroom;
+import ntnu.no.backend.model.Notification;
 import ntnu.no.backend.model.NotebookEntry;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotebookEntryRepository;
+import ntnu.no.backend.repository.NotificationRepository;
 import ntnu.no.backend.repository.UserRepository;
 
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
+import ntnu.no.backend.shared.CensoredWords;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +30,8 @@ import java.util.UUID;
 /**
  * Service for managing notebook entries.
  *
- * @author tri
- * @version 0.1
+ * @author tri, norakirknes
+ * @version 0.2
  * @since 0.1
  * @see NotebookController
  * @see NotebookEntry
@@ -39,6 +43,8 @@ public class NotebookService {
   private final ClassroomRepository classroomRepository;
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final NotificationRepository notificationRepository;
 
   /**
    * Creates a new notebook entry for a student in a classroom.
@@ -52,7 +58,7 @@ public class NotebookService {
    * @throws AccessDeniedException if the student is not an approved member
    * @see ClassroomRepository#findByIdAndDeletedAtIsNull(UUID)
    */
-  @Transactional
+  @Transactional(noRollbackFor = IllegalArgumentException.class)
   public NotebookEntryResponseDTO createNotebook(UUID classroomId, NotebookEntryRequestDTO dto, UUID userId) {
     Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
         .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
@@ -61,6 +67,7 @@ public class NotebookService {
         .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
     verifyStudentMembership(classroomId, user);
+    validateContent(dto, classroom, user);
 
     NotebookEntry notebook = NotebookEntry.builder()
         .user(user)
@@ -85,12 +92,13 @@ public class NotebookService {
    * @throws AccessDeniedException if the user does not own the notebook entry
    * @see #createNotebook(UUID, NotebookEntryRequestDTO, UUID)
    */
-  @Transactional
+  @Transactional(noRollbackFor = IllegalArgumentException.class)
   public NotebookEntryResponseDTO updateNotebook(NotebookEntryRequestDTO dto, UUID id, UUID userId) {
     NotebookEntry notebook = notebookEntryRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Notebook not found with id: " + id));
 
     verifyNotebookOwnership(notebook, userId);
+    validateContent(dto, notebook.getClassroom(), notebook.getUser());
 
     notebook.setAutoNotes(dto.getAutoNotes());
     notebook.setStopLocation(dto.getStopLocation());
@@ -160,6 +168,34 @@ public class NotebookService {
 
     if (membership == null || !membership.isAllowed()) {
       throw new AccessDeniedException("You are not an approved member of this classroom");
+    }
+  }
+
+  /**
+   * Validates the contents the student is trying to save.
+   * Checks if the entry contains any of the predefined curse words.
+   * If the entry contains a curse word a notification is sent to all
+   * instructors of the classroom
+   *
+   * @param dto the notebook entry request
+   * @param classroom the classroom of the student
+   * @param user the user (student) making the notebook entry.
+   * @throws IllegalArgumentException if the contents has inappropriate words
+   */
+  private void validateContent(NotebookEntryRequestDTO dto, Classroom classroom, User user) {
+    if (CensoredWords.containsBlockedWord(dto.getStudentReflection())) {
+      classroomInstructorRepository.findAllByClassroom(classroom)
+          .forEach(instructor -> notificationRepository.save(
+              Notification.builder()
+                  .user(instructor.getUser())
+                  .classroom(classroom)
+                  .msg(user.getDisplayName() + " skrev upassende tekst i notatblokken")
+                  .refType("inappropriate_message")
+                  .refId(user.getId())
+                  .isRead(false)
+                  .build()
+          ));
+      throw new IllegalArgumentException("Teksten inneholder upassende ord");
     }
   }
 

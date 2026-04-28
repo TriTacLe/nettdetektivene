@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfileOptions, updateProfileMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
@@ -16,6 +16,9 @@ const { data, isLoading } = useQuery(getProfileOptions())
 const avatarConfig = ref<AvatarConfig>({ ...DEFAULT_AVATAR_CONFIG })
 const displayName = ref('')
 const originalDisplayName = ref('')
+
+const nameChangeStatus = computed(() => data.value?.data?.nameChangeStatus ?? null)
+const hasPendingNameChange = computed(() => nameChangeStatus.value === 'PENDING')
 
 watchEffect(() => {
   const profile = data.value?.data
@@ -43,11 +46,16 @@ function handleSave() {
     return
   }
 
+  const trimmed = displayName.value.trim()
+  if (trimmed !== originalDisplayName.value && hasPendingNameChange.value) {
+    saveError.value = 'Du har allerede en navneendring til godkjenning. Vennligst vent på svar fra læreren din.'
+    return
+  }
+
   const body: Record<string, string> = {
     avatarConfig: serializeAvatarConfig(avatarConfig.value),
   }
 
-  const trimmed = displayName.value.trim()
   if (trimmed !== originalDisplayName.value) {
     body.displayName = trimmed
   }
@@ -64,6 +72,14 @@ function handleSave() {
       <CaseFile v-else tab-label="REDIGER PROFIL" class="w-full max-w-[64rem] lg:max-h-[78vh] lg:min-h-0">
         <template #left>
           <div class="flex flex-col items-center flex-1 p-3 lg:p-4 gap-2 min-h-0">
+
+            <div
+              v-if="hasPendingNameChange"
+              class="w-full px-4 py-3 rounded-xl bg-amber-100 border-2 border-amber-400 text-amber-900 text-sm font-semibold text-center"
+            >
+              Du har spurt om navneendring. Vennligst vent til læreren godkjenner.
+            </div>
+
             <div class="w-full flex flex-col gap-1">
               <label for="display-name" class="text-sm font-bold text-stone-800">
                 Brukernavn
@@ -74,7 +90,8 @@ function handleSave() {
                 type="text"
                 placeholder="Skriv inn navn"
                 maxlength="30"
-                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700"
+                :disabled="hasPendingNameChange"
+                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 @keyup.enter="handleSave"
               />
               <span v-if="saveError" class="text-red-600 text-xs font-semibold">

@@ -28,6 +28,10 @@ public class UserProfileMapper {
    * @return a {@link UserProfileResponseDTO}, or {@code null} if {@code profile} is null
    */
   public static UserProfileResponseDTO toDTO(UserProfile profile) {
+    return toDTO(profile, null);
+  }
+
+  public static UserProfileResponseDTO toDTO(UserProfile profile, String nameChangeStatus) {
     if (profile == null) return null;
     return new UserProfileResponseDTO(
       profile.getId(),
@@ -36,7 +40,8 @@ public class UserProfileMapper {
       profile.getAvatarConfig(),
       profile.getXp(),
       profile.getXpLevel(),
-      profile.getCreatedAt()
+      profile.getCreatedAt(),
+      nameChangeStatus
     );
   }
 

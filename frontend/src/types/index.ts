@@ -259,6 +259,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
+  content?: any
 }
 
 export interface TaskAttemptRequestDTO {

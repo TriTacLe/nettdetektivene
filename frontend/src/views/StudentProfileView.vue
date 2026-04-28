@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
 import CaseFile from '@/components/CaseFile.vue'
 import { useAuthStore } from "@/stores/AuthStore.ts"
+import { useToast } from '@/composables/UseToast'
 import AvatarPreview from '@/components/avatar/AvatarPreview.vue'
 import { parseAvatarConfig } from '@/utils/avatar'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const { data, isLoading } = useQuery(getProfileOptions())
+const { showSuccess, showError } = useToast()
+
+const { data, isLoading } = useQuery({ ...getProfileOptions(), refetchInterval: 5000 })
 const profile = computed(() => data.value?.data ?? null)
 const avatarCfg = computed(() => parseAvatarConfig(profile.value?.avatarConfig ?? null))
 
 const viewportHeight = ref(window.innerHeight)
-function onResize() { viewportHeight.value = window.innerHeight }
+
+function onResize() {
+  viewportHeight.value = window.innerHeight
+}
+
 onMounted(() => window.addEventListener('resize', onResize))
 onUnmounted(() => window.removeEventListener('resize', onResize))
 
@@ -25,6 +32,21 @@ const avatarSize = computed(() => {
   if (viewportHeight.value < 700) return 88
   return 120
 })
+
+const hasPendingNameChange = computed(() => profile.value?.nameChangeStatus === 'PENDING')
+
+watch(
+  () => profile.value?.nameChangeStatus,
+  (newStatus, oldStatus) => {
+    if (oldStatus === 'PENDING' && newStatus && oldStatus !== newStatus) {
+      if (newStatus === 'APPROVED') {
+        showSuccess('Navneendring godkjent')
+      } else if (newStatus === 'REJECTED') {
+        showError('Navneendring avvist')
+      }
+    }
+  }
+)
 </script>
 
 <template>
@@ -37,6 +59,7 @@ const avatarSize = computed(() => {
           <template #left>
             <div class="profile-card-inner">
               <AvatarPreview :config="avatarCfg" :size="avatarSize" />
+
               <button
                 class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition"
                 @click="router.push({ name: 'edit-avatar' })"
@@ -48,6 +71,9 @@ const avatarSize = computed(() => {
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">Brukernavn</p>
                   <p class="profile-value font-bold text-stone-900">{{ profile.displayName ?? '---' }}</p>
+                  <p v-if="hasPendingNameChange" class="text-xs text-amber-700 font-semibold mt-1">
+                    Navneendring venter på godkjenning
+                  </p>
                 </div>
 
                 <div>

@@ -370,6 +370,7 @@ export type UserProfileResponseDto = {
     xp?: number;
     xpLevel?: number;
     createdAt?: string;
+    nameChangeStatus?: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
 };
 
 export type ApiResponseNotificationResponseDto = {

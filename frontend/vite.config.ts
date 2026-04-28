@@ -23,11 +23,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.BACKEND_URL || 'http://localhost:8080',
         changeOrigin: true,
       },
     },
     allowedHosts: [
+      'nettdetektivene.orbitntnu.com',
       '1394-2001-700-300-4013-6caa-319e-8bcf-e831.ngrok-free.app',
     ],
   },
