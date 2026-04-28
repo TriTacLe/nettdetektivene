@@ -386,6 +386,51 @@ BEGIN
 END$$
 
 -- -------------------------------------------------------------
+-- trg_notify_attempt_correct
+-- Notifies instructors the first time a student passes a task.
+-- Uses COUNT on task_attempt (which already includes the new row)
+-- to detect first-pass without relying on task_best_score order.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_notify_attempt_correct$$
+CREATE TRIGGER trg_notify_attempt_correct
+AFTER INSERT ON task_attempt
+FOR EACH ROW
+BEGIN
+    DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_task_title   VARCHAR(255) DEFAULT NULL;
+    DECLARE v_pass_count   INT DEFAULT 0;
+    DECLARE v_msg          VARCHAR(500);
+
+    IF NEW.passed = 1 THEN
+        SELECT COUNT(*)
+        INTO v_pass_count
+        FROM task_attempt
+        WHERE user_id     = NEW.user_id
+          AND task_id     = NEW.task_id
+          AND classroom_id = NEW.classroom_id
+          AND passed      = 1;
+
+        IF v_pass_count = 1 THEN
+            SELECT display_name INTO v_student_name
+            FROM app_user WHERE user_id = NEW.user_id;
+
+            SELECT title INTO v_task_title
+            FROM task WHERE task_id = NEW.task_id;
+
+            SET v_msg = CONCAT(v_student_name, ' fullførte oppgaven "', v_task_title, '".');
+
+            INSERT INTO notification
+                (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
+            SELECT
+                UUID(), ci.user_id, NEW.classroom_id,
+                v_msg, 'task_attempt_correct', NEW.attempt_id, 0, NOW()
+            FROM classroom_instructor ci
+            WHERE ci.classroom_id = NEW.classroom_id;
+        END IF;
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
 -- trg_award_achievements
 -- Awards achievements based on task completion criteria
 -- -------------------------------------------------------------
