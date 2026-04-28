@@ -92,11 +92,10 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-const AUTH_ENDPOINT_PATTERN = /\/auth\/(login|refresh|register|feide-login)\b/
+const AUTH_ENDPOINT_PATTERN = /\/auth\/(login|refresh|register|feide-login|feide)\b/
 
 apiClient.interceptors.response.use((response) => response, async (error: AxiosError) => {
   const original = error.config as AxiosRequestConfig & { _retry?: boolean }
-
   const isAuthRequest = typeof original?.url === 'string' && AUTH_ENDPOINT_PATTERN.test(original.url)
 
   if (error.response?.status !== 401 || original._retry || isAuthRequest) {

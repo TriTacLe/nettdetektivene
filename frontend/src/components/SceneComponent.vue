@@ -11,10 +11,13 @@ const props = withDefaults(
     background?: string
     vignette?: boolean
     scanlines?: boolean
+    dimOverlay?: boolean
   }>(),
   {
+    background: '/StartBackground.jpg',
     vignette: true,
     scanlines: false,
+    dimOverlay: false,
   },
 )
 
@@ -47,7 +50,7 @@ function handleBack() {
 <template>
   <div class="scene" :class="{ scanlines: resolvedScanlines }">
     <img class="scene-background" :src="resolvedBackground" alt="" aria-hidden="true" />
-    <div class="scene-overlay" />
+    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }" />
     <div v-if="vignette" class="scene-vignette" aria-hidden="true" />
 
     <div class="scene-content">
@@ -85,6 +88,10 @@ function handleBack() {
   opacity: 0.5;
   z-index: 10;
   pointer-events: none;
+}
+
+.scene-overlay--dim {
+  opacity: 0.8;
 }
 
 .scene-vignette {
