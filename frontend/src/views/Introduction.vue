@@ -21,7 +21,7 @@ function onSceneDone() {
     <img class="intro-background" src="/StartBackground.jpg" alt="" aria-hidden="true" />
     <CutsceneDialog
       :key="currentScene"
-      :scene="introductionDialogs[currentScene]"
+      :scene="introductionDialogs[currentScene]!"
       @done="onSceneDone"
     />
   </div>
