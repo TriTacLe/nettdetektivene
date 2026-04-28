@@ -5,6 +5,7 @@ import AuthService from '@/services/AuthService.ts'
 import type { UserDTO, FeideLoginRequest } from '@/types'
 import { UserRole } from '@/types'
 import { useToast } from '@/composables/UseToast'
+import { useStopStore } from '@/stores/StopStore'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -29,6 +30,7 @@ export const useAuthStore = defineStore(
       sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
+      useStopStore().exitTestMode()
       await fetchMe()
     }
 
@@ -37,6 +39,7 @@ export const useAuthStore = defineStore(
       sessionStorage.setItem('auth', JSON.stringify({ token: response.token, refreshToken: response.refreshToken }))
       token.value = response.token
       refreshToken.value = response.refreshToken
+      useStopStore().exitTestMode()
       await fetchMe()
     }
 
@@ -63,6 +66,7 @@ export const useAuthStore = defineStore(
       token.value = null
       refreshToken.value = null
       user.value = null
+      useStopStore().exitTestMode()
       const { showSuccess } = useToast()
       showSuccess('Du er logget ut')
       router.push({ name: 'start' })
