@@ -9,14 +9,14 @@ const studentStore = useStudentStore()
 const institutionId = computed(() => studentStore.institutionId)
 
 const { data, isLoading, isError } = useQuery(
-  computed(() =>
-    getClassroomsLeaderboardByInstitutionOptions({
-      path: { institutionId: institutionId.value ?? '' },
-    }),
-  ),
+  institutionId.value
+    ? getClassroomsLeaderboardByInstitutionOptions({
+        path: { institutionId: institutionId.value },
+      })
+    : { enabled: false } as any,
 )
 
-const entries = computed(() => data.value?.data ?? [])
+const entries = computed(() => (data.value as any)?.data ?? [])
 </script>
 
 <template>

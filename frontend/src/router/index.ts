@@ -29,26 +29,41 @@ const router = createRouter({
       path: '/stops/nyhetskvartalet',
       name: 'nyhetskvartalet',
       component: () => import('../views/NyhetskvartaletView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/stops/nyhetskvartalet/:taskId',
       name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletTaskView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/stops/fotografen',
       name: 'fotografen',
       component: () => import('../views/FotografenView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/stops/fotografen/:taskId',
       name: 'fotografen-task',
       component: () => import('../views/FotografenTaskView.vue'),
+      meta: { music: 'dark' },
+    },
+    {
+      path: '/stops/datasenteret/:taskId',
+      name: 'datasenteret-task',
+      component: () => import('../views/TaskView.vue'),
+    },
+    {
+      path: '/stops/:stopId/:taskId',
+      name: 'stop-task',
+      component: () => import('../views/TaskView.vue'),
     },
     {
       path: '/stops/:stopId',
       name: 'stop',
       component: () => import('../views/StopView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/join-classroom',
@@ -75,6 +90,11 @@ const router = createRouter({
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
       // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/test-game',
+      name: 'classroom-test-game',
+      component: () => import('../views/teacher/TeacherTestGameView.vue'),
     },
     {
       path: '/teacher-leaderboard',
@@ -168,16 +188,19 @@ const router = createRouter({
       path: '/task-finished',
       name: 'task-finished',
       component: () => import('../views/TaskFinishedView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/stop-finished',
       name: 'stop-finished',
       component: () => import('../views/StopFinishedView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/task-failed',
       name: 'task-failed',
       component: () => import('../views/TaskFailedView.vue'),
+      meta: { music: 'dark' },
     },
     {
       path: '/teacher-notifications',
@@ -193,6 +216,7 @@ const router = createRouter({
       path: '/tasks',
       name: 'tasks',
       component: () => import('../views/TasksView.vue'),
+      meta: { music: 'dark' },
     },
   ],
 })

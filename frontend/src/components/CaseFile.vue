@@ -161,7 +161,7 @@ defineProps<{ tabLabel: string }>()
 
 .decor-fingerprint {
   position: absolute;
-  top: 11rem;
+  top: 3rem;
   left: 1.25rem;
   width: 4rem;
   height: 6rem;

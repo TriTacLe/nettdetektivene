@@ -70,7 +70,7 @@ function openCreateTask() {
       </div>
       <section v-else-if="tasks.length" class="teacher-task-grid">
         <article v-for="item in tasks" :key="item.taskId" class="teacher-task-card">
-          <div class="teacher-task-header">
+          <div class="teacher-task-info">
             <div class="teacher-task-meta">
               <span class="teacher-pill">{{ item.task.taskType }}</span>
               <span class="teacher-pill teacher-pill--muted">Vanskelighetsgrad {{ item.task.difficulty }}</span>
@@ -81,28 +81,28 @@ function openCreateTask() {
                 {{ item.isActive ? 'Aktiv' : 'Inaktiv' }}
               </span>
             </div>
-            <div class="teacher-task-actions">
-              <button
-                class="teacher-action-btn teacher-action-btn--edit"
-                @click="handleEditTask(item.taskId)"
-                aria-label="Rediger oppgave"
-              >
-                Rediger
-              </button>
-              <button
-                class="teacher-action-btn teacher-action-btn--delete"
-                @click="handleDeleteTask(item.taskId, item.task.title)"
-                :disabled="deleteTaskMutation.isPending.value"
-                aria-label="Slett oppgave"
-              >
-                Slett
-              </button>
-            </div>
+            <h3 class="teacher-task-name">{{ item.task.title }}</h3>
+            <p class="teacher-task-details">
+              Stop: {{ item.task.stopLocation || 'ukjent' }} • Vanskelighetsgrad {{ item.task.difficulty }}
+            </p>
           </div>
-          <h3 class="teacher-task-name">{{ item.task.title }}</h3>
-          <p class="teacher-task-details">
-            Stop: {{ item.task.stopLocation || 'ukjent' }} • Vanskelighetsgrad {{ item.task.difficulty }}
-          </p>
+          <div class="teacher-task-actions">
+            <button
+              class="teacher-action-btn teacher-action-btn--edit"
+              @click="handleEditTask(item.taskId)"
+              aria-label="Rediger oppgave"
+            >
+              Rediger
+            </button>
+            <button
+              class="teacher-action-btn teacher-action-btn--delete"
+              @click="handleDeleteTask(item.taskId, item.task.title)"
+              :disabled="deleteTaskMutation.isPending.value"
+              aria-label="Slett oppgave"
+            >
+              Slett
+            </button>
+          </div>
         </article>
       </section>
       <div v-else class="teacher-state">
@@ -147,9 +147,11 @@ function openCreateTask() {
 
 .teacher-title {
   margin: 0;
-  color: #2b1606;
+  color: #ffffff;
   font-size: clamp(1.4rem, 2vw, 2rem);
   font-weight: 900;
+  -webkit-text-stroke: 5px #000000;
+  paint-order: stroke fill;
 }
 
 .teacher-copy {
@@ -188,40 +190,47 @@ function openCreateTask() {
   background: rgba(255, 255, 255, 0.94);
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  padding: 1.1rem;
+  padding: 1.1rem 1.25rem;
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
   display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.teacher-task-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .teacher-task-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.teacher-task-info {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .teacher-task-actions {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  align-items: stretch;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .teacher-action-btn {
-  padding: 0.6rem 1rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  min-width: 7rem;
+  text-align: center;
 }
 
 .teacher-action-btn--edit {
@@ -277,9 +286,11 @@ function openCreateTask() {
 
 .teacher-task-name {
   margin: 0.9rem 0 0.35rem;
-  color: #111827;
+  color: #ffffff;
   font-size: 1.1rem;
   font-weight: 800;
+  -webkit-text-stroke: 4px #000000;
+  paint-order: stroke fill;
 }
 
 .teacher-task-details {
@@ -311,11 +322,13 @@ function openCreateTask() {
     width: 100%;
   }
 
-  .teacher-task-header {
+  .teacher-task-card {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .teacher-task-actions {
+    flex-direction: row;
     width: 100%;
   }
 

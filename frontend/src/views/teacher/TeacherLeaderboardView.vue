@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { getClassroomsLeaderboardByInstitutionOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import { ref, computed, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import SceneComponent from '@/components/SceneComponent.vue'
 
 const router = useRouter()
 const institutionId = ref<string | null>(null)
@@ -27,14 +28,14 @@ watchEffect(async () => {
 })
 
 const { data, isLoading, isError } = useQuery(
-  computed(() =>
-    getClassroomsLeaderboardByInstitutionOptions({
-      path: { institutionId: institutionId.value ?? '' },
-    }),
-  ),
+  institutionId.value
+    ? getClassroomsLeaderboardByInstitutionOptions({
+        path: { institutionId: institutionId.value },
+      })
+    : { enabled: false } as any,
 )
 
-const entries = computed(() => data.value?.data ?? [])
+const entries = computed(() => (data.value as any)?.data ?? [])
 </script>
 
 <template>

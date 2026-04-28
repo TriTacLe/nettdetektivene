@@ -8,12 +8,8 @@ import type {
 } from "@/types";
 
 async function getMyClassrooms(): Promise<ClassroomResponseDTO[]> {
-  console.log('[ClassroomService] Fetching my classrooms...')
   const { data } = await apiClient.get<ApiResponse<ClassroomResponseDTO>>('/classrooms/me')
-  console.log('[ClassroomService] Response:', data)
-  const classrooms = data.data ? [data.data] : []
-  console.log('[ClassroomService] Parsed classrooms:', classrooms)
-  return classrooms
+  return data.data ? [data.data] : []
 }
 
 async function getAllClassrooms(): Promise<ClassroomResponseDTO[]> {
@@ -67,23 +63,16 @@ async function getUnlockedTasks(classroomId: string): Promise<ClassroomTaskRespo
   return data.data
 }
 
-async function getClassroomTasks(classroomId: string, activeOnly: boolean = true, includeUnlocked: boolean = true): Promise<ClassroomTaskResponseDTO[]> {
-  console.log('[ClassroomService] getClassroomTasks - classroomId:', classroomId, 'activeOnly:', activeOnly, 'includeUnlocked:', includeUnlocked)
+async function getClassroomTasks(classroomId: string, activeOnly: boolean = true, includeUnlocked: boolean = true, testMode: boolean = false): Promise<ClassroomTaskResponseDTO[]> {
   const params: Record<string, boolean> = {}
   if (activeOnly) params.activeOnly = true
   if (includeUnlocked) params.includeUnlocked = true
+  if (testMode) params.testMode = true
 
   const queryString = new URLSearchParams(params as any).toString()
   const url = queryString ? `/classrooms/${classroomId}/tasks?${queryString}` : `/classrooms/${classroomId}/tasks`
 
-  console.log('[ClassroomService] Fetching URL:', url)
   const { data } = await apiClient.get<ApiResponse<ClassroomTaskResponseDTO[]>>(url)
-  console.log('[ClassroomService] Response data:', data)
-  console.log('[ClassroomService] Tasks with unlock status:', data.data?.map(t => ({
-    title: t.task.title,
-    isUnlocked: t.isUnlocked,
-    taskId: t.taskId
-  })))
   return data.data
 }
 
