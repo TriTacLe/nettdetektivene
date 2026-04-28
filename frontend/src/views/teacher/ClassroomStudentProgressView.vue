@@ -362,8 +362,8 @@ function formatDate(iso: string | undefined): string {
         <!-- Notebook toggle -->
         <div class="px-5 pb-5">
           <button
+            class="btn-vn notebook-toggle-btn"
             @click="toggleNotebook(stop.key)"
-            class="w-full border border-amber-300 text-amber-800 font-semibold text-sm py-2.5 rounded-xl hover:bg-amber-50 transition"
           >
             {{ openNotebookStop === stop.key ? 'Skjul notater' : 'Se Notater' }}
           </button>

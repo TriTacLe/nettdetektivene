@@ -17,21 +17,204 @@
   --color-nd-panel-border: rgba(255, 255, 255, 0.18);
   --color-nd-vignette: rgba(0, 0, 0, 0.55);
 
+  /* Pixel-notch button palette. White card, black outline + text.
+     Inverts on hover (black card, white text). Applied to every
+     <button> globally, except those tagged `.btn-bare`. */
+  --color-nd-button: #ffffff;
+  --color-nd-button-hover: #111111;
+  --color-nd-button-active: #000000;
+  --color-nd-button-edge: #111111;
+  --color-nd-button-text: #111111;
+  --color-nd-button-text-hover: #ffffff;
+  --color-nd-button-danger: #ffffff;
+  --color-nd-button-danger-edge: #b91c1c;
+  --color-nd-button-danger-text: #b91c1c;
+
   --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
   --radius-card: 0.75rem;
 }
 
-button {
-  background-color: #ffffff;
-  color: #000000;
-  border: 2px solid #000000;
-  border-radius: 0.5rem;
-  padding: 0.75rem 2rem;
-  font-size: 1.25rem;
+/* ---------------------------------------------------------------
+ * Default <button> — pixel-notched white rectangle with black outline
+ * and black text. Inverts to black-on-white on hover/focus. Applied
+ * globally to every <button>, with `.btn-bare` as the opt-out for
+ * icon-only and fully-custom buttons.
+ *
+ * The corner-notch silhouette is cut with `clip-path: polygon(...)`.
+ * Real `border` is invisible after the clip, so the edge highlight
+ * is drawn as an inset box-shadow instead.
+ * --------------------------------------------------------------- */
+button:not(.btn-bare),
+.btn-vn {
+  background-color: var(--color-nd-button);
+  color: var(--color-nd-button-text);
+  border: 2px solid var(--color-nd-button-edge);
+  border-radius: 0.6rem;
+  padding: 0.85rem 2rem;
+  font-family: inherit;
+  font-size: 1.1rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+button:not(.btn-bare):hover:not(:disabled),
+.btn-vn:hover:not(:disabled),
+button:not(.btn-bare):focus-visible:not(:disabled),
+.btn-vn:focus-visible:not(:disabled) {
+  transform: scale(1.04);
+}
+button:not(.btn-bare):active:not(:disabled),
+.btn-vn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:not(.btn-bare):focus-visible,
+.btn-vn:focus-visible {
+  outline: 2px solid var(--color-nd-glow);
+  outline-offset: 3px;
+}
+button:not(.btn-bare):disabled,
+.btn-vn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Opt-out for buttons that handle their own visuals (icon-only nav
+   arrows, modal close X, BoardNote, large task cards, quiz choices).
+   Provides a clean baseline so the component's scoped CSS — including
+   its own :hover/:active rules — works without fighting the globals. */
+.btn-bare {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
   cursor: pointer;
 }
+.btn-bare:focus-visible {
+  outline: 2px solid var(--color-nd-glow);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+ * Menu list utilities — used by teacher pages that present a
+ * vertical list of nav buttons (TeacherHome, ClassroomDetail,
+ * ClassroomSettings, ClassroomOverview, etc.). Pair with `.btn-vn`
+ * on each `<button>` to get purple-notch fill + invert hover.
+ * --------------------------------------------------------------- */
+.menu-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+.menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+.menu-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.menu-subtitle {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
+.menu-arrow {
+  font-size: 1.4rem;
+  font-weight: 700;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.menu-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 2.5rem;
+  background: var(--color-nd-danger, #ef4444);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 999px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+}
+
+/* Sizing helpers shared by the three teacher "overview" pages
+   (ClassroomOverview, ClassroomStudentsView, ClassroomTasksView).
+   Big primary "+ create" button at the top, and chunky action
+   buttons (Åpne / Rediger / Slett) on each row. */
+.overview-primary-btn {
+  width: 100%;
+  font-size: 1.15rem;
+  padding: 1rem 1.75rem;
+}
+.overview-action-btn {
+  font-size: 0.95rem;
+  padding: 0.6rem 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Stack layout for menu-style button lists (login forms, dialog
+   choices, start screen menu). Action pairs (approve/reject etc.)
+   stay horizontal, so this is opt-in via the .btn-stack class on the
+   parent wrapper. */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 18rem;
+}
+.btn-stack > button { width: 100%; }
+
+/* Destructive variant — red outline + red text on white. Hover/active
+   keep the colour stable and just scale, matching the default. */
+.btn-vn-danger,
+button.btn-vn-danger:not(.btn-bare) {
+  background-color: var(--color-nd-button-danger);
+  color: var(--color-nd-button-danger-text);
+  border-color: var(--color-nd-button-danger-edge);
+}
+
+/* Outline / cancel variant — transparent fill, edge only. */
+.btn-vn-ghost {
+  background-color: transparent;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 2px var(--color-nd-button-edge);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.btn-vn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.12);
+  filter: none;
+}
+
 
 input {
   background-color: #ffffff;
@@ -77,7 +260,7 @@ h4, h5, h6 {
 .scene-fade-leave-to { opacity: 0; }
 
 /* Reserve scrollbar gutter so route swaps don't shift content horizontally. */
-html { scrollbar-gutter: stable; }
+html, body { scrollbar-gutter: stable; background: #000; }
 
 /* CRT scanline overlay — opt-in via SceneComponent prop or route meta. */
 .scanlines::after {

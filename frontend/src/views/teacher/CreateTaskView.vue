@@ -440,14 +440,14 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   gap: 0.8rem;
   align-items: start;
   background: radial-gradient(circle at top left, #fef3c7, #fdba74);
-  border-color: #b45309;
+  border-color: #111111;
   color: #431407;
   text-align: left;
 }
 
 .task-type-card--photo {
   background: radial-gradient(circle at top left, #dcfce7, #86efac);
-  border-color: #15803d;
+  border-color: #111111;
   color: #052e16;
 }
 
@@ -598,7 +598,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   align-items: center;
   gap: 1px;
   padding: 0.4rem 0.6rem;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.6rem;
   background: white;
   cursor: pointer;
@@ -658,7 +658,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-field textarea,
 .task-field select {
   background: white;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.8rem;
   padding: 0.85rem 1rem;
   font-size: 1rem;
@@ -809,7 +809,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-create-add {
   align-self: start;
   background: #eff6ff;
-  border-color: #3b82f6;
+  border-color: #111111;
   color: #1d4ed8;
 }
 
@@ -884,7 +884,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   gap: 0.25rem;
   padding: 0.6rem 0.4rem;
   border-radius: 0.75rem;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   background: white;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;

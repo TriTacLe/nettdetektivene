@@ -66,7 +66,7 @@ function submit() {
             v-for="type in TYPES"
             :key="type.value"
             type="button"
-            class="choice-btn"
+            class="choice-btn btn-bare"
             :class="{ 'choice-btn--selected': selections[i] === type.value }"
             :disabled="submitted"
             @click="select(i, type.value)"
@@ -99,7 +99,7 @@ function submit() {
     <div class="lever-row">
       <button
         type="button"
-        class="lever-btn"
+        class="lever-btn btn-bare"
         :disabled="!allSelected || submitted"
         @click="submit"
       >

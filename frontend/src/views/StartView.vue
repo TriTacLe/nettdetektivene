@@ -21,12 +21,11 @@ function goToTeacher() {
       <h1>Velkommen til Nettdetektivene!</h1>
       <h4>Velg om du er en elev eller en lærer for å komme i gang.</h4>
 
-      <div class="buttons">
-        <button class="btn" @click="goToStudent">
+      <div class="btn-stack">
+        <button class="btn-vn" @click="goToStudent">
           Jeg er en elev
         </button>
-
-        <button class="btn" @click="goToTeacher">
+        <button class="btn-vn" @click="goToTeacher">
           Jeg er en lærer
         </button>
       </div>
@@ -52,11 +51,5 @@ function goToTeacher() {
 .start-content h4 {
   font-size: 1.25rem;
 }
-
-.buttons {
-  display: flex;
-  gap: 1rem;
-}
-
 
 </style>

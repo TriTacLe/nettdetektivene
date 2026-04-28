@@ -119,7 +119,7 @@ async function handleLogin(): Promise<void> {
           </span>
         </div>
 
-        <button :disabled="isLoading" @click="handleLogin">
+        <button class="btn-vn" :disabled="isLoading" @click="handleLogin">
           {{ isLoading ? 'Logger inn...' : 'Logg inn' }}
         </button>
       </div>

@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAudioStore } from '@/stores/AudioStore'
 import { useAuthStore } from '@/stores/AuthStore'
 
-const emit = defineEmits<{ close: [] }>()
+defineEmits<{ close: [] }>()
 
 const audio = useAudioStore()
 const auth = useAuthStore()
-const router = useRouter()
 
 const musicVolume = ref(Math.round(audio.musicVolume * 100))
 const sfxVolume = ref(Math.round(audio.sfxVolume * 100))
@@ -27,11 +25,6 @@ function onTextSpeedInput() {
   audio.setTextSpeed(textSpeed.value)
 }
 
-function backToStart() {
-  emit('close')
-  router.push({ name: 'start' })
-}
-
 function logout() {
   auth.logout()
 }
@@ -42,7 +35,7 @@ function logout() {
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Innstillinger</h2>
-        <button class="close-button" aria-label="Lukk innstillinger" @click="$emit('close')">
+        <button class="close-button btn-bare" aria-label="Lukk innstillinger" @click="$emit('close')">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
@@ -54,7 +47,7 @@ function logout() {
           <div class="setting-row">
             <label for="music-volume">Musikk</label>
             <button
-              class="mute-button"
+              class="mute-button btn-bare"
               :aria-label="audio.musicMuted ? 'Skru på musikk' : 'Demp musikk'"
               @click="audio.toggleMusicMuted()"
             >
@@ -88,7 +81,7 @@ function logout() {
           <div class="setting-row">
             <label for="sfx-volume">Lydeffekter</label>
             <button
-              class="mute-button"
+              class="mute-button btn-bare"
               :aria-label="audio.sfxMuted ? 'Skru på lydeffekter' : 'Demp lydeffekter'"
               @click="audio.toggleSfxMuted()"
             >
@@ -148,7 +141,7 @@ function logout() {
           <div class="setting-row">
             <label>Auto-fortsett</label>
             <button
-              class="mute-button"
+              class="mute-button btn-bare"
               :aria-pressed="audio.autoAdvance"
               @click="audio.toggleAutoAdvance()"
             >
@@ -157,8 +150,7 @@ function logout() {
           </div>
         </section>
 
-        <button class="back-button" @click="backToStart">Tilbake til start</button>
-        <button class="logout-button" @click="logout">Logg ut</button>
+        <button class="btn-vn btn-vn-danger" @click="logout">Logg ut</button>
       </div>
     </div>
   </div>
@@ -245,6 +237,7 @@ function logout() {
   border-radius: 999px;
   background: none;
   cursor: pointer;
+  color: inherit;
 }
 
 .mute-button:hover {
@@ -326,30 +319,7 @@ function logout() {
   opacity: 0.3;
 }
 
-.back-button,
-.logout-button {
-  margin-top: 4px;
-  padding: 10px;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.back-button {
-  background: var(--color-nd-navy, #1a2744);
-}
-
-.logout-button {
-  background: var(--color-nd-danger);
-}
-
-.back-button:hover,
-.logout-button:hover {
-  filter: brightness(0.88);
-}
+.modal-body > .btn-vn { margin-top: 4px; }
 
 .speed-readout {
   font-weight: 600;

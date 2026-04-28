@@ -26,7 +26,7 @@ const swayDuration = `${(4 + Math.random() * 1.5).toFixed(2)}s`
 <template>
   <button
     type="button"
-    class="board-note"
+    class="board-note btn-bare"
     :style="{
       '--note-rotation': `${rotation}deg`,
       '--sway-delay': swayDelay,

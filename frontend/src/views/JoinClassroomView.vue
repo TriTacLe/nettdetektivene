@@ -52,8 +52,8 @@ function handleJoin() {
         </div>
 
         <button
+          class="btn-vn"
           :disabled="join.isPending.value"
-          class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition"
           @click="handleJoin"
         >
           {{ join.isPending.value ? 'Blir med...' : 'Bli med' }}

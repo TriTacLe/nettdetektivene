@@ -90,7 +90,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       class="cutscene-background"
       :style="{ backgroundImage: `url('${scene.background}')` }"
     />
-    <div class="cutscene-backdrop" />
+    <div class="cutscene-tint" aria-hidden="true" />
 
     <img
       class="cutscene-character"
@@ -99,25 +99,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :alt="scene.characterName"
     />
 
-    <div class="cutscene-dialog vn-panel" @click.stop="advance">
+    <div class="cutscene-text">
       <div class="dialog-name">{{ scene.characterName }}</div>
       <div class="dialog-text">
         {{ visibleText }}<span v-if="!isComplete" class="dialog-caret">|</span>
       </div>
 
-      <div v-if="showChoices" class="dialog-choices">
+      <div v-if="showChoices" class="dialog-choices btn-stack">
         <button
           v-for="(choice, i) in scene.choices"
           :key="choice.next + i"
-          class="dialog-choice"
+          class="btn-vn dialog-choice"
           @click.stop="choose(choice)"
         >
           <span class="dialog-choice-key">{{ i + 1 }}</span>
           <span class="dialog-choice-label">{{ choice.label }}</span>
         </button>
       </div>
+    </div>
 
-      <div v-else class="dialog-progress">
+    <div class="dialog-corner">
+      <div v-if="!showChoices" class="dialog-progress">
         <span
           v-for="(_, i) in scene.lines"
           :key="i"
@@ -125,7 +127,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           :class="{ active: i === lineIndex }"
         />
       </div>
-
       <div v-if="!showChoices" class="dialog-hint">
         <template v-if="!isComplete">Klikk for å hoppe over</template>
         <template v-else-if="!isLastLine">Klikk for å fortsette</template>
@@ -141,8 +142,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: flex;
-  align-items: flex-end;
   cursor: pointer;
   user-select: none;
   overflow: hidden;
@@ -153,35 +152,36 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: brightness(0.7) saturate(1.05);
-  transform: scale(1.04);
-  transition: transform 6s ease-out;
-}
-.cutscene[data-mood] .cutscene-background {
-  transform: scale(1.08);
+  z-index: 0;
 }
 
-.cutscene-backdrop {
+/* Dark layer between the background and the character — bumps text
+   contrast without fully obscuring the scene. Stronger at the bottom
+   where the dialog text sits. */
+.cutscene-tint {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.55) 100%),
-    linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.2) 100%);
+    linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0.35) 100%);
 }
 
 .cutscene-character {
   position: absolute;
-  bottom: 180px;
-  left: 5%;
-  height: 60vh;
-  max-height: 520px;
+  bottom: 0;
+  right: 4%;
+  height: 95vh;
+  max-height: 100vh;
+  width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.75));
-  z-index: 1;
+  object-position: bottom right;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.6));
+  z-index: 2;
   pointer-events: none;
   animation: portrait-idle 4.5s ease-in-out infinite;
   transform-origin: bottom center;
-  transition: filter 0.3s ease, transform 0.3s ease;
+  transition: filter 0.3s ease;
 }
 
 .cutscene-character.mood-happy { filter: drop-shadow(0 12px 28px rgba(56, 189, 124, 0.45)) brightness(1.05); }
@@ -194,120 +194,125 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   50%      { transform: translateY(-6px); }
 }
 
-.cutscene-dialog {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: 1.5rem 2rem 1.5rem 42%;
-  min-height: 200px;
+/* Text + choices float bottom-center, free-floating on the scene. */
+.cutscene-text {
+  position: absolute;
+  left: 50%;
+  bottom: 5vh;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(70vw, 60rem);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
 }
 
 @media (max-width: 640px) {
-  .cutscene-character { height: 38vh; bottom: 220px; left: 0; }
-  .cutscene-dialog { padding: 1.25rem; padding-top: 3rem; min-height: 180px; }
+  .cutscene-character { height: 70vh; right: 0; }
+  .cutscene-text { width: calc(100% - 2.5rem); bottom: 1.5rem; }
 }
 
 .dialog-name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--color-nd-glow, #f0c040);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-shadow: 0 0 12px rgba(240, 192, 64, 0.35);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(0, 0, 0, 0.7);
 }
 
 .dialog-text {
-  font-size: 1.1rem;
-  color: #f4f4f4;
-  line-height: 1.65;
-  max-width: 720px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.55;
   min-height: 3.4em;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 14px rgba(0, 0, 0, 0.75);
 }
 
 .dialog-caret {
   display: inline-block;
   margin-left: 2px;
   animation: caret-blink 0.9s steps(1) infinite;
-  color: var(--color-nd-glow, #f0c040);
+  color: #ffffff;
+  text-shadow: inherit;
 }
 @keyframes caret-blink { 50% { opacity: 0; } }
 
-.dialog-progress { display: flex; gap: 0.4rem; margin-top: 0.25rem; }
-.dialog-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); transition: background 0.2s; }
-.dialog-dot.active { background: var(--color-nd-glow, #f0c040); }
-
 .dialog-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  max-width: 720px;
+  margin-top: 0.4rem;
+  max-width: min(44rem, 92vw);
 }
 
 .dialog-choice {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.7rem 1rem;
-  background: rgba(20, 24, 40, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0.5rem;
-  color: #f4f4f4;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
 }
-.dialog-choice:hover, .dialog-choice:focus-visible {
-  background: rgba(40, 48, 75, 0.95);
-  border-color: var(--color-nd-glow, #f0c040);
-  transform: translateX(3px);
-  outline: none;
+.dialog-choice .dialog-choice-key {
+  color: #555;
 }
 
 .dialog-choice-key {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.35rem;
-  font-size: 0.85rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 0.8rem;
   color: var(--color-nd-glow, #f0c040);
   font-weight: 800;
   flex-shrink: 0;
 }
 
-.dialog-choice-label { flex: 1; }
+.dialog-choice-label { flex: 1; white-space: nowrap; }
+
+/* Progress dots + hint sit discreetly bottom-right so they don't
+   compete with the dialog block. */
+.dialog-corner {
+  position: absolute;
+  right: 3vw;
+  bottom: 3vh;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.dialog-progress { display: flex; gap: 0.35rem; }
+.dialog-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+  transition: background 0.2s;
+}
+.dialog-dot.active { background: var(--color-nd-glow, #f0c040); }
 
 .dialog-hint {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  margin-top: auto;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
 }
-
 .dialog-arrow {
   font-size: 0.65rem;
   animation: arrow-pulse 1.2s ease-in-out infinite;
 }
 @keyframes arrow-pulse {
-  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  0%, 100% { opacity: 0.5; transform: translateX(0); }
   50%      { opacity: 1; transform: translateX(3px); }
-}
-
-/* VN-style panel base — overridable in main.css if --color-nd-panel is defined */
-.vn-panel {
-  background: var(--color-nd-panel, rgba(10, 10, 20, 0.92));
-  border-top: 2px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(6px);
 }
 </style>
