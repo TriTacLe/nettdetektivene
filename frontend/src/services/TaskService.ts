@@ -1,6 +1,6 @@
 import apiClient from '@/services/ApiService'
 import ClassroomService from '@/services/ClassroomService'
-import { TaskType, type TaskDTO, type NewsChallengeContent, type PhotoChallengeContent, type ApiResponse, type TeacherPhotoTaskDraft, type TeacherTaskDraft } from '@/types'
+import { TaskType, type TaskDTO, type NewsChallengeContent, type PhotoChallengeContent, type ApiResponse, type TeacherPhotoTaskDraft, type TeacherTaskDraft, type EditTaskDraft } from '@/types'
 
 export async function fetchAllTasks(): Promise<TaskDTO[]> {
   const { data } = await apiClient.get<ApiResponse<TaskDTO[]>>('/tasks')
@@ -38,9 +38,8 @@ export async function createTeacherTask(classroomId: string, draft: TeacherTaskD
   const taskPayload = {
     title: draft.title.trim(),
     taskType: draft.type,
-    stopLocation: draft.difficulty === 4
-      ? 'datasenteret'
-      : draft.type === TaskType.NEWS ? 'nyhetskvartalet' : 'fotografen',
+<<<<<<< HEAD
+    stopLocation: draft.stopLocation ?? (draft.type === TaskType.NEWS ? 'nyhetskvartalet' : 'fotografen'),
     difficulty: draft.difficulty,
     content: JSON.stringify(content),
   }
@@ -112,6 +111,108 @@ export async function updateTeacherTask(
     ...(updates.difficulty !== undefined && { difficulty: updates.difficulty }),
   })
   return data.data
+}
+
+export async function updateTeacherTaskFull(taskId: string, draft: EditTaskDraft): Promise<TaskDTO> {
+  const hasNewImages = draft.type === TaskType.NEWS
+    ? draft.articles.some(a => a.image)
+    : draft.alternatives.some(a => a.image)
+
+  if (hasNewImages) {
+    return updateTeacherTaskMultipart(taskId, draft)
+  }
+
+  // JSON path — no new images, send everything as plain JSON
+  let content: object
+  if (draft.type === TaskType.NEWS) {
+    content = {
+      question: draft.question.trim(),
+      hint: draft.hint.trim(),
+      articles: draft.articles.map(a => ({
+        imagePath: toRelativePath(a.existingImagePath ?? ''),
+        isReal: a.isReal,
+      })),
+    }
+  } else {
+    content = {
+      description: draft.description.trim(),
+      hint: draft.hint.trim(),
+      alternatives: draft.alternatives.map(a => ({
+        imagePath: toRelativePath(a.existingImagePath ?? ''),
+        description: a.description.trim(),
+        correctType: a.correctType,
+        begrunnelser: a.begrunnelserText.split('\n').map(s => s.trim()).filter(Boolean),
+      })),
+    }
+  }
+
+  const { data } = await apiClient.patch<ApiResponse<TaskDTO>>(`/tasks/${taskId}`, {
+    title: draft.title.trim(),
+    taskType: draft.type,
+    difficulty: draft.difficulty,
+    stopLocation: draft.stopLocation,
+    content: JSON.stringify(content),
+  })
+  return data.data
+}
+
+async function updateTeacherTaskMultipart(taskId: string, draft: EditTaskDraft): Promise<TaskDTO> {
+  const formData = new FormData()
+
+  let content: object
+  if (draft.type === TaskType.NEWS) {
+    content = {
+      question: draft.question.trim(),
+      hint: draft.hint.trim(),
+      articles: draft.articles.map((article, index) => ({
+        imagePath: resolveEditImageRef(formData, article.image, article.existingImagePath, `news-article-${index + 1}`),
+        isReal: article.isReal,
+      })),
+    }
+  } else {
+    content = {
+      description: draft.description.trim(),
+      hint: draft.hint.trim(),
+      alternatives: draft.alternatives.map((alt, index) => ({
+        imagePath: resolveEditImageRef(formData, alt.image, alt.existingImagePath, `photo-alternative-${index + 1}`),
+        description: alt.description.trim(),
+        correctType: alt.correctType,
+        begrunnelser: alt.begrunnelserText.split('\n').map(s => s.trim()).filter(Boolean),
+      })),
+    }
+  }
+
+  formData.append('task', new Blob([JSON.stringify({
+    title: draft.title.trim(),
+    taskType: draft.type,
+    difficulty: draft.difficulty,
+    stopLocation: draft.stopLocation,
+    content: JSON.stringify(content),
+  })], { type: 'application/json' }))
+
+  const { data } = await apiClient.patch<ApiResponse<TaskDTO>>(`/tasks/${taskId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data.data
+}
+
+function resolveEditImageRef(formData: FormData, newFile: File | null, existingPath: string | null, name: string): string {
+  if (newFile) {
+    const safeFilename = `${name}-${newFile.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '')}`
+    formData.append('images', newFile, safeFilename)
+    return `upload://${safeFilename}`
+  }
+  if (!existingPath) throw new Error(`Mangler bilde for ${name}`)
+  return toRelativePath(existingPath)
+}
+
+function toRelativePath(path: string): string {
+  const apiBaseUrl = import.meta.env.VITE_API_URL as string | undefined
+  if (apiBaseUrl) {
+    const origin = apiBaseUrl.replace(/\/api\/v1\/?$/, '')
+    if (path.startsWith(origin)) return path.slice(origin.length)
+  }
+  return path
 }
 
 export function parseTaskContent(contentString: string, taskType: string) {

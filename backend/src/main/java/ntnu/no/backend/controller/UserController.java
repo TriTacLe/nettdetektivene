@@ -62,24 +62,26 @@ public class UserController {
     return ResponseEntity.ok(userService.updateUser(user.getId(), dto));
   }
 
-  /**
-   * Updates a student's account. Currently any instructor can update any user by UUID.
-   * TODO: restrict to students only and scope to the instructor's own classroom(s)
-   *  when classroom membership repositories and services are implemented.
+/**
+   * Updates a student's account by instructor.
+   * Instructors can only update students from their own classrooms.
    *
-   * @param id  the UUID of the student to update
+   * @param targetUserId the UUID of the student to update
    * @param dto the update request containing new values
+   * @param requestingInstructor the authenticated instructor
    * @return {@code 200 OK} with the updated user
    */
-  @Operation(summary = "Update a student's account (instructor only)")
+  @Operation(summary = "Update a student's account (instructor own classroom only)")
   @ApiResponse(responseCode = "200", description = "User updated successfully")
   @ApiResponse(responseCode = "400", description = "Invalid input")
   @ApiResponse(responseCode = "401", description = "Not authenticated")
-  @ApiResponse(responseCode = "403", description = "Not authorized")
+  @ApiResponse(responseCode = "403", description = "Not authorized - instructor can only update students in their own classrooms")
   @PreAuthorize("hasAuthority('instructor')")
-  @PatchMapping("/{id}")
-  public ResponseEntity<UserResponseDTO> updateUserById(@PathVariable UUID id,
-                                                        @Valid @RequestBody UserUpdateDTO dto) {
-    return ResponseEntity.ok(userService.updateUser(id, dto));
+  @PatchMapping("/{targetUserId}")
+  public ResponseEntity<UserResponseDTO> updateUserById(
+      @PathVariable UUID targetUserId,
+      @Valid @RequestBody UserUpdateDTO dto,
+      @AuthenticationPrincipal User requestingInstructor) {
+    return ResponseEntity.ok(userService.updateStudentByInstructor(targetUserId, dto, requestingInstructor));
   }
 }

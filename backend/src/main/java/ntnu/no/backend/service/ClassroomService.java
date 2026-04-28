@@ -181,6 +181,24 @@ public class ClassroomService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<ClassroomTaskResponseDTO> getActiveClassroomTasksTestMode(UUID classroomId, UUID userId) {
+    if (!classroomRepository.existsById(classroomId)) {
+      throw new EntityNotFoundException("Classroom not found with id: " + classroomId);
+    }
+
+    List<ClassroomTask> allTasks = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroomId);
+
+    List<UUID> allTaskIds = allTasks.stream()
+        .map(ct -> ct.getTask().getId())
+        .toList();
+
+    return allTasks.stream()
+        .map(ct -> ClassroomTaskMapper.toDTO(ct, allTaskIds))
+        .toList();
+  }
+
   @Transactional
   public ClassroomTaskResponseDTO createClassroomTask(UUID classroomId, ClassroomTaskCreateRequestDTO dto) {
     Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)

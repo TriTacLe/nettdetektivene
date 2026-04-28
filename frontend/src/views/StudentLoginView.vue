@@ -10,7 +10,7 @@ const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
 // init verdi må fjernes før innlevering
-const email = ref('student1@test.no')
+const email = ref('tri@nettdetektivene.no')
 const password = ref('password123')
 
 const serverError = ref('')

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService.ts'
 import type { UserDTO, FeideLoginRequest } from '@/types'
 import { UserRole } from '@/types'
-import { useStopStore } from '@/stores/StopStore'
+import { useToast } from '@/composables/UseToast'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -63,7 +63,8 @@ export const useAuthStore = defineStore(
       token.value = null
       refreshToken.value = null
       user.value = null
-      useStopStore().clearCompleted()
+      const { showSuccess } = useToast()
+      showSuccess('Du er logget ut')
       router.push({ name: 'start' })
     }
 
