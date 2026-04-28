@@ -42,6 +42,8 @@ services:
       SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8080:8080"
+    volumes:
+      - nettdetektivene_uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,6 +64,7 @@ services:
 
 volumes:
   nettdetektivene_mysql_data:
+  nettdetektivene_uploads:
 
 networks:
   nd-network:
