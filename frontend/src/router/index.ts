@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { requireTeacher } from "@/router/guards.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,6 +46,16 @@ const router = createRouter({
       component: () => import('../views/FotografenTaskView.vue'),
     },
     {
+      path: '/stops/datasenteret/:taskId',
+      name: 'datasenteret-task',
+      component: () => import('../views/TaskView.vue'),
+    },
+    {
+      path: '/stops/:stopId/:taskId',
+      name: 'stop-task',
+      component: () => import('../views/TaskView.vue'),
+    },
+    {
       path: '/stops/:stopId',
       name: 'stop',
       component: () => import('../views/StopView.vue'),
@@ -76,6 +85,11 @@ const router = createRouter({
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
       // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/test-game',
+      name: 'classroom-test-game',
+      component: () => import('../views/teacher/TeacherTestGameView.vue'),
     },
     {
       path: '/teacher-leaderboard',
@@ -119,6 +133,11 @@ const router = createRouter({
       path: '/classroom/:id/tasks/new',
       name: 'classroom-task-create',
       component: () => import('../views/teacher/CreateTaskView.vue'),
+    },
+    {
+      path: '/classroom/:id/tasks/:taskId/edit',
+      name: 'classroom-task-edit',
+      component: () => import('../views/teacher/EditClassroomTaskView.vue'),
     },
     {
       path: '/classroom/:id/students',

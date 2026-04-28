@@ -222,6 +222,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
+  content?: any
 }
 
 export interface TaskAttemptRequestDTO {
@@ -249,6 +250,8 @@ export enum NotificationType {
   INAPPROPRIATE_USERNAME = 'INAPPROPRIATE_USERNAME',
   JOIN_REQUEST = 'JOIN_REQUEST',
   NAME_CHANGE = 'NAME_CHANGE',
+  FAILED = 'FAILED',
+  CORRECT = 'CORRECT',
 }
 
 export interface NotificationResponseDTO {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -11,40 +11,30 @@ const stopStore = useStopStore()
 
 const stopId = route.params.stopId as string
 const stop = computed(() => STOPS[stopId])
+const testClassroomId = stopStore.testModeClassroomId
+const previousRoute = computed(() =>
+  testClassroomId ? `/classroom/${testClassroomId}/test-game` : '/game-map'
+)
 const tasks = computed(() => stopStore.tasks[stopId] ?? [])
 const isLoading = computed(() => stopStore.loading[stopId] ?? false)
 
-const availableTasks = computed(() => {
-  const filtered = tasks.value.filter(t => t.isUnlocked)
-  console.log('[StopView] Available tasks computed:', filtered.length, 'tasks', filtered.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
-  return filtered
-})
-
-const lockedTasks = computed(() => {
-  const filtered = tasks.value.filter(t => !t.isUnlocked)
-  console.log('[StopView] Locked tasks computed:', filtered.length, 'tasks', filtered.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
-  return filtered
-})
-
-watch(tasks, (newTasks) => {
-  console.log('[StopView] Tasks updated:', newTasks.map(t => ({title: t.title, isUnlocked: t.isUnlocked})))
-})
+const availableTasks = computed(() => tasks.value.filter(t => t.isUnlocked))
+const lockedTasks = computed(() => tasks.value.filter(t => !t.isUnlocked))
 
 onMounted(() => {
-  console.log('[StopView] Component mounted for stopId:', stopId)
-  stopStore.clearTasks()
-  stopStore.loadTasks(stopId, true)
+  if (testClassroomId) {
+    stopStore.loadTasksTestMode(testClassroomId, stopId)
+  } else {
+    stopStore.clearTasks(stopId)
+    stopStore.loadTasks(stopId, true)
+  }
 })
 
 function goToTask(taskId: number) {
-  console.log('[StopView] goToTask called - taskId:', taskId)
   const task = tasks.value.find(t => t.taskId === taskId)
-  console.log('[StopView] Task found:', task)
   if (task && task.isUnlocked && stop.value) {
-    console.log('[StopView] Task is unlocked, navigating to:', `${stop.value.taskRoute}/${taskId}`)
-    router.push(`${stop.value.taskRoute}/${taskId}`)
+    router.push(`${stop.value.taskRoute}/${task.uuid}`)
   } else {
-    console.log('[StopView] Task is locked or not found')
     alert('Denne oppgaven er låst. Fullfør tidligere oppgaver for å låse opp.')
   }
 }
@@ -54,7 +44,7 @@ function goToTask(taskId: number) {
   <SceneComponent
     v-if="stop"
     :title="stop.name"
-    previous="/game-map"
+    :previous="previousRoute"
     :background="stop.background"
   >
     <div class="task-list">

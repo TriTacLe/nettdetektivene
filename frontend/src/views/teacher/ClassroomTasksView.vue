@@ -2,13 +2,14 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import ClassroomService from '@/services/ClassroomService'
 import type { ClassroomTaskResponseDTO } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
+const queryClient = useQueryClient()
 const classroomId = route.params.id as string
 
 const { data: classroomData } = useQuery(getClassroomOptions({ path: { id: classroomId } }))
@@ -20,6 +21,23 @@ const tasksQuery = useQuery({
 })
 
 const tasks = computed<ClassroomTaskResponseDTO[]>(() => tasksQuery.data.value ?? [])
+
+const deleteTaskMutation = useMutation({
+  mutationFn: (taskId: string) => ClassroomService.removeClassroomTask(classroomId, taskId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['teacher-classroom-tasks', classroomId] })
+  },
+})
+
+async function handleDeleteTask(taskId: string, taskTitle: string) {
+  if (confirm(`Er du sikker på at du vil fjerne oppgaven "${taskTitle}" fra dette klasserommet?`)) {
+    deleteTaskMutation.mutate(taskId)
+  }
+}
+
+function handleEditTask(taskId: string) {
+  router.push({ name: 'classroom-task-edit', params: { id: classroomId, taskId } })
+}
 
 function openCreateTask() {
   router.push({ name: 'classroom-task-create', params: { id: classroomId } })
@@ -52,15 +70,34 @@ function openCreateTask() {
       </div>
       <section v-else-if="tasks.length" class="teacher-task-grid">
         <article v-for="item in tasks" :key="item.taskId" class="teacher-task-card">
-          <div class="teacher-task-meta">
-            <span class="teacher-pill">{{ item.task.taskType }}</span>
-            <span class="teacher-pill teacher-pill--muted">Sortering {{ item.sortOrder }}</span>
-            <span
-              class="teacher-pill"
-              :class="item.isActive ? 'teacher-pill--active' : 'teacher-pill--inactive'"
-            >
-              {{ item.isActive ? 'Aktiv' : 'Inaktiv' }}
-            </span>
+          <div class="teacher-task-header">
+            <div class="teacher-task-meta">
+              <span class="teacher-pill">{{ item.task.taskType }}</span>
+              <span class="teacher-pill teacher-pill--muted">Vanskelighetsgrad {{ item.task.difficulty }}</span>
+              <span
+                class="teacher-pill"
+                :class="item.isActive ? 'teacher-pill--active' : 'teacher-pill--inactive'"
+              >
+                {{ item.isActive ? 'Aktiv' : 'Inaktiv' }}
+              </span>
+            </div>
+            <div class="teacher-task-actions">
+              <button
+                class="teacher-action-btn teacher-action-btn--edit"
+                @click="handleEditTask(item.taskId)"
+                aria-label="Rediger oppgave"
+              >
+                Rediger
+              </button>
+              <button
+                class="teacher-action-btn teacher-action-btn--delete"
+                @click="handleDeleteTask(item.taskId, item.task.title)"
+                :disabled="deleteTaskMutation.isPending.value"
+                aria-label="Slett oppgave"
+              >
+                Slett
+              </button>
+            </div>
           </div>
           <h3 class="teacher-task-name">{{ item.task.title }}</h3>
           <p class="teacher-task-details">
@@ -158,10 +195,60 @@ function openCreateTask() {
   gap: 0.65rem;
 }
 
+.teacher-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
 .teacher-task-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  flex: 1;
+}
+
+.teacher-task-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.teacher-action-btn {
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.teacher-action-btn--edit {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.teacher-action-btn--edit:hover {
+  background: #bfdbfe;
+  border-color: #93c5fd;
+}
+
+.teacher-action-btn--delete {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.teacher-action-btn--delete:hover:not(:disabled) {
+  background: #fecaca;
+  border-color: #fca5a5;
+}
+
+.teacher-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .teacher-pill {
@@ -222,6 +309,18 @@ function openCreateTask() {
 
   .teacher-primary-btn {
     width: 100%;
+  }
+
+  .teacher-task-header {
+    flex-direction: column;
+  }
+
+  .teacher-task-actions {
+    width: 100%;
+  }
+
+  .teacher-action-btn {
+    flex: 1;
   }
 }
 </style>

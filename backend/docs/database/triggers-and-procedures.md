@@ -122,6 +122,43 @@ NEW.mys_status = 'approved' AND OLD.mys_status <> 'approved'
 
 ---
 
+### trg_notify_stop_completed_insert / trg_notify_stop_completed_update
+
+**Table:** `task_best_score`
+**Timing:** AFTER INSERT and AFTER UPDATE
+
+**Purpose:**
+Notifies all classroom instructors when a student passes the final remaining task in a stop location.
+
+**Behavior:**
+
+* Both triggers run the same check; two are needed because `trg_attempt_sync` upserts via `INSERT ... ON DUPLICATE KEY UPDATE`, so a first-attempt pass produces an INSERT and subsequent passes produce UPDATEs.
+* Fires only when `first_passed_at` transitions from NULL to a value (INSERT variant: `NEW.first_passed_at IS NOT NULL`; UPDATE variant: same plus `OLD.first_passed_at` was NULL or different).
+* Counts active tasks in the same `stop_location` and how many of them this student has `first_passed_at` set on.
+* If counts match, inserts one notification per `classroom_instructor` with `ref_type = 'stop_completed'` and `ref_id = user_id`.
+
+---
+
+### trg_notify_attempt_failed
+
+**Table:** `task_attempt`
+**Timing:** AFTER INSERT
+
+**Purpose:**
+Notifies all classroom instructors when a student fails a task attempt (score below the pass threshold).
+
+**Behavior:**
+
+* Fires only when `NEW.passed = 0`. Passed attempts produce no notification.
+* Looks up the student's `display_name` and the task `title`.
+* Inserts one `notification` row per `classroom_instructor` of `NEW.classroom_id` with `ref_type = 'task_attempt_failed'` and `ref_id = NEW.attempt_id`.
+
+**Side-effects:**
+
+* Every failed attempt produces N notifications (N = instructors). No debouncing.
+
+---
+
 ## STORED PROCEDURES
 
 ---

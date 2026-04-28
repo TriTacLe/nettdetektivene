@@ -60,8 +60,14 @@ echo ""
 response=$(make_api_call "GET" "/api/v1/tasks" "" "$token")
 body="$response"
 
-if [ -z "$body" ] || [ "$body" = "null" ] || echo "$body" | grep -qE "error|Error|500|401|403"; then
-    echo -e "${RED}[ERROR]${NC} Failed to fetch tasks"
+if [ -z "$body" ] || [ "$body" = "null" ]; then
+    echo -e "${RED}[ERROR]${NC} Failed to fetch tasks - empty response"
+    exit 1
+fi
+
+success=$(echo "$body" | jq -r '.success' 2>/dev/null)
+if [ "$success" != "true" ]; then
+    echo -e "${RED}[ERROR]${NC} API returned unsuccessful response"
     echo "Response: $body"
     exit 1
 fi
