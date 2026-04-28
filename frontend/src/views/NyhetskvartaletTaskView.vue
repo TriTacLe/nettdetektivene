@@ -37,7 +37,7 @@ onMounted(async () => {
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
-          taskType: taskFromStore.taskType,
+          taskType: taskFromStore.taskType as TaskType,
           difficulty: 1,
           isActive: true,
           stopLocation: 'nyhetskvartalet',
