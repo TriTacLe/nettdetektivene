@@ -65,6 +65,20 @@ public class TaskController {
   }
 
   /**
+   * Returns all tasks for instructor test mode.
+   * All tasks are marked as unlocked, allowing teachers to play through the game
+   * without progression constraints.
+   *
+   * @return 200 OK with all tasks in test mode format
+   */
+  @GetMapping("/test-mode")
+  @Operation(summary = "Get all tasks in test mode (instructor only)")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<List<TaskResponseDTO>>> getAllTasksTestMode() {
+    return ResponseEntity.ok(ApiResponse.ok(taskService.getAllTasksTestMode()));
+  }
+
+  /**
    * Creates a new task. Only accessible by instructors and admins.
    *
    * @param dto the request body

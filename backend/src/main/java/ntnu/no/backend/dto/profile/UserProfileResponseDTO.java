@@ -28,5 +28,6 @@ public record UserProfileResponseDTO(
     String avatarConfig,
     int xp,
     int xpLevel,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String nameChangeStatus
 ) {}

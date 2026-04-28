@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -181,5 +182,15 @@ class ClassroomControllerTest {
   void getAllClassrooms_unauthenticated_returnsUnauthorized() throws Exception {
     mockMvc.perform(get("/api/v1/classrooms"))
       .andExpect(status().isUnauthorized());
+  }
+
+@Test
+  @WithMockUser(authorities = "student")
+  void getClassroomTasks_testMode_asStudent_returnsForbidden() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+
+    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/tasks?testMode=true"))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.message").value("Access denied"));
   }
 }

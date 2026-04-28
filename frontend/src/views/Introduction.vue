@@ -1,40 +1,46 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
+import introductionDialogs from '@/data/IntroductionDialogs'
 
-import SceneComponent from "@/components/SceneComponent.vue";
+const router = useRouter()
+const currentScene = ref(0)
+
+function onSceneDone() {
+  if (currentScene.value < introductionDialogs.length - 1) {
+    currentScene.value++
+  } else {
+    router.push({ name: 'student-home' })
+  }
+}
 </script>
 
 <template>
-  <SceneComponent title="Oppgave informasjon" previous="/join-classroom" next="/student-home">
-    <div class="introduction">
-      <h1>Velkommen</h1>
-      <h4>
-        Oppdraget ditt er å beskytte internettbyen
-        ved å bekjempe data-tyven som prøver å lure deg gjennom falske nyheter og bilder,
-        stjeler passord og sender løgner på e-post.
-        Du skal løse oppgaver,
-        se etter spor og tenke for å løse saken og bekjempe data-tyven.
-      </h4>
-    </div>
-
-  </SceneComponent>
+  <div class="introduction-cutscene">
+    <img class="intro-background" src="/StartBackground.jpg" alt="" aria-hidden="true" />
+    <CutsceneDialog
+      :key="currentScene"
+      :scene="introductionDialogs[currentScene]"
+      @done="onSceneDone"
+    />
+  </div>
 </template>
 
 <style scoped>
-.introduction {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 1rem;
-  padding: 2rem;
+.introduction-cutscene {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.introduction h1 {
-  font-size: 2.5rem;
-}
-.introduction h4 {
-  font-size: 1.25rem;
-  max-width: 600px;
+.intro-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
 }
 </style>
