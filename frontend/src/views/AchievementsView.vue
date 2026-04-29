@@ -39,10 +39,10 @@ const notEarnedAchievements = computed(() =>
 </script>
 
 <template>
-  <SceneComponent title="Prestasjoner" previous="/student-home" background="/trophy.jpg">
+  <SceneComponent title="Resultater" previous="/student-home" background="/trophy.jpg">
     <div class="achievements-container">
       <div class="achievements-card">
-        <h1>Mine prestasjoner</h1>
+        <h1>Mine resultater</h1>
 
         <!-- Loading state -->
         <div v-if="isLoading" class="loading-state">
@@ -67,7 +67,7 @@ const notEarnedAchievements = computed(() =>
 
           <!-- total fremgang -->
           <section class="section">
-            <h2>Total progresjon</h2>
+            <h2>Fullførte oppgaver</h2>
             <div class="total-progress">
               <div class="progress-info">
                 <p><strong>Fullført:</strong> {{ earned }} / {{ total }}</p>
@@ -84,7 +84,7 @@ const notEarnedAchievements = computed(() =>
 
           <!-- Opna medaljer -->
           <section class="section" v-if="earnedAchievements.length > 0">
-            <h2>Opna medaljer</h2>
+            <h2>Mine medaljer</h2>
             <div class="badges-container">
               <BadgeCard
                 v-for="achievement in earnedAchievements"
