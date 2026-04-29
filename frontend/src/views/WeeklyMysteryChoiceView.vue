@@ -11,7 +11,7 @@ const router = useRouter()
 const classroomId = computed(() => String(route.params.classroomId))
 
 const { data: classroomData } = useQuery(
-  getClassroomOptions({ path: { id: classroomId.value } }),
+  computed(() => getClassroomOptions({ path: { id: classroomId.value } })),
 )
 
 const classroomTitle = computed(() => classroomData.value?.data?.title ?? 'Klasserom')

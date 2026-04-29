@@ -152,4 +152,12 @@ public class MysteryController {
       @PathVariable UUID classroomId) {
     return ResponseEntity.ok(ApiResponse.ok(mysteryService.getFeaturedSubmission(classroomId)));
   }
+
+  @Operation(summary = "Get all featured mystery submissions by classroom, newest first")
+  @GetMapping("/classroom/{classroomId}/featured/all")
+  @PreAuthorize("hasAnyAuthority('student', 'instructor')")
+  public ResponseEntity<ApiResponse<List<MysterySubmissionResponseDTO>>> getAllFeaturedSubmissions(
+      @PathVariable UUID classroomId) {
+    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getAllFeaturedSubmissions(classroomId)));
+  }
 }

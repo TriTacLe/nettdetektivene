@@ -48,6 +48,13 @@ async function getFeaturedSubmission(classroomId: string): Promise<MysterySubmis
   } catch { return null }
 }
 
+async function getAllFeaturedSubmissions(classroomId: string): Promise<MysterySubmissionResponseDTO[]> {
+  try {
+    const { data } = await apiClient.get<ApiResponse<MysterySubmissionResponseDTO[]>>(`/mysteries/classroom/${classroomId}/featured/all`)
+    return data.data
+  } catch { return [] }
+}
+
 export default {
   submitMystery,
   getSubmissionsByClassroom,
@@ -56,4 +63,5 @@ export default {
   reviewSubmission,
   createTaskFromSubmission,
   getFeaturedSubmission,
+  getAllFeaturedSubmissions,
 }

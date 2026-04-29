@@ -53,4 +53,6 @@ public interface MysterySubmissionRepository extends JpaRepository<MysterySubmis
    * @return the featured submission, if one exists
    */
   Optional<MysterySubmission> findFirstByClassroom_IdAndIsFeaturedTrue(UUID classroomId);
+
+  List<MysterySubmission> findByClassroom_IdAndIsFeaturedTrueOrderByWeekYearDescWeekNumberDesc(UUID classroomId);
 }

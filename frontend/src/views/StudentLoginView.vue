@@ -9,10 +9,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
-const email = ref('tri@nettdetektivene.no')
-const password = ref('password123')
-const serverError = ref('')
-const isLoading = ref(false)
+// Test credentials for school project demo
+  const email = ref('siljelund@nettdetektivene.no')
+  const password = ref('password123')
+  const serverError = ref('')
+  const isLoading = ref(false)
 
 const fieldErrors = ref({ email: '', password: '' })
 

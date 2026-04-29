@@ -31,9 +31,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.WeekFields;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.temporal.IsoFields;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -56,6 +58,7 @@ public class MysteryService {
   private final ClassroomStudentRepository classroomStudentRepository;
   private final TaskRepository taskRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
+  private final ObjectMapper objectMapper;
 
   /**
    * Submits a new mystery for the authenticated student.
@@ -75,7 +78,6 @@ public class MysteryService {
     verifyStudentMembership(dto.getClassroomId(), user);
 
     LocalDate now = LocalDate.now();
-    WeekFields weekFields = WeekFields.of(Locale.getDefault());
 
     MysterySubmission submission = MysterySubmission.builder()
         .classroom(classroom)
@@ -84,8 +86,8 @@ public class MysteryService {
         .attachmentUrl(dto.getAttachmentUrl())
         .mysStatus(MysteryStatus.PENDING)
         .isFeatured(false)
-        .weekNumber(now.get(weekFields.weekOfWeekBasedYear()))
-        .weekYear(now.get(weekFields.weekBasedYear()))
+        .weekNumber(now.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR))
+        .weekYear(now.get(IsoFields.WEEK_BASED_YEAR))
         .build();
 
     return MysterySubmissionMapper.toDTO(mysterySubmissionRepository.save(submission));
@@ -242,30 +244,31 @@ public class MysteryService {
         .orElseThrow(() -> new EntityNotFoundException("Featured mystery submission not found for classroom: " + classroomId));
   }
 
+  @Transactional(readOnly = true)
+  public List<MysterySubmissionResponseDTO> getAllFeaturedSubmissions(UUID classroomId) {
+    return mysterySubmissionRepository
+        .findByClassroom_IdAndIsFeaturedTrueOrderByWeekYearDescWeekNumberDesc(classroomId)
+        .stream()
+        .map(MysterySubmissionMapper::toDTO)
+        .toList();
+  }
+
   private String resolveTaskContent(MysterySubmission submission, MysteryTaskCreateRequestDTO dto) {
     if (dto.getContent() != null && !dto.getContent().isBlank()) {
       return dto.getContent();
     }
 
-    return "{"
-        + "\"description\":\"" + escapeJson(submission.getMysDesc()) + "\","
-        + "\"sourceUrl\":\"" + escapeJson(submission.getAttachmentUrl()) + "\","
-        + "\"mysterySubmissionId\":\"" + submission.getId() + "\","
-        + "\"weekNumber\":" + submission.getWeekNumber() + ","
-        + "\"weekYear\":" + submission.getWeekYear()
-        + "}";
-  }
-
-  private String escapeJson(String value) {
-    if (value == null) {
-      return "";
+    try {
+      return objectMapper.writeValueAsString(Map.of(
+          "description", submission.getMysDesc() != null ? submission.getMysDesc() : "",
+          "sourceUrl", submission.getAttachmentUrl() != null ? submission.getAttachmentUrl() : "",
+          "mysterySubmissionId", submission.getId().toString(),
+          "weekNumber", submission.getWeekNumber(),
+          "weekYear", submission.getWeekYear()
+      ));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Failed to serialize task content", e);
     }
-    return value
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-        .replace("\t", "\\t");
   }
 
   private void verifyStudentMembership(UUID classroomId, User user) {

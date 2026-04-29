@@ -106,7 +106,7 @@ function getIsoWeek(date: Date) {
             <div class="card-body">
               <h2>{{ weeklyPrompt }}</h2>
               <p>Send inn et eksempel du har funnet på nettet – en falsk nyhet, et manipulert bilde eller en mistenkelig nettside. Læreren din godkjenner de beste bidragene.</p>
-              <div class="reward-row"><span class="pill pill--deadline">Frist: søndag 20. april</span><span class="pill pill--reward">🏆 Premie: Kildekritiker-medalje</span></div>
+              <div class="reward-row"><span class="pill pill--deadline">Uke {{ currentWeek }}</span><span class="pill pill--reward">🏆 Premie: Kildekritiker-medalje</span></div>
             </div>
           </article>
           <form class="card form-card" @submit.prevent="submitMystery">
