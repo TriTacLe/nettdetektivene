@@ -67,7 +67,7 @@ wait_for_backend() {
 }
 
 mysql_exec() {
-  docker exec "$DB_CONTAINER" mysql -uroot -p"$MYSQL_ROOT_PW" "$MYSQL_DB" -e "$1" 2>/dev/null
+  docker exec "$DB_CONTAINER" mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PW" "$MYSQL_DB" -e "$1" 2>/dev/null
 }
 
 seed_institution() {
@@ -385,6 +385,24 @@ seed_tasks() {
   done
 }
 
+seed_achievements() {
+  info "Seeding achievements..."
+  mysql_exec "
+    INSERT IGNORE INTO achievement (achievement_id, title, desc_ach, icon, trigger_type, trigger_ref) VALUES
+      (UUID(), 'Første Oppgave',     'Fullfør din første oppgave',                    NULL, 'task_completed',      'first_task'),
+      (UUID(), 'Nyhetsjeger',        'Fullfør alle oppgaver i Nyhetskvartalet',        NULL, 'location_completed',  'nyhetskvartalet'),
+      (UUID(), 'Fotoproff',          'Fullfør alle oppgaver hos Fotografen',            NULL, 'location_completed',  'fotografen'),
+      (UUID(), 'Postmester',         'Fullfør alle oppgaver på Postkontoret',           NULL, 'location_completed',  'postkontoret'),
+      (UUID(), 'Passordvokter',      'Fullfør alle oppgaver i Passordbanken',           NULL, 'location_completed',  'passordbanken'),
+      (UUID(), 'Markedsekspert',     'Fullfør alle oppgaver på Markedsplassen',         NULL, 'location_completed',  'markedsplassen'),
+      (UUID(), 'Sosial Detektiv',    'Fullfør alle oppgaver på Sosialen',               NULL, 'location_completed',  'sosialen'),
+      (UUID(), 'Datamester',         'Fullfør alle oppgaver i Datasenteret',            NULL, 'location_completed',  'datasenteret'),
+      (UUID(), 'Ukens Mysterium',    'Fullfør ukens mysterium',                         NULL, 'ukens_mysterium',     NULL),
+      (UUID(), 'Sikkerhetsmester',   'Fullfør alle oppgaver i et klasserom',            NULL, 'all_tasks_completed', 'classroom');
+  "
+  ok "Achievements seeded"
+}
+
 activate_all_tasks() {
   info "Activating all tasks (DB)..."
   mysql_exec "UPDATE task SET is_active = TRUE;"
@@ -420,6 +438,7 @@ main() {
   join_students
   seed_tasks
   activate_all_tasks
+  seed_achievements
   summary
 }
 
