@@ -81,12 +81,7 @@ export async function createTeacherTask(classroomId: string, draft: TeacherTaskD
       hint: photoDraft.hint.trim(),
       alternatives: photoDraft.alternatives.map((alternative, index) => ({
         imagePath: toUploadReference(alternative.image, `photo-alternative-${index + 1}`),
-        description: alternative.description.trim(),
         correctType: alternative.correctType,
-        begrunnelser: alternative.begrunnelserText
-          .split('\n')
-          .map(item => item.trim())
-          .filter(Boolean),
       })),
     }
   }
@@ -138,9 +133,7 @@ export async function updateTeacherTaskFull(taskId: string, draft: EditTaskDraft
       hint: draft.hint.trim(),
       alternatives: draft.alternatives.map(a => ({
         imagePath: toRelativePath(a.existingImagePath ?? ''),
-        description: a.description.trim(),
         correctType: a.correctType,
-        begrunnelser: a.begrunnelserText.split('\n').map(s => s.trim()).filter(Boolean),
       })),
     }
   }
@@ -174,9 +167,7 @@ async function updateTeacherTaskMultipart(taskId: string, draft: EditTaskDraft):
       hint: draft.hint.trim(),
       alternatives: draft.alternatives.map((alt, index) => ({
         imagePath: resolveEditImageRef(formData, alt.image, alt.existingImagePath, `photo-alternative-${index + 1}`),
-        description: alt.description.trim(),
         correctType: alt.correctType,
-        begrunnelser: alt.begrunnelserText.split('\n').map(s => s.trim()).filter(Boolean),
       })),
     }
   }

@@ -1,50 +1,26 @@
 <script setup lang="ts">
-import { getMyClassrooms } from '@/generated-client'
-import { getClassroom } from '@/generated-client'
+import { getAllClassroomsOptions, getClassroomsLeaderboardByInstitutionOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import { useQuery } from '@tanstack/vue-query'
-import { ref, computed, watchEffect } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 
 const router = useRouter()
-const institutionId = ref<string | null>(null)
 
-const { data: myClassrooms } = useQuery({
-  queryKey: ['my-classrooms'],
-  queryFn: async () => {
-    const { data } = await getMyClassrooms()
-    return data?.data ?? []
-  },
-})
+const { data: classroomsData, isLoading: classroomsLoading } = useQuery(getAllClassroomsOptions())
 
-const firstClassroomId = computed(() => myClassrooms.value?.[0]?.classroomId)
+const institutionId = computed(() => classroomsData.value?.data?.[0]?.institutionId ?? null)
 
-watchEffect(async () => {
-  if (firstClassroomId.value && !institutionId.value) {
-    const res = await getClassroom({ path: { id: firstClassroomId.value } })
-    institutionId.value = res.data?.data?.institutionId ?? null
-  }
-})
+const { data, isLoading: leaderboardLoading, isError } = useQuery(
+  computed(() =>
+    institutionId.value
+      ? getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
+      : ({ queryKey: ['leaderboard-disabled'], queryFn: () => null, enabled: false } as any),
+  ),
+)
 
-const queryResult = useQuery({
-  queryKey: ['leaderboard', institutionId],
-  queryFn: async () => {
-    if (!institutionId.value) {
-      return { data: [] }
-    }
-    const client = (await import('@/services/ApiService')).default
-    const response = await client.get(`/classrooms/leaderboard/institution/${institutionId.value}`)
-    return response.data
-  },
-  enabled: !!institutionId.value,
-})
-
-const entries = computed(() => {
-  const data = queryResult.data.value as { data?: unknown[] } | undefined
-  return (data?.data as Array<{ classroomId?: string; rank?: number; title?: string; totalScore?: number }>) ?? []
-})
-const isLoading = queryResult.isLoading
-const isError = queryResult.isError
+const isLoading = computed(() => classroomsLoading.value || leaderboardLoading.value)
+const entries = computed(() => (data.value as any)?.data ?? [])
 </script>
 
 <template>
@@ -53,7 +29,7 @@ const isError = queryResult.isError
       <div class="w-full max-w-2xl bg-white/90 rounded-2xl p-6 flex flex-col gap-4">
         <h1 class="text-center text-xl font-bold">Klasseromrangering</h1>
 
-        <div v-if="isLoading || !institutionId" class="text-center text-gray-500 py-8">
+        <div v-if="isLoading" class="text-center text-gray-500 py-8">
           Laster...
         </div>
 

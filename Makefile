@@ -1,7 +1,7 @@
 .PHONY: dev prod down clean logs status test test-backend test-frontend test-e2e test-coverage
 
 # configurable
-SERVICES_DEV = mysql backend frontend
+SERVICES_DEV = mysql backend
 SERVICES_PROD = mysql backend frontend
 
 # Dev
@@ -26,16 +26,13 @@ dev:
 
 	@echo "Backend is up"
 	@echo "Backend: http://localhost:8080"
-	@echo "MySQL:   localhost:3306"
+	@echo "MySQL:   localhost:3307"
 
-	@echo "Running test-data scripts..."
-	@if [ -d scripts/testdata ] && [ "$$(ls -A scripts/testdata 2>/dev/null)" ]; then \
-		for f in scripts/testdata/*; do \
-			echo "  Running $$f"; \
-			bash "$$f" || echo "  Warning: $$f exited with errors (continuing)"; \
-		done; \
+	@echo "Running factory.sh seed..."
+	@if [ -x scripts/factory.sh ]; then \
+		bash scripts/factory.sh || echo "  Warning: factory.sh exited with errors (continuing)"; \
 	else \
-		echo "No scripts found - skipping"; \
+		echo "scripts/factory.sh not found - skipping"; \
 	fi
 
 	@echo "Streaming logs (Ctrl+C to stop)..."
@@ -64,7 +61,7 @@ prod:
 	@echo "All services started"
 	@echo "Frontend: http://localhost:5173"
 	@echo "Backend:  http://localhost:8080"
-	@echo "MySQL:    localhost:3306"
+	@echo "MySQL:    localhost:3307"
 
 	@echo "Showing recent logs:"
 	docker compose logs --tail=30
@@ -74,8 +71,8 @@ prod:
 
 # Helpers
 status:
-	@echo "Ports (8080, 3306, 5173):"
-	@sudo lsof -i:8080,3306,5173 -sTCP:LISTEN 2>/dev/null || echo "  none"
+	@echo "Ports (8080, 3307, 5173):"
+	@sudo lsof -i:8080,3307,5173 -sTCP:LISTEN 2>/dev/null || echo "  none"
 	@echo ""
 	@echo "Docker containers:"
 	@docker ps --format "  {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "  none"

@@ -140,7 +140,8 @@ describe('TeacherLoginView', () => {
     expect(authStore.feideLogin).toHaveBeenCalledWith({
       email: 'lars@skole.no',
       password: 'passord123',
-      affiliation: 'instructor'
+      affiliation: 'instructor',
+      displayName: 'lars',
     })
   })
 

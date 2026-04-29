@@ -8,7 +8,7 @@
 
 CREATE TABLE app_user
 (
-    user_id             CHAR(36)     NOT NULL PRIMARY KEY,
+    user_id             CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
     display_name        VARCHAR(255) NOT NULL,
     email               VARCHAR(255) NOT NULL,
     is_active           TINYINT(1)   NOT NULL DEFAULT 1,
@@ -22,7 +22,7 @@ CREATE TABLE app_user
 CREATE TABLE app_user_local_credential
 (
     credential_id   BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id         CHAR(36)         NOT NULL,
+    user_id         CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NOT NULL,
     password_hash   VARCHAR(255)     NOT NULL,
     must_change_pw  TINYINT(1)       NOT NULL DEFAULT 0,
     last_changed_at DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -38,7 +38,7 @@ CREATE TABLE app_user_local_credential
 CREATE TABLE app_user_refresh_token
 (
     token_id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id    CHAR(36)        NOT NULL,
+    user_id    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci        NOT NULL,
     token_hash CHAR(64)        NOT NULL,
     issued_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at DATETIME        NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE app_user_refresh_token
 CREATE TABLE app_user_identity
 (
     identity_id      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id          CHAR(36)        NOT NULL,
+    user_id          CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci        NOT NULL,
     provider_name    VARCHAR(50)     NOT NULL,
     provider_user_id VARCHAR(255)    NOT NULL,
     provider_email   VARCHAR(255)    NULL,
@@ -71,7 +71,7 @@ CREATE TABLE app_user_identity
 
 CREATE TABLE role
 (
-    role_id   CHAR(36)    NOT NULL PRIMARY KEY,
+    role_id   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci    NOT NULL PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL,
 
     CONSTRAINT uq_role_name UNIQUE (role_name)
@@ -79,8 +79,8 @@ CREATE TABLE role
 
 CREATE TABLE user_role
 (
-    user_id CHAR(36) NOT NULL,
-    role_id CHAR(36) NOT NULL,
+    user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    role_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 
     PRIMARY KEY (user_id, role_id),
     CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES app_user (user_id),
@@ -93,9 +93,9 @@ CREATE TABLE user_role
 
 CREATE TABLE user_profile
 (
-    profile_id     CHAR(36)          NOT NULL PRIMARY KEY,
+    profile_id     CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL PRIMARY KEY,
     display_name   VARCHAR(255)      NOT NULL,
-    user_id        CHAR(36)          NOT NULL,
+    user_id        CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
     feide_id       VARCHAR(255)      NULL,
     avatar_config  JSON              NULL,
     xp             INT UNSIGNED      NOT NULL DEFAULT 0,
@@ -114,7 +114,7 @@ CREATE TABLE user_profile
 
 CREATE TABLE institution
 (
-    institution_id CHAR(36)     NOT NULL PRIMARY KEY,
+    institution_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
     inst_name      VARCHAR(255) NOT NULL,
     created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -126,12 +126,12 @@ CREATE TABLE institution
 
 CREATE TABLE classroom
 (
-    classroom_id    CHAR(36)     NOT NULL PRIMARY KEY,
-    institution_id  CHAR(36)     NOT NULL,
+    classroom_id    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
+    institution_id  CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL,
     title           VARCHAR(255) NOT NULL,
     class_desc      TEXT         NULL,
     join_code       VARCHAR(20)  NOT NULL,
-    created_by      CHAR(36)     NOT NULL,
+    created_by      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL,
     is_game_enabled TINYINT(1)   NOT NULL DEFAULT 0,
     deleted_at      DATETIME     NULL,
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -144,8 +144,8 @@ CREATE TABLE classroom
 
 CREATE TABLE classroom_instructor
 (
-    classroom_id CHAR(36) NOT NULL,
-    user_id      CHAR(36) NOT NULL,
+    classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    user_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     assigned_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (classroom_id, user_id),
@@ -155,15 +155,15 @@ CREATE TABLE classroom_instructor
 
 CREATE TABLE classroom_student
 (
-    classroom_id                CHAR(36) NOT NULL,
-    user_id                     CHAR(36) NOT NULL,
+    classroom_id                CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    user_id                     CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     display_name                VARCHAR(255) NOT NULL,
     is_allowed                  TINYINT(1) NOT NULL DEFAULT 0,
 
     requested_display_name      VARCHAR(255) NULL,
     name_change_status          ENUM('NONE', 'PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'NONE',
     name_change_requested_at    DATETIME NULL,
-    name_change_reviewed_by     CHAR(36) NULL,
+    name_change_reviewed_by     CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
     name_change_reviewed_at     DATETIME NULL,
 
     joined_at                   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -182,7 +182,7 @@ CREATE TABLE classroom_student
 
 CREATE TABLE task
 (
-    task_id        CHAR(36)         NOT NULL PRIMARY KEY,
+    task_id        CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NOT NULL PRIMARY KEY,
     title          VARCHAR(255)     NOT NULL,
     task_type      ENUM(
                         'NEWS',
@@ -196,7 +196,7 @@ CREATE TABLE task
     stop_location  VARCHAR(100)     NULL,
     difficulty     TINYINT UNSIGNED NOT NULL DEFAULT 1,
     content        JSON             NOT NULL,
-    owner_id       CHAR(36)         NULL,
+    owner_id       CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NULL,
     is_active      TINYINT(1)       NOT NULL DEFAULT 1,
     created_at     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -207,8 +207,8 @@ CREATE TABLE task
 
 CREATE TABLE classroom_task
 (
-    classroom_id CHAR(36)          NOT NULL,
-    task_id      CHAR(36)          NOT NULL,
+    classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
+    task_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
     sort_order   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     is_active    TINYINT(1)       NOT NULL DEFAULT 1,
 
@@ -219,9 +219,9 @@ CREATE TABLE classroom_task
 
 CREATE TABLE user_task_unlocked
 (
-    user_id      CHAR(36)   NOT NULL,
-    classroom_id CHAR(36)   NOT NULL,
-    task_id      CHAR(36)   NOT NULL,
+    user_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci   NOT NULL,
+    classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci   NOT NULL,
+    task_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci   NOT NULL,
     unlocked_at  DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, classroom_id, task_id),
     CONSTRAINT fk_utu_user      FOREIGN KEY (user_id)      REFERENCES app_user (user_id),
@@ -235,10 +235,10 @@ CREATE TABLE user_task_unlocked
 
 CREATE TABLE task_attempt
 (
-    attempt_id   CHAR(36)          NOT NULL PRIMARY KEY,
-    user_id      CHAR(36)          NOT NULL,
-    task_id      CHAR(36)          NOT NULL,
-    classroom_id CHAR(36)          NOT NULL,
+    attempt_id   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY,
+    user_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    task_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     score        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     passed       TINYINT(1)        NOT NULL DEFAULT 0,
     attempted_at DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -252,9 +252,9 @@ CREATE TABLE task_attempt
 
 CREATE TABLE task_best_score
 (
-    user_id           CHAR(36)          NOT NULL,
-    task_id           CHAR(36)          NOT NULL,
-    classroom_id      CHAR(36)          NOT NULL,
+    user_id           CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
+    task_id           CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
+    classroom_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci          NOT NULL,
     best_score        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     total_attempts    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     first_passed_at   DATETIME          NULL,
@@ -273,7 +273,7 @@ CREATE TABLE task_best_score
 
 CREATE TABLE achievement
 (
-    achievement_id CHAR(36)     NOT NULL PRIMARY KEY,
+    achievement_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
     title          VARCHAR(255) NOT NULL,
     desc_ach       TEXT         NULL,
     icon           TEXT         NULL,
@@ -284,9 +284,9 @@ CREATE TABLE achievement
 
 CREATE TABLE user_achievement
 (
-    user_id        CHAR(36) NOT NULL,
-    achievement_id CHAR(36) NOT NULL,
-    classroom_id   CHAR(36) NULL,
+    user_id        CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    achievement_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    classroom_id   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
     earned_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (user_id, achievement_id),
@@ -301,9 +301,9 @@ CREATE TABLE user_achievement
 
 CREATE TABLE notebook_entry
 (
-    entry_id           CHAR(36)     NOT NULL PRIMARY KEY,
-    user_id            CHAR(36)     NOT NULL,
-    classroom_id       CHAR(36)     NOT NULL,
+    entry_id           CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
+    user_id            CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL,
+    classroom_id       CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL,
     stop_location      VARCHAR(100) NOT NULL,
     auto_notes         JSON         NULL,
     student_reflection TEXT         NULL,
@@ -321,13 +321,13 @@ CREATE TABLE notebook_entry
 
 CREATE TABLE mystery_submission
 (
-    submission_id  CHAR(36)         NOT NULL PRIMARY KEY,
-    classroom_id   CHAR(36)         NOT NULL,
-    submitted_by   CHAR(36)         NOT NULL,
+    submission_id  CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NOT NULL PRIMARY KEY,
+    classroom_id   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NOT NULL,
+    submitted_by   CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NOT NULL,
     mys_desc       TEXT             NOT NULL,
     attachment_url VARCHAR(500)     NULL,
     mys_status     ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
-    reviewed_by    CHAR(36)         NULL,
+    reviewed_by    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         NULL,
     reviewed_at    DATETIME         NULL,
     is_featured    TINYINT(1)       NOT NULL DEFAULT 0,
     week_number    TINYINT UNSIGNED NULL,
@@ -346,12 +346,12 @@ CREATE TABLE mystery_submission
 
 CREATE TABLE notification
 (
-    notification_id CHAR(36)     NOT NULL PRIMARY KEY,
-    recipient_id    CHAR(36)     NOT NULL,
-    classroom_id    CHAR(36)     NULL,
+    notification_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL PRIMARY KEY,
+    recipient_id    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NOT NULL,
+    classroom_id    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NULL,
     msg             VARCHAR(500) NOT NULL,
     ref_type        VARCHAR(50)  NULL,
-    ref_id          CHAR(36)     NULL,
+    ref_id          CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci     NULL,
     is_read         TINYINT(1)   NOT NULL DEFAULT 0,
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

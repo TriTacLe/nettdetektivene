@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, useAttrs } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import NavigationHeader from './NavigationHeader.vue'
 
 const props = withDefaults(
@@ -9,17 +9,34 @@ const props = withDefaults(
     previous?: string
     next?: string
     background?: string
+    vignette?: boolean
+    scanlines?: boolean
     dimOverlay?: boolean
   }>(),
   {
     background: '/StartBackground.jpg',
+    vignette: true,
+    scanlines: false,
     dimOverlay: false,
   },
 )
 
 const emit = defineEmits<{ back: [] }>()
 const attrs = useAttrs()
+const route = useRoute()
 const router = useRouter()
+
+// Background priority: explicit prop > route meta > default
+const resolvedBackground = computed(() => {
+  if (props.background) return props.background
+  const metaBg = route.meta.background as string | undefined
+  return metaBg ?? '/StartBackground.jpg'
+})
+
+const resolvedScanlines = computed(() => {
+  if (props.scanlines) return true
+  return Boolean(route.meta.scanlines)
+})
 
 function handleBack() {
   if (attrs.onBack) {
@@ -31,9 +48,10 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="scene">
-    <img class="scene-background" :src="background" alt="" aria-hidden="true" />
-    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }" />
+  <div class="scene" :class="{ scanlines: resolvedScanlines }">
+    <img class="scene-background" :src="resolvedBackground" alt="" aria-hidden="true" />
+    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }"></div>
+    <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
     <div class="scene-content">
       <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
       <div class="scene-body">
@@ -73,6 +91,18 @@ function handleBack() {
 
 .scene-overlay--dim {
   opacity: 0.8;
+}
+
+.scene-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 11;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 40%,
+    var(--color-nd-vignette, rgba(0, 0, 0, 0.55)) 100%
+  );
 }
 
 .scene-content {

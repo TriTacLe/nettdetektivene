@@ -69,8 +69,26 @@ import org.springframework.transaction.annotation.Transactional;
      * @return a {@link UserProfileResponseDTO} containing the profile data                                                          
      * @throws EntityNotFoundException if no profile exists for the given feideId                                                    
      */                                                                                                                              
-    @Transactional(readOnly = true)                                                                                                  
-    public UserProfileResponseDTO getByFeideId(String feideId) {                                                                     
+    @Transactional(readOnly = true)
+    public int getStoryProgress(User user) {
+      UserProfile profile = userProfileRepository.findByUser(user)
+          .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+      return profile.getStoryProgress();
+    }
+
+    @Transactional
+    public int advanceStoryProgress(User user, int step) {
+      UserProfile profile = userProfileRepository.findByUser(user)
+          .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));
+      if (step > profile.getStoryProgress()) {
+        profile.setStoryProgress(step);
+      }
+      return profile.getStoryProgress();
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponseDTO getByFeideId(String feideId) {
+
       UserProfile profile = userProfileRepository.findByFeideId(feideId)                                                             
         .orElseThrow(() -> new EntityNotFoundException("No profile found for feideId: " + feideId));                                 
       return UserProfileMapper.toDTO(profile);                                                                                       

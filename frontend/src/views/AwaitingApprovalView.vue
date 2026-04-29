@@ -19,13 +19,13 @@ watch(data, (val) => {
   const classroom = val?.data
   if (classroom?.id && classroom?.institutionId) {
     studentStore.setClassroom(classroom.id, classroom.institutionId)
-    router.push({ name: 'introduction' })
+    router.push({ name: 'student-home' })
   }
 })
 </script>
 
 <template>
-  <SceneComponent title="Venter på godkjenning" previous="/join-classroom">
+  <SceneComponent title="Venter på godkjenning">
     <div class="flex flex-col items-center justify-center flex-1 px-6">
       <div class="flex flex-col gap-4 w-full max-w-sm items-center text-center">
         <div class="spinner" />

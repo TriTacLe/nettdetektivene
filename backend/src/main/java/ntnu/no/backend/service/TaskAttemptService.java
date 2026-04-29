@@ -10,6 +10,7 @@ import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.repository.TaskAttemptRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -40,10 +41,12 @@ import java.util.UUID;
 public class TaskAttemptService {
 
   private final TaskAttemptRepository taskAttemptRepository;
+  private final TaskBestScoreRepository taskBestScoreRepository;
   private final JdbcTemplate jdbcTemplate;
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final TaskAttemptVerifier taskAttemptVerifier;
 
   /**
    * Submits a task attempt by calling the {@code sp_submit_attempt} stored procedure.
@@ -53,7 +56,7 @@ public class TaskAttemptService {
    * updates best scores and awards XP automatically.</p>
    *
    * @param user the authenticated user submitting the attempt
-   * @param dto  the attempt request containing taskId, classroomId, and score
+   * @param dto  the attempt request containing taskId, classroomId, and raw answers
    * @return a {@link TaskAttemptResponseDTO} representing the recorded attempt
    */
   @Transactional
@@ -62,8 +65,8 @@ public class TaskAttemptService {
     String userId = user.getId().toString();
     String taskId = dto.getTaskId().toString();
     String classroomId = dto.getClassroomId().toString();
-    int score = dto.getScore();
-    boolean passed = score >= 80;
+    boolean passed = taskAttemptVerifier.isCorrect(dto.getTaskId(), dto.getAnswers());
+    int score = passed ? 100 : 0;
 
     jdbcTemplate.update("CALL sp_submit_attempt(?, ?, ?, ?, ?, ?)",
         attemptId.toString(), userId, taskId, classroomId, score, passed ? 1 : 0);
@@ -102,6 +105,20 @@ public class TaskAttemptService {
    * @return a list of {@link TaskAttemptResponseDTO} for the classroom
    * @throws AccessDeniedException if the requesting user is not an instructor of the classroom
    */
+  /**
+   * Returns the IDs of every task the authenticated user has passed at
+   * least once (any classroom). Source of truth: {@code task_best_score}
+   * rows where {@code first_passed_at IS NOT NULL}, maintained by the
+   * {@code trg_attempt_sync} trigger.
+   *
+   * @param user the authenticated user
+   * @return list of passed task IDs
+   */
+  @Transactional(readOnly = true)
+  public List<UUID> getMyPassedTaskIds(User user) {
+    return taskBestScoreRepository.findPassedTaskIdsByUserId(user.getId());
+  }
+
   @Transactional(readOnly = true)
   public List<TaskAttemptResponseDTO> getAttemptsByClassroom(UUID classroomId, User requestingUser) {
     verifyInstructor(classroomId, requestingUser);

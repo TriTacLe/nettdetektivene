@@ -9,16 +9,21 @@ import { useMutation } from '@tanstack/vue-query'
 import { updateProfileMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import { DEFAULT_AVATAR_CONFIG, type AvatarConfig } from '@/types/avatar'
 import { serializeAvatarConfig } from '@/utils/avatar'
+import { useAuthStore } from '@/stores/AuthStore.ts'
 
 const router = useRouter()
 const displayName = ref('')
 const fieldError = ref('')
 const avatarConfig = ref<AvatarConfig>({ ...DEFAULT_AVATAR_CONFIG })
+const authStore = useAuthStore()
 
 const update = useMutation({
   ...updateProfileMutation(),
-  onSuccess: () => router.push({ name: 'join-classroom' }),
-  onError: (e: Error) => {
+  onSuccess: async () => {
+    await authStore.fetchMe()
+    router.push({ name: 'join-classroom' })
+  },
+  onError: (e: any) => {
     fieldError.value = e.message ?? 'Kunne ikke lagre profilen'
   },
 })
@@ -40,8 +45,13 @@ function handleSubmit() {
 
 <template>
   <SceneComponent title="Velkommen til Nettdetektivene!" background="/StartBackground.jpg">
-    <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden">
-      <CaseFile tab-label="LAG DIN DETEKTIV" class="w-full max-w-[64rem] lg:max-h-[78vh] lg:min-h-0">
+    <div
+      class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden"
+    >
+      <CaseFile
+        tab-label="LAG DIN DETEKTIV"
+        class="w-full max-w-[64rem] lg:max-h-[78vh] lg:min-h-0"
+      >
         <template #left>
           <div class="flex flex-col items-center flex-1 p-3 lg:p-4 gap-2 min-h-0">
             <div class="w-full flex flex-col gap-1">

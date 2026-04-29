@@ -32,7 +32,7 @@ const isError = queryResult.isError
   <SceneComponent title="Ledertavle" previous="/student-home" background="/StartBackground.jpg">
     <div class="flex justify-center p-4 flex-1">
       <div class="w-full max-w-2xl bg-white/90 rounded-2xl p-6 flex flex-col gap-4">
-        <h1 class="text-center text-xl font-bold">Klasseromrangering</h1>
+        <h1 class="text-center text-xl font-bold">Klasserom ledertavle</h1>
 
         <div v-if="isLoading" class="text-center text-gray-500 py-8">Laster...</div>
 

@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from "vue-router";
+import { useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
-import { useAuthStore } from "@/stores/AuthStore.ts";
+import { useAuthStore } from '@/stores/AuthStore.ts'
 import { useStudentStore } from '@/stores/StudentStore.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
-// init verdi må fjernes før innlevering
-const email = ref('tri@nettdetektivene.no')
+const email = ref('student1@test.no')
 const password = ref('password123')
-
 const serverError = ref('')
 const isLoading = ref(false)
 
@@ -41,7 +39,7 @@ async function handleLogin(): Promise<void> {
 
   isLoading.value = true
   try {
-    await authStore.feideLogin({ email: email.value, affiliation: "student", password: password.value})
+    await authStore.feideLogin({ email: email.value, affiliation: 'student', password: password.value })
 
     const emailPrefix = authStore.user?.email?.split('@')[0]
     if (authStore.user?.displayName === emailPrefix) {
@@ -68,119 +66,358 @@ async function handleLogin(): Promise<void> {
         router.push({ name: 'join-classroom' })
       }
     }
-
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
   } finally {
     isLoading.value = false
   }
 }
+
 </script>
 
 <template>
   <SceneComponent
-    title="Elev innlogging"
+    title="Feide elev innlogging"
     previous="/start"
-    next="/join-classroom"
-    background="/StartBackground.jpg"
+    background="/whiteBgImage.jpg"
   >
-    <div class="login-container">
-      <div class="login-card">
-        <div v-if="serverError" class="error-banner" role="alert">
-          {{ serverError }}
-        </div>
+    <div class="login-shell">
+      <div class="login-card-stage">
+        <div class="login-card">
+          <div class="login-toolbar">
+            <span class="login-locale">Norsk</span>
+          </div>
 
-        <div class="field">
-          <label for="student-email">Epost</label>
-          <input
-            id="student-email"
-            v-model="email"
-            type="email"
-            autocomplete="email"
-            :aria-invalid="!!fieldErrors.email"
-            @keyup.enter="handleLogin"
-          />
-          <span v-if="fieldErrors.email" class="field-error" role="alert">
-            {{ fieldErrors.email }}
-          </span>
-        </div>
+          <div class="login-content">
+            <div class="login-header">
+              <h2>Logg inn med Feide</h2>
+              <p>Logg inn via Feide for å få tilgang som elev.</p>
+            </div>
 
-        <div class="field">
-          <label for="student-password">Passord</label>
-          <input
-            id="student-password"
-            v-model="password"
-            type="password"
-            autocomplete="current-password"
-            :aria-invalid="!!fieldErrors.password"
-            @keyup.enter="handleLogin"
-          />
-          <span v-if="fieldErrors.password" class="field-error" role="alert">
-            {{ fieldErrors.password }}
-          </span>
-        </div>
+            <div class="login-divider" />
 
-        <button :disabled="isLoading" @click="handleLogin">
-          {{ isLoading ? 'Logger inn...' : 'Logg inn' }}
-        </button>
+            <div class="affiliation-box">
+              <span class="affiliation-badge" aria-hidden="true">i</span>
+              <div>
+                <p class="affiliation-label">Tilknytning</p>
+                <p class="affiliation-value">Elev</p>
+              </div>
+            </div>
+
+            <div class="login-divider" />
+
+            <div v-if="serverError" class="error-banner" role="alert">
+              {{ serverError }}
+            </div>
+
+            <div class="field">
+              <label for="student-email">Brukernavn</label>
+              <input
+                id="student-email"
+                v-model="email"
+                type="email"
+                autocomplete="email"
+                :aria-invalid="!!fieldErrors.email"
+                @keyup.enter="handleLogin"
+              />
+              <span v-if="fieldErrors.email" class="field-error" role="alert">
+                {{ fieldErrors.email }}
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="student-password">Passord</label>
+              <input
+                id="student-password"
+                v-model="password"
+                type="password"
+                autocomplete="current-password"
+                :aria-invalid="!!fieldErrors.password"
+                @keyup.enter="handleLogin"
+              />
+              <span v-if="fieldErrors.password" class="field-error" role="alert">
+                {{ fieldErrors.password }}
+              </span>
+            </div>
+
+            <button class="login-button btn-bare" :disabled="isLoading" @click="handleLogin">
+              {{ isLoading ? 'Logger inn...' : 'Logg inn' }}
+            </button>
+
+            <button type="button" class="secondary-link btn-bare">
+              Glemt brukernavn eller passord?
+            </button>
+
+            <div class="support-row">
+              <span>Trenger du hjelp?</span>
+              <span class="support-plus">+</span>
+            </div>
+
+            <button type="button" class="privacy-link btn-bare">
+              Personvern og informasjonskapsler
+            </button>
+          </div>
+
+          <div class="login-footer">
+            Feide
+          </div>
+        </div>
       </div>
     </div>
   </SceneComponent>
 </template>
 
 <style scoped>
-.login-container {
+:deep(.scene) {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #d8e0ec;
+}
+
+:deep(.scene-background) {
+  display: none;
+}
+
+:deep(.scene-overlay) {
+  opacity: 0;
+}
+
+:deep(.scene-vignette) {
+  display: none;
+}
+
+:deep(.scene-content) {
+  height: 100dvh;
+  min-height: 0;
+  background: #d8e0ec;
+}
+
+:deep(.scene-body) {
+  min-height: 0;
+  overflow: auto;
+}
+
+:deep(.nav-title) {
+  color: #1f2937;
+  -webkit-text-stroke-width: 0;
+  -webkit-text-stroke-color: transparent;
+  text-shadow: none;
+  font-size: 1.5rem;
+}
+
+.login-shell {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 2rem;
+  padding: 0.75rem 1rem 2rem;
+}
+
+.login-card-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .login-card {
+  width: 100%;
+  max-width: 30rem;
+  background: #ffffff;
+  border: 1px solid #d7deea;
+  box-shadow: 0 8px 24px rgba(56, 79, 118, 0.12);
+  color: #1f2937;
+}
+
+.login-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.5rem 0.75rem;
+  background: #f7f9fc;
+  border-bottom: 1px solid #dde4ef;
+}
+
+.login-locale {
+  font-size: 0.85rem;
+  color: #35538d;
+}
+
+.login-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 480px;
+  gap: 1.2rem;
+  padding: 1.6rem 1.6rem 1.35rem;
+}
+
+.login-header h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1f2937;
+  -webkit-text-stroke-width: 0;
+  -webkit-text-stroke-color: transparent;
+  text-shadow: none;
+}
+
+.login-header p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #374151;
+}
+
+.login-divider {
+  border-top: 1px solid #d9e1ee;
+}
+
+.affiliation-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.affiliation-badge {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 2px solid #d12b2b;
+  color: #d12b2b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.affiliation-label {
+  margin: 0 0 0.15rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.affiliation-value {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #111827;
+  font-weight: 500;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 label {
-  color: white;
-  font-weight: 700;
-  font-size: 1.25rem;
-  -webkit-text-stroke: 2px #000000;
-  paint-order: stroke fill;
+  color: #111827;
+  font-weight: 400;
+  font-size: 1.05rem;
+}
+
+input {
+  height: 2.95rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #5f79be;
+  border-radius: 0;
+  background: #fff;
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+input:focus {
+  outline: 2px solid rgba(95, 121, 190, 0.22);
+  outline-offset: 1px;
 }
 
 .field-error {
-  color: #fca5a5;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.65);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  line-height: 1.3;
 }
 
 .error-banner {
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
+  background: #fff1f2;
+  border: 1px solid #f1b5bb;
+  color: #991b1b;
   font-weight: 600;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  text-align: center;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
-button:disabled {
+.login-button {
+  height: 2.95rem;
+  border: none;
+  border-radius: 0;
+  background: #8eb2ea;
+  color: #1f2937;
+  font-size: 1.05rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #81a8e5;
+}
+
+.login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.secondary-link,
+.privacy-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #2f4a84;
+  font-size: 0.9rem;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.support-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-top: 1px solid #d9e1ee;
+  border-bottom: 1px solid #d9e1ee;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.support-plus {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #35538d;
+}
+
+.login-footer {
+  padding: 1rem 1rem 1.25rem;
+  background: #dbe7f7;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+@media (max-width: 480px) {
+  .login-shell {
+    padding: 1rem 0.5rem;
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
+}
 </style>
-
-

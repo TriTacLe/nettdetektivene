@@ -111,7 +111,7 @@ function submit() {
   <SceneComponent
     :title="isEditMode ? 'Rediger klasserom' : 'Opprett klasserom'"
     background="/StartBackground.jpg"
-    :previous="isEditMode ? `/classroom/${classroomId}` : '/classroom-overview'"
+    :previous="isEditMode ? `/classroom/${classroomId}` : '/teacher-home'"
   >
     <div class="min-h-screen flex flex-col items-center justify-center p-8">
       <div class="bg-amber-50 rounded-2x1 shadow-xl p-8 w-full max-w-md">
@@ -190,8 +190,8 @@ function submit() {
 
           <button
             type="submit"
+            class="btn-vn"
             :disabled="createMutation.isPending.value || updateMutation.isPending.value"
-            class="w-full bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition mt-2"
           >
             {{
               isEditMode

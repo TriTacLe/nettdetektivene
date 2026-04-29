@@ -62,7 +62,7 @@ function goToTask(taskId: number) {
         <button
           v-for="task in availableTasks"
           :key="task.taskId"
-          class="task-btn"
+          class="task-btn btn-bare"
           :class="{
             'task-btn--completed': stopStore.isComplete(stopId, task.uuid),
           }"

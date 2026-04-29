@@ -1,259 +1,179 @@
 # Nettdetektivene
 
-IDATT2106 - System Development 2 with Agile Project  
-Team 05 - Spring 2026
+A gamified educational web app where pupils (grades 3–7) learn about digital
+safety, fake news, image manipulation, and cybercrime by playing through
+detective-themed tasks. Teachers create classrooms, hand out join codes, and
+track student progress.
 
-A gamified educational platform teaching children (grades 3-7) about digital safety, misinformation, and cybercrime through interactive detective gameplay.
-
----
-
-## Project Overview
-
-Nettdetektivene is a web application where students become digital detectives, solving tasks related to:
-
-- Identifying fake news and misinformation
-- Recognizing phishing attempts and suspicious emails
-- Creating strong passwords
-- Understanding safe social media practices
-- Detecting manipulated images
-
-Teachers can create classrooms, track student progress, and manage learning content.
+- **Backend** — Spring Boot 3.5 (Java 21) + MySQL 8 + Flyway
+- **Frontend** — Vue 3 + Vite + Tailwind 4 + Pinia
+- **Container orchestration** — Docker Compose, driven by a top-level Makefile
 
 ---
 
-## Technology Stack
+## Prerequisites
 
-### Backend
-
-- **Framework:** Spring Boot 3.5
-- **Language:** Java 21
-- **Build Tool:** Maven
-- **Database:** MySQL 8.0
-- **Security:** JWT Authentication, Spring Security
-- **Documentation:** OpenAPI/Swagger
-- **Migrations:** Flyway
-- **Testing:** JUnit 5, Mockito, Testcontainers
-
-### Frontend
-
-- **Framework:** Vue 3
-- **Language:** TypeScript
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS v4
-- **State Management:** Pinia
-- **Routing:** Vue Router
-- **HTTP Client:** Axios
-
-### DevOps
-
-- **Version Control:** GitHub
-- **CI/CD:** GitHub Actions
-- **Containerization:** Docker, Docker Compose
+- Docker + Docker Compose
+- `bash`, `curl`, `jq` (for the seed script)
+- Node 22 and Java 21 only if you want to run a service outside Docker
 
 ---
 
-## Quick Start
+## 1. Configure environment
 
-### Prerequisites
+There are **two** `.env` files. Both must be filled in before anything works.
 
-- Java 21
-- Node.js 22
-- Maven (or use wrapper: `./mvnw`)
-- MySQL 8.0+ (or Docker)
-
-### 1. Clone Repository
+### Root `.env` (used by `docker-compose` and the backend container)
 
 ```bash
-git clone git@git.ntnu.no:smblund/idatt2106-v26-05.git
-cd idatt2106-v26-05
-```
-
-### 2. Database Setup
-
-**Option A: Docker (Recommended)**
-
-```bash
-# Start all services (MySQL, Backend, Frontend)
-docker-compose up -d
-
-# Or start only MySQL
-docker-compose up -d mysql
-```
-
-**Option B: Local MySQL**
-
-```bash
-mysql -u root -p -e "CREATE DATABASE nettdetektivene;"
-```
-
-### 3. Backend Setup
-
-```bash
-cd backend
 cp .env.example .env
-# Edit .env with your database credentials
-./mvnw spring-boot:run
 ```
 
-Backend runs at: http://localhost:8080  
-Swagger UI: http://localhost:8080/swagger-ui.html
+Then edit `.env` and set:
 
-### 4. Frontend Setup
+```env
+MYSQL_USER=nd-usr
+MYSQL_PASSWORD=<pick one>
+MYSQL_DATABASE=nd-db
+MYSQL_ROOT_PASSWORD=<pick one>
+JWT_SECRET=<run: openssl rand -base64 32>
+JWT_EXPIRATION_MS=900000
+JWT_REFRESH_EXPIRATION_MS=604800000
+```
+
+The healthcheck for the `mysql` service uses `MYSQL_ROOT_PASSWORD`, so it must
+not be empty.
+
+### Frontend `.env` (read by Vite at build/dev time)
 
 ```bash
+cp frontend/.env.example frontend/.env
+```
+
+Defaults are fine for local development:
+
+```env
+VITE_API_URL=http://localhost:8080/api/v1
+VITE_APP_TITLE=Nettdetektivene
+```
+
+In Docker `prod` mode the frontend nginx proxies `/api` to the backend, so
+`VITE_API_URL` can stay as `http://localhost:8080/api/v1` regardless.
+
+---
+
+## 2. Run the stack
+
+The `Makefile` is the supported entry point.
+
+| Command       | What it does                                                                |
+| ------------- | --------------------------------------------------------------------------- |
+| `make dev`    | Builds + starts `mysql` and `backend`, waits until backend is healthy, runs `scripts/factory.sh` to seed test data, then tails logs. |
+| `make prod`   | Builds + starts `mysql`, `backend`, and `frontend` (nginx). Frontend at `http://localhost:5173`. |
+| `make status` | Shows port usage (8080, 3307, 5173) and running containers.                  |
+| `make logs`   | Tails logs for any service: `make logs backend`.                            |
+| `make down`   | `docker compose down` — stops containers, keeps volumes.                    |
+| `make clean`  | `docker compose down -v` — stops containers **and removes the database volume**. Use this to reset. |
+
+Service URLs once running:
+
+- Backend: `http://localhost:8080` (Swagger at `/swagger-ui.html`)
+- Frontend: `http://localhost:5173` (only in `prod` mode; for `dev`, run the
+  frontend separately with `cd frontend && npm install && npm run dev`)
+- MySQL: `localhost:3307` (mapped from container `:3306`)
+
+---
+
+## 3. Populate the database
+
+Seeding is driven by a single idempotent script: `scripts/factory.sh`.
+
+`make dev` runs it automatically once the backend is healthy. To re-seed
+manually (after a code change, fresh volume, etc.):
+
+```bash
+bash scripts/factory.sh
+```
+
+It creates:
+
+- The **NTNU** institution
+- One default teacher: `laerer@ntnu.no` (matches the default in the teacher
+  login form). Plus `instructor@test.no` and `admin@test.no` for parity with
+  older scripts.
+- Five students: `student1@test.no` … `student5@test.no`
+- A classroom **Testklasse 1** with all students joined and approved
+- 11 tasks linked to the classroom: 3 NEWS (Nyhetskvartalet), 3 PHOTO
+  (Fotografen), and 5 mixed NEWS/PHOTO at Datasenteret (the boss area)
+
+All default passwords are `password123`. The script is safe to re-run; existing
+records are detected by name/email and skipped.
+
+**Resetting from scratch:** `make clean` drops the MySQL volume. The next
+`make dev` re-applies Flyway migrations and re-runs `factory.sh` against an
+empty database.
+
+---
+
+## 4. Common workflows
+
+```bash
+# First-time setup
+cp .env.example .env && cp frontend/.env.example frontend/.env
+# (edit both files)
+make dev
+
+# After pulling new backend changes
+make down
+make dev          # rebuilds the backend image, re-seeds
+
+# Reset everything
+make clean
+make dev
+
+# Stop the stack
+make down
+
+# Frontend dev server (HMR) — backend can be running via make dev in another terminal
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend runs at: http://localhost:5173
+---
+
+## 5. Tests
+
+```bash
+make test             # backend + frontend unit tests
+make test-backend     # JUnit + Mockito + H2
+make test-frontend    # Vitest
+make test-e2e         # Cypress (stack must already be running)
+make test-coverage    # JaCoCo report — backend/target/site/jacoco/index.html
+```
 
 ---
 
-## Demo Data Seeding
-
-The backend includes an automatic `DataSeeder` that populates the database with comprehensive mock data on first startup.
-
-### What Gets Created
-
-- **3 Institutions** - NTNU, OsloMet, UiB
-- **3 Teachers** - with different institution affiliations
-- **3 Classrooms** - with unique join codes
-- **11 Tasks** - across different types (NEWS, PHOTO, EMAIL, PASSWORD, MARKETPLACE, SOCIAL, BOSS)
-- **8 Students** - with varied progress levels (high achievers, average, struggling)
-- **Task Attempts** - with realistic scores and pass/fail status
-- **Notebook Entries** - student reflections
-- **Achievements** - various badges
-
-### Default Demo Credentials
-
-The seeder runs automatically on startup when the database is empty. Use these accounts to log in:
-
-**Teacher:**
-
-- Email: `nora@ntnu.no`
-- Password: `password123`
-
-**Student (High Achiever):**
-
-- Email: `kari@elev.no`
-- Password: `password123`
-
-**Student (Struggling):**
-
-- Email: `christoffer@elev.no`
-- Password: `password123`
-
-### Disable Seeding
-
-To prevent seeding (e.g., in production):
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
-```
-
-### Reset Demo Data
-
-To re-seed with fresh data:
-
-```bash
-# Drop and recreate the database
-mysql -u root -p -e "DROP DATABASE nd-db; CREATE DATABASE nd-db;"
-
-# Restart the backend - Flyway and DataSeeder will run automatically
-./mvnw spring-boot:run
-```
-
-See [backend/src/main/java/ntnu/no/backend/config/README.md](backend/src/main/java/ntnu/no/backend/config/README.md) for complete documentation.
-
----
-
-## Project Structure
+## 6. Where things live
 
 ```
-idatt2106-v26-05/
+.
+├── Makefile              # entry point — make dev / prod / clean / logs
+├── compose.yaml          # dev compose (builds backend image locally)
+├── compose.prod.yaml     # prod compose (pulls images from registry)
+├── .env                  # root env (mysql + jwt)
+├── scripts/
+│   └── factory.sh        # idempotent seed script
 ├── backend/
-│   ├── src/
-│   │   ├── main/java/ntnu/no/backend/
-│   │   │   ├── config/          # Configuration classes
-│   │   │   ├── controller/      # REST controllers
-│   │   │   ├── dto/             # Data Transfer Objects
-│   │   │   ├── exception/       # Exception handlers
-│   │   │   ├── mapper/          # Entity-DTO mappers
-│   │   │   ├── model/           # JPA entities
-│   │   │   ├── repository/      # Spring Data repositories
-│   │   │   ├── security/        # JWT and security
-│   │   │   ├── service/         # Business logic
-│   │   │   └── shared/          # Shared utilities
-│   │   ├── resources/
-│   │   │   └── db/migration/    # Flyway migrations
-│   │   └── test/                # Test classes
-│   └── pom.xml
-├── frontend/
-│   ├── src/
-│   │   ├── components/          # Vue components
-│   │   ├── views/               # Page views
-│   │   ├── services/            # API services
-│   │   ├── stores/              # Pinia stores
-│   │   ├── router/              # Vue Router config
-│   │   └── types/               # TypeScript types
-│   └── package.json
-└── compose.yml
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/main/...      # Spring Boot app + Flyway migrations
+└── frontend/
+    ├── Dockerfile
+    ├── nginx.conf        # /api proxy + SPA fallback
+    ├── .env              # Vite env (VITE_API_URL, VITE_APP_TITLE)
+    └── src/...           # Vue 3 app
 ```
 
----
-
-## Team
-
-| Name                     | Role                            | Responsibility                                     |
-| ------------------------ | ------------------------------- | -------------------------------------------------- |
-| Nora Lilliedahl Kirknes  | Process Documentation / Backend | Auth, Security, Process                            |
-| Tri Tac Le               | Backend                         | Achievement, Task, Notebook, Mystery, Notification |
-| Anine Selle Standnes     | Backend                         | User, Classroom                                    |
-| Silje Marie Borgan Lund  | Frontend                        | Views, Components                                  |
-| Regine Hjelmtveit        | Frontend                        | UI/UX, Styling                                     |
-| Vetle Nilsen             | Frontend                        | Game Logic, Interactions                           |
-| Gustav Haverstad Skyberg | Frontend                        | Integration, Testing                               |
-
-**Product Owners:** Lea Mæhlum, Malin
-
----
-
-## API Documentation
-
-All API endpoints are documented via Swagger UI:
-
-```
-http://localhost:8080/swagger-ui.html
-```
-
-Base URL: `http://localhost:8080/api/v1/`
-
-## Development
-
-### Running Tests
-
-**Backend:**
-
-```bash
-cd backend
-./mvnw test
-./mvnw test jacoco:report  # With coverage
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run test:unit
-```
-
-### Code Style
-
-- Follow existing naming conventions
-- Use constructor injection (not @Autowired)
-- Map entities to DTOs before returning from controllers
-- Add @PreAuthorize on all mutating endpoints
-- Generate UUIDs in Java (not database)
-
----
+API base URL: `http://localhost:8080/api/v1/`. Swagger:
+`http://localhost:8080/swagger-ui.html`.

@@ -78,25 +78,25 @@ function removeStudent(userId: string) {
 
             <button
               v-if="!student.isAllowed"
+              class="btn-vn overview-action-btn"
               @click="student.userId && approveStudent(student.userId)"
-              class="text-green-700 hover:text-green-500 font-bold text-sm shrink-0 px-2 py-1"
             >
               Godkjenn
             </button>
 
             <button
               v-if="student.isAllowed"
+              class="btn-vn overview-action-btn"
               @click="student.userId && router.push({ name: 'classroom-student-progress', params: { id: classroomId, userId: student.userId } })"
-              class="text-blue-700 hover:text-blue-500 font-bold text-sm shrink-0 px-2 py-1"
             >
               Se progresjon
             </button>
 
             <button
-              @click="student.userId && removeStudent(student.userId)"
-              class="text-red-600 hover:text-red-800 font-bold text-xl leading-none shrink-0 p-1"
+              class="btn-vn btn-vn-danger overview-action-btn"
               title="Fjern elev"
               aria-label="Fjern elev"
+              @click="student.userId && removeStudent(student.userId)"
             >
               &times;
             </button>
@@ -106,3 +106,12 @@ function removeStudent(userId: string) {
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.student-action-btn {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  --notch: 5px;
+  flex-shrink: 0;
+}
+</style>
