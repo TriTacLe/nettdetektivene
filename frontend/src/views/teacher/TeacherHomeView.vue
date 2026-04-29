@@ -40,7 +40,6 @@ function handleSelect(item: SidePanelMenuItem) {
 <template>
   <SceneComponent
     title="Lærerportal"
-    previous="/teacher-login"
     background="/StartBackground.jpg"
   >
     <div class="scene-split-layout">

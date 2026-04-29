@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import './types'
 
 const router = createRouter({
@@ -74,7 +75,6 @@ const router = createRouter({
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/classroom/:id/test-game',
@@ -100,13 +100,11 @@ const router = createRouter({
       path: '/classroom/new',
       name: 'create-classroom',
       component: () => import('../views/teacher/CreateClassroomView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/classroom/:id',
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/classroom/:id/tasks/new',
@@ -196,6 +194,32 @@ const router = createRouter({
   ],
 })
 
+const PUBLIC_ROUTES = new Set([
+  'start', 'student-login', 'teacher-login'
+])
+
+const AUTH_ROUTES = new Set([
+  'join-classroom', 'set-display-name', 'awaiting-approval',
+])
+
+const TEACHER_ROUTES = new Set([
+  'teacher-home', 'classroom-test-game', 'teacher-leaderboard',
+  'teacher-classroom-leaderboard', 'settings',
+  'create-classroom', 'classroom-detail',
+  'classroom-task-create', 'classroom-task-edit', 'classroom-students',
+  'classroom-settings', 'edit-classroom', 'classroom-student-progress',
+  'teacher-notifications',
+])
+
+const STUDENT_ROUTES = new Set([
+  'student-home', 'game-map', 'nyhetskvartalet-task',
+  'fotografen-task', 'stop-task', 'stop',
+  'student-profile', 'edit-avatar', 'notebook',
+  'student-leaderboard', 'ending', 'task-finished',
+  'stop-finished', 'task-failed', 'tasks',
+  'achievements',
+])
+
 // Routes that belong to the test-mode flow. Leaving any of these while
 // testModeClassroomId is set means the teacher exited test mode, so we
 // drop the flag + the local "completed" marks loadTasksTestMode left.
@@ -213,6 +237,17 @@ router.beforeEach((to) => {
   if (stop.testModeClassroomId && !isTestModeRoute(to.path, to.name)) {
     stop.exitTestMode()
   }
+
+  const auth = useAuthStore()
+  const name = to.name = to.name as string
+
+  if (PUBLIC_ROUTES.has(name)) return true
+  if (!auth.isAuthenticated) return { name: 'start' }
+  if (TEACHER_ROUTES.has(name) && !auth.isTeacher) return { name: 'start' }
+  if (STUDENT_ROUTES.has(name) && !auth.isStudent) return { name: 'start' }
+  if (AUTH_ROUTES.has(name) && !auth.isStudent) return true
+
+  return true
 })
 
 export default router
