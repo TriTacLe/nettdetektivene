@@ -64,9 +64,7 @@ watch(classroomTask, (task) => {
       alternatives: (content?.alternatives ?? []).map((a: any) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
-        description: a.description ?? '',
         correctType: a.correctType ?? 'ekte',
-        begrunnelserText: (a.begrunnelser ?? []).join('\n'),
       })),
     }
     draft.value = photoDraft
@@ -126,8 +124,6 @@ function validate() {
     if (!draft.value.description.trim()) throw new Error('Oppgaven må ha en beskrivelse')
     for (const alt of draft.value.alternatives) {
       if (!alt.image && !alt.existingImagePath) throw new Error('Alle alternativer må ha et bilde')
-      if (!alt.description.trim()) throw new Error('Alle alternativer må ha en beskrivelse')
-      if (!alt.begrunnelserText.trim()) throw new Error('Alle alternativer må ha minst én begrunnelse')
     }
   }
 }
@@ -152,7 +148,7 @@ function addAlternative() {
     return
   }
   serverError.value = null
-  draft.value.alternatives.push({ existingImagePath: null, image: null, description: '', correctType: 'ekte', begrunnelserText: '' })
+  draft.value.alternatives.push({ existingImagePath: null, image: null, correctType: 'ekte' })
 }
 
 function removeAlternative(index: number) {
@@ -319,22 +315,12 @@ function submit() {
                 </div>
 
                 <label class="task-field">
-                  <span>Beskrivelse</span>
-                  <input v-model="alt.description" type="text" placeholder="Legg til kontekst for elevene..." />
-                </label>
-
-                <label class="task-field">
                   <span>Bildetypen er</span>
                   <select v-model="alt.correctType">
                     <option value="ekte">Ekte</option>
                     <option value="ai-generert">KI-generert</option>
                     <option value="manipulert">Manipulert</option>
                   </select>
-                </label>
-
-                <label class="task-field">
-                  <span>Begrunnelser, én per linje</span>
-                  <textarea v-model="alt.begrunnelserText" rows="4" />
                 </label>
 
                 <button type="button" class="task-upload-remove" :disabled="draft.alternatives.length <= 2" @click="removeAlternative(index)">

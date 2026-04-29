@@ -127,9 +127,7 @@ export type PhotoType = 'ekte' | 'ai-generert' | 'manipulert'
 
 export interface PhotoAlternative {
   imagePath: string;
-  description: string;
   correctType: PhotoType;
-  begrunnelser: string[];
 }
 
 export interface FotografenChallenge {
@@ -143,9 +141,7 @@ export interface TeacherNewsArticleDraft {
 
 export interface TeacherPhotoAlternativeDraft {
   image: File | null
-  description: string
   correctType: PhotoType
-  begrunnelserText: string
 }
 
 export interface TeacherTaskBaseDraft {
@@ -179,9 +175,7 @@ export interface EditArticleDraft {
 export interface EditAlternativeDraft {
   existingImagePath: string | null
   image: File | null
-  description: string
   correctType: PhotoType
-  begrunnelserText: string
 }
 
 export interface EditNewsTaskDraft {
@@ -262,10 +256,24 @@ export interface StopTaskDTO {
   content?: any
 }
 
+export interface NewsAnswers {
+  selectedIndex: number
+}
+
+export interface PhotoSelectionAnswer {
+  type: PhotoType
+}
+
+export interface PhotoAnswers {
+  selections: PhotoSelectionAnswer[]
+}
+
+export type TaskAnswers = NewsAnswers | PhotoAnswers
+
 export interface TaskAttemptRequestDTO {
   taskId: string
   classroomId: string
-  score: number
+  answers: TaskAnswers
 }
 
 export interface TaskAttemptResponseDTO {
