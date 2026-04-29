@@ -20,6 +20,7 @@ const badgeImage = '/unlockedBadge.png'
 const questionmarkImage = '/questionmarkIcon.png'
 const notebookImage = '/notebook.jpg'
 const leaderboardImage = '/leaderboard.jpg'
+const mysteryImage = '/mystery-magnifier.png'
 
 const router = useRouter()
 const storyStore = useStoryProgressStore()
@@ -227,7 +228,7 @@ onUnmounted(() => {
           >
             <div class="profile-note">
               <AvatarPreview :config="avatarCfg" :size="84" />
-              <p class="note-title">{{ studentName }}</p>
+              <p class="image-note-title">{{ studentName }}</p>
             </div>
           </BoardNote>
         </div>
@@ -236,12 +237,12 @@ onUnmounted(() => {
           <BoardNote
             :rotation="4"
             pin-color="#1c7ed6"
-            width="clamp(4rem, 6vw, 6rem)"
+            width="clamp(5.5rem, 7vw, 7.25rem)"
             @click="toggleHelp"
           >
-            <div class="help-note">
-              <img :src="questionmarkImage" alt="Hjelp" class="help-image" />
-              <p class="note-title">{{ showHelp ? 'Lukk' : 'Hjelp' }}</p>
+            <div class="image-note">
+              <img :src="questionmarkImage" :alt="showHelp ? 'Lukk hjelp' : 'Hjelp'" class="help-image image-note-bg" />
+              <p class="image-note-title">{{ showHelp ? 'Lukk' : 'Hjelp' }}</p>
             </div>
           </BoardNote>
         </div>
@@ -306,37 +307,39 @@ onUnmounted(() => {
           <BoardNote
             :rotation="-1"
             pin-color="#e03131"
-            width="auto"
-            height="auto"
+            width="clamp(6.35rem, 9vw, 7.85rem)"
             @click="goTo('/mystery')"
           >
-            <p class="note-title">Ukens Mysterium</p>
+            <div class="image-note">
+              <img :src="mysteryImage" alt="Ukens Mysterium" class="mystery-image image-note-bg" />
+              <p class="image-note-title">Ukens Mysterium</p>
+            </div>
           </BoardNote>
         </div>
 
         <Transition name="fade">
           <div v-if="showHelp" class="help-overlay" @click.self="closeHelp">
-            <div class="help-note help-note--overlay" style="top: 12%; left: 13%; transform: translate(-50%, 30%) rotate(-2deg)">
+            <div class="help-note help-note--overlay" style="top: 12%; left: 13%; transform: translate(-50%, 30%) rotate(-4deg)">
               <p class="help-note-title">Detektivprofil</p>
               <p class="help-note-text">Se profilen din, endre avatar og navn</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 50%; left: 52%">
+            <div class="help-note help-note--overlay" style="top: 49%; left: 52%; transform: translate(-50%, -130%) rotate(1.5deg)">
               <p class="help-note-title">Kartet</p>
               <p class="help-note-text">Utforsk kartet og finn detektivoppdrag ute</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 10%; left: 86%; transform: translate(-50%, 30%) rotate(-2deg)">
+            <div class="help-note help-note--overlay" style="top: 10%; left: 86%; transform: translate(-50%, 30%) rotate(3deg)">
               <p class="help-note-title">Prestasjoner</p>
               <p class="help-note-text">Se medaljer og prestasjoner du har oppnådd</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 85%; left: 86%">
+            <div class="help-note help-note--overlay" style="top: 85%; left: 86%; transform: translate(-50%, -130%) rotate(-2deg)">
               <p class="help-note-title">Notatblokk</p>
               <p class="help-note-text">Skriv og les egne notater fra oppdragene</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 89%; left: 14%">
+            <div class="help-note help-note--overlay" style="top: 89%; left: 14%; transform: translate(-50%, -130%) rotate(2.5deg)">
               <p class="help-note-title">Ledertavle</p>
               <p class="help-note-text">Se hvilken klasse på skolen din som har flest poeng</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 90%; left: 52%">
+            <div class="help-note help-note--overlay" style="top: 93%; left: 52%; transform: translate(-50%, -130%) rotate(-1deg)">
               <p class="help-note-title">Ukens Mysterium</p>
               <p class="help-note-text">Send inn funn fra nettet og vinn en medalje</p>
             </div>
@@ -365,14 +368,13 @@ onUnmounted(() => {
 }
 
 .image-note {
-  position: relative;
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
   width: 100%;
-  height: auto;
-  min-height: 0;
   padding: 0;
-  line-height: 0;
-  overflow: visible;
+  line-height: normal;
 }
 
 .student-home {
@@ -429,7 +431,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 3;
+  z-index: 2;
 }
 
 .string-line {
@@ -445,7 +447,7 @@ onUnmounted(() => {
   position: absolute;
   transform: translate(-50%, -50%);
   max-width: 28%;
-  z-index: 2;
+  z-index: 4;
 }
 
 .note-title {
@@ -454,13 +456,9 @@ onUnmounted(() => {
   font-size: clamp(1.125rem, 1.2vw, 1.35rem);
   line-height: 1.15;
   text-align: center;
-  color: #fff;
-  text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000,
-    0 2px 4px rgba(0, 0, 0, 0.45);
+  max-width: 100%;
+  color: #2f2418;
+  text-wrap: balance;
 }
 
 .image-note-bg,
@@ -480,27 +478,27 @@ onUnmounted(() => {
 }
 
 .image-note-title {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(0.2rem, 0.8vw, 0.7rem);
-  transform: translateX(-50%);
-  z-index: 1;
   margin: 0;
-  padding: 0;
-  font-size: clamp(1.125rem, 1.2vw, 1.35rem);
+  width: calc(100% - 0.15rem);
+  min-height: clamp(2.55rem, 3.2vw, 3.1rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.85rem 0.35rem;
+  font-size: clamp(1rem, 1.1vw, 1.25rem);
   font-weight: 800;
   line-height: 1.15;
-  white-space: nowrap;
-  color: #fff;
-  text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000,
-    0 2px 4px rgba(0, 0, 0, 0.45);
-  background: transparent;
-  border: none;
-  border-radius: 0;
+  text-align: center;
+  white-space: normal;
+  max-width: calc(100% - 0.15rem);
+  color: #2f2418;
+  background: linear-gradient(180deg, rgba(255, 252, 237, 0.96), rgba(245, 235, 205, 0.96));
+  border-radius: 2px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -1px 0 rgba(130, 97, 48, 0.08) inset;
+  border-top: 1px solid rgba(125, 92, 45, 0.12);
+  text-wrap: balance;
 }
 
 .profile-note {
@@ -508,6 +506,29 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  text-align: center;
+}
+
+.help-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.help-image {
+  display: block;
+  width: clamp(2.7rem, 4vw, 3.4rem);
+  height: auto;
+  object-fit: contain;
+}
+
+.mystery-image {
+  display: block;
+  width: 64%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
 }
 
 .note-profile {
@@ -522,18 +543,21 @@ onUnmounted(() => {
 .help-note--overlay {
   position: absolute;
   transform: translate(-50%, -130%) rotate(-2deg);
-  background: linear-gradient(180deg, #fffdf0 0%, #fdf6d8 100%);
-  padding: 0.6rem 0.9rem 0.7rem;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 168, 0.98) 0%, rgba(251, 234, 122, 0.97) 100%);
+  padding: 0.7rem 0.85rem 0.8rem;
   box-shadow:
-    0 6px 12px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.18);
-  border-radius: 2px;
-  width: 11rem;
+    0 10px 18px rgba(0, 0, 0, 0.28),
+    0 2px 5px rgba(0, 0, 0, 0.14);
+  border-radius: 0;
+  width: 10.25rem;
   pointer-events: none;
+  border: 1px solid rgba(167, 133, 28, 0.12);
 }
 
+
 .note-map {
-  top: 50%;
+  top: 46%;
   left: 50%;
 }
 .note-achievements {
@@ -551,8 +575,8 @@ onUnmounted(() => {
 }
 
 .note-mystery {
-  top: 90%;
-  left: 52%;
+  top: 86.8%;
+  left: 53%;
 }
 
 
@@ -566,17 +590,17 @@ onUnmounted(() => {
 
 
 .help-note-title {
-  margin: 0 0 0.2rem;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1a365d;
+  margin: 0 0 0.25rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #5d430d;
 }
 
 .help-note-text {
   margin: 0;
-  font-size: 0.75rem;
-  color: #2d3748;
-  line-height: 1.3;
+  font-size: 0.82rem;
+  color: #5d430d;
+  line-height: 1.35;
 }
 
 .fade-enter-active,
