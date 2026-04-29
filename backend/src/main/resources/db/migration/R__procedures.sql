@@ -230,6 +230,7 @@ BEGIN
     DECLARE v_stop_passed INT DEFAULT 0;
     DECLARE v_total_classroom_tasks INT DEFAULT 0;
     DECLARE v_total_classroom_passed INT DEFAULT 0;
+    DECLARE v_user_classroom_fails INT DEFAULT 0;
 
     -- First Task: only on INSERT path (first attempt is always an INSERT)
     IF p_is_insert = 1 THEN
@@ -286,6 +287,16 @@ BEGIN
 
     IF v_total_classroom_passed >= v_total_classroom_tasks AND v_total_classroom_tasks > 0 THEN
         CALL sp_award_achievement(p_user_id, 'all_tasks_completed', 'classroom', p_classroom_id);
+
+        SELECT COUNT(*) INTO v_user_classroom_fails
+        FROM task_attempt
+        WHERE user_id = p_user_id
+          AND classroom_id = p_classroom_id
+          AND passed = 0;
+
+        IF v_user_classroom_fails = 0 THEN
+            CALL sp_award_achievement(p_user_id, 'perfect_classroom', 'classroom', p_classroom_id);
+        END IF;
     END IF;
 END$$
 

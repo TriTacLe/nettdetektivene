@@ -11,7 +11,7 @@ import { useStopStore } from '@/stores/StopStore'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { fotografenIntro } from '@/data/taskDialogs/fotografen'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
-import type { TaskDTO, FotografenChallenge } from '@/types'
+import type { TaskDTO, FotografenChallenge, PhotoAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -87,45 +87,63 @@ const challenge = computed<FotografenChallenge | null>(() => {
 const taskQuestion = computed(() => task.value?.content?.photo?.description)
 const taskTip = computed(() => task.value?.content?.photo?.hint)
 
-async function submitAttempt(score: number) {
+function isCorrectLocally(answers: PhotoAnswers): boolean {
+  const alts = task.value?.content?.photo?.alternatives ?? []
+  if (answers.selections.length !== alts.length) return false
+  return alts.every((alt: any, i: number) => answers.selections[i]?.type === alt.correctType)
+}
+
+function failureReason(answers: PhotoAnswers): string {
+  const alts = task.value?.content?.photo?.alternatives ?? []
+  const wrongIndexes = alts
+    .map((alt: any, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
+    .filter((i: number | null): i is number => i !== null)
+  const which = wrongIndexes.length === 1
+    ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
+    : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
+  return `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`
+}
+
+async function onSubmit(answers: PhotoAnswers) {
+  if (testClassroomId) {
+    routeResult(isCorrectLocally(answers), answers)
+    return
+  }
+
   try {
     submitting.value = true
     const classroomId = await fetchClassroomId()
-    if (classroomId) {
-      await TaskAttemptService.submitAttempt(taskId, classroomId, score)
-      return true
+    if (!classroomId) {
+      error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
+      return
     }
-    error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
-    return false
+    const result = await TaskAttemptService.submitAttempt(taskId, classroomId, answers)
+    routeResult(result.passed, answers)
   } catch (err) {
     console.error('Failed to submit attempt:', err)
     error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
-    return false
   } finally {
     submitting.value = false
   }
 }
 
-async function onComplete() {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(100)
-    if (!wasSaved) return
+function routeResult(passed: boolean, answers: PhotoAnswers) {
+  if (passed) {
+    router.push({
+      name: 'task-finished',
+      query: { stop: 'fotografen', taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
+    })
+  } else {
+    router.push({
+      name: 'task-failed',
+      query: {
+        stop: 'fotografen',
+        taskId,
+        reason: failureReason(answers),
+        ...(testClassroomId ? { classroomId: testClassroomId } : {}),
+      },
+    })
   }
-  router.push({
-    name: 'task-finished',
-    query: { stop: 'fotografen', taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
-}
-
-async function onFailed(reason: string) {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(0)
-    if (!wasSaved) return
-  }
-  router.push({
-    name: 'task-failed',
-    query: { stop: 'fotografen', taskId, reason, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
 }
 </script>
 
@@ -145,8 +163,7 @@ async function onFailed(reason: string) {
         :challenge="challenge"
         :question="taskQuestion"
         :tip="taskTip"
-        @complete="onComplete"
-        @failed="onFailed"
+        @submit="onSubmit"
       />
       <CutsceneDialog
         v-if="!introDone && introRunner.currentScene.value"

@@ -46,6 +46,7 @@ public class TaskAttemptService {
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final TaskAttemptVerifier taskAttemptVerifier;
 
   /**
    * Submits a task attempt by calling the {@code sp_submit_attempt} stored procedure.
@@ -55,7 +56,7 @@ public class TaskAttemptService {
    * updates best scores and awards XP automatically.</p>
    *
    * @param user the authenticated user submitting the attempt
-   * @param dto  the attempt request containing taskId, classroomId, and score
+   * @param dto  the attempt request containing taskId, classroomId, and raw answers
    * @return a {@link TaskAttemptResponseDTO} representing the recorded attempt
    */
   @Transactional
@@ -64,8 +65,8 @@ public class TaskAttemptService {
     String userId = user.getId().toString();
     String taskId = dto.getTaskId().toString();
     String classroomId = dto.getClassroomId().toString();
-    int score = dto.getScore();
-    boolean passed = score >= 80;
+    boolean passed = taskAttemptVerifier.isCorrect(dto.getTaskId(), dto.getAnswers());
+    int score = passed ? 100 : 0;
 
     jdbcTemplate.update("CALL sp_submit_attempt(?, ?, ?, ?, ?, ?)",
         attemptId.toString(), userId, taskId, classroomId, score, passed ? 1 : 0);
