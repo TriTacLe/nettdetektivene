@@ -483,105 +483,74 @@ END$$
 
 -- -------------------------------------------------------------
 -- trg_award_achievements
--- Awards achievements based on task completion criteria
+-- awards achievements based on task completion criteria.
+-- uses sp_award_achievement for idempotent inserts.
 -- -------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_award_achievements$$
 CREATE TRIGGER trg_award_achievements
 AFTER INSERT ON task_best_score
 FOR EACH ROW
 BEGIN
-    DECLARE v_task_location VARCHAR(100) DEFAULT NULL;
-    DECLARE v_task_count INT DEFAULT 0;
-    DECLARE v_user_passed_count INT DEFAULT 0;
-    DECLARE v_classroom_task_count INT DEFAULT 0;
-    DECLARE v_user_classroom_passed_count INT DEFAULT NULL;
-    
-    -- Award "Første Oppgave" achievement
-    INSERT IGNORE INTO user_achievement (user_id, achievement_id, classroom_id, earned_at)
-    SELECT NEW.user_id, a.achievement_id, NEW.classroom_id, NOW()
-    FROM achievement a
-    WHERE a.trigger_type = 'task_completed'
-      AND a.trigger_ref = 'first_task'
-      AND NOT EXISTS (
-          SELECT 1 FROM user_achievement ua 
-          WHERE ua.user_id = NEW.user_id AND ua.achievement_id = a.achievement_id
-      );
-    
-    -- Award "Perfekt Score" achievement (100 points)
-    IF NEW.best_score = 100 THEN
-        INSERT IGNORE INTO user_achievement (user_id, achievement_id, classroom_id, earned_at)
-        SELECT NEW.user_id, a.achievement_id, NEW.classroom_id, NOW()
-        FROM achievement a
-        WHERE a.trigger_type = 'perfect_score'
-          AND a.trigger_ref = '100_points'
-          AND NOT EXISTS (
-              SELECT 1 FROM user_achievement ua 
-              WHERE ua.user_id = NEW.user_id AND ua.achievement_id = a.achievement_id
-          );
+    DECLARE v_prior_passes INT DEFAULT 0;
+    DECLARE v_stop_name VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+    DECLARE v_stop_tasks INT DEFAULT 0;
+    DECLARE v_stop_passed INT DEFAULT 0;
+    DECLARE v_total_classroom_tasks INT DEFAULT 0;
+    DECLARE v_total_classroom_passed INT DEFAULT 0;
+
+    -- Award First Task if this is the users first ever passed task
+    SELECT COUNT(*) INTO v_prior_passes
+    FROM task_best_score
+    WHERE user_id = NEW.user_id
+      AND first_passed_at IS NOT NULL
+      AND task_id <> NEW.task_id;
+
+    IF v_prior_passes = 0 THEN
+        CALL sp_award_achievement(NEW.user_id, 'task_completed', 'first_task', NEW.classroom_id);
     END IF;
-    
-    -- Award location completion achievements
-    -- Get the task's stop location
-    SELECT stop_location
-    INTO v_task_location
-    FROM task
-    WHERE task_id = NEW.task_id;
-    
-    -- Count total tasks in this stop location
-    SELECT COUNT(*)
-    INTO v_task_count
-    FROM task
-    WHERE stop_location = v_task_location
-      AND is_active = 1;
-    
-    -- Count tasks user has passed in this stop location
-    SELECT COUNT(*)
-    INTO v_user_passed_count
-    FROM task_best_score tbs
-    JOIN task t ON t.task_id = tbs.task_id
-    WHERE tbs.user_id = NEW.user_id
-      AND tbs.classroom_id = NEW.classroom_id
-      AND t.stop_location = v_task_location
-      AND tbs.first_passed_at IS NOT NULL;
-    
-    -- Award location achievement if all tasks completed
-    IF v_user_passed_count >= v_task_count AND v_task_count > 0 THEN
-        INSERT IGNORE INTO user_achievement (user_id, achievement_id, classroom_id, earned_at)
-        SELECT NEW.user_id, a.achievement_id, NEW.classroom_id, NOW()
-        FROM achievement a
-        WHERE a.trigger_type = 'location_completed'
-          AND a.trigger_ref = v_task_location
-          AND NOT EXISTS (
-              SELECT 1 FROM user_achievement ua 
-              WHERE ua.user_id = NEW.user_id AND ua.achievement_id = a.achievement_id
-          );
+
+    -- Check if all tasks in the stop location are now passed
+    SELECT stop_location INTO v_stop_name
+    FROM task WHERE task_id = NEW.task_id LIMIT 1;
+
+    IF v_stop_name IS NOT NULL THEN
+        SELECT COUNT(DISTINCT ct.task_id) INTO v_stop_tasks
+        FROM classroom_task ct
+        JOIN task t ON t.task_id = ct.task_id
+        WHERE ct.classroom_id = NEW.classroom_id
+          AND t.stop_location = v_stop_name
+          AND ct.is_active = 1
+          AND t.is_active = 1;
+
+        SELECT COUNT(*) INTO v_stop_passed
+        FROM task_best_score tbs
+        JOIN task t ON t.task_id = tbs.task_id
+        WHERE tbs.user_id = NEW.user_id
+          AND tbs.classroom_id = NEW.classroom_id
+          AND t.stop_location = v_stop_name
+          AND tbs.first_passed_at IS NOT NULL;
+
+        IF v_stop_passed >= v_stop_tasks AND v_stop_tasks > 0 THEN
+            CALL sp_award_achievement(NEW.user_id, 'location_completed', v_stop_name, NEW.classroom_id);
+        END IF;
     END IF;
-    
-    -- Award "Sikkerhetsmester" achievement (all classroom tasks completed)
-    SELECT COUNT(*)
-    INTO v_classroom_task_count
+
+    -- Check if ALL tasks in the classroom are now passed
+    SELECT COUNT(*) INTO v_total_classroom_tasks
     FROM classroom_task
-    WHERE classroom_id = NEW.classroom_id
-      AND is_active = 1;
-    
-    SELECT COUNT(*)
-    INTO v_user_classroom_passed_count
-    FROM task_best_score tbs
-    JOIN classroom_task ct ON tbs.task_id = ct.task_id AND ct.classroom_id = NEW.classroom_id
-    WHERE tbs.user_id = NEW.user_id
-      AND ct.is_active = 1
-      AND tbs.first_passed_at IS NOT NULL;
-    
-    IF v_user_classroom_passed_count >= v_classroom_task_count AND v_classroom_task_count > 0 THEN
-        INSERT IGNORE INTO user_achievement (user_id, achievement_id, classroom_id, earned_at)
-        SELECT NEW.user_id, a.achievement_id, NEW.classroom_id, NOW()
-        FROM achievement a
-        WHERE a.trigger_type = 'all_tasks_completed'
-          AND a.trigger_ref = 'classroom'
-          AND NOT EXISTS (
-              SELECT 1 FROM user_achievement ua 
-              WHERE ua.user_id = NEW.user_id AND ua.achievement_id = a.achievement_id
-          );
+    WHERE classroom_id = NEW.classroom_id AND is_active = 1;
+
+    SELECT COUNT(*) INTO v_total_classroom_passed
+    FROM classroom_task ct
+    JOIN task_best_score tbs
+      ON tbs.task_id = ct.task_id
+     AND tbs.classroom_id = ct.classroom_id
+     AND tbs.user_id = NEW.user_id
+     AND tbs.first_passed_at IS NOT NULL
+    WHERE ct.classroom_id = NEW.classroom_id AND ct.is_active = 1;
+
+    IF v_total_classroom_passed >= v_total_classroom_tasks AND v_total_classroom_tasks > 0 THEN
+        CALL sp_award_achievement(NEW.user_id, 'all_tasks_completed', 'classroom', NEW.classroom_id);
     END IF;
 END$$
 
