@@ -68,7 +68,6 @@ const footerItems = [
 <template>
   <SceneComponent
     title="Laererportal"
-    previous="/teacher-login"
     background="/StartBackground.jpg"
     dim-overlay>
 
