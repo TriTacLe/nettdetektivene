@@ -130,7 +130,7 @@ const router = createRouter({
     {
       path: '/classroom/:id/tasks',
       name: 'classroom-tasks',
-      component: () => import('../views/teacher/ClassroomTasksView.vue'),
+      component: () => import('../views/teacher/ClassroomDetailView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',
