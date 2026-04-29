@@ -50,12 +50,8 @@ function handleBack() {
 <template>
   <div class="scene" :class="{ scanlines: resolvedScanlines }">
     <img class="scene-background" :src="resolvedBackground" alt="" aria-hidden="true" />
-    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }" />
-    <div v-if="vignette" class="scene-vignette" aria-hidden="true" />
-
-  <div class="scene">
-    <img class="scene-background" :src="background" alt="" aria-hidden="true" />
-    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }" />
+    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }"></div>
+    <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
     <div class="scene-content">
       <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
       <div class="scene-body">
