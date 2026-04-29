@@ -69,6 +69,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: github.repository == 'OrbitNTNU/nettdetektivene'
     steps:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.8.0
