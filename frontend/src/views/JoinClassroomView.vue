@@ -14,7 +14,7 @@ const join = useMutation({
   onSuccess: () => {
     router.push({ name: 'awaiting-approval' })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     fieldError.value = e.message ?? 'Kunne ikke bli med i klasserommet'
   },
 })

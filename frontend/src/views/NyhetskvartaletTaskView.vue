@@ -11,7 +11,8 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import type { TaskDTO, NewsChallenge, NewsAnswers } from '@/types'
+import { parseTaskContent } from '@/services/TaskService'
+import type { TaskDTO, NewsArticle, NewsChallengeContent, PhotoChallengeContent, NewsAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -50,6 +51,7 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[NyhetskvartaletTaskView] Found task in store:', taskFromStore)
+        const content = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -57,10 +59,10 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'nyhetskvartalet',
-          content: taskFromStore.content
+          content: content as { news?: NewsChallengeContent } | { photo?: PhotoChallengeContent } | unknown
         }
         console.log('[NyhetskvartaletTaskView] Task from store content:', task.value?.content)
-        console.log('[NyhetskvartaletTaskView] Task from store content.news:', task.value?.content?.news)
+        console.log('[NyhetskvartaletTaskView] Task from store content.news:', (task.value?.content as { news?: NewsChallengeContent })?.news)
       } else {
         console.warn('[NyhetskvartaletTaskView] Task not found in store, fetching from API')
         task.value = await fetchTaskById(taskId)
@@ -80,18 +82,19 @@ onMounted(async () => {
   }
 })
 
-const challenge = computed<NewsChallenge | null>(() => {
-  const content = task.value?.content?.news
+const challenge = computed(() => {
+  const content = (task.value?.content as { news?: NewsChallengeContent })?.news
   if (!content?.articles?.length) return null
-  return { articles: content.articles }
+  return { articles: content.articles as [NewsArticle, NewsArticle] }
 })
 
-const taskQuestion = computed(() => task.value?.content?.news?.question)
-const taskTip = computed(() => task.value?.content?.news?.hint)
+const taskQuestion = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.question)
+const taskTip = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.hint)
 
 function isCorrectLocally(answers: NewsAnswers): boolean {
-  const articles = task.value?.content?.news?.articles ?? []
-  return Boolean(articles[answers.selectedIndex]?.isReal)
+  const articles = (task.value?.content as { news?: NewsChallengeContent })?.news?.articles ?? []
+  const idx = answers.selectedIndex
+  return Boolean(articles[idx]?.isReal)
 }
 
 const FAILURE_REASON =
