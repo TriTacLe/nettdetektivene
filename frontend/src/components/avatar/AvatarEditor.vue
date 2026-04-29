@@ -30,13 +30,13 @@ const LABELS: Record<string, string> = {
   b58143: 'Blond',
   c93305: 'Rød',
   // hair
-  frizzle: 'Krøller',
-  straight01: 'Rett',
-  bigHair: 'Stort',
-  dreads01: 'Dreads',
+  frizzle: 'Kort Rett',
+  straight01: 'Langt Rett',
+  bigHair: 'Langt Krøllete',
+  dreads01: 'Kort Krøllete',
   // hat
   none: 'Ingen',
-  hat: 'Caps',
+  hat: 'Hatt',
   hijab: 'Hijab',
   winterHat03: 'Lue',
   // clothes
@@ -47,7 +47,7 @@ const LABELS: Record<string, string> = {
   // other
   round: 'Briller',
   sunglasses: 'Solbriller',
-  eyepatch: 'Lapp',
+  eyepatch: 'Øyelapp',
 }
 
 const SKIN_HEX: Record<string, string> = {
