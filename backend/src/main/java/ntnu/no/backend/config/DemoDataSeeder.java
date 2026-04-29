@@ -837,13 +837,13 @@ private void seedNotebookEntries() {
     // Week 48, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Jeg lærte at ikke alle bilder på nettet er ekte! Noen er laget av kunstig intelligens.",
-        "https://example.com/bilde1.jpg", 48, 2025, true,
+        "https://www.medietilsynet.no/digitale-medier/skole/deepfakes/fra-goy-til-guffent-pa-et-oyeblikk/", 48, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 48, 2025 - segward approved
     createMysterySubmissionWithStatus(users.get("segward"), class1,
         "Funnet en nettside som ser ekte ut, men har falske nyheter!",
-        "https://example.com/nettside2.jpg", 48, 2025, false,
+        "https://snl.no/falske_nyheter", 48, 2025, false,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 49, 2025 - aninstan rejected
@@ -855,7 +855,7 @@ private void seedNotebookEntries() {
     // Week 50, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Phishing e-poster kan se veldig ekte ut. Sjekk alltid avsender!",
-        "https://example.com/phishing1.jpg", 50, 2025, true,
+        "https://snl.no/phishing", 50, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 51, 2025 - segward pending
@@ -866,7 +866,7 @@ private void seedNotebookEntries() {
     // Week 52, 2025 - aninstan approved
     createMysterySubmissionWithStatus(users.get("aninstan"), class1,
         "Jeg oppdaget en falske butikk paa nettet som solgte dyre varer billig!",
-        "https://example.com/butikk1.jpg", 52, 2025, false,
+        "https://snl.no/nettsvindel", 52, 2025, false,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // === CURRENT WEEK (Week 1-2, 2026) ===
@@ -882,15 +882,15 @@ private void seedNotebookEntries() {
     if (class4 != null && users.get("saka") != null) {
       createPendingMysterySubmission(users.get("saka"), class4,
         "Fotballspillere far mye personlig info pa nettet. Hvordan kan vi beskytte oss?",
-        "https://example.com/fotball1.jpg", 2, 2026, false);
+        null, 2, 2026, false);
     }
 
-    // Week 2, 2026 - Arsenal player approved
+    // Week 2, 2026 - Arsenal player approved & featured
     if (class4 != null && users.get("odegaard") != null) {
       User triInstructor = users.get("tri");
       createMysterySubmissionWithStatus(users.get("odegaard"), class4,
         "Det er mange falske profiler som later som aa være kjendiser pa sosiale medier!",
-        "https://example.com/sosial1.jpg", 2, 2026, true,
+        "https://snl.no/nettsvindel", 2, 2026, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, triInstructor);
     }
 
@@ -907,7 +907,7 @@ private void seedNotebookEntries() {
     if (class5 != null && users.get("son") != null) {
       createPendingMysterySubmission(users.get("son"), class5,
         "Jeg fikk en e-post som sa at jeg hadde vunnet i lotto, men jeg ikke spiller lotto!",
-        "https://example.com/lotto1.jpg", 2, 2026, false);
+        "https://snl.no/nettfiske", 2, 2026, false);
     }
 
     log.info("Mystery submissions seeded");
