@@ -1,7 +1,8 @@
 package ntnu.no.backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
-import ntnu.no.backend.controller.TaskController;
 import ntnu.no.backend.dto.task.TaskAttemptRequestDTO;
 import ntnu.no.backend.dto.task.TaskAttemptResponseDTO;
 import ntnu.no.backend.model.Classroom;
@@ -29,10 +30,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.springframework.security.access.AccessDeniedException;
 
 /**
  * Controller tests for {@link TaskAttemptService}.
@@ -63,8 +64,14 @@ class TaskAttemptServiceTest {
   @Mock
   ClassroomInstructorRepository classroomInstructorRepository;
 
+  @Mock
+  TaskAttemptVerifier taskAttemptVerifier;
+
   @InjectMocks
   private TaskAttemptService taskAttemptService;
+
+  private static final JsonNode ANY_ANSWERS =
+      new ObjectMapper().createObjectNode().put("selectedIndex", 0);
 
   private UUID userId;
   private UUID taskId;
@@ -82,12 +89,13 @@ class TaskAttemptServiceTest {
   @Test
   void submitAttempt_callsStoredProcedure_andReturnsDto_whenPassed() {
     User user = userWithId(userId);
-    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 85);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, ANY_ANSWERS);
 
     TaskAttempt persistedAttempt = taskAttempt(
         null, userId, taskId, classroomId, 85, true, attemptedAt
     );
 
+    when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(true);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.of(persistedAttempt));
 
@@ -116,27 +124,27 @@ class TaskAttemptServiceTest {
     assertThat(userIdCaptor.getValue()).isEqualTo(userId.toString());
     assertThat(taskIdCaptor.getValue()).isEqualTo(taskId.toString());
     assertThat(classroomIdCaptor.getValue()).isEqualTo(classroomId.toString());
-    assertThat(scoreCaptor.getValue()).isEqualTo(85);
+    assertThat(scoreCaptor.getValue()).isEqualTo(100);
     assertThat(passedCaptor.getValue()).isEqualTo(1);
 
     assertThat(result.id()).isEqualTo(persistedAttempt.getId());
     assertThat(result.userId()).isEqualTo(userId);
     assertThat(result.taskId()).isEqualTo(taskId);
     assertThat(result.classroomId()).isEqualTo(classroomId);
-    assertThat(result.score()).isEqualTo(85);
     assertThat(result.passed()).isTrue();
     assertThat(result.attemptedAt()).isEqualTo(attemptedAt);
   }
 
   @Test
-  void submitAttempt_callsStoredProcedure_withPassedZero_whenScoreBelow80() {
+  void submitAttempt_callsStoredProcedure_withPassedZero_whenAnswersIncorrect() {
     User user = userWithId(userId);
-    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 79);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, ANY_ANSWERS);
 
     TaskAttempt persistedAttempt = taskAttempt(
-        null, userId, taskId, classroomId, 79, false, attemptedAt
+        null, userId, taskId, classroomId, 0, false, attemptedAt
     );
 
+    when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(false);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.of(persistedAttempt));
 
@@ -150,7 +158,7 @@ class TaskAttemptServiceTest {
         eq(userId.toString()),
         eq(taskId.toString()),
         eq(classroomId.toString()),
-        eq(79),
+        eq(0),
         passedCaptor.capture()
     );
 
@@ -161,8 +169,9 @@ class TaskAttemptServiceTest {
   @Test
   void submitAttempt_throwsEntityNotFoundException_whenAttemptCannotBeReadBack() {
     User user = userWithId(userId);
-    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, 80);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, ANY_ANSWERS);
 
+    when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(true);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.empty());
 
@@ -176,7 +185,7 @@ class TaskAttemptServiceTest {
         eq(userId.toString()),
         eq(taskId.toString()),
         eq(classroomId.toString()),
-        eq(80),
+        eq(100),
         eq(1)
     );
   }

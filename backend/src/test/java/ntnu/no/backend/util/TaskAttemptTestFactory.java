@@ -1,5 +1,8 @@
 package ntnu.no.backend.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import ntnu.no.backend.dto.task.TaskAttemptRequestDTO;
 import ntnu.no.backend.dto.task.TaskAttemptResponseDTO;
 import ntnu.no.backend.model.Classroom;
@@ -41,11 +44,21 @@ public class TaskAttemptTestFactory {
   }
 
   public static TaskAttemptRequestDTO requestDTO(UUID taskId, UUID classroomId) {
+    return requestDTO(taskId, classroomId, defaultAnswers());
+  }
+
+  public static TaskAttemptRequestDTO requestDTO(UUID taskId, UUID classroomId, JsonNode answers) {
     return TaskAttemptRequestDTO.builder()
         .taskId(taskId)
         .classroomId(classroomId)
-        .score(85)
+        .answers(answers)
         .build();
+  }
+
+  public static JsonNode defaultAnswers() {
+    ObjectNode node = new ObjectMapper().createObjectNode();
+    node.put("selectedIndex", 0);
+    return node;
   }
 
   public static TaskAttemptResponseDTO responseDTO(UUID id) {

@@ -1,12 +1,17 @@
 import apiClient from '@/services/ApiService'
-import type { ApiResponse, TaskAttemptRequestDTO, TaskAttemptResponseDTO } from '@/types'
+import type {
+  ApiResponse,
+  TaskAnswers,
+  TaskAttemptRequestDTO,
+  TaskAttemptResponseDTO,
+} from '@/types'
 
 async function submitAttempt(
   taskId: string,
   classroomId: string,
-  score: number,
+  answers: TaskAnswers,
 ): Promise<TaskAttemptResponseDTO> {
-  const payload: TaskAttemptRequestDTO = { taskId, classroomId, score }
+  const payload: TaskAttemptRequestDTO = { taskId, classroomId, answers }
   const { data } = await apiClient.post<ApiResponse<TaskAttemptResponseDTO>>('/attempts', payload)
   return data.data
 }

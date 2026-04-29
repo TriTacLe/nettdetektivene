@@ -51,7 +51,7 @@ public class TaskAttemptController {
    * trigger then updates best scores and awards XP automatically.</p>
    *
    * @param user the authenticated user
-   * @param dto  the attempt request containing taskId, classroomId, and score
+   * @param dto  the attempt request containing taskId, classroomId, and raw answers
    * @return {@code 200 OK} with the recorded attempt
    */
   @Operation(summary = "Submit a task attempt")

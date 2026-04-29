@@ -1,35 +1,51 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/AuthStore.ts'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { Users, Plus, Trash2 } from 'lucide-vue-next'
 import SceneComponent from '@/components/SceneComponent.vue'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
+  getMyNotificationsOptions,
   getAllClassroomsOptions,
   getAllClassroomsQueryKey,
+  getApprovedStudentsOptions,
   deleteClassroomMutation,
 } from '@/generated-client/@tanstack/vue-query.gen.ts'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const queryClient = useQueryClient()
 
-const { data, isLoading, error } = useQuery(getAllClassroomsOptions())
+const { data: classroomsData, isLoading, error } = useQuery(getAllClassroomsOptions())
+const { data: notificationsData } = useQuery({ ...getMyNotificationsOptions(), refetchInterval: 5000 })
 
-const myClassrooms = computed(() => data.value?.data ?? [])
+const classrooms = computed(() => classroomsData.value?.data ?? [])
+
+const studentQueries = useQueries({
+  queries: computed(() =>
+    classrooms.value.map((c) =>
+      getApprovedStudentsOptions({ path: { classroomId: c.id! } })
+    )
+  ),
+})
+
+function studentCount(index: number) {
+  return studentQueries.value[index]?.data?.data?.length ?? 0
+}
+
+function classroomNotifications(classroomId: string) {
+  return (notificationsData.value?.data ?? []).filter(
+    (n) => !n.isRead && n.classroomId === classroomId
+  ).length
+}
 
 const deleteMutation = useMutation({
   ...deleteClassroomMutation(),
   onSuccess: () => queryClient.invalidateQueries({ queryKey: getAllClassroomsQueryKey() }),
 })
 
-async function deleteClassroom(id: string) {
+function deleteClassroom(id: string) {
   if (!confirm('Er du sikker på at du vil slette dette klasserommet?')) return
   deleteMutation.mutate({ path: { id } })
-}
-
-function openClassroom(id: string) {
-  router.push({ name: 'classroom-detail', params: { id } })
 }
 </script>
 
@@ -39,97 +55,274 @@ function openClassroom(id: string) {
     background="/StartBackground.jpg"
     previous="teacher-home"
   >
-    <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
-      <div class="w-full max-w-md mx-auto flex justify-end mb-2">
-        <span class="text-white text-sm font-semibold opacity-80">{{ authStore.user?.displayName ?? authStore.user?.email }}</span>
+    <div class="overview-content">
+      <div
+        v-if="error"
+        class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
+      >
+        {{ error }}
       </div>
-      <div class="menu-stack">
-        <div
-          v-if="error"
-          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
-        >
-          {{ error }}
-        </div>
 
-        <button class="btn-vn menu-item" @click="router.push({ name: 'create-classroom' })">
-          <span class="menu-text">
-            <span class="menu-title">+ Nytt klasserom</span>
-            <span class="menu-subtitle">Opprett et nytt klasserom</span>
-          </span>
-          <span class="menu-arrow" aria-hidden="true">›</span>
-        </button>
+      <div v-if="isLoading" class="text-center text-white py-6">Laster...</div>
+      <div v-else-if="classrooms.length === 0" class="text-center text-white py-6 text-sm">
+        Du har ingen klasserom enda.
+      </div>
 
-        <div v-if="isLoading" class="text-center text-white py-6">Laster...</div>
-        <div v-else-if="myClassrooms.length === 0" class="text-center text-white py-6 text-sm">
-          Du har ingen klasserom enda.
-        </div>
-
-        <div
-          v-for="classroom in myClassrooms"
+      <div class="card-list">
+        <article
+          v-for="(classroom, i) in classrooms"
           :key="classroom.id"
           class="classroom-card"
+          :style="{ animationDelay: `${i * 0.07}s` }"
         >
-          <div class="classroom-card-info">
-            <p class="classroom-card-title">{{ classroom.title }}</p>
-            <p class="classroom-card-meta">
-              Kode: <span class="font-mono font-bold">{{ classroom.joinCode }}</span>
-            </p>
-            <p v-if="classroom.classDesc" class="classroom-card-desc">
-              {{ classroom.classDesc }}
-            </p>
+          <div class="card-header">
+            <p class="card-title">{{ classroom.title }}</p>
+            <span
+              v-if="classroomNotifications(classroom.id!)"
+              class="card-badge"
+              :aria-label="`${classroomNotifications(classroom.id!)} uleste varsler`"
+            >
+              {{ classroomNotifications(classroom.id!) }}
+            </span>
           </div>
-          <div class="classroom-card-actions">
+
+          <div class="card-stats">
+            <span class="stat">
+              <Users :size="14" aria-hidden="true" />
+              {{ studentCount(i) }} elever
+            </span>
+            <span class="stat stat-code">
+              {{ classroom.joinCode }}
+            </span>
+          </div>
+
+          <div class="card-actions">
             <button
-              class="btn-vn overview-action-btn"
-              @click="classroom.id && openClassroom(classroom.id)"
+              class="btn-bare action-btn"
+              @click="router.push({ name: 'classroom-detail', params: { id: classroom.id } })"
             >
               Åpne
             </button>
             <button
-              class="btn-vn btn-vn-danger overview-action-btn"
+              class="btn-bare action-btn action-btn-danger"
               @click="classroom.id && deleteClassroom(classroom.id)"
             >
+              <Trash2 :size="14" aria-hidden="true" />
               Slett
             </button>
           </div>
-        </div>
+        </article>
+
+        <button
+          class="btn-bare create-card"
+          :style="{ animationDelay: `${classrooms.length * 0.07}s` }"
+          @click="router.push({ name: 'create-classroom' })"
+          aria-label="Opprett nytt klasserom"
+        >
+          <Plus :size="24" aria-hidden="true" />
+          <span>Nytt klasserom</span>
+        </button>
       </div>
     </div>
   </SceneComponent>
 </template>
 
 <style scoped>
+.overview-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.5rem 1.5rem;
+  max-width: 32rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.card-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .classroom-card {
-  background: rgba(255, 251, 235, 0.95);
-  border: 1px solid rgba(252, 211, 77, 0.6);
-  border-radius: 0.75rem;
-  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  clip-path: var(--notch-clip);
+  padding: 1.25rem 1.5rem;
+  animation: slideUp 0.5s ease-out both;
+}
+
+.card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  margin-bottom: 0.625rem;
 }
-.classroom-card-info { flex: 1; min-width: 0; }
-.classroom-card-title {
-  font-size: 1.1rem;
+
+.card-title {
+  font-size: 1.25rem;
   font-weight: 800;
-  color: #78350f;
+  color: #111827;
   margin: 0;
+  line-height: 1.3;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
 }
-.classroom-card-meta {
-  font-size: 0.85rem;
-  color: #92400e;
-  margin: 0.15rem 0 0;
-}
-.classroom-card-desc {
-  font-size: 0.85rem;
-  color: #b45309;
-  margin: 0.25rem 0 0;
-}
-.classroom-card-actions {
+
+.card-badge {
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 1.375rem;
+  height: 1.375rem;
   display: flex;
-  gap: 0.4rem;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.375rem;
+}
+
+.card-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.stat-code {
+  font-family: monospace;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0 !important;
+  clip-path: var(--notch-clip);
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #d1d5db;
+  z-index: -2;
+}
+
+.action-btn::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--notch-clip);
+  background: white;
+  z-index: -1;
+  transition: background 0.15s;
+}
+
+.action-btn:hover::after {
+  background: #f9fafb;
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+.action-btn-danger {
+  color: #b91c1c;
+}
+
+.action-btn-danger::before {
+  background: #fca5a5;
+}
+
+.action-btn-danger:hover::after {
+  background: #fef2f2;
+}
+
+.create-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: none;
+  border-radius: 0 !important;
+  clip-path: var(--notch-clip);
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  animation: slideUp 0.5s ease-out both;
+}
+
+.create-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: -2;
+  transition: background 0.15s;
+}
+
+.create-card::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: var(--notch-clip);
+  background: rgba(40, 30, 20, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: -1;
+  transition: background 0.15s;
+}
+
+.create-card:hover::before {
+  background: #ffffff;
+}
+
+.create-card:hover::after {
+  background: rgba(40, 30, 20, 0.35);
+}
+
+.create-card:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

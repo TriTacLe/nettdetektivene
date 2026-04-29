@@ -505,4 +505,28 @@ BEGIN
     END IF;
 END$$
 
+-- -------------------------------------------------------------
+-- trg_award_failed_count
+-- Awards the "tasks_failed/10" achievement once a user has accumulated
+-- ten failed task attempts across all classrooms.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_award_failed_count$$
+CREATE TRIGGER trg_award_failed_count
+AFTER INSERT ON task_attempt
+FOR EACH ROW
+BEGIN
+    DECLARE v_fail_count INT DEFAULT 0;
+
+    IF NEW.passed = 0 THEN
+        SELECT COUNT(*)
+        INTO v_fail_count
+        FROM task_attempt
+        WHERE user_id = NEW.user_id AND passed = 0;
+
+        IF v_fail_count >= 10 THEN
+            CALL sp_award_achievement(NEW.user_id, 'tasks_failed', '10', NEW.classroom_id);
+        END IF;
+    END IF;
+END$$
+
 DELIMITER ;
