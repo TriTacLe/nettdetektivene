@@ -2,11 +2,13 @@ package ntnu.no.backend.util;
 
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
+import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Institution;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.enums.NameChangeStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -81,6 +83,19 @@ public class ClassroomTestFactory {
       true,
       isUnlocked,
       TaskTestFactory.responseDTO(taskId)
+    );
+  }
+
+  public static ClassroomStudentResponseDTO classroomStudentResponseDTO(UUID classroomId, UUID userId) {
+    return new ClassroomStudentResponseDTO(
+      classroomId,
+      userId,
+      "Nora",
+      true,
+      NameChangeStatus.NONE,
+      null,
+      LocalDateTime.now(),
+      "nora-feide-123"
     );
   }
 }

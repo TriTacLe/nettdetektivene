@@ -92,8 +92,9 @@ const taskQuestion = computed(() => (task.value?.content as { news?: NewsChallen
 const taskTip = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.hint)
 
 function isCorrectLocally(answers: NewsAnswers): boolean {
-  const articles = task.value?.content?.news?.articles ?? []
-  return Boolean(articles[answers.selectedIndex]?.isReal)
+  const articles = (task.value?.content as { news?: NewsChallengeContent })?.news?.articles ?? []
+  const idx = answers.selectedIndex
+  return Boolean(articles[idx]?.isReal)
 }
 
 const FAILURE_REASON =

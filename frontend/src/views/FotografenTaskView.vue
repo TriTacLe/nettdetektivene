@@ -90,13 +90,13 @@ const taskQuestion = computed(() => (task.value?.content as { photo?: PhotoChall
 const taskTip = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.hint)
 
 function isCorrectLocally(answers: PhotoAnswers): boolean {
-  const alts = task.value?.content?.photo?.alternatives ?? []
+  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
   if (answers.selections.length !== alts.length) return false
   return alts.every((alt: any, i: number) => answers.selections[i]?.type === alt.correctType)
 }
 
 function failureReason(answers: PhotoAnswers): string {
-  const alts = task.value?.content?.photo?.alternatives ?? []
+  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
   const wrongIndexes = alts
     .map((alt: any, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
     .filter((i: number | null): i is number => i !== null)
