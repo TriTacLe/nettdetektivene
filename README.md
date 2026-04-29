@@ -130,14 +130,17 @@ The backend includes an automatic `DataSeeder` that populates the database with 
 The seeder runs automatically on startup when the database is empty. Use these accounts to log in:
 
 **Teacher:**
+
 - Email: `nora@ntnu.no`
 - Password: `password123`
 
 **Student (High Achiever):**
+
 - Email: `kari@elev.no`
 - Password: `password123`
 
 **Student (Struggling):**
+
 - Email: `christoffer@elev.no`
 - Password: `password123`
 
@@ -252,11 +255,5 @@ npm run test:unit
 - Map entities to DTOs before returning from controllers
 - Add @PreAuthorize on all mutating endpoints
 - Generate UUIDs in Java (not database)
-
----
-
-## Documentation
-
-- [CHANGELOG.md](CHANGELOG.md) - Sprint-by-sprint changelog
 
 ---
