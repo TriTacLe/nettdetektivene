@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { createPinia } from 'pinia'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { parseAvatarConfig } from '../../utils/avatar'
 import { DEFAULT_AVATAR_CONFIG } from '../../types/avatar'
@@ -197,7 +198,7 @@ describe('SetDisplayNameView', () => {
 
     const wrapper = mount(SetDisplayNameView, {
       global: {
-        plugins: [router, [VueQueryPlugin, { queryClient }]],
+        plugins: [createPinia(), router, [VueQueryPlugin, { queryClient }]],
       },
     })
 

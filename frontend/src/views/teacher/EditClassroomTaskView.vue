@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import ClassroomService from '@/services/ClassroomService'
 import { updateTeacherTaskFull } from '@/services/TaskService'
-import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft } from '@/types'
+import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft, type NewsChallengeContent, type PhotoChallengeContent } from '@/types'
 import { parseTaskContent } from '@/services/TaskService'
 
 const route = useRoute()
@@ -34,18 +34,20 @@ watch(classroomTask, (task) => {
   initialized.value = true
   const t = task.task
 
-  const parsed = parseTaskContent(t.content, t.taskType)
+  const contentString = typeof t.content === 'string' ? t.content : JSON.stringify(t.content)
+  const parsed = parseTaskContent(contentString, t.taskType)
+  if (!parsed) return
 
   if (t.taskType === TaskType.NEWS) {
-    const content = (parsed as any)?.news ?? parsed as any
+    const newsContent = (parsed as any)?.news ?? parsed as any
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
       difficulty: t.difficulty,
       stopLocation: t.stopLocation ?? 'nyhetskvartalet',
-      question: content?.question ?? '',
-      hint: content?.hint ?? '',
-      articles: (content?.articles ?? []).map((a: any) => ({
+      question: newsContent?.question ?? '',
+      hint: newsContent?.hint ?? '',
+      articles: (newsContent?.articles ?? []).map((a: { imagePath?: string; isReal: boolean }) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         isReal: a.isReal,
@@ -53,15 +55,15 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = (parsed as any)?.photo ?? parsed as any
+    const photoContent = (parsed as any)?.photo ?? parsed as any
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
       difficulty: t.difficulty,
       stopLocation: t.stopLocation ?? 'fotografen',
-      description: content?.description ?? '',
-      hint: content?.hint ?? '',
-      alternatives: (content?.alternatives ?? []).map((a: any) => ({
+      description: photoContent?.description ?? '',
+      hint: photoContent?.hint ?? '',
+      alternatives: (photoContent?.alternatives ?? []).map((a: { imagePath?: string; description?: string; correctType?: string; begrunnelser?: string[] }) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         correctType: a.correctType ?? 'ekte',

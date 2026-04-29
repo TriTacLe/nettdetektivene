@@ -12,7 +12,6 @@ import {
   getAchievementsForStudentOptions,
   getAllAchievementsOptions,
 } from '@/generated-client/@tanstack/vue-query.gen.ts'
-import apiClient from '@/services/ApiService'
 
 const route = useRoute()
 const classroomId = route.params.id as string
@@ -72,15 +71,6 @@ const { data: achievementsData, isLoading: loadingAchievements } = useQuery(
 const { data: allAchievementsData, isLoading: loadingAllAchievements } = useQuery(
   getAllAchievementsOptions(),
 )
-
-const { data: unlockedTasksData } = useQuery({
-  queryKey: ['unlockedTasks', classroomId, userId],
-  queryFn: async () => {
-    const { data } = await apiClient.get(`/classrooms/${classroomId}/tasks/unlocked/${userId}`)
-    return data
-  },
-  enabled: !!classroomId && !!userId,
-})
 
 const isLoading = computed(
   () =>

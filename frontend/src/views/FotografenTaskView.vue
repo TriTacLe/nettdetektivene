@@ -8,10 +8,11 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
+import { parseTaskContent } from '@/services/TaskService'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { fotografenIntro } from '@/data/taskDialogs/fotografen'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
-import type { TaskDTO, FotografenChallenge, PhotoAnswers } from '@/types'
+import type { TaskDTO, FotografenChallenge, PhotoChallengeContent, NewsChallengeContent, PhotoAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -50,6 +51,7 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[FotografenTaskView] Found task in store:', taskFromStore)
+        const content = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -57,7 +59,7 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'fotografen',
-          content: taskFromStore.content
+          content: content as PhotoChallengeContent | NewsChallengeContent | unknown
         }
         console.log('[FotografenTaskView] Task from store content:', task.value?.content)
       } else {
@@ -79,22 +81,22 @@ onMounted(async () => {
 })
 
 const challenge = computed<FotografenChallenge | null>(() => {
-  const content = task.value?.content?.photo
+  const content = (task.value?.content as { photo?: PhotoChallengeContent })?.photo
   if (!content?.alternatives?.length) return null
   return { alternatives: content.alternatives }
 })
 
-const taskQuestion = computed(() => task.value?.content?.photo?.description)
-const taskTip = computed(() => task.value?.content?.photo?.hint)
+const taskQuestion = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.description)
+const taskTip = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.hint)
 
 function isCorrectLocally(answers: PhotoAnswers): boolean {
-  const alts = task.value?.content?.photo?.alternatives ?? []
+  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
   if (answers.selections.length !== alts.length) return false
   return alts.every((alt: any, i: number) => answers.selections[i]?.type === alt.correctType)
 }
 
 function failureReason(answers: PhotoAnswers): string {
-  const alts = task.value?.content?.photo?.alternatives ?? []
+  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
   const wrongIndexes = alts
     .map((alt: any, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
     .filter((i: number | null): i is number => i !== null)

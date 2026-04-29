@@ -19,6 +19,8 @@ import type {
   NewsAnswers,
   PhotoAnswers,
   TaskAnswers,
+  NewsChallengeContent,
+  PhotoChallengeContent,
 } from '@/types'
 import { TaskType } from '@/types'
 
@@ -81,21 +83,21 @@ const isNews = computed(() => task.value?.taskType === TaskType.NEWS)
 const isPhoto = computed(() => task.value?.taskType === TaskType.PHOTO)
 
 const newsChallenge = computed<NewsChallenge | null>(() => {
-  const content = task.value?.content?.news
-  if (!content?.articles?.length) return null
-  return { articles: content.articles }
+  const content = (task.value?.content as { news?: NewsChallengeContent })?.news
+  if (!content?.articles?.length || content.articles.length < 2) return null
+  return content.articles.slice(0, 2) as unknown as NewsChallenge
 })
 
 const photoChallenge = computed<FotografenChallenge | null>(() => {
-  const content = task.value?.content?.photo
+  const content = (task.value?.content as { photo?: PhotoChallengeContent })?.photo
   if (!content?.alternatives?.length) return null
   return { alternatives: content.alternatives }
 })
 
-const newsQuestion = computed(() => task.value?.content?.news?.question)
-const newsTip = computed(() => task.value?.content?.news?.hint)
-const photoQuestion = computed(() => task.value?.content?.photo?.description)
-const photoTip = computed(() => task.value?.content?.photo?.hint)
+const newsQuestion = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.question)
+const newsTip = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.hint)
+const photoQuestion = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.description)
+const photoTip = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.hint)
 
 const hasRenderableContent = computed(() => {
   if (isNews.value) return Boolean(newsChallenge.value)
@@ -105,12 +107,12 @@ const hasRenderableContent = computed(() => {
 
 function isCorrectLocally(answers: TaskAnswers): boolean {
   if (isNews.value) {
-    const articles = task.value?.content?.news?.articles ?? []
+    const articles = (task.value?.content as { news?: NewsChallengeContent })?.news?.articles ?? []
     const idx = (answers as NewsAnswers).selectedIndex
     return Boolean(articles[idx]?.isReal)
   }
   if (isPhoto.value) {
-    const alts = task.value?.content?.photo?.alternatives ?? []
+    const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
     const sel = (answers as PhotoAnswers).selections
     if (sel.length !== alts.length) return false
     return alts.every((alt: any, i: number) => sel[i]?.type === alt.correctType)
@@ -123,7 +125,7 @@ function failureReason(answers: TaskAnswers): string {
     return 'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.'
   }
   if (isPhoto.value) {
-    const alts = task.value?.content?.photo?.alternatives ?? []
+    const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
     const sel = (answers as PhotoAnswers).selections
     const wrongIndexes = alts
       .map((alt: any, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
