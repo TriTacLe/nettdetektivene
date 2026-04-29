@@ -83,7 +83,7 @@ const saveMutation = useMutation({
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['teacher-classroom-tasks', classroomId] })
-    router.push({ name: 'classroom-tasks', params: { id: classroomId } })
+    router.push({ name: 'classroom-detail', params: { id: classroomId } })
   },
   onError: (error: Error) => {
     serverError.value = error.message || 'Kunne ikke oppdatere oppgaven'
@@ -181,7 +181,7 @@ function submit() {
           <div class="task-template task-template--news">
             <div class="task-template__hero">
               <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-tasks', params: { id: classroomId } })">←</button>
+                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
                 <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
                   {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
                 </button>
@@ -199,12 +199,12 @@ function submit() {
                   <span class="task-field-label">Vanskelighetsgrad</span>
                   <div class="diff-selector">
                     <button v-for="n in 3" :key="n" type="button"
-                      :class="['diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
                       @click="selectDifficulty(n)">
                       <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
                     </button>
                     <button type="button"
-                      :class="['diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
                       @click="selectDatasenteret()">
                       Datasenteret
                     </button>
@@ -259,7 +259,7 @@ function submit() {
           <div class="task-template task-template--photo">
             <div class="task-template__hero">
               <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-tasks', params: { id: classroomId } })">←</button>
+                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
                 <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
                   {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
                 </button>
@@ -277,12 +277,12 @@ function submit() {
                   <span class="task-field-label">Vanskelighetsgrad</span>
                   <div class="diff-selector">
                     <button v-for="n in 3" :key="n" type="button"
-                      :class="['diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
                       @click="selectDifficulty(n)">
                       <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
                     </button>
                     <button type="button"
-                      :class="['diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
                       @click="selectDatasenteret()">
                       Datasenteret
                     </button>

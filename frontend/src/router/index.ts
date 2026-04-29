@@ -97,11 +97,6 @@ const router = createRouter({
       component: () => import('../views/teacher/TeacherSettingsView.vue'),
     },
     {
-      path: '/classroom-overview',
-      name: 'classroom-overview',
-      component: () => import('../views/teacher/ClassroomOverviewView.vue'),
-    },
-    {
       path: '/classroom/new',
       name: 'create-classroom',
       component: () => import('../views/teacher/CreateClassroomView.vue'),
@@ -110,11 +105,6 @@ const router = createRouter({
       path: '/classroom/:id',
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
-    },
-    {
-      path: '/classroom/:id/tasks',
-      name: 'classroom-tasks',
-      component: () => import('../views/teacher/ClassroomTasksView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',
@@ -214,8 +204,8 @@ const AUTH_ROUTES = new Set([
 
 const TEACHER_ROUTES = new Set([
   'teacher-home', 'classroom-test-game', 'teacher-leaderboard',
-  'teacher-classroom-leaderboard', 'settings', 'classroom-overview',
-  'create-classroom', 'classroom-detail', 'classroom-tasks',
+  'teacher-classroom-leaderboard', 'settings',
+  'create-classroom', 'classroom-detail',
   'classroom-task-create', 'classroom-task-edit', 'classroom-students',
   'classroom-settings', 'edit-classroom', 'classroom-student-progress',
   'teacher-notifications',

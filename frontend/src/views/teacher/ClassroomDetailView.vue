@@ -2,8 +2,10 @@
 import { ref, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
+import SidePanelMenu, { type SidePanelMenuItem } from '@/components/SidePanelMenu.vue'
+import ClassroomTasksPanel from '@/components/ClassroomTasksPanel.vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { ClipboardList, Bell, Settings, Gamepad2, X, Search } from 'lucide-vue-next'
+import { Bell, Settings, Gamepad2, X, Search } from 'lucide-vue-next'
 import {
   getClassroomOptions,
   getMyNotificationsOptions,
@@ -193,19 +195,42 @@ function navigateToStudent(student: any) {
   router.push({ name: 'classroom-student-progress', params: { id: classroomId, userId: student.userId } })
 }
 
-const menuItems = [
-  { title: 'Oversikt Oppgaver', subtitle: 'Oppgaver i spillet', icon: ClipboardList, route: 'classroom-tasks' },
-  { title: 'Varsler', subtitle: 'Meldinger fra klassen', icon: Bell, route: 'notifications', showBadge: true },
-  { title: 'Klasseromsstyring', subtitle: 'Rediger innstillinger', icon: Settings, route: 'classroom-settings' },
-  { title: 'Test Spillet', subtitle: 'Spill som elev', icon: Gamepad2, route: 'classroom-test-game' },
-]
+const menuItems = computed<SidePanelMenuItem[]>(() => [
+  { key: 'notifications', title: 'Varsler', subtitle: 'Meldinger fra klassen', icon: Bell, badge: unreadCount.value },
+  { key: 'classroom-settings', title: 'Klasseromsstyring', subtitle: 'Rediger innstillinger', icon: Settings },
+  { key: 'classroom-test-game', title: 'Test Spillet', subtitle: 'Spill som elev', icon: Gamepad2 },
+])
 
-function handleMenuItem(item: (typeof menuItems)[0]) {
-  if (item.route === 'notifications') {
+function handleMenuItem(item: SidePanelMenuItem) {
+  if (item.key === 'notifications') {
     router.push({ name: 'teacher-notifications', query: { classroomId } })
     return
   }
-  router.push({ name: item.route, params: { id: classroomId } })
+  router.push({ name: item.key, params: { id: classroomId } })
+}
+
+type DetailTab = 'students' | 'tasks'
+const activeTab = ref<DetailTab>('students')
+const tabs: { key: DetailTab; label: string }[] = [
+  { key: 'students', label: 'Elever' },
+  { key: 'tasks', label: 'Oppgaver' },
+]
+const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null })
+
+function setTabRef(key: DetailTab, el: Element | null) {
+  tabRefs.value[key] = el as HTMLButtonElement | null
+}
+
+function onTabKeydown(e: KeyboardEvent) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  e.preventDefault()
+  const order: DetailTab[] = ['students', 'tasks']
+  const i = order.indexOf(activeTab.value)
+  const next = e.key === 'ArrowRight'
+    ? order[(i + 1) % order.length]!
+    : order[(i - 1 + order.length) % order.length]!
+  activeTab.value = next
+  nextTick(() => tabRefs.value[next]?.focus())
 }
 </script>
 
@@ -214,18 +239,55 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
     :title="classroom?.title || 'Klasserom'"
     previous="/teacher-home"
     background="/StartBackground.jpg"
-    dim-overlay
   >
-    <div class="detail-wrapper">
-      <div class="detail-layout">
+    <div class="scene-split-layout">
+      <div class="scene-split-grid">
 
-        <section class="panel-students" aria-label="Elever">
+        <section class="scene-split-main" aria-label="Klasseromsinnhold">
 
-          <div class="divider-heading">
-            <div class="divider-line" />
-            <h2 class="section-label">Elever ({{ allStudents.length }})</h2>
-            <div class="divider-line" />
+          <div
+            class="tab-bar"
+            role="tablist"
+            aria-label="Innholdsvelger"
+            @keydown="onTabKeydown"
+          >
+            <button
+              v-for="tab in tabs"
+              :key="tab.key"
+              :ref="(el) => setTabRef(tab.key, el as Element | null)"
+              type="button"
+              class="tab-btn"
+              :class="{ 'tab-btn--active': activeTab === tab.key }"
+              role="tab"
+              :aria-selected="activeTab === tab.key"
+              :aria-controls="`tab-panel-${tab.key}`"
+              :id="`tab-${tab.key}`"
+              :tabindex="activeTab === tab.key ? 0 : -1"
+              @click="activeTab = tab.key"
+            >
+              <span class="tab-label">{{ tab.label }}</span>
+              <span class="tab-count">
+                {{ tab.key === 'students' ? allStudents.length : totalTasks }}
+              </span>
+            </button>
           </div>
+
+          <div
+            v-show="activeTab === 'tasks'"
+            :id="`tab-panel-tasks`"
+            role="tabpanel"
+            aria-labelledby="tab-tasks"
+          >
+            <ClassroomTasksPanel :classroom-id="classroomId" />
+          </div>
+
+          <div
+            v-show="activeTab === 'students'"
+            :id="`tab-panel-students`"
+            role="tabpanel"
+            aria-labelledby="tab-students"
+            class="students-panel"
+          >
 
           <div v-if="showSearch" class="search-row">
             <Search :size="14" class="search-icon" aria-hidden="true" />
@@ -269,21 +331,21 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
                 </span>
                 <div class="sr-actions">
                   <button
-                    class="sr-btn sr-btn--approve"
+                    class="btn-bare sr-btn sr-btn--approve"
                     :aria-label="`Godkjenn ${student.displayName}`"
                     @click="student.userId && approveStudent(student.userId, $event)"
                   >Godkjenn</button>
                   <button
-                    class="sr-btn sr-btn--icon"
+                    class="btn-bare sr-btn sr-btn--icon"
                     :aria-label="`Fjern ${student.displayName} fra klasserommet`"
                     @click="student.userId && requestRemove(student.userId, student.displayName ?? 'Elev', $event)"
-                  ><X :size="12" aria-hidden="true" /></button>
+                  ><X :size="18" aria-hidden="true" /></button>
                 </div>
               </div>
 
               <button
                 v-else
-                class="student-row student-row--approved"
+                class="btn-bare student-row student-row--approved"
                 :aria-label="studentAriaLabel(student)"
                 @click="navigateToStudent(student)"
               >
@@ -304,15 +366,15 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 
                 <div class="sr-actions">
                   <button
-                    class="sr-btn sr-btn--reset"
+                    class="btn-bare sr-btn sr-btn--reset"
                     :aria-label="`Fjern brukernavn for ${student.displayName}`"
                     @click="student.userId && requestReset(student.userId, student.displayName ?? 'Elev', $event)"
                   >Fjern navn</button>
                   <button
-                    class="sr-btn sr-btn--icon"
+                    class="btn-bare sr-btn sr-btn--icon"
                     :aria-label="`Fjern ${student.displayName} fra klasserommet`"
                     @click="student.userId && requestRemove(student.userId, student.displayName ?? 'Elev', $event)"
-                  ><X :size="12" aria-hidden="true" /></button>
+                  ><X :size="18" aria-hidden="true" /></button>
                 </div>
 
                 <span class="sr-chevron" aria-hidden="true">&rsaquo;</span>
@@ -323,40 +385,16 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
               Ingen treff for &laquo;{{ searchQuery }}&raquo;
             </li>
           </ul>
+          </div>
         </section>
 
-        <aside class="panel-sidebar">
-
-          <div class="code-card">
-            <span class="code-label">Klasseromskode</span>
-            <span class="code-value">{{ classroom?.joinCode ?? '---' }}</span>
-          </div>
-
-          <div class="divider-heading">
-            <div class="divider-line" />
-            <h2 class="section-label section-label-sm">Mer</h2>
-            <div class="divider-line" />
-          </div>
-
-          <div class="menu-column">
-            <button
-              v-for="item in menuItems"
-              :key="item.title"
-              class="card-menu"
-              :aria-label="`${item.title} — ${item.subtitle}`"
-              @click="handleMenuItem(item)"
-            >
-              <span
-                v-if="item.showBadge && unreadCount > 0"
-                class="badge"
-                :aria-label="`${unreadCount} uleste varsler`"
-              >{{ unreadCount }}</span>
-              <component :is="item.icon" :size="18" aria-hidden="true" class="menu-icon" />
-              <span class="menu-title">{{ item.title }}</span>
-              <span class="menu-subtitle">{{ item.subtitle }}</span>
-              <span class="chevron-menu" aria-hidden="true">&rsaquo;</span>
-            </button>
-          </div>
+        <aside class="scene-split-side">
+          <SidePanelMenu
+            :items="menuItems"
+            :code="{ label: 'Klasseromskode', value: classroom?.joinCode ?? '---' }"
+            aria-label="Klasseromsmeny"
+            @select="handleMenuItem"
+          />
         </aside>
 
       </div>
@@ -437,104 +475,51 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 </template>
 
 <style scoped>
-.detail-wrapper {
-  flex: 1;
+.tab-bar {
   display: flex;
-  justify-content: flex-start;
-  width: 100%;
-  padding: 1rem 3rem 2rem;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
 }
 
-.detail-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 80rem;
-  align-items: start;
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
-@media (max-width: 768px) {
-  .detail-layout {
-    grid-template-columns: 1fr;
-  }
-  .panel-sidebar {
-    order: -1;
-  }
+.tab-btn:not(.tab-btn--active)::after {
+  background: #1a1a1a;
 }
 
-.panel-students {
+.tab-btn:not(.tab-btn--active) {
+  color: #ffffff;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.12);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.tab-btn:not(.tab-btn--active) .tab-count {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.students-panel {
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.panel-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: sticky;
-  top: 0;
-}
-
-.code-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.125rem;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  animation: slideUp 0.5s ease-out both;
-}
-
-.code-label {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.code-value {
-  font-size: 1.375rem;
-  font-weight: 800;
-  color: white;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: 0.12em;
-}
-
-.divider-heading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  animation: slideUp 0.5s ease-out both;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.section-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.section-label-sm {
-  font-size: 0.8125rem;
 }
 
 .search-row {
@@ -577,10 +562,31 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 .student-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(4px);
+  height: calc(100vh - 14rem);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.student-list::-webkit-scrollbar {
+  width: 8px;
+}
+.student-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.student-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+.student-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .student-row-wrapper {
@@ -592,10 +598,10 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.85rem 1.25rem;
   border: none;
-  border-radius: 0.625rem;
   background: rgba(255, 255, 255, 0.95);
+  clip-path: var(--notch-clip);
   text-align: left;
   font-family: inherit;
   font-size: inherit;
@@ -621,20 +627,21 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 }
 
 .sr-name {
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: 1.125rem;
+  font-weight: 800;
   color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 5rem;
+  flex: 1;
   flex-shrink: 1;
 }
 
 .sr-stat {
-  font-size: 0.6875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -646,9 +653,9 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 }
 
 .sr-progress-bar {
-  height: 4px;
+  height: 8px;
   background: #e5e7eb;
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -662,30 +669,36 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 .sr-actions {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
   flex-shrink: 0;
   margin-left: auto;
 }
 
 .sr-btn {
   border: none;
-  border-radius: 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sr-btn:focus-visible {
   outline: 2px solid #d97706;
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .sr-btn--approve {
-  padding: 0.25rem 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
   background: #15803d;
   color: white;
+  font-size: 0.9375rem;
 }
 
 .sr-btn--approve:hover {
@@ -693,11 +706,13 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 }
 
 .sr-btn--reset {
-  padding: 0.25rem 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
   background: #fee2e2;
   color: #b91c1c;
-  border: 1px solid #fca5a5;
-  border-radius: 0.375rem;
+  border: 1.5px solid #fca5a5;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
 }
 
 .sr-btn--reset:hover {
@@ -710,11 +725,12 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   background: transparent;
-  color: #d1d5db;
+  color: #6b7280;
+  border-radius: 0.5rem;
 }
 
 .sr-btn--icon:hover {
@@ -723,11 +739,12 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 }
 
 .sr-chevron {
-  color: #d1d5db;
-  font-size: 0.875rem;
+  color: #9ca3af;
+  font-size: 1.5rem;
   font-weight: 700;
   flex-shrink: 0;
   transition: transform 0.15s, color 0.15s;
+  margin-left: 0.25rem;
 }
 
 .student-row--approved:hover .sr-chevron {
@@ -739,10 +756,10 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.625rem;
-  font-weight: 600;
-  padding: 0.125rem 0.4rem;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
   border-radius: 9999px;
   white-space: nowrap;
 }
@@ -796,98 +813,6 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
   font-size: 0.8125rem;
   margin: 0.75rem 0;
   animation: slideUp 0.5s ease-out both;
-}
-
-.menu-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.card-menu {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  padding: 0.875rem 1.125rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
-  text-align: left;
-  cursor: pointer;
-  animation: slideUp 0.5s ease-out both;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  min-height: 3rem;
-}
-
-.card-menu:hover {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
-  transform: translateY(-1px);
-}
-
-.card-menu:focus-visible {
-  outline: 2px solid #d97706;
-  outline-offset: 2px;
-}
-
-.menu-icon {
-  color: #57534e;
-  flex-shrink: 0;
-}
-
-.menu-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #111827;
-  flex: 1;
-}
-
-.menu-subtitle {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .menu-subtitle {
-    display: inline;
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-left: auto;
-  }
-}
-
-.chevron-menu {
-  color: #9ca3af;
-  font-size: 1rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  transition: transform 0.15s;
-}
-
-.card-menu:hover .chevron-menu {
-  transform: translateX(2px);
-}
-
-.badge {
-  position: absolute;
-  top: -0.375rem;
-  right: -0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  border-radius: 9999px;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.3rem;
-  background: #c05555;
-  color: white;
-  box-shadow: 0 1px 4px rgb(192 85 85 / 0.3);
 }
 
 .dialog-backdrop {
