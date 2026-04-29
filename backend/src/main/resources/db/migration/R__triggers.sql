@@ -549,7 +549,7 @@ BEGIN
     WHERE task_id = NEW.task_id
     LIMIT 1;
 
-    IF v_stop IS NOT NULL AND v_hint IS NOT NULL AND v_hint <> 'null' THEN
+    IF v_stop IS NOT NULL THEN
         SELECT entry_id INTO v_existing_id
         FROM notebook_entry
         WHERE user_id = NEW.user_id
@@ -561,8 +561,10 @@ BEGIN
             INSERT INTO notebook_entry
                 (entry_id, user_id, classroom_id, stop_location, auto_notes, created_at, updated_at)
             VALUES
-                (UUID(), NEW.user_id, NEW.classroom_id, v_stop, JSON_ARRAY(v_hint), NOW(), NOW());
-        ELSE
+                (UUID(), NEW.user_id, NEW.classroom_id, v_stop,
+                 IF(v_hint IS NOT NULL AND v_hint <> 'null', JSON_ARRAY(v_hint), JSON_ARRAY()),
+                 NOW(), NOW());
+        ELSEIF v_hint IS NOT NULL AND v_hint <> 'null' THEN
             UPDATE notebook_entry
             SET auto_notes = JSON_ARRAY_APPEND(COALESCE(auto_notes, JSON_ARRAY()), '$', v_hint),
                 updated_at = NOW()

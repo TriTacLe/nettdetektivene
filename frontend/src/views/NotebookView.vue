@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/generated-client/@tanstack/vue-query.gen'
 import type { NotebookEntryResponseDto } from '@/generated-client/types.gen'
 import SceneComponent from '@/components/SceneComponent.vue'
+import { Lock, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -47,12 +48,35 @@ const savedStop = ref<string | null>(null)
 const saveError = ref<string | null>(null)
 const currentSpread = ref(0)
 
-const stops = computed(() =>
-  Object.values(TaskType).filter((t) => !!entriesByStop.value[t]),
+const ALL_STOPS = Object.values(TaskType)
+
+const isMobile = ref(window.innerWidth <= 1000)
+
+function onResize() {
+  const wasMobile = isMobile.value
+  isMobile.value = window.innerWidth <= 1000
+  if (wasMobile !== isMobile.value) currentSpread.value = 0
+}
+onMounted(() => window.addEventListener('resize', onResize))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
+const displayStops = computed(() =>
+  ALL_STOPS.map((t) => ({ type: t, locked: !entriesByStop.value[t] })),
 )
-const totalSpreads = computed(() => Math.ceil(stops.value.length / 2))
-const leftStop = computed(() => stops.value[currentSpread.value * 2] ?? null)
-const rightStop = computed(() => stops.value[currentSpread.value * 2 + 1] ?? null)
+
+const totalSpreads = computed(() =>
+  isMobile.value
+    ? displayStops.value.length
+    : Math.max(1, Math.ceil(displayStops.value.length / 2)),
+)
+const leftEntry = computed(() =>
+  isMobile.value
+    ? displayStops.value[currentSpread.value] ?? null
+    : displayStops.value[currentSpread.value * 2] ?? null,
+)
+const rightEntry = computed(() =>
+  isMobile.value ? null : displayStops.value[currentSpread.value * 2 + 1] ?? null,
+)
 
 const { data, isLoading, error } = useQuery(
   computed(() =>
@@ -179,118 +203,156 @@ function saveReflection(stopLocation: string): void {
         </p>
 
         <template v-else>
-          <div class="book-nav">
+          <div class="book-carousel">
             <button
-              class="nav-button"
+              class="btn-bare carousel-arrow carousel-arrow--left"
               :disabled="currentSpread === 0"
               aria-label="Forrige side"
               @click="prevSpread"
             >
-              ◀
+              <ChevronLeft :size="28" />
+              <span>Forrige</span>
             </button>
-            <span class="page-indicator">{{ currentSpread + 1 }} / {{ totalSpreads }}</span>
+
+            <div class="book">
+              <template v-if="leftEntry">
+                <div
+                  v-if="leftEntry.locked"
+                  class="book-page book-page--left book-page--locked"
+                >
+                  <div class="card-header card-header--locked">
+                    <h2 class="stop-title">{{ STOP_LABELS[leftEntry.type] }}</h2>
+                  </div>
+                  <div class="locked-content">
+                    <Lock class="lock-icon" :size="72" aria-hidden="true" />
+                    <p class="stop-locked">Fullfør forrige stoppested for å låse opp</p>
+                  </div>
+                </div>
+                <div v-else class="book-page book-page--left">
+                  <div class="card-header">
+                    <h2 class="stop-title">{{ STOP_LABELS[leftEntry.type] }}</h2>
+                  </div>
+                  <div class="lined-section">
+                    <p v-for="(note, i) in getAutoNotes(leftEntry.type)" :key="i" class="lined-row">
+                      {{ note }}
+                    </p>
+                    <p v-if="getAutoNotes(leftEntry.type).length === 0" class="lined-row lined-row--empty">
+                      Ingen tips enda...
+                    </p>
+                    <div class="reflection-divider">Dine egne notater</div>
+                    <textarea
+                      :id="`reflection-${leftEntry.type}`"
+                      class="reflection-input"
+                      :value="getReflection(leftEntry.type)"
+                      placeholder="Skriv her..."
+                      :aria-label="`Refleksjon for ${STOP_LABELS[leftEntry.type]}`"
+                      @input="onReflectionInput(leftEntry.type, ($event.target as HTMLTextAreaElement).value)"
+                    />
+                  </div>
+                  <p v-if="saveError && savingStop === null && savedStop !== leftEntry.type" class="save-error" role="alert">
+                    {{ saveError }}
+                  </p>
+                  <button
+                    class="save-button"
+                    :disabled="savingStop === leftEntry.type"
+                    :aria-label="`Lagre refleksjon for ${STOP_LABELS[leftEntry.type]}`"
+                    @click="saveReflection(leftEntry.type)"
+                  >
+                    <span v-if="savingStop === leftEntry.type">Lagrer...</span>
+                    <span v-else-if="savedStop === leftEntry.type">Lagret!</span>
+                    <span v-else>Lagre</span>
+                  </button>
+                </div>
+              </template>
+
+              <div v-if="!isMobile" class="book-spine" />
+
+              <template v-if="rightEntry">
+                <div
+                  v-if="rightEntry.locked"
+                  class="book-page book-page--right book-page--locked"
+                >
+                  <div class="card-header card-header--locked">
+                    <h2 class="stop-title">{{ STOP_LABELS[rightEntry.type] }}</h2>
+                  </div>
+                  <div class="locked-content">
+                    <Lock class="lock-icon" :size="72" aria-hidden="true" />
+                    <p class="stop-locked">Fullfør forrige stoppested for å låse opp</p>
+                  </div>
+                </div>
+                <div v-else class="book-page book-page--right">
+                  <div class="card-header">
+                    <h2 class="stop-title">{{ STOP_LABELS[rightEntry.type] }}</h2>
+                  </div>
+                  <div class="lined-section">
+                    <p v-for="(note, i) in getAutoNotes(rightEntry.type)" :key="i" class="lined-row">
+                      {{ note }}
+                    </p>
+                    <p v-if="getAutoNotes(rightEntry.type).length === 0" class="lined-row lined-row--empty">
+                      Ingen tips enda...
+                    </p>
+                    <div class="reflection-divider">Dine egne notater</div>
+                    <textarea
+                      :id="`reflection-${rightEntry.type}`"
+                      class="reflection-input"
+                      :value="getReflection(rightEntry.type)"
+                      placeholder="Skriv her..."
+                      :aria-label="`Refleksjon for ${STOP_LABELS[rightEntry.type]}`"
+                      @input="onReflectionInput(rightEntry.type, ($event.target as HTMLTextAreaElement).value)"
+                    />
+                  </div>
+                  <p v-if="saveError && savingStop === null && savedStop !== rightEntry.type" class="save-error" role="alert">
+                    {{ saveError }}
+                  </p>
+                  <button
+                    class="save-button"
+                    :disabled="savingStop === rightEntry.type"
+                    :aria-label="`Lagre refleksjon for ${STOP_LABELS[rightEntry.type]}`"
+                    @click="saveReflection(rightEntry.type)"
+                  >
+                    <span v-if="savingStop === rightEntry.type">Lagrer...</span>
+                    <span v-else-if="savedStop === rightEntry.type">Lagret!</span>
+                    <span v-else>Lagre</span>
+                  </button>
+                </div>
+              </template>
+
+              <div v-else-if="!isMobile" class="book-page book-page--right book-page--blank" aria-hidden="true" />
+            </div>
+
             <button
-              class="nav-button"
+              class="btn-bare carousel-arrow carousel-arrow--right"
               :disabled="currentSpread === totalSpreads - 1"
               aria-label="Neste side"
               @click="nextSpread"
             >
-              ▶
+              <span>Neste</span>
+              <ChevronRight :size="28" />
             </button>
           </div>
 
-          <div class="book">
-            <div
-              v-if="leftStop"
-              class="book-page book-page--left"
+          <span class="page-indicator page-indicator--desktop">Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span>
+
+          <div class="book-mobile-nav">
+            <button
+              class="btn-bare mobile-nav-btn"
+              :disabled="currentSpread === 0"
+              aria-label="Forrige side"
+              @click="prevSpread"
             >
-              <div class="card-header">
-                <h2 class="stop-title">{{ STOP_LABELS[leftStop] }}</h2>
-              </div>
-
-              <div class="lined-section">
-                <p v-for="(note, i) in getAutoNotes(leftStop)" :key="i" class="lined-row">
-                  {{ note }}
-                </p>
-                <p v-if="getAutoNotes(leftStop).length === 0" class="lined-row lined-row--empty">
-                  Ingen tips enda...
-                </p>
-                <div class="reflection-divider">✏️ Dine egne notater</div>
-                <textarea
-                  :id="`reflection-${leftStop}`"
-                  class="reflection-input"
-                  :value="getReflection(leftStop)"
-                  placeholder="Skriv her..."
-                  :aria-label="`Refleksjon for ${STOP_LABELS[leftStop]}`"
-                  @input="onReflectionInput(leftStop, ($event.target as HTMLTextAreaElement).value)"
-                />
-              </div>
-              <p v-if="saveError && savingStop === null && savedStop !== leftStop" class="text-red-600 text-xs font-semibold mt-1">
-                {{ saveError }}
-              </p>
-              <button
-                class="save-button"
-                :disabled="savingStop === leftStop"
-                :aria-label="`Lagre refleksjon for ${STOP_LABELS[leftStop]}`"
-                @click="saveReflection(leftStop)"
-              >
-                <span v-if="savingStop === leftStop">Lagrer...</span>
-                <span v-else-if="savedStop === leftStop">✓ Lagret!</span>
-                <span v-else>Lagre</span>
-              </button>
-            </div>
-
-            <div class="book-spine" />
-
-            <div
-              v-if="rightStop"
-              class="book-page book-page--right"
+              <ChevronLeft :size="24" />
+              <span>Forrige</span>
+            </button>
+            <span class="page-indicator">Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span>
+            <button
+              class="btn-bare mobile-nav-btn"
+              :disabled="currentSpread === totalSpreads - 1"
+              aria-label="Neste side"
+              @click="nextSpread"
             >
-              <div class="card-header">
-                <h2 class="stop-title">{{ STOP_LABELS[rightStop] }}</h2>
-              </div>
-
-              <div class="lined-section">
-                <p v-for="(note, i) in getAutoNotes(rightStop)" :key="i" class="lined-row">
-                  {{ note }}
-                </p>
-                <p
-                  v-if="getAutoNotes(rightStop).length === 0"
-                  class="lined-row lined-row--empty"
-                >
-                  Ingen tips enda...
-                </p>
-                <div class="reflection-divider">✏️ Dine egne notater</div>
-                <textarea
-                  :id="`reflection-${rightStop}`"
-                  class="reflection-input"
-                  :value="getReflection(rightStop)"
-                  placeholder="Skriv her..."
-                  :aria-label="`Refleksjon for ${STOP_LABELS[rightStop]}`"
-                  @input="
-                    onReflectionInput(
-                      rightStop,
-                      ($event.target as HTMLTextAreaElement).value,
-                    )
-                  "
-                />
-              </div>
-              <p v-if="saveError && savingStop === null && savedStop !== rightStop" class="text-red-600 text-xs font-semibold mt-1">
-                {{ saveError }}
-              </p>
-              <button
-                class="save-button"
-                :disabled="savingStop === rightStop"
-                :aria-label="`Lagre refleksjon for ${STOP_LABELS[rightStop]}`"
-                @click="saveReflection(rightStop)"
-              >
-                <span v-if="savingStop === rightStop">Lagrer...</span>
-                <span v-else-if="savedStop === rightStop">✓ Lagret!</span>
-                <span v-else>Lagre</span>
-              </button>
-            </div>
-
-            <div v-else class="book-page book-page--right book-page--blank" aria-hidden="true" />
+              <span>Neste</span>
+              <ChevronRight :size="24" />
+            </button>
           </div>
         </template>
       </template>
@@ -299,12 +361,12 @@ function saveReflection(stopLocation: string): void {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap');
 
 .notebook-wrapper {
   padding: 16px 24px 40px;
   width: 100%;
-  max-width: 960px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -314,64 +376,78 @@ function saveReflection(stopLocation: string): void {
 
 .notebook-status,
 .notebook-empty {
-  color: white;
+  color: #f0e8d0;
   text-align: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-top: 40px;
 }
 
 .notebook-hint {
-  color: #f5e7c7;
+  color: #d4c4a8;
   text-align: center;
-  font-size: 0.98rem;
+  font-size: 1.15rem;
   max-width: 42rem;
   margin: 0;
 }
 
 .notebook-error {
-  color: #ff6b6b;
+  color: #fca5a5;
   text-align: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-top: 40px;
 }
 
-/* Navigation */
-.book-nav {
+/* Carousel layout */
+.book-carousel {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+  width: 100%;
 }
 
-.nav-button {
-  background: #e8a020;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
+.carousel-arrow {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.nav-button:hover:not(:disabled) {
-  background: #c47a10;
+.carousel-arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
-.nav-button:disabled {
-  opacity: 0.3;
+.carousel-arrow:disabled {
+  opacity: 0.2;
   cursor: not-allowed;
 }
 
 .page-indicator {
-  color: white;
-  font-family: 'Caveat', cursive;
-  font-size: 1.1rem;
-  min-width: 48px;
+  color: #c8c0b4;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
   text-align: center;
+}
+
+.page-indicator--desktop {
+  display: block;
+}
+
+@media (max-width: 1000px) {
+  .page-indicator--desktop {
+    display: none;
+  }
 }
 
 /* Open book */
@@ -379,87 +455,80 @@ function saveReflection(stopLocation: string): void {
   display: flex;
   width: 100%;
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.22);
-  border-radius: 8px;
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
   overflow: hidden;
 }
 
 /* Spine */
 .book-spine {
-  width: 12px;
+  width: 20px;
   flex-shrink: 0;
-  background: linear-gradient(to right, #9f620d, #e8a020 45%, #b07010 60%, #8f580c);
+  background: linear-gradient(to right, #c0b8a8, #d8d0c0 50%, #c0b8a8);
   box-shadow:
-    inset -2px 0 4px rgba(0, 0, 0, 0.22),
-    inset 2px 0 4px rgba(255, 255, 255, 0.08);
+    inset -1px 0 3px rgba(0, 0, 0, 0.15),
+    inset 1px 0 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Pages */
 .book-page {
   flex: 1;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.22), transparent 38%),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.025)),
-    #f8f1df;
+  background: #faf8f4;
   display: flex;
   flex-direction: column;
-  min-height: 480px;
-  font-family: 'Caveat', 'Courier New', cursive;
+  min-height: 560px;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
   overflow: hidden;
   position: relative;
 }
 
 .book-page::before {
-  content: '';
-  display: block;
-  height: 14px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.08));
-  border-bottom: 1px solid rgba(120, 90, 40, 0.12);
+  display: none;
 }
 
 .book-page--left {
-  border-radius: 4px 0 0 4px;
-  border: 2px solid #e8a020;
-  border-right: none;
+  border-radius: 2px 0 0 2px;
+  border: none;
 }
 
 .book-page--right {
-  border-radius: 0 4px 4px 0;
-  border: 2px solid #e8a020;
-  border-left: none;
+  border-radius: 0 2px 2px 0;
+  border: none;
 }
 
 .book-page--locked {
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 38%),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.03)),
-    #f3ead7;
+  background: #f0eeea;
 }
 
 .book-page--blank {
-  background-color: #f5edd6;
+  background: #f0eeea;
 }
 
 /* Header */
 .card-header {
   background: transparent;
-  padding: 14px 20px 10px;
-  box-shadow: none;
+  padding: 16px 18px 8px;
+  border-bottom: 2px solid #ddd8d0;
+}
+
+.card-header--locked {
+  border-bottom-color: #e0dcd6;
 }
 
 .card-header::after {
-  content: '';
-  display: block;
-  margin-top: 8px;
-  height: 1px;
-  background: #e8a020;
-  opacity: 0.7;
+  display: none;
 }
+
 .stop-title {
-  font-family: 'Caveat', cursive;
-  font-size: 1.3rem;
-  font-weight: 400;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #3a3530;
+  margin: 0;
+  letter-spacing: 0.03em;
+  text-align: center;
+  -webkit-text-stroke: 0;
 }
 
 /* Locked */
@@ -468,85 +537,78 @@ function saveReflection(stopLocation: string): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
-  gap: 10px;
+  padding: 50px 20px;
+  gap: 12px;
   flex: 1;
   text-align: center;
-  position: relative;
 }
 
 .locked-content::before {
-  content: '';
-  position: absolute;
-  inset: 24px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  pointer-events: none;
+  display: none;
 }
 
 .lock-icon {
-  font-size: 2.2rem;
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+  color: #b8b0a8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .stop-locked {
-  color: #7f7a70;
-  font-size: 1rem;
-  font-style: italic;
+  color: #8a8480;
+  font-size: 1.2rem;
+  font-style: normal;
+  font-weight: 600;
   margin: 0;
-  font-family: 'Caveat', cursive;
-  position: relative;
-  z-index: 1;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
 }
 
 /* Lined section */
 .lined-section {
   flex: 1;
-  padding: 0 16px;
+  padding: 4px 18px;
   display: flex;
   flex-direction: column;
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent 31px,
-    rgba(170, 196, 226, 0.75) 31px,
-    rgba(170, 196, 226, 0.75) 32px
+    transparent 33px,
+    rgba(120, 90, 60, 0.2) 33px,
+    rgba(120, 90, 60, 0.2) 34px
   );
-  background-size: 100% 32px;
+  background-size: 100% 34px;
 }
 
 /* Printed notes */
 .lined-row {
-  font-family: 'Caveat', cursive;
+  font-family: 'Patrick Hand', cursive;
   font-size: 1rem;
-  color: #333;
+  color: #2a2220;
   margin: 0;
-  height: 32px;
-  line-height: 32px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-height: 34px;
+  line-height: 34px;
+  white-space: normal;
+  word-break: break-word;
+  letter-spacing: 0.04em;
 }
 
 .lined-row--empty {
-  color: #aaa;
+  color: #7a7068;
   font-style: italic;
 }
 
 /* Divider label between auto notes and reflection */
 .reflection-divider {
-  font-family: 'Caveat', cursive;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #e8a020;
-  height: 32px;
-  line-height: 32px;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid #e8a020;
-  opacity: 0.7;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 200;
+  color: #000000;
+  line-height: 2;
+  margin: 16px -18px 2px;
+  background: transparent;
+  text-align: left;
+  border-bottom: 2px solid #c8c2b8;
+  padding-left: 15px;
+  padding-top: 15px;
+  letter-spacing: 0.03em;
 }
 
 /* Reflection textarea */
@@ -557,78 +619,117 @@ function saveReflection(stopLocation: string): void {
   border: none;
   padding: 0;
   margin: 0;
-  color: #333;
+  color: #2a2220;
   font-size: 1rem;
-  line-height: 32px;
-  font-family: 'Caveat', cursive;
+  line-height: 34px;
+  font-family: 'Patrick Hand', cursive;
+  letter-spacing: 0.04em;
   resize: none;
   box-sizing: border-box;
   outline: none;
   overflow-y: auto;
 }
 
+.reflection-input:focus {
+  outline: 2px solid #a0a0a0;
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
 .reflection-input::placeholder {
-  color: #bbb;
+  color: #6a5e54;
   font-style: italic;
 }
 
 /* Save button */
 .save-button {
-  align-self: flex-end;
-  background: linear-gradient(to bottom, #eba92c, #dc9619);
-  color: white;
-  border: none;
-  border-radius: 999px;
-  padding: 8px 20px;
-  margin: 4px 16px 12px;
-  min-width: 74px;
-  font-size: 1rem;
-  font-family: 'Caveat', cursive;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.2s,
-    transform 0.15s,
-    box-shadow 0.2s;
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --color-nd-button: #3a3530;
+  --color-nd-button-edge: #1a1510;
+  --color-nd-button-text: #faf8f4;
+  --color-nd-button-hover: #4a4540;
+  --color-nd-button-text-hover: #ffffff;
+  align-self: center;
+  margin: 12px 16px 16px;
+  min-width: 140px;
 }
 
-.save-button:hover:not(:disabled) {
-  background: linear-gradient(to bottom, #f0b43f, #d38710);
-  transform: translateY(-1px);
-}
-
-.save-button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
+.save-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 8px 16px;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  align-self: center;
 }
 
 /* Mobile */
-@media (max-width: 640px) {
+@media (max-width: 1000px) {
+  .notebook-wrapper {
+    padding: 16px 70px 30px;
+  }
+
   .book {
     flex-direction: column;
   }
 
-  .book-spine {
-    width: 100%;
-    height: 8px;
-    background: linear-gradient(to bottom, #b07010, #e8a020, #b07010);
+  .book-carousel {
+    flex-direction: column;
   }
 
-  .book-page--left {
-    border-radius: 4px 4px 0 0;
-    border: 2px solid #e8a020;
-    border-bottom: none;
+  .carousel-arrow {
+    display: none;
   }
 
-  .book-page--right,
-  .book-page--blank {
-    border-radius: 0 0 4px 4px;
-    border: 2px solid #e8a020;
-    border-top: none;
+}
+
+.book-mobile-nav {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1000px) {
+  .book-mobile-nav {
+    display: flex;
   }
+}
+
+.mobile-nav-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  padding: 10px 20px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.mobile-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.mobile-nav-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+.mobile-nav-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 </style>
