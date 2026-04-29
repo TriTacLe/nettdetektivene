@@ -67,26 +67,26 @@ function handleMenuItem(item: (typeof menuItems)[0]) {
         <p class="text-4xl font-mono font-black tracking-widest text-white">{{ classroom?.joinCode }}</p>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-      <button
-        v-for="item in menuItems"
-        :key="item.title"
-        :disabled="!item.route"
-        class="relative bg-white rounded-xl p-4 flex items-center justify-between text-left shadow transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        @click="handleMenuItem(item)"
-      >
-        <div>
-          <p class="font-bold text-gray-900 text-sm">{{ item.title }}</p>
-          <p class="text-gray-500 text-xs mt-0.5">{{ item.subtitle }}</p>
-        </div>
-        <span
-          v-if="item.route === 'notifications' && unreadCount > 0"
-          class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5"
+      <div class="menu-stack">
+        <button
+          v-for="item in menuItems"
+          :key="item.title"
+          :disabled="!item.route"
+          class="btn-vn menu-item"
+          @click="handleMenuItem(item)"
         >
-          {{ unreadCount }}
-        </span>
-        <span class="text-gray-400 text-lg">›</span>
-      </button>
+          <span class="menu-text">
+            <span class="menu-title">{{ item.title }}</span>
+            <span class="menu-subtitle">{{ item.subtitle }}</span>
+          </span>
+          <span
+            v-if="item.route === 'notifications' && unreadCount > 0"
+            class="menu-badge"
+          >
+            {{ unreadCount }}
+          </span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
+        </button>
       </div>
     </div>
   </SceneComponent>

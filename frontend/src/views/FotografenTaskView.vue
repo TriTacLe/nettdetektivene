@@ -3,10 +3,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import FotografenComponent from '../components/FotografenComponent.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
+import { useDialogRunner } from '@/composables/UseDialogRunner'
+import { fotografenIntro } from '@/data/taskDialogs/fotografen'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type { TaskDTO, FotografenChallenge } from '@/types'
 import { TaskType } from '@/types'
 
@@ -23,6 +27,17 @@ const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
+
+const storyStore = useStoryProgressStore()
+const introRunner = useDialogRunner(fotografenIntro, 'start')
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_FOTOGRAFEN))
+function onIntroAdvance() {
+  introRunner.advance()
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_FOTOGRAFEN)
+  }
+}
 
 onMounted(async () => {
   console.log('[FotografenTaskView] Loading task with ID:', taskId)
@@ -126,11 +141,18 @@ async function onFailed(reason: string) {
     <template v-else>
       <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
       <FotografenComponent
+        v-if="introDone"
         :challenge="challenge"
         :question="taskQuestion"
         :tip="taskTip"
         @complete="onComplete"
         @failed="onFailed"
+      />
+      <CutsceneDialog
+        v-if="!introDone && introRunner.currentScene.value"
+        :key="introRunner.currentScene.value.id"
+        :scene="introRunner.currentScene.value"
+        @done="onIntroAdvance"
       />
     </template>
   </SceneComponent>

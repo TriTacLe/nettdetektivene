@@ -190,8 +190,8 @@ function submit() {
 
           <button
             type="submit"
+            class="btn-vn"
             :disabled="createMutation.isPending.value || updateMutation.isPending.value"
-            class="w-full bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition mt-2"
           >
             {{
               isEditMode

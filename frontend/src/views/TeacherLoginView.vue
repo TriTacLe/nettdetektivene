@@ -43,7 +43,13 @@ async function handleLogin(): Promise<void> {
 
   isLoading.value = true
   try {
-    await authStore.feideLogin({ email: email.value, affiliation: 'instructor', password: password.value })
+    const displayName = email.value.split('@')[0]
+    await authStore.feideLogin({
+      email: email.value,
+      password: password.value,
+      affiliation: 'instructor',
+      displayName,
+    })
     router.push({ name: 'teacher-home' })
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
@@ -57,7 +63,6 @@ async function handleLogin(): Promise<void> {
   <SceneComponent
     title="Feide Lærer innlogging"
     previous="/start"
-    next="/teacher-home"
     background="/StartBackground.jpg"
   >
     <div class="login-container">
@@ -96,7 +101,7 @@ async function handleLogin(): Promise<void> {
           </span>
         </div>
 
-        <button :disabled="isLoading" @click="handleLogin">
+        <button class="btn-vn" :disabled="isLoading" @click="handleLogin">
           {{ isLoading ? 'Logger inn...' : 'Logg inn' }}
         </button>
       </div>

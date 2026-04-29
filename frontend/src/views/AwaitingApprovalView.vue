@@ -19,7 +19,7 @@ watch(data, (val) => {
   const classroom = val?.data
   if (classroom?.id && classroom?.institutionId) {
     studentStore.setClassroom(classroom.id, classroom.institutionId)
-    router.push({ name: 'introduction' })
+    router.push({ name: 'student-home' })
   }
 })
 </script>

@@ -11,4 +11,9 @@ async function submitAttempt(
   return data.data
 }
 
-export default { submitAttempt }
+async function getMyPassedTaskIds(): Promise<string[]> {
+  const { data } = await apiClient.get<ApiResponse<string[]>>('/attempts/me/passed')
+  return data.data ?? []
+}
+
+export default { submitAttempt, getMyPassedTaskIds }

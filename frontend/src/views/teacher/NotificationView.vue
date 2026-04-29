@@ -258,7 +258,11 @@ const TYPE_STYLES: Record<NotificationType, NotificationStyle> = {
 }
 
 function formatTime(iso: string): string {
-  const date = new Date(iso)
+  // Backend serializes LocalDateTime without a timezone (e.g. "2026-04-28T14:39:05").
+  // The DB and JVM run in UTC, so treat unmarked timestamps as UTC; otherwise the
+  // browser would parse them as local time and add a fixed offset to every value.
+  const hasZone = /Z$|[+-]\d{2}:?\d{2}$/.test(iso)
+  const date = new Date(hasZone ? iso : iso + 'Z')
   const now = Date.now()
   const diffMin = Math.floor((now - date.getTime()) / 60000)
   if (diffMin < 1) return 'Nå nettopp'
@@ -400,14 +404,17 @@ function formatTime(iso: string): string {
             </div>
           </div>
 
-          <button
+          <span
             v-if="!notification.isRead"
+            role="button"
+            tabindex="0"
             @click.stop="markRead.mutate({ path: { id: notification.id } })"
-            style="all: unset; cursor: pointer;"
-            class="text-[10px] leading-none text-gray-400 hover:text-gray-600 shrink-0 mt-0.5 transition"
+            @keydown.enter.stop.prevent="markRead.mutate({ path: { id: notification.id } })"
+            @keydown.space.stop.prevent="markRead.mutate({ path: { id: notification.id } })"
+            class="self-start shrink-0 mt-0.5 px-2 py-1 text-[10px] leading-none font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-700 cursor-pointer select-none transition rounded"
           >
             Dempe
-          </button>
+          </span>
         </li>
       </ul>
 

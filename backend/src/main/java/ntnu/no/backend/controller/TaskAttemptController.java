@@ -83,6 +83,21 @@ public class TaskAttemptController {
   }
 
   /**
+   * Returns the IDs of every task the authenticated user has passed at
+   * least once. Backed by {@code task_best_score.first_passed_at IS NOT NULL}.
+   *
+   * @param user the authenticated user
+   * @return {@code 200 OK} with the list of passed task IDs
+   */
+  @Operation(summary = "List task IDs the authenticated user has passed")
+  @PreAuthorize("isAuthenticated()")
+  @GetMapping("/me/passed")
+  public ResponseEntity<ApiResponse<List<UUID>>> getMyPassedTaskIds(
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getMyPassedTaskIds(user)));
+  }
+
+  /**
    * Retrieves all attempts within a classroom.
    * Only instructors of the classroom can access this endpoint.
    *

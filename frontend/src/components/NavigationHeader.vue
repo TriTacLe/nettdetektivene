@@ -44,7 +44,7 @@ function goTo(path?: string) {
 <template>
   <header class="navigation-header">
     <div v-if="previous" class="nav-previous" @click="goTo()">
-      <button class="nav-button" aria-label="Go back">
+      <button class="nav-button btn-bare" aria-label="Go back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />
           <path
@@ -78,7 +78,7 @@ function goTo(path?: string) {
         {{ authStore.user.displayName }}
       </span>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
-        <button class="nav-button" aria-label="Go forward">
+        <button class="nav-button btn-bare" aria-label="Go forward">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="12" fill="white" />
             <path
@@ -92,7 +92,7 @@ function goTo(path?: string) {
         </button>
       </div>
       <div v-else class="nav-placeholder" />
-      <button v-if="showSettings" class="nav-button settings-button" aria-label="Apne innstillinger" @click="settingsOpen = true">
+      <button v-if="showSettings" class="nav-button settings-button btn-bare" aria-label="Apne innstillinger" @click="settingsOpen = true">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />
           <path

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/vue-query'
 import {
   getClassroomLeaderboardOptions,
   getStudentScoreOptions,
-  getAllTasksOptions,
+  getClassroomTasksOptions,
   getAllNotebooksOptions,
   getStudentsOptions,
   getAchievementsForStudentOptions,
@@ -53,7 +53,13 @@ const { data: scoreData, isLoading: loadingScores } = useQuery(
   getStudentScoreOptions({ path: { classroomId, userId } }),
 )
 
-const { data: tasksData, isLoading: loadingTasks } = useQuery(getAllTasksOptions())
+// Classroom-scoped task list. Using getAllTasks() here was the source of the
+// progress-percentage bug: it returned every task in the system, so stops
+// where other classrooms had also created tasks (e.g. Fotografen) showed an
+// inflated denominator and a low percentage even for a fully-finished student.
+const { data: tasksData, isLoading: loadingTasks } = useQuery(
+  getClassroomTasksOptions({ path: { classroomId }, query: { activeOnly: true } }),
+)
 
 const { data: notebookData, isLoading: loadingNotebooks } = useQuery(
   getAllNotebooksOptions({ path: { classroomId } }),
@@ -101,7 +107,13 @@ const displayName = computed(
 
 const taskScores = computed(() => scoreData.value?.data ?? [])
 
-const allTasks = computed(() => (tasksData.value?.data ?? []).filter((t) => t.isActive))
+const allTasks = computed(() => {
+  const out: NonNullable<NonNullable<typeof tasksData.value>['data']>[number]['task'][] = []
+  for (const ct of tasksData.value?.data ?? []) {
+    if (ct.isActive && ct.task) out.push(ct.task)
+  }
+  return out.filter((t): t is NonNullable<typeof t> => t !== undefined)
+})
 
 const scoreMap = computed(() => {
   const map = new Map<string, (typeof taskScores.value)[0]>()
@@ -348,8 +360,8 @@ function formatDate(iso: string | undefined): string {
         <!-- Notebook toggle -->
         <div class="px-5 pb-5">
           <button
+            class="btn-vn notebook-toggle-btn"
             @click="toggleNotebook(stop.key)"
-            class="w-full border border-amber-300 text-amber-800 font-semibold text-sm py-2.5 rounded-xl hover:bg-amber-50 transition"
           >
             {{ openNotebookStop === stop.key ? 'Skjul notater' : 'Se Notater' }}
           </button>

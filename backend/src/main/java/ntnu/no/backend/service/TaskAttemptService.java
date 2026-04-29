@@ -10,6 +10,7 @@ import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.repository.TaskAttemptRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -40,6 +41,7 @@ import java.util.UUID;
 public class TaskAttemptService {
 
   private final TaskAttemptRepository taskAttemptRepository;
+  private final TaskBestScoreRepository taskBestScoreRepository;
   private final JdbcTemplate jdbcTemplate;
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
@@ -102,6 +104,20 @@ public class TaskAttemptService {
    * @return a list of {@link TaskAttemptResponseDTO} for the classroom
    * @throws AccessDeniedException if the requesting user is not an instructor of the classroom
    */
+  /**
+   * Returns the IDs of every task the authenticated user has passed at
+   * least once (any classroom). Source of truth: {@code task_best_score}
+   * rows where {@code first_passed_at IS NOT NULL}, maintained by the
+   * {@code trg_attempt_sync} trigger.
+   *
+   * @param user the authenticated user
+   * @return list of passed task IDs
+   */
+  @Transactional(readOnly = true)
+  public List<UUID> getMyPassedTaskIds(User user) {
+    return taskBestScoreRepository.findPassedTaskIdsByUserId(user.getId());
+  }
+
   @Transactional(readOnly = true)
   public List<TaskAttemptResponseDTO> getAttemptsByClassroom(UUID classroomId, User requestingUser) {
     verifyInstructor(classroomId, requestingUser);

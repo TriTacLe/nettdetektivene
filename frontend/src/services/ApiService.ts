@@ -92,13 +92,13 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-const AUTH_PATHS = ['/auth/login', '/auth/feide']
+const AUTH_ENDPOINT_PATTERN = /\/auth\/(login|refresh|register|feide-login|feide)\b/
 
 apiClient.interceptors.response.use((response) => response, async (error: AxiosError) => {
   const original = error.config as AxiosRequestConfig & { _retry?: boolean }
-  const isAuthEndpoint = AUTH_PATHS.some(p => original?.url?.includes(p))
+  const isAuthRequest = typeof original?.url === 'string' && AUTH_ENDPOINT_PATTERN.test(original.url)
 
-  if (error.response?.status !== 401 || original._retry || isAuthEndpoint) {
+  if (error.response?.status !== 401 || original._retry || isAuthRequest) {
     return Promise.reject(new Error(toUserMessage(error.response?.status)))
   }
 
@@ -118,7 +118,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
 
   if (!refreshToken) {
     clearSession()
-    window.location.href = '/login'
+    window.location.href = '/start'
     return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt.'))
   }
 
@@ -134,7 +134,7 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   } catch (refreshError) {
     flushQueue(refreshError, null)
     clearSession()
-    window.location.href = '/login'
+    window.location.href = '/start'
     return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt. '))
   } finally {
     isRefreshing = false

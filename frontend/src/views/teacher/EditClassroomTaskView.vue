@@ -37,7 +37,7 @@ watch(classroomTask, (task) => {
   const parsed = parseTaskContent(t.content, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
-    const content = parsed?.news ?? parsed
+    const content = (parsed as any)?.news ?? parsed as any
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
@@ -53,7 +53,7 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = parsed?.photo ?? parsed
+    const content = (parsed as any)?.photo ?? parsed as any
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
@@ -497,7 +497,7 @@ function submit() {
   align-items: center;
   gap: 1px;
   padding: 0.4rem 0.6rem;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.6rem;
   background: white;
   cursor: pointer;
@@ -557,7 +557,7 @@ function submit() {
 .task-field textarea,
 .task-field select {
   background: white;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.8rem;
   padding: 0.85rem 1rem;
   font-size: 1rem;
@@ -703,7 +703,7 @@ function submit() {
 .task-create-add {
   align-self: start;
   background: #eff6ff;
-  border-color: #3b82f6;
+  border-color: #111111;
   color: #1d4ed8;
 }
 

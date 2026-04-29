@@ -14,19 +14,18 @@ function goToTeacher() {
 
 <template>
   <SceneComponent
-      title="Start"
+      title=""
       background="/StartBackground.jpg">
 
     <div class="start-content">
       <h1>Velkommen til Nettdetektivene!</h1>
       <h4>Velg om du er en elev eller en lærer for å komme i gang.</h4>
 
-      <div class="buttons">
-        <button class="btn" @click="goToStudent">
+      <div class="btn-stack">
+        <button class="btn-vn" @click="goToStudent">
           Jeg er en elev
         </button>
-
-        <button class="btn" @click="goToTeacher">
+        <button class="btn-vn" @click="goToTeacher">
           Jeg er en lærer
         </button>
       </div>
@@ -37,13 +36,15 @@ function goToTeacher() {
 
 <style scoped>
 .start-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
   gap: 1.5rem;
   padding: 2rem;
+  padding-top: 25vh;
 }
 
 .start-content h1 {
@@ -53,10 +54,11 @@ function goToTeacher() {
   font-size: 1.25rem;
 }
 
-.buttons {
+.btn-stack {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
-
 
 </style>

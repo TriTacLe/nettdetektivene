@@ -142,6 +142,26 @@ class TaskAttemptControllerTest {
   }
 
   @Test
+  void getMyPassedTaskIds_unauthenticated_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/api/v1/attempts/me/passed"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser
+  void getMyPassedTaskIds_returnsList() throws Exception {
+    UUID t1 = UUID.fromString("00000000-0000-0000-0000-000000000010");
+    UUID t2 = UUID.fromString("00000000-0000-0000-0000-000000000011");
+    when(taskAttemptService.getMyPassedTaskIds(any())).thenReturn(List.of(t1, t2));
+
+    mockMvc.perform(get("/api/v1/attempts/me/passed"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data[0]").value(t1.toString()))
+        .andExpect(jsonPath("$.data[1]").value(t2.toString()));
+  }
+
+  @Test
   @WithMockUser(authorities = "instructor")
   void getAttemptsByClassroom_returnsOk() throws Exception {
     UUID classroomId = UUID.randomUUID();

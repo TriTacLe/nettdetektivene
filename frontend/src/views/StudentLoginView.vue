@@ -81,7 +81,6 @@ async function handleLogin(): Promise<void> {
   <SceneComponent
     title="Elev innlogging"
     previous="/start"
-    next="/join-classroom"
     background="/StartBackground.jpg"
   >
     <div class="login-container">
@@ -120,7 +119,7 @@ async function handleLogin(): Promise<void> {
           </span>
         </div>
 
-        <button :disabled="isLoading" @click="handleLogin">
+        <button class="btn-vn" :disabled="isLoading" @click="handleLogin">
           {{ isLoading ? 'Logger inn...' : 'Logg inn' }}
         </button>
       </div>
