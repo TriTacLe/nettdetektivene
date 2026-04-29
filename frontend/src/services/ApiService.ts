@@ -4,8 +4,7 @@ import axios, {
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig
 } from 'axios';
-
-const SESSION_KEY = 'auth'
+import { AUTH_ENDPOINT_PATTERN, readSession, refreshAccessToken } from '@/lib/TokenRefresh'
 
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
   400: 'Ugyldig forespørsel',
@@ -18,64 +17,11 @@ const HTTP_ERROR_MESSAGES: Record<number, string> = {
   503: 'Tjenesten er midlertidig utilgjengelig'
 } as const
 
-interface AuthTokens {
-  token: string
-  refreshToken: string
-}
-
-interface PendingRequest {
-  resolve: (token: string) => void
-  reject: (reason: unknown) => void
-}
-
-function readSession(): Partial<AuthTokens> {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
-    return raw ? (JSON.parse(raw) as Partial<AuthTokens>) : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeSessionTokens(tokens: AuthTokens): void {
-  try {
-    const current = readSession()
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({...current, ...tokens}))
-  } catch {
-    // sessionStorage unavailable
-  }
-}
-
-function clearSession(): void {
-  sessionStorage.removeItem(SESSION_KEY)
-}
-
 function toUserMessage(status: number | undefined): string {
   if (status !== undefined && Object.prototype.hasOwnProperty.call(HTTP_ERROR_MESSAGES, status)) {
     return HTTP_ERROR_MESSAGES[status] as string
   }
   return 'En ukjent feil oppsto. Prøv igjen'
-}
-
-let isRefreshing = false
-const pendingQueue: PendingRequest[] = []
-
-function flushQueue(error: unknown, token: string | null): void {
-  const drained = pendingQueue.splice(0, pendingQueue.length)
-  for (const item of drained) {
-    if (error !== null && error !== undefined) {
-      item.reject(error)
-    } else if (token !== null) {
-      item.resolve(token)
-    }
-  }
-}
-
-function enqueue(): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const item: PendingRequest = { resolve, reject }
-    pendingQueue.push(item)
-  })
 }
 
 const apiClient: AxiosInstance = axios.create({
@@ -92,8 +38,6 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-const AUTH_ENDPOINT_PATTERN = /\/auth\/(login|refresh|register|feide-login|feide)\b/
-
 apiClient.interceptors.response.use((response) => response, async (error: AxiosError) => {
   const original = error.config as AxiosRequestConfig & { _retry?: boolean }
   const isAuthRequest = typeof original?.url === 'string' && AUTH_ENDPOINT_PATTERN.test(original.url)
@@ -104,41 +48,12 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
 
   original._retry = true
 
-  if (isRefreshing) {
-    const newToken = await enqueue()
-    original.headers = {
-      ...original.headers,
-      Authorization: `Bearer ${newToken}`
-    }
-    return apiClient(original)
+  const newToken = await refreshAccessToken()
+  original.headers = {
+    ...original.headers,
+    Authorization: `Bearer ${newToken}`
   }
-
-  isRefreshing = true
-  const { refreshToken, token: expiredToken } = readSession()
-
-  if (!refreshToken) {
-    clearSession()
-    window.location.href = '/start'
-    return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt.'))
-  }
-
-  try {
-    const { data } = await apiClient.post<AuthTokens>('/auth/refresh', { refreshToken, expiredToken })
-    writeSessionTokens(data)
-    flushQueue(null, data.token)
-    original.headers = {
-      ...original.headers,
-      Authorization: `Bearer ${data.token}`
-    }
-    return apiClient(original)
-  } catch (refreshError) {
-    flushQueue(refreshError, null)
-    clearSession()
-    window.location.href = '/start'
-    return Promise.reject(new Error('Sesjonen er utløpt. Logg inn på nytt. '))
-  } finally {
-    isRefreshing = false
-  }
+  return apiClient(original)
 },)
 
 export default apiClient

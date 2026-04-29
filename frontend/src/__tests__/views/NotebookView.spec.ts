@@ -117,7 +117,7 @@ describe('NotebookView', () => {
 
   it('shows page navigation when entries exist', () => {
     const wrapper = setup()
-    expect(wrapper.find('.book-nav').exists()).toBe(true)
+    expect(wrapper.find('.book-carousel').exists()).toBe(true)
     expect(wrapper.find('.page-indicator').exists()).toBe(true)
   })
 
@@ -127,11 +127,11 @@ describe('NotebookView', () => {
     expect(wrapper.text()).toContain('Tips 2')
   })
 
-  it('only shows stops the student has completed', () => {
+  it('shows all stops with locked ones marked', () => {
     const wrapper = setup()
     expect(wrapper.text()).toContain('Nyhetskvartalet')
-    expect(wrapper.text()).not.toContain('Fotografen')
-    expect(wrapper.findAll('.locked-content')).toHaveLength(0)
+    expect(wrapper.text()).toContain('Fotografen')
+    expect(wrapper.findAll('.locked-content').length).toBeGreaterThan(0)
   })
 
   it('save button calls mutateAsync with correct payload', async () => {
@@ -152,8 +152,8 @@ describe('NotebookView', () => {
   it('next button advances the spread', async () => {
     const wrapper = setup([mockEntry, secondMockEntry, thirdMockEntry])
     const indicator = wrapper.find('.page-indicator')
-    expect(indicator.text()).toContain('1 / 2')
+    expect(indicator.text()).toContain('Side 1 av 4')
     await wrapper.find('[aria-label="Neste side"]').trigger('click')
-    expect(indicator.text()).toContain('2 /')
+    expect(indicator.text()).toContain('Side 2 av 4')
   })
 })
