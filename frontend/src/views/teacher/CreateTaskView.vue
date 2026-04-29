@@ -132,8 +132,6 @@ function validatePhotoDraft() {
   if (photoDraft.value.alternatives.length < 2) throw new Error('Legg til minst to bildealternativer')
   for (const alternative of photoDraft.value.alternatives) {
     if (!alternative.image) throw new Error('Alle alternativer må ha et bilde')
-    if (!alternative.description.trim()) throw new Error('Alle alternativer må ha en beskrivelse')
-    if (!alternative.begrunnelserText.trim()) throw new Error('Alle alternativer må ha minst én begrunnelse')
   }
 }
 
@@ -160,9 +158,7 @@ function selectDatasenteret() {
 function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   return {
     image: null,
-    description: '',
     correctType: 'ekte',
-    begrunnelserText: '',
   }
 }
 </script>
@@ -347,22 +343,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                 </div>
 
                 <label class="task-field">
-                  <span>Beskrivelse</span>
-                  <input v-model="alternative.description" type="text" placeholder="Legg til kontekst for elevene..." />
-                </label>
-
-                <label class="task-field">
                   <span>Bildetypen er</span>
                   <select v-model="alternative.correctType">
                     <option value="ekte">Ekte</option>
                     <option value="ai-generert">KI-generert</option>
                     <option value="manipulert">Manipulert</option>
                   </select>
-                </label>
-
-                <label class="task-field">
-                  <span>Begrunnelser, én per linje</span>
-                  <textarea v-model="alternative.begrunnelserText" rows="4" />
                 </label>
 
                 <button type="button" class="task-upload-remove" :disabled="photoDraft.alternatives.length <= 2" @click="removePhotoAlternative(index)">

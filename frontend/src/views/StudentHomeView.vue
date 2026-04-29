@@ -256,7 +256,7 @@ onUnmounted(() => {
           >
             <div class="image-note">
               <img :src="mapImage" alt="kart" class="map-image" />
-              <p class="image-note-title">Gå utendørs</p>
+              <p class="image-note-title">Spill</p>
             </div>
           </BoardNote>
         </div>
@@ -284,7 +284,7 @@ onUnmounted(() => {
           >
             <div class="image-note">
               <img :src="notebookImage" alt="Notatblokk" class="image-note-bg">
-              <p class="image-note-title">Notatblokk</p>
+              <p class="image-note-title">Notatbok</p>
             </div>
           </BoardNote>
         </div>
@@ -325,11 +325,11 @@ onUnmounted(() => {
             </div>
             <div class="help-note help-note--overlay" style="top: 49%; left: 52%; transform: translate(-50%, -130%) rotate(1.5deg)">
               <p class="help-note-title">Kartet</p>
-              <p class="help-note-text">Utforsk kartet og finn detektivoppdrag ute</p>
+              <p class="help-note-text">Utforsk kartet og finn detektivoppdrag</p>
             </div>
             <div class="help-note help-note--overlay" style="top: 10%; left: 86%; transform: translate(-50%, 30%) rotate(3deg)">
-              <p class="help-note-title">Prestasjoner</p>
-              <p class="help-note-text">Se medaljer og prestasjoner du har oppnådd</p>
+              <p class="help-note-title">Resultater</p>
+              <p class="help-note-text">Se medaljer og resultater du har oppnådd</p>
             </div>
             <div class="help-note help-note--overlay" style="top: 85%; left: 86%; transform: translate(-50%, -130%) rotate(-2deg)">
               <p class="help-note-title">Notatblokk</p>
@@ -614,3 +614,4 @@ onUnmounted(() => {
 }
 
 </style>
+

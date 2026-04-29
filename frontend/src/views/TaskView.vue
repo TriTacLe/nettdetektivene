@@ -12,7 +12,14 @@ import { useStopStore } from '@/stores/StopStore'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { datasenteretIntro } from '@/data/taskDialogs/datasenteret'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
-import type { TaskDTO, NewsChallenge, FotografenChallenge } from '@/types'
+import type {
+  TaskDTO,
+  NewsChallenge,
+  FotografenChallenge,
+  NewsAnswers,
+  PhotoAnswers,
+  TaskAnswers,
+} from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -96,45 +103,80 @@ const hasRenderableContent = computed(() => {
   return false
 })
 
-async function submitAttempt(score: number) {
+function isCorrectLocally(answers: TaskAnswers): boolean {
+  if (isNews.value) {
+    const articles = task.value?.content?.news?.articles ?? []
+    const idx = (answers as NewsAnswers).selectedIndex
+    return Boolean(articles[idx]?.isReal)
+  }
+  if (isPhoto.value) {
+    const alts = task.value?.content?.photo?.alternatives ?? []
+    const sel = (answers as PhotoAnswers).selections
+    if (sel.length !== alts.length) return false
+    return alts.every((alt: any, i: number) => sel[i]?.type === alt.correctType)
+  }
+  return false
+}
+
+function failureReason(answers: TaskAnswers): string {
+  if (isNews.value) {
+    return 'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.'
+  }
+  if (isPhoto.value) {
+    const alts = task.value?.content?.photo?.alternatives ?? []
+    const sel = (answers as PhotoAnswers).selections
+    const wrongIndexes = alts
+      .map((alt: any, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
+      .filter((i: number | null): i is number => i !== null)
+    const which = wrongIndexes.length === 1
+      ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
+      : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
+    return `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`
+  }
+  return 'Forsøket var ikke korrekt.'
+}
+
+async function onSubmit(answers: TaskAnswers) {
+  if (testClassroomId) {
+    const passed = isCorrectLocally(answers)
+    routeResult(passed, answers)
+    return
+  }
+
   try {
     submitting.value = true
     const classroomId = await fetchClassroomId()
-    if (classroomId) {
-      await TaskAttemptService.submitAttempt(taskId, classroomId, score)
-      return true
+    if (!classroomId) {
+      error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
+      return
     }
-    error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
-    return false
+    const result = await TaskAttemptService.submitAttempt(taskId, classroomId, answers)
+    routeResult(result.passed, answers)
   } catch (err) {
     console.error('Failed to submit attempt:', err)
     error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
-    return false
   } finally {
     submitting.value = false
   }
 }
 
-async function onComplete() {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(100)
-    if (!wasSaved) return
+function routeResult(passed: boolean, answers: TaskAnswers) {
+  if (passed) {
+    router.push({
+      name: 'task-finished',
+      query: { stop: stopId, taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
+    })
+  } else {
+    router.push({
+      name: 'task-failed',
+      query: {
+        stop: stopId,
+        taskId,
+        reason: failureReason(answers),
+        ...(testClassroomId ? { classroomId: testClassroomId } : {}),
+      },
+    })
   }
-  router.push({
-    name: 'task-finished',
-    query: { stop: stopId, taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
-}
-
-async function onFailed(reason: string) {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(0)
-    if (!wasSaved) return
-  }
-  router.push({
-    name: 'task-failed',
-    query: { stop: stopId, taskId, reason, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
 }
 </script>
 
@@ -158,16 +200,14 @@ async function onFailed(reason: string) {
         :challenge="newsChallenge"
         :question="newsQuestion"
         :tip="newsTip"
-        @complete="onComplete"
-        @failed="onFailed"
+        @submit="onSubmit"
       />
       <FotografenComponent
         v-else-if="introDone && isPhoto && photoChallenge"
         :challenge="photoChallenge"
         :question="photoQuestion"
         :tip="photoTip"
-        @complete="onComplete"
-        @failed="onFailed"
+        @submit="onSubmit"
       />
 
       <CutsceneDialog

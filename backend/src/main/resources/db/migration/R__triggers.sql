@@ -505,4 +505,70 @@ BEGIN
     END IF;
 END$$
 
+-- -------------------------------------------------------------
+-- trg_award_failed_count
+-- Awards the "tasks_failed/10" achievement once a user has accumulated
+-- ten failed task attempts across all classrooms.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_award_failed_count$$
+CREATE TRIGGER trg_award_failed_count
+AFTER INSERT ON task_attempt
+FOR EACH ROW
+BEGIN
+    DECLARE v_fail_count INT DEFAULT 0;
+
+    IF NEW.passed = 0 THEN
+        SELECT COUNT(*)
+        INTO v_fail_count
+        FROM task_attempt
+        WHERE user_id = NEW.user_id AND passed = 0;
+
+        IF v_fail_count >= 10 THEN
+            CALL sp_award_achievement(NEW.user_id, 'tasks_failed', '10', NEW.classroom_id);
+        END IF;
+    END IF;
+END$$
+
+-- -------------------------------------------------------------
+-- trg_unlock_creates_notebook
+-- when a task is unlocked, reads its hint from the content JSON
+-- and adds it to the notebook_entry for that stop.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_unlock_creates_notebook$$
+CREATE TRIGGER trg_unlock_creates_notebook
+AFTER INSERT ON user_task_unlocked
+FOR EACH ROW
+BEGIN
+    DECLARE v_stop VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+    DECLARE v_hint TEXT DEFAULT NULL;
+    DECLARE v_existing_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+
+    SELECT stop_location, JSON_UNQUOTE(JSON_EXTRACT(content, '$.hint'))
+    INTO v_stop, v_hint
+    FROM task
+    WHERE task_id = NEW.task_id
+    LIMIT 1;
+
+    IF v_stop IS NOT NULL AND v_hint IS NOT NULL AND v_hint <> 'null' THEN
+        SELECT entry_id INTO v_existing_id
+        FROM notebook_entry
+        WHERE user_id = NEW.user_id
+          AND classroom_id = NEW.classroom_id
+          AND stop_location = v_stop
+        LIMIT 1;
+
+        IF v_existing_id IS NULL THEN
+            INSERT INTO notebook_entry
+                (entry_id, user_id, classroom_id, stop_location, auto_notes, created_at, updated_at)
+            VALUES
+                (UUID(), NEW.user_id, NEW.classroom_id, v_stop, JSON_ARRAY(v_hint), NOW(), NOW());
+        ELSE
+            UPDATE notebook_entry
+            SET auto_notes = JSON_ARRAY_APPEND(COALESCE(auto_notes, JSON_ARRAY()), '$', v_hint),
+                updated_at = NOW()
+            WHERE entry_id = v_existing_id;
+        END IF;
+    END IF;
+END$$
+
 DELIMITER ;

@@ -392,13 +392,11 @@ seed_achievements() {
       (UUID(), 'Første Oppgave',     'Fullfør din første oppgave',                    NULL, 'task_completed',      'first_task'),
       (UUID(), 'Nyhetsjeger',        'Fullfør alle oppgaver i Nyhetskvartalet',        NULL, 'location_completed',  'nyhetskvartalet'),
       (UUID(), 'Fotoproff',          'Fullfør alle oppgaver hos Fotografen',            NULL, 'location_completed',  'fotografen'),
-      (UUID(), 'Postmester',         'Fullfør alle oppgaver på Postkontoret',           NULL, 'location_completed',  'postkontoret'),
-      (UUID(), 'Passordvokter',      'Fullfør alle oppgaver i Passordbanken',           NULL, 'location_completed',  'passordbanken'),
-      (UUID(), 'Markedsekspert',     'Fullfør alle oppgaver på Markedsplassen',         NULL, 'location_completed',  'markedsplassen'),
-      (UUID(), 'Sosial Detektiv',    'Fullfør alle oppgaver på Sosialen',               NULL, 'location_completed',  'sosialen'),
       (UUID(), 'Datamester',         'Fullfør alle oppgaver i Datasenteret',            NULL, 'location_completed',  'datasenteret'),
       (UUID(), 'Ukens Mysterium',    'Fullfør ukens mysterium',                         NULL, 'ukens_mysterium',     NULL),
-      (UUID(), 'Sikkerhetsmester',   'Fullfør alle oppgaver i et klasserom',            NULL, 'all_tasks_completed', 'classroom');
+      (UUID(), 'Sikkerhetsmester',   'Fullfør alle oppgaver i et klasserom',            NULL, 'all_tasks_completed', 'classroom'),
+      (UUID(), 'Plettfri Detektiv',  'Fullfør alle oppgaver i et klasserom uten å feile', NULL, 'perfect_classroom',   'classroom'),
+      (UUID(), 'Aldri Gi Opp',       'Feil 10 oppgaveforsøk',                           NULL, 'tasks_failed',        '10');
   "
   ok "Achievements seeded"
 }
