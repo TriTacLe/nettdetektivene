@@ -80,4 +80,3 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "docker login ghcr.io -u tritacle --password-stdin" <<< "${{ secrets.PAT_TOKEN }}"
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
-
