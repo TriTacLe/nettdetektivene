@@ -33,22 +33,6 @@ defineProps<{ tabLabel: string }>()
       />
     </svg>
     <svg
-      class="decor-fingerprint"
-      aria-hidden="true"
-      viewBox="0 0 60 80"
-      fill="none"
-    >
-      <ellipse cx="30" cy="40" rx="26" ry="36" stroke="#1c1917" stroke-width="0.7" fill="none" />
-      <ellipse cx="30" cy="40" rx="23" ry="32" stroke="#1c1917" stroke-width="0.7" fill="none" />
-      <ellipse cx="30" cy="40" rx="20" ry="28" stroke="#1c1917" stroke-width="0.7" fill="none" />
-      <ellipse cx="30" cy="40" rx="17" ry="24" stroke="#1c1917" stroke-width="0.7" fill="none" />
-      <ellipse cx="30" cy="40" rx="14" ry="20" stroke="#1c1917" stroke-width="0.7" fill="none" />
-      <ellipse cx="30" cy="40" rx="11" ry="16" stroke="#1c1917" stroke-width="0.6" fill="none" />
-      <ellipse cx="30" cy="40" rx="8" ry="12" stroke="#1c1917" stroke-width="0.6" fill="none" />
-      <ellipse cx="30" cy="40" rx="5" ry="8" stroke="#1c1917" stroke-width="0.5" fill="none" />
-      <ellipse cx="30" cy="40" rx="2.5" ry="4" stroke="#1c1917" stroke-width="0.5" fill="none" />
-    </svg>
-    <svg
       class="decor-stamp"
       aria-hidden="true"
       viewBox="0 0 160 40"
@@ -157,17 +141,6 @@ defineProps<{ tabLabel: string }>()
   z-index: 3;
   pointer-events: none;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
-}
-
-.decor-fingerprint {
-  position: absolute;
-  top: 11rem;
-  left: 1.25rem;
-  width: 4rem;
-  height: 6rem;
-  opacity: 0.30;
-  pointer-events: none;
-  transform: rotate(-15deg);
 }
 
 .decor-stamp {

@@ -42,4 +42,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
    */
   @Query("SELECT COUNT(t) > 0 FROM Task t WHERE t.id = :id AND t.deletedAt IS NULL")
   boolean existsByIdAndDeletedAtIsNull(@Param("id") UUID id);
+
+  @Query("SELECT t FROM Task t WHERE t.title = :title AND t.deletedAt IS NULL")
+  Optional<Task> findByTitleAndDeletedAtIsNull(@Param("title") String title);
 }

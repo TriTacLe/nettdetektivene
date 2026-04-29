@@ -40,7 +40,7 @@ function choose(article: NewsArticle) {
 
         <button
           type="button"
-          class="article-choice"
+          class="article-choice btn-bare"
           :disabled="selected !== null"
           @click="choose(article)"
         >

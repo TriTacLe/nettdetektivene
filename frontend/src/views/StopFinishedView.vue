@@ -1,5 +1,5 @@
 <template>
-  <SceneComponent title="" previous="/game-map" previous-label="Tilbake til kartet">
+  <SceneComponent title="" :previous="mapRoute" previous-label="Tilbake til kartet">
     <canvas ref="confettiCanvas" class="confetti-canvas" />
 
     <div class="content">
@@ -29,13 +29,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
+import { useStopStore } from '@/stores/StopStore'
 import { STOPS } from '@/data/StopData'
 
 const route = useRoute()
 const router = useRouter()
+const stopStore = useStopStore()
+// Teachers previewing the game land back on the test-game map, students on
+// the regular game map.
+const mapRoute = computed(() =>
+  stopStore.testModeClassroomId
+    ? `/classroom/${stopStore.testModeClassroomId}/test-game`
+    : '/game-map',
+)
 const confettiCanvas = ref<HTMLCanvasElement | null>(null)
 
 const stopId = route.query.stop as string | undefined
@@ -169,7 +178,7 @@ onUnmounted(() => {
 })
 
 function goToMap() {
-  router.push({ name: 'game-map' })
+  router.push(mapRoute.value)
 }
 </script>
 

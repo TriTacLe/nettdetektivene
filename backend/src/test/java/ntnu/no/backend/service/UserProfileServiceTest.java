@@ -149,7 +149,6 @@ class UserProfileServiceTest {
         .build();
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.existsByUser(user)).thenReturn(false);
 
     UserProfileResponseDTO result = userProfileService.update(user, dto);
 
@@ -165,12 +164,19 @@ class UserProfileServiceTest {
     UUID userId = UUID.randomUUID();
     User user = createUser(userId, "Test");
     UserProfile profile = createProfile(user);
+    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
+    ClassroomStudent membership = ClassroomStudent.builder()
+        .classroom(classroom)
+        .user(user)
+        .isAllowed(true)
+        .build();
     UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
         .displayName("NewTest")
         .build();
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.existsByUser(user)).thenReturn(true);
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of());
 
     userProfileService.update(user, dto);
 
@@ -185,12 +191,19 @@ class UserProfileServiceTest {
   void update_throwsIllegalArgument_whenDisplayNameContainsCensoredWord() {
     User user = createUser(UUID.randomUUID(), "Test");
     UserProfile profile = createProfile(user);
+    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
+    ClassroomStudent membership = ClassroomStudent.builder()
+        .classroom(classroom)
+        .user(user)
+        .isAllowed(true)
+        .build();
     UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
         .displayName("helvete")
         .build();
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of());
 
     assertThatThrownBy(() -> userProfileService.update(user, dto))
         .isInstanceOf(IllegalArgumentException.class)
@@ -252,8 +265,7 @@ class UserProfileServiceTest {
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
     when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> userProfileService.update(user, dto))
-        .isInstanceOf(IllegalArgumentException.class);
+    userProfileService.update(user, dto);
 
     verify(notificationRepository, never()).save(any());
   }

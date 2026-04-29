@@ -30,7 +30,7 @@ function handleJoin() {
 </script>
 
 <template>
-  <SceneComponent title="Bli med i klasserom" previous="/student-login" next="/introduction">
+  <SceneComponent title="Bli med i klasserom" previous="/student-login">
     <div class="flex flex-col items-center justify-center flex-1 px-6">
       <div class="flex flex-col gap-4 w-full max-w-sm">
         <div class="field">
@@ -52,8 +52,8 @@ function handleJoin() {
         </div>
 
         <button
+          class="btn-vn"
           :disabled="join.isPending.value"
-          class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow transition"
           @click="handleJoin"
         >
           {{ join.isPending.value ? 'Blir med...' : 'Bli med' }}
