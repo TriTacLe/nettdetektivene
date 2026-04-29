@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useStopStore } from '@/stores/StopStore'
+import './types'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,21 +28,9 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet',
-      name: 'nyhetskvartalet',
-      component: () => import('../views/NyhetskvartaletView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
       path: '/stops/nyhetskvartalet/:taskId',
       name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletTaskView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
-      path: '/stops/fotografen',
-      name: 'fotografen',
-      component: () => import('../views/FotografenView.vue'),
       meta: { music: 'dark' },
     },
     {
@@ -48,11 +38,6 @@ const router = createRouter({
       name: 'fotografen-task',
       component: () => import('../views/FotografenTaskView.vue'),
       meta: { music: 'dark' },
-    },
-    {
-      path: '/stops/datasenteret/:taskId',
-      name: 'datasenteret-task',
-      component: () => import('../views/TaskView.vue'),
     },
     {
       path: '/stops/:stopId/:taskId',
@@ -180,9 +165,10 @@ const router = createRouter({
       component: () => import('../views/AwaitingApprovalView.vue'),
     },
     {
-      path: '/introduction',
-      name: 'introduction',
-      component: () => import('../views/Introduction.vue'),
+      path: '/ending',
+      name: 'ending',
+      component: () => import('../views/EndingView.vue'),
+      meta: { music: 'datasenteret' },
     },
     {
       path: '/task-finished',
@@ -220,4 +206,24 @@ const router = createRouter({
     },
   ],
 })
+
+// Routes that belong to the test-mode flow. Leaving any of these while
+// testModeClassroomId is set means the teacher exited test mode, so we
+// drop the flag + the local "completed" marks loadTasksTestMode left.
+function isTestModeRoute(path: string, name: unknown): boolean {
+  if (path.startsWith('/stops/')) return true
+  if (/^\/classroom\/[^/]+\/test-game$/.test(path)) return true
+  if (typeof name === 'string') {
+    return ['task-finished', 'task-failed', 'stop-finished', 'ending'].includes(name)
+  }
+  return false
+}
+
+router.beforeEach((to) => {
+  const stop = useStopStore()
+  if (stop.testModeClassroomId && !isTestModeRoute(to.path, to.name)) {
+    stop.exitTestMode()
+  }
+})
+
 export default router

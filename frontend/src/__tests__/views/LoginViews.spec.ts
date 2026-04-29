@@ -133,25 +133,27 @@ describe('TeacherLoginView', () => {
     authStore = useAuthStore()
   })
 
-  it('calls login with email and password', async () => {
+  it('calls feideLogin with email, password and instructor affiliation', async () => {
     vi.mocked(authStore.login).mockResolvedValueOnce(undefined)
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
-    expect(authStore.login).toHaveBeenCalledWith({
+    expect(authStore.feideLogin).toHaveBeenCalledWith({
       email: 'lars@skole.no',
-      password: 'passord123'
+      password: 'passord123',
+      affiliation: 'instructor',
+      displayName: 'lars',
     })
   })
 
   it('navigates to teacher-home after successful login', async() => {
-    vi.mocked(authStore.login).mockResolvedValueOnce(undefined)
+    vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'teacher-home' })
   })
 
   it('shows error if unsuccessful login', async () => {
-    vi.mocked(authStore.login).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
+    vi.mocked(authStore.feideLogin).mockRejectedValueOnce(new Error('Ugyldig epost eller passord'))
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
     expect(wrapper.text()).toContain('Ugyldig epost eller passord')

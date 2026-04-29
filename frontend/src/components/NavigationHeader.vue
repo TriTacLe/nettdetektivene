@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/AuthStore.ts'
+import { getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import SettingsModal from './SettingsModal.vue'
 
 defineProps<{
@@ -19,6 +21,25 @@ const settingsOpen = ref(false)
 const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login', 'join-classroom', 'set-display-name'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
+const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
+const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PRE_CLASSROOM_ROUTES.has(route.name as string))
+
+const notificationOpts = getMyNotificationsOptions()
+const { data: notificationsData } = useQuery({
+  ...notificationOpts,
+  queryKey: notificationOpts.queryKey as any,
+  enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
+})
+
+const unreadCount = computed(() =>
+  (notificationsData.value?.data ?? []).filter((n: { isRead?: boolean }) => !n.isRead).length
+)
+
+function logout() {
+  authStore.logout()
+  router.push({ name: 'student-login' })
+}
+
 function goTo(path?: string) {
   if (path) {
     router.push(path)
@@ -31,7 +52,7 @@ function goTo(path?: string) {
 <template>
   <header class="navigation-header">
     <div v-if="previous" class="nav-previous" @click="goTo()">
-      <button class="nav-button" aria-label="Go back">
+      <button class="nav-button btn-bare" aria-label="Go back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />
           <path
@@ -49,11 +70,30 @@ function goTo(path?: string) {
     <h1 class="nav-title">{{ title }}</h1>
 
     <div class="nav-right">
-      <span v-if="authStore.isTeacher && authStore.user" class="nav-user">
-        {{ authStore.user.displayName ?? authStore.user.email }}
+      <button
+        v-if="authStore.isTeacher && showSettings"
+        class="nav-bell btn-bare"
+        :aria-label="unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Ingen uleste varsler'"
+        @click="router.push({ name: 'teacher-notifications' })"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        <span v-if="unreadCount > 0" class="nav-bell-badge">{{ unreadCount }}</span>
+      </button>
+      <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
+        {{ authStore.user.displayName }}
       </span>
+      <button
+        v-if="showLogout"
+        class="nav-button btn-bare logout-button"
+        @click="logout"
+      >
+        Logg ut
+      </button>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
-        <button class="nav-button" aria-label="Go forward">
+        <button class="nav-button btn-bare" aria-label="Go forward">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="12" fill="white" />
             <path
@@ -67,7 +107,7 @@ function goTo(path?: string) {
         </button>
       </div>
       <div v-else class="nav-placeholder" />
-      <button v-if="showSettings" class="nav-button settings-button" aria-label="Apne innstillinger" @click="settingsOpen = true">
+      <button v-if="showSettings" class="nav-button settings-button btn-bare" aria-label="Apne innstillinger" @click="settingsOpen = true">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="white" />
           <path
@@ -145,10 +185,9 @@ function goTo(path?: string) {
 }
 
 .nav-user {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  opacity: 0.8;
 }
 
 .nav-next {
@@ -167,6 +206,38 @@ function goTo(path?: string) {
   gap: 2px;
 }
 
+.nav-bell {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bell:hover {
+  opacity: 0.8;
+}
+
+.nav-bell-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
 .nav-title {
   flex: 1;
   text-align: left;
@@ -174,5 +245,20 @@ function goTo(path?: string) {
   font-weight: 700;
   color: white;
   margin: 0 16px 0 42px;
+}
+
+.logout-button {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: rgba(0, 0, 0, 0.55);
 }
 </style>

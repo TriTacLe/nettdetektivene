@@ -51,7 +51,7 @@ public class TaskAttemptController {
    * trigger then updates best scores and awards XP automatically.</p>
    *
    * @param user the authenticated user
-   * @param dto  the attempt request containing taskId, classroomId, and score
+   * @param dto  the attempt request containing taskId, classroomId, and raw answers
    * @return {@code 200 OK} with the recorded attempt
    */
   @Operation(summary = "Submit a task attempt")
@@ -80,6 +80,21 @@ public class TaskAttemptController {
       @PathVariable UUID taskId,
       @AuthenticationPrincipal User user) {
     return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getAttemptsByUserAndTask(userId, taskId, user)));
+  }
+
+  /**
+   * Returns the IDs of every task the authenticated user has passed at
+   * least once. Backed by {@code task_best_score.first_passed_at IS NOT NULL}.
+   *
+   * @param user the authenticated user
+   * @return {@code 200 OK} with the list of passed task IDs
+   */
+  @Operation(summary = "List task IDs the authenticated user has passed")
+  @PreAuthorize("isAuthenticated()")
+  @GetMapping("/me/passed")
+  public ResponseEntity<ApiResponse<List<UUID>>> getMyPassedTaskIds(
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(taskAttemptService.getMyPassedTaskIds(user)));
   }
 
   /**

@@ -3,6 +3,7 @@ package ntnu.no.backend.repository;
 import ntnu.no.backend.model.Institution;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -13,4 +14,5 @@ import java.util.UUID;
  * @since 0.1
  */
 public interface InstitutionRepository extends JpaRepository<Institution, UUID> {
+  Optional<Institution> findByInstName(String instName);
 }

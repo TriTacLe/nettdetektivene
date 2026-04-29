@@ -17,13 +17,23 @@ withDefaults(
 defineEmits<{
   (e: 'click'): void
 }>()
+
+// Randomize the idle-sway phase per instance so notes don't all bob in sync.
+const swayDelay = `-${(Math.random() * 4).toFixed(2)}s`
+const swayDuration = `${(4 + Math.random() * 1.5).toFixed(2)}s`
 </script>
 
 <template>
   <button
     type="button"
-    class="board-note"
-    :style="{ '--note-rotation': `${rotation}deg`, width, height }"
+    class="board-note btn-bare"
+    :style="{
+      '--note-rotation': `${rotation}deg`,
+      '--sway-delay': swayDelay,
+      '--sway-duration': swayDuration,
+      width,
+      height,
+    }"
     @click="$emit('click')"
   >
     <span class="board-note-pin" :style="{ background: pinColor }" aria-hidden="true" />
@@ -49,26 +59,39 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(var(--note-rotation, 0deg)) scale(1);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transform-origin: top center;
+  transform: rotate(var(--note-rotation, 0deg)) translateY(0);
+  animation: note-sway var(--sway-duration, 5s) ease-in-out var(--sway-delay, 0s) infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+@keyframes note-sway {
+  0%, 100% { transform: rotate(var(--note-rotation, 0deg)) translateY(0); }
+  50%      { transform: rotate(calc(var(--note-rotation, 0deg) + 0.4deg)) translateY(-2px); }
 }
 
 .board-note:hover {
-  transform: rotate(var(--note-rotation, 0deg)) scale(1.06);
+  animation: none;
+  transform: rotate(var(--note-rotation, 0deg)) scale(1.07) translateY(-4px);
   box-shadow:
-    0 12px 20px rgba(0, 0, 0, 0.32),
-    0 4px 8px rgba(0, 0, 0, 0.22);
+    0 16px 28px rgba(0, 0, 0, 0.38),
+    0 6px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(245, 166, 35, 0.25);
+  filter: saturate(1.08) brightness(1.02);
+  z-index: 5;
 }
 
 .board-note:active {
-  transform: rotate(var(--note-rotation, 0deg)) scale(1.02);
+  transform: rotate(var(--note-rotation, 0deg)) scale(1.03) translateY(-1px);
 }
 
 .board-note:focus-visible {
   outline: 2px solid #1c7ed6;
   outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-note { animation: none; }
 }
 
 .board-note-pin {

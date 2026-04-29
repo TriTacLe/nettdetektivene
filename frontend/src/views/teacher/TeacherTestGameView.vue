@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -8,14 +8,15 @@ const route = useRoute()
 const classroomId = route.params.id as string
 const stopStore = useStopStore()
 
-const houses = computed(() => [
-  { key: 'classroom-back', src: '/StudentHomeObject.png', name: 'Tilbake til Klasserom', to: `/classroom/${classroomId}`, stopId: null, showStars: false, previousStop: null },
-  { key: 'news', src: '/NewsObject.png', name: 'Nyhetskvartalet', to: `/stops/nyhetskvartalet?test=true&classroomId=${classroomId}`, stopId: 'nyhetskvartalet', showStars: true, previousStop: null },
-  { key: 'photo', src: '/PhotoObject.png', name: 'Fotografen', to: `/stops/fotografen?test=true&classroomId=${classroomId}`, stopId: 'fotografen', showStars: true, previousStop: 'Nyhetskvartalet' },
-  { key: 'final-boss', src: '/FinalBossObject.png', name: 'Datasenteret', to: `/stops/datasenteret?test=true&classroomId=${classroomId}`, stopId: null, showStars: false, previousStop: null },
-])
-
-const lockedPopup = ref<string | null>(null)
+// Same layout/objects as the student GameMapView, but every stop is open
+// (test mode), no lock state, no stars, and links carry ?test=true so the
+// stop list / task views know to skip attempt submission.
+const houses = [
+  { key: 'student-home', src: '/StudentHomeObject.png', name: 'Tilbake til klasserom', to: `/classroom/${classroomId}` },
+  { key: 'news',         src: '/NewsObject.png',         name: 'Nyhetskvartalet',     to: `/stops/nyhetskvartalet?test=true&classroomId=${classroomId}` },
+  { key: 'photo',        src: '/PhotoObject.png',        name: 'Fotografen',           to: `/stops/fotografen?test=true&classroomId=${classroomId}` },
+  { key: 'final-boss',   src: '/FinalBossObject.png',    name: 'Datasenteret',         to: `/stops/datasenteret?test=true&classroomId=${classroomId}` },
+]
 
 onMounted(async () => {
   stopStore.setTestMode(classroomId)
@@ -23,71 +24,34 @@ onMounted(async () => {
     await Promise.all([
       stopStore.loadTasksTestMode(classroomId, 'nyhetskvartalet'),
       stopStore.loadTasksTestMode(classroomId, 'fotografen'),
+      stopStore.loadTasksTestMode(classroomId, 'datasenteret'),
     ])
   } catch (error) {
     console.error('Failed to load test mode tasks:', error)
   }
 })
-
-function isAvailable(_stopId: string | null): boolean {
-  void _stopId;
-  return true;
-}
-
-function openLockedPopup(key: string) {
-  lockedPopup.value = key
-}
-
-function closeLockedPopup() {
-  lockedPopup.value = null
-}
 </script>
 
 <template>
   <SceneComponent title="Test Modus" :previous="`/classroom/${classroomId}`" background="/GameMapBackground.jpg">
-    <div class="test-mode-badge">TEST MODUS - Alle oppgaver åpne</div>
+    <div class="test-mode-badge" aria-label="Test modus">TEST MODUS</div>
 
     <div class="map-objects">
       <div class="road" aria-hidden="true"></div>
 
-      <template v-for="house in houses" :key="house.key">
-        <RouterLink
-          v-if="isAvailable(house.stopId)"
-          :to="house.to"
-          class="map-object"
-          :class="[house.key]"
-          :aria-label="house.name"
-        >
-          <div class="house-label">
-            <div v-if="house.showStars" class="stars">
-              <span class="star star--done">★</span>
-              <span class="star star--done">★</span>
-              <span class="star star--done">★</span>
-            </div>
-            <div class="name">{{ house.name }}</div>
-          </div>
-          <img class="house-image" :src="house.src" :alt="house.name" />
-        </RouterLink>
-
-        <div
-          v-else
-          class="map-object map-object--locked"
-          :class="house.key"
-          @click="openLockedPopup(house.key)"
-        >
-          <div class="house-label">
-            <div class="name">{{ house.name }}</div>
-          </div>
-          <img class="house-image" :src="house.src" :alt="house.name" />
+      <RouterLink
+        v-for="house in houses"
+        :key="house.key"
+        :to="house.to"
+        class="map-object"
+        :class="house.key"
+        :aria-label="house.name"
+      >
+        <div class="house-label">
+          <div class="name">{{ house.name }}</div>
         </div>
-      </template>
-    </div>
-
-    <div v-if="lockedPopup" class="locked-popup-overlay" @click="closeLockedPopup">
-      <div class="locked-popup" @click.stop>
-        <p>Dette stoppestedet er ikke åpent ennå.</p>
-        <button @click="closeLockedPopup">Lukk</button>
-      </div>
+        <img class="house-image" :src="house.src" :alt="house.name" />
+      </RouterLink>
     </div>
   </SceneComponent>
 </template>
@@ -95,120 +59,90 @@ function closeLockedPopup() {
 <style scoped>
 .map-objects {
   position: relative;
+  flex: 1;
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
 }
 
 .road {
   position: absolute;
-  bottom: 10%;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(90deg, #8B7355, #A9A9A9, #8B7355);
-  border-radius: 30px;
-  z-index: 1;
+  bottom: 0;
+  height: 12%;
+  background: #1a2a2e;
+  border-top: 2px solid #0d1618;
+  z-index: 0;
 }
 
 .map-object {
-  position: relative;
-  z-index: 10;
+  position: absolute;
+  width: 16.5%;
+  bottom: 5%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  z-index: 1;
   text-decoration: none;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.map-object:hover {
+.map-object:hover,
+.map-object:focus-visible {
   transform: scale(1.05);
+  filter: brightness(1.1);
 }
 
-.map-object--locked {
-  cursor: not-allowed;
-  opacity: 0.6;
+.map-object:active {
+  transform: scale(1.02);
 }
 
-.map-object--locked:hover {
-  transform: none;
+.map-object:focus-visible {
+  outline: 2px solid #ffd447;
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .house-image {
-  max-height: 120px;
-  max-width: 120px;
-  object-fit: contain;
+  width: 100%;
+  height: auto;
 }
 
 .house-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
   margin-bottom: 0.5rem;
   text-align: center;
 }
 
 .name {
-  background: white;
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  font-weight: bold;
-  font-size: 0.9rem;
-  color: #333;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.stars {
-  color: #FFD700;
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.star:not(.star--done) {
-  color: #ccc;
-}
-
-.locked-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.locked-popup {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  max-width: 90%;
-  text-align: center;
-}
-
-.locked-popup button {
-  margin-top: 1rem;
-  padding: 0.5rem 2rem;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
-}
+/* Same horizontal positions as the student map. */
+.student-home { left: 8%; }
+.news         { left: 28%; }
+.photo        { left: 50%; }
+.final-boss   { left: 72%; }
 
 .test-mode-badge {
   position: absolute;
-  top: 1rem;
+  top: 5rem;
   right: 1rem;
+  z-index: 20;
   background: #ff9800;
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.9rem;
   border-radius: 0.5rem;
-  font-weight: bold;
-  z-index: 20;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 </style>

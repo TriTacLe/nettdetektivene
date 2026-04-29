@@ -1,56 +1,74 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
+import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
+import FotografenComponent from '../components/FotografenComponent.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { fetchTaskById } from '@/services/TaskService'
+import TaskAttemptService from '@/services/TaskAttemptService'
+import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
+import { useDialogRunner } from '@/composables/UseDialogRunner'
+import { datasenteretIntro } from '@/data/taskDialogs/datasenteret'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import type {
+  TaskDTO,
+  NewsChallenge,
+  FotografenChallenge,
+  NewsAnswers,
+  PhotoAnswers,
+  TaskAnswers,
+} from '@/types'
+import { TaskType } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 const taskId = route.params.taskId as string
+const stopId = route.params.stopId as string
 const stopStore = useStopStore()
 const testClassroomId = stopStore.testModeClassroomId
 const previousRoute = testClassroomId
-  ? `/stops/${route.params.stopId}?test=true&classroomId=${testClassroomId}`
-  : `/stops/${route.params.stopId}`
+  ? `/stops/${stopId}?test=true&classroomId=${testClassroomId}`
+  : `/stops/${stopId}`
 
-const task = ref<any>(null)
+const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
+const submitting = ref(false)
+
+const storyStore = useStoryProgressStore()
+const introRunner = useDialogRunner(datasenteretIntro, 'start')
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_DATASENTERET))
+function onIntroAdvance() {
+  introRunner.advance()
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_DATASENTERET)
+  }
+}
 
 onMounted(async () => {
-  console.log('[TaskView] Loading task with ID:', taskId)
-  const stopId = route.params.stopId as string
-  console.log('[TaskView] Stop ID:', stopId)
-  console.log('[TaskView] Test mode classroom ID:', testClassroomId)
-  
   try {
     if (testClassroomId) {
       const stopTasks = stopStore.tasks[stopId] || []
       const taskFromStore = stopTasks.find(t => t.uuid === taskId)
-      
       if (taskFromStore) {
-        console.log('[TaskView] Found task in store:', taskFromStore)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
-          taskType: taskFromStore.taskType,
+          taskType: taskFromStore.taskType as TaskType,
           difficulty: 1,
           isActive: true,
           stopLocation: stopId,
-          content: taskFromStore.content
+          content: taskFromStore.content,
         }
-        console.log('[TaskView] Task from store content:', task.value?.content)
       } else {
-        console.warn('[TaskView] Task not found in store, fetching from API')
         task.value = await fetchTaskById(taskId)
       }
     } else {
       task.value = await fetchTaskById(taskId)
     }
-    
-    console.log('[TaskView] Final task content:', task.value?.content)
-
   } catch (err) {
     error.value = 'Kunne ikke laste oppgaven. Prøv igjen.'
     console.error('[TaskView] Error loading task:', err)
@@ -59,110 +77,175 @@ onMounted(async () => {
   }
 })
 
-async function submitAttempt() {
-  alert('Oppgaveinsending er ikke implementert ennå for denne oppgavetypen.')
+const isNews = computed(() => task.value?.taskType === TaskType.NEWS)
+const isPhoto = computed(() => task.value?.taskType === TaskType.PHOTO)
+
+const newsChallenge = computed<NewsChallenge | null>(() => {
+  const content = task.value?.content?.news
+  if (!content?.articles?.length) return null
+  return { articles: content.articles }
+})
+
+const photoChallenge = computed<FotografenChallenge | null>(() => {
+  const content = task.value?.content?.photo
+  if (!content?.alternatives?.length) return null
+  return { alternatives: content.alternatives }
+})
+
+const newsQuestion = computed(() => task.value?.content?.news?.question)
+const newsTip = computed(() => task.value?.content?.news?.hint)
+const photoQuestion = computed(() => task.value?.content?.photo?.description)
+const photoTip = computed(() => task.value?.content?.photo?.hint)
+
+const hasRenderableContent = computed(() => {
+  if (isNews.value) return Boolean(newsChallenge.value)
+  if (isPhoto.value) return Boolean(photoChallenge.value)
+  return false
+})
+
+function isCorrectLocally(answers: TaskAnswers): boolean {
+  if (isNews.value) {
+    const articles = task.value?.content?.news?.articles ?? []
+    const idx = (answers as NewsAnswers).selectedIndex
+    return Boolean(articles[idx]?.isReal)
+  }
+  if (isPhoto.value) {
+    const alts = task.value?.content?.photo?.alternatives ?? []
+    const sel = (answers as PhotoAnswers).selections
+    if (sel.length !== alts.length) return false
+    return alts.every((alt: any, i: number) => sel[i]?.type === alt.correctType)
+  }
+  return false
 }
 
-function goBack() {
-  router.push(previousRoute)
+function failureReason(answers: TaskAnswers): string {
+  if (isNews.value) {
+    return 'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.'
+  }
+  if (isPhoto.value) {
+    const alts = task.value?.content?.photo?.alternatives ?? []
+    const sel = (answers as PhotoAnswers).selections
+    const wrongIndexes = alts
+      .map((alt: any, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
+      .filter((i: number | null): i is number => i !== null)
+    const which = wrongIndexes.length === 1
+      ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
+      : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
+    return `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`
+  }
+  return 'Forsøket var ikke korrekt.'
+}
+
+async function onSubmit(answers: TaskAnswers) {
+  if (testClassroomId) {
+    const passed = isCorrectLocally(answers)
+    routeResult(passed, answers)
+    return
+  }
+
+  try {
+    submitting.value = true
+    const classroomId = await fetchClassroomId()
+    if (!classroomId) {
+      error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
+      return
+    }
+    const result = await TaskAttemptService.submitAttempt(taskId, classroomId, answers)
+    routeResult(result.passed, answers)
+  } catch (err) {
+    console.error('Failed to submit attempt:', err)
+    error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+function routeResult(passed: boolean, answers: TaskAnswers) {
+  if (passed) {
+    router.push({
+      name: 'task-finished',
+      query: { stop: stopId, taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
+    })
+  } else {
+    router.push({
+      name: 'task-failed',
+      query: {
+        stop: stopId,
+        taskId,
+        reason: failureReason(answers),
+        ...(testClassroomId ? { classroomId: testClassroomId } : {}),
+      },
+    })
+  }
 }
 </script>
 
 <template>
   <SceneComponent
-    v-if="task"
-    :title="task.title"
+    :title="task?.title ?? 'Datasenteret'"
     :previous="previousRoute"
-    background="/GameMapBackground.jpg"
+    background="/datasenteret.jpg"
   >
-    <div class="task-container">
-      <div v-if="isLoading">Laster oppgave...</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-      <div v-else class="task-content">
-        <h2>{{ task.title }}</h2>
-        <p>Vanskelighetsgrad: {{ task.difficulty }}</p>
-        <p>Oppgavetype: {{ task.taskType }}</p>
-        
-        <div v-if="task.content" class="content-section">
-          <h3>Oppgaveinnhold:</h3>
-          <pre>{{ JSON.stringify(task.content, null, 2) }}</pre>
-        </div>
-        
-        <div v-else class="warning">
-          Oppgaven mangler innhold.
-        </div>
-        
-        <div class="actions">
-          <button @click="goBack" class="back-btn">Tilbake</button>
-        </div>
-      </div>
+    <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
+    <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
+    <div v-else-if="!task" class="state-msg state-msg--error">Oppgaven ble ikke funnet.</div>
+    <div v-else-if="!hasRenderableContent" class="state-msg state-msg--error">
+      Denne oppgavetypen har ikke noe innhold å vise ennå.
     </div>
+    <template v-else>
+      <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
+
+      <NyhetskvartaletComponent
+        v-if="introDone && isNews && newsChallenge"
+        :challenge="newsChallenge"
+        :question="newsQuestion"
+        :tip="newsTip"
+        @submit="onSubmit"
+      />
+      <FotografenComponent
+        v-else-if="introDone && isPhoto && photoChallenge"
+        :challenge="photoChallenge"
+        :question="photoQuestion"
+        :tip="photoTip"
+        @submit="onSubmit"
+      />
+
+      <CutsceneDialog
+        v-if="!introDone && introRunner.currentScene.value"
+        :key="introRunner.currentScene.value.id"
+        :scene="introRunner.currentScene.value"
+        @done="onIntroAdvance"
+      />
+    </template>
   </SceneComponent>
 </template>
 
 <style scoped>
-.task-container {
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.error {
-  color: red;
-  text-align: center;
-}
-
-.task-content {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-}
-
-.task-content h2 {
-  margin-top: 0;
-  color: #1a1a1a;
-}
-
-.task-content h3 {
-  margin-top: 1.5rem;
-  color: #333;
-}
-
-.content-section {
-  margin-top: 1.5rem;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-}
-
-pre {
-  background: #f5f5f5;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-}
-
-.warning {
-  color: #666;
-  font-style: italic;
-  margin-top: 1rem;
-}
-
-.actions {
-  margin-top: 2rem;
-}
-
-.back-btn {
-  padding: 0.75rem 1.5rem;
-  background: #4CAF50;
+.state-msg {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  padding: 2rem;
 }
 
-.back-btn:hover {
-  background: #45a049;
+.state-msg--error { color: #fca5a5; }
+
+.submit-overlay {
+  position: absolute;
+  top: 5.5rem;
+  right: 1rem;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 </style>

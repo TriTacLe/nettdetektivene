@@ -77,6 +77,15 @@ public class UserProfile extends BaseEntity {
   private int xpLevel = 1;
 
   /**
+   * Linear story progression marker. Each one-shot dialog corresponds
+   * to a step; the dialog is shown only when {@code storyProgress < step}.
+   * Advancing sets it to {@code max(current, step)}.
+   */
+  @Builder.Default
+  @Column(name = "story_progress", nullable = false)
+  private int storyProgress = 0;
+
+  /**
    * Timestamp of when this profile was created, set once on persist
    */
   @Column(name = "created_at", nullable = false, updatable = false)

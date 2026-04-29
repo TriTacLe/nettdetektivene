@@ -17,18 +17,19 @@ const menuItems = [
 <template>
   <SceneComponent title="Innstillinger" previous="/teacher-home" background="/StartBackground.jpg">
     <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
-      <div class="flex flex-col gap-3 w-full max-w-md mx-auto">
+      <div class="menu-stack">
         <button
           v-for="item in menuItems"
           :key="item.title"
+          class="btn-vn menu-item"
+          :class="{ 'btn-vn-danger': item.danger }"
           @click="item.action()"
-          class="w-full bg-white rounded-2xl shadow px-5 py-4 flex items-center gap-4 hover:bg-red-50 transition text-left"
         >
-          <div class="flex-1">
-            <p class="font-bold text-base leading-tight text-red-700">{{ item.title }}</p>
-            <p class="text-gray-500 text-sm mt-0.5">{{ item.subtitle }}</p>
-          </div>
-          <span class="text-gray-400 text-lg">›</span>
+          <span class="menu-text">
+            <span class="menu-title">{{ item.title }}</span>
+            <span class="menu-subtitle">{{ item.subtitle }}</span>
+          </span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
       </div>
     </div>

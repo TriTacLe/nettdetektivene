@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import GuidanceComponent from './GuidanceComponent.vue'
-import type { FotografenChallenge, PhotoType } from '../types'
+import type { FotografenChallenge, PhotoAnswers, PhotoType } from '../types'
 
 const props = defineProps<{ challenge: FotografenChallenge; question?: string; tip?: string }>()
 const emit = defineEmits<{
-  complete: []
-  failed: [reason: string]
+  submit: [answers: PhotoAnswers]
 }>()
 
 const TYPES: { value: PhotoType; label: string }[] = [
@@ -16,10 +15,9 @@ const TYPES: { value: PhotoType; label: string }[] = [
 ]
 
 const selections = ref<(PhotoType | null)[]>(props.challenge.alternatives.map(() => null))
-const begrunnelser = ref<(string | null)[]>(props.challenge.alternatives.map(() => null))
 const submitted = ref(false)
 
-const allSelected = computed(() => selections.value.every((s) => s !== null))
+const allAnswered = computed(() => selections.value.every((s) => s !== null))
 
 function select(index: number, type: PhotoType) {
   if (submitted.value) return
@@ -27,21 +25,14 @@ function select(index: number, type: PhotoType) {
 }
 
 function submit() {
-  if (!allSelected.value) return
+  if (!allAnswered.value) return
   submitted.value = true
 
-  const wrongIndexes = props.challenge.alternatives
-    .map((alt, i) => (selections.value[i] !== alt.correctType ? i + 1 : null))
-    .filter((i): i is number => i !== null)
-
-  if (wrongIndexes.length === 0) {
-    emit('complete')
-  } else {
-    const which = wrongIndexes.length === 1
-      ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
-      : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
-    emit('failed', `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`)
-  }
+  emit('submit', {
+    selections: props.challenge.alternatives.map((_, i) => ({
+      type: selections.value[i]!,
+    })),
+  })
 }
 </script>
 
@@ -59,14 +50,14 @@ function submit() {
         :key="i"
         class="card"
       >
-        <img class="card-image" :src="alt.imagePath" :alt="alt.description" />
+        <img class="card-image" :src="alt.imagePath" alt="" />
 
         <div class="choices">
           <button
             v-for="type in TYPES"
             :key="type.value"
             type="button"
-            class="choice-btn"
+            class="choice-btn btn-bare"
             :class="{ 'choice-btn--selected': selections[i] === type.value }"
             :disabled="submitted"
             @click="select(i, type.value)"
@@ -79,28 +70,14 @@ function submit() {
             {{ type.label }}
           </button>
         </div>
-
-        <div class="begrunnelse">
-          <label :for="`begrunnelse-${i}`" class="begrunnelse-label">Begrunnelse:</label>
-          <select
-            :id="`begrunnelse-${i}`"
-            v-model="begrunnelser[i]"
-            class="begrunnelse-select"
-            :disabled="submitted"
-          >
-            <option :value="null" disabled>Velg en begrunnelse...</option>
-            <option v-for="b in alt.begrunnelser" :key="b" :value="b">{{ b }}</option>
-          </select>
-        </div>
-
       </div>
     </div>
 
     <div class="lever-row">
       <button
         type="button"
-        class="lever-btn"
-        :disabled="!allSelected || submitted"
+        class="lever-btn btn-bare"
+        :disabled="!allAnswered || submitted"
         @click="submit"
       >
         Lever svar &rarr;
@@ -238,35 +215,6 @@ function submit() {
 .checkbox svg {
   width: 12px;
   height: 12px;
-}
-
-.begrunnelse {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.begrunnelse-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #555;
-}
-
-.begrunnelse-select {
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 2px solid #c8c0d4;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.9rem;
-  font-family: inherit;
-  cursor: pointer;
-  color: #1a1a1a;
-}
-
-.begrunnelse-select:disabled {
-  cursor: default;
-  opacity: 0.7;
 }
 
 .lever-row {

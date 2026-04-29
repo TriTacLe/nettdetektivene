@@ -3,6 +3,8 @@ package ntnu.no.backend.repository;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.TaskBestScoreId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,4 +33,8 @@ public interface TaskBestScoreRepository extends JpaRepository<TaskBestScore, Ta
       UUID userId,
       String stopLocation
   );
+
+  @Query("SELECT bs.task.id FROM TaskBestScore bs " +
+      "WHERE bs.user.id = :userId AND bs.firstPassedAt IS NOT NULL")
+  List<UUID> findPassedTaskIdsByUserId(@Param("userId") UUID userId);
 }
