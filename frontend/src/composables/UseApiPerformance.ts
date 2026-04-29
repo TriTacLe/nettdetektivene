@@ -47,8 +47,11 @@ export function useApiPerformance() {
         if (!acc[call.method]) {
           acc[call.method] = { count: 0, totalDuration: 0 }
         }
-        acc[call.method].count++
-        acc[call.method].totalDuration += call.duration
+        const methodData = acc[call.method]
+        if (methodData) {
+          methodData.count++
+          methodData.totalDuration += call.duration
+        }
         return acc
       }, {} as Record<string, { count: number; totalDuration: number }>)
     }

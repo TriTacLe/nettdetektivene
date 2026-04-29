@@ -67,8 +67,10 @@ export function usePerformanceMonitor() {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries()
         const lastEntry = entries[entries.length - 1]
-        lcp = lastEntry.startTime
-        resolve(lcp)
+        if (lastEntry) {
+          lcp = lastEntry.startTime
+          resolve(lcp)
+        }
       })
       
       observer.observe({ entryTypes: ['largest-contentful-paint'] })
@@ -103,7 +105,10 @@ export function usePerformanceMonitor() {
       if (!acc[metric.name]) {
         acc[metric.name] = []
       }
-      acc[metric.name].push(metric.value)
+      const nameArray = acc[metric.name]
+      if (nameArray) {
+        nameArray.push(metric.value)
+      }
       return acc
     }, {} as Record<string, number[]>)
 
