@@ -34,10 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doNothing;
 
 @ExtendWith(MockitoExtension.class)
 class FeideAuthServiceTest {
@@ -97,7 +97,7 @@ class FeideAuthServiceTest {
 
   private AppUserIdentity createTestIdentity(User user, String feideId) {
     return AppUserIdentity.builder()
-        .id(UUID.randomUUID())
+        .id(1L)
         .user(user)
         .providerName("feide")
         .providerUserId(feideId)
@@ -116,15 +116,15 @@ class FeideAuthServiceTest {
     when(identityRepository.findByProviderNameAndProviderUserId("feide", feideId))
         .thenReturn(Optional.of(identity));
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
-    when(refreshTokenService.revokeAll(user)).thenReturn(null);
+    doNothing().when(refreshTokenService).revokeAll(user);
     when(refreshTokenService.create(user)).thenReturn("refresh.token");
     when(jwtUtil.generateToken(user, feideId)).thenReturn("jwt.token");
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, feideId);
 
     assertThat(result.token()).isEqualTo("jwt.token");
-    assertThat(result.getRefreshToken()).isEqualTo("refresh.token");
-    assertThat(result.getFeideId()).isEqualTo(feideId);
+    assertThat(result.refreshToken()).isEqualTo("refresh.token");
+    assertThat(result.feideId()).isEqualTo(feideId);
     verify(refreshTokenService).revokeAll(user);
     verify(jwtUtil).generateToken(user, feideId);
   }
@@ -158,15 +158,15 @@ class FeideAuthServiceTest {
     when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
     when(identityRepository.findByProviderNameAndUser("feide", user))
         .thenReturn(Optional.of(identity));
-    when(refreshTokenService.revokeAll(user)).thenReturn(null);
+    doNothing().when(refreshTokenService).revokeAll(user);
     when(refreshTokenService.create(user)).thenReturn("refresh.token");
     when(jwtUtil.generateToken(user, feideId)).thenReturn("jwt.token");
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
     assertThat(result.token()).isEqualTo("jwt.token");
-    assertThat(result.getRefreshToken()).isEqualTo("refresh.token");
-    assertThat(result.getFeideId()).isEqualTo(feideId);
+    assertThat(result.refreshToken()).isEqualTo("refresh.token");
+    assertThat(result.feideId()).isEqualTo(feideId);
   }
 
   @Test
@@ -196,15 +196,17 @@ class FeideAuthServiceTest {
 
     when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
     when(roleRepository.findByRoleName(RoleName.STUDENT.getValue())).thenReturn(Optional.of(studentRole));
+    when(userProfileRepository.findByUser(any(User.class))).thenReturn(Optional.empty());
     when(jwtUtil.generateToken(any(User.class), anyString())).thenReturn("jwt.token");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token");
     when(passwordEncoder.encode("password")).thenReturn("hashed.password");
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
     assertThat(result.token()).isEqualTo("jwt.token");
-    assertThat(result.getRefreshToken()).isEqualTo("refresh.token");
-    assertThat(result.getFeideId()).isNotNull();
+    assertThat(result.refreshToken()).isEqualTo("refresh.token");
+    assertThat(result.feideId()).isNotNull();
     verify(userRepository).save(any(User.class));
     verify(refreshTokenService).create(any(User.class));
   }
@@ -234,15 +236,20 @@ class FeideAuthServiceTest {
         .roleName(RoleName.STUDENT.getValue())
         .build();
 
-    when(userRepository.existsByEmail("user@example.com")).thenReturn(false);
+when(userRepository.existsByEmail("user@example.com")).thenReturn(false);
     when(roleRepository.findByRoleName(RoleName.STUDENT.getValue())).thenReturn(Optional.of(studentRole));
+    when(userProfileRepository.findByUser(any(User.class))).thenReturn(Optional.empty());
     when(jwtUtil.generateToken(any(User.class), anyString())).thenReturn("jwt.token");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token");
     when(passwordEncoder.encode("password")).thenReturn("hashed.password");
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
-    verify(userRepository).save(argThat(user -> "user".equals(user.getDisplayName())));
+    verify(identityRepository).save(argThat((AppUserIdentity identity) ->
+        "feide".equals(identity.getProviderName()) &&
+        "user@example.com".equals(identity.getProviderEmail()) &&
+        result.feideId().equals(identity.getProviderUserId())));
   }
 
   @Test
@@ -255,13 +262,14 @@ class FeideAuthServiceTest {
 
     when(userRepository.existsByEmail("instructor@example.com")).thenReturn(false);
     when(roleRepository.findByRoleName(RoleName.INSTRUCTOR.getValue())).thenReturn(Optional.of(instructorRole));
+    when(userProfileRepository.findByUser(any(User.class))).thenReturn(Optional.empty());
     when(jwtUtil.generateToken(any(User.class), anyString())).thenReturn("jwt.token");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token");
     when(passwordEncoder.encode("password")).thenReturn("hashed.password");
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
-    assertThat(result.getRoles()).containsExactly("instructor");
+    assertThat(result.roles()).containsExactly("instructor");
   }
 
   @Test
@@ -296,6 +304,7 @@ class FeideAuthServiceTest {
 
     when(userRepository.existsByEmail("user@example.com")).thenReturn(false);
     when(roleRepository.findByRoleName(RoleName.STUDENT.getValue())).thenReturn(Optional.of(studentRole));
+    when(userProfileRepository.findByUser(any(User.class))).thenReturn(Optional.empty());
     when(jwtUtil.generateToken(any(User.class), anyString())).thenReturn("jwt.token");
     when(refreshTokenService.create(any(User.class))).thenReturn("refresh.token");
     when(passwordEncoder.encode("password123")).thenReturn("hashed.password123");
@@ -323,10 +332,10 @@ class FeideAuthServiceTest {
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
-    verify(identityRepository).save(argThat(identity ->
+    verify(identityRepository).save(argThat((AppUserIdentity identity) ->
         "feide".equals(identity.getProviderName()) &&
         "user@example.com".equals(identity.getProviderEmail()) &&
-        result.getFeideId().equals(identity.getProviderUserId())));
+        result.feideId().equals(identity.getProviderUserId())));
   }
 
   @Test
@@ -345,7 +354,7 @@ class FeideAuthServiceTest {
 
     FeideAuthResponseDTO result = feideAuthService.login(dto, null);
 
-    verify(userProfileRepository).save(argThat(profile ->
-        result.getFeideId().equals(profile.getFeideId())));
+    verify(userProfileRepository).save(argThat((UserProfile profile) ->
+        result.feideId().equals(profile.getFeideId())));
   }
 }

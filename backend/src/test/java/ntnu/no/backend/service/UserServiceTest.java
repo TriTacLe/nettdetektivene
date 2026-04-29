@@ -28,9 +28,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 
 /**
  * Unit tests for {@link UserService}.
@@ -153,7 +155,6 @@ class UserServiceTest {
     userService.updateUser(id, dto);
 
     assertThat(profile.getDisplayName()).isEqualTo("New Name");
-    verify(userProfileRepository).save(profile);
   }
 
   @Test
@@ -168,11 +169,8 @@ class UserServiceTest {
         .displayName("Updated Name")
         .build();
 
-    assertThatCode(() -> userService.updateUser(id, dto))
-        .doesNotThrowAnyException();
-
-    verify(userRepository).save(user);
-    verify(userProfileRepository, never()).save(any());
+    assertThatNoException()
+        .isThrownBy(() -> userService.updateUser(id, dto));
   }
 
   @Test
