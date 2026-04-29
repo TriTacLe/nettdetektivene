@@ -83,4 +83,4 @@ jobs:
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "echo '${{ secrets.PAT_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
 
 #          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
-
+#           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
