@@ -126,7 +126,7 @@ public class ClassroomStudentService {
             Notification.builder()
                 .user(instructor.getUser())
                 .classroom(classroom)
-                .msg("Eleven " + user.getEmail() + " ønsker å bli med i klasserommet " + classroom.getTitle())
+                .msg("Eleven " + profile.getDisplayName() + " (" + user.getEmail() + ") ønsker å bli med i klasserommet " + classroom.getTitle())
                 .refType("classroom_student")
                 .refId(user.getId())
                 .isRead(false)

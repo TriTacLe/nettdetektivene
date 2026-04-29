@@ -210,4 +210,83 @@ BEGIN
     END IF;
 END$$
 
+-- -------------------------------------------------------------
+-- sp_check_and_award_achievements
+-- shared logic called by both INSERT and UPDATE triggers on
+-- task_best_score. Checks first-task, location and classroom
+-- completion and awards matching achievements.
+-- -------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_check_and_award_achievements$$
+CREATE PROCEDURE sp_check_and_award_achievements(
+    IN p_user_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_task_id      CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_is_insert    TINYINT(1)
+)
+BEGIN
+    DECLARE v_prior_passes INT DEFAULT 0;
+    DECLARE v_stop_name VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+    DECLARE v_stop_tasks INT DEFAULT 0;
+    DECLARE v_stop_passed INT DEFAULT 0;
+    DECLARE v_total_classroom_tasks INT DEFAULT 0;
+    DECLARE v_total_classroom_passed INT DEFAULT 0;
+
+    -- First Task: only on INSERT path (first attempt is always an INSERT)
+    IF p_is_insert = 1 THEN
+        SELECT COUNT(*) INTO v_prior_passes
+        FROM task_best_score
+        WHERE user_id = p_user_id
+          AND first_passed_at IS NOT NULL
+          AND task_id <> p_task_id;
+
+        IF v_prior_passes = 0 THEN
+            CALL sp_award_achievement(p_user_id, 'task_completed', 'first_task', p_classroom_id);
+        END IF;
+    END IF;
+
+    -- Location completion
+    SELECT stop_location INTO v_stop_name
+    FROM task WHERE task_id = p_task_id LIMIT 1;
+
+    IF v_stop_name IS NOT NULL THEN
+        SELECT COUNT(DISTINCT ct.task_id) INTO v_stop_tasks
+        FROM classroom_task ct
+        JOIN task t ON t.task_id = ct.task_id
+        WHERE ct.classroom_id = p_classroom_id
+          AND t.stop_location = v_stop_name
+          AND ct.is_active = 1
+          AND t.is_active = 1;
+
+        SELECT COUNT(*) INTO v_stop_passed
+        FROM task_best_score tbs
+        JOIN task t ON t.task_id = tbs.task_id
+        WHERE tbs.user_id = p_user_id
+          AND tbs.classroom_id = p_classroom_id
+          AND t.stop_location = v_stop_name
+          AND tbs.first_passed_at IS NOT NULL;
+
+        IF v_stop_passed >= v_stop_tasks AND v_stop_tasks > 0 THEN
+            CALL sp_award_achievement(p_user_id, 'location_completed', v_stop_name, p_classroom_id);
+        END IF;
+    END IF;
+
+    -- Classroom completion
+    SELECT COUNT(*) INTO v_total_classroom_tasks
+    FROM classroom_task
+    WHERE classroom_id = p_classroom_id AND is_active = 1;
+
+    SELECT COUNT(*) INTO v_total_classroom_passed
+    FROM classroom_task ct
+    JOIN task_best_score tbs
+      ON tbs.task_id = ct.task_id
+     AND tbs.classroom_id = ct.classroom_id
+     AND tbs.user_id = p_user_id
+     AND tbs.first_passed_at IS NOT NULL
+    WHERE ct.classroom_id = p_classroom_id AND ct.is_active = 1;
+
+    IF v_total_classroom_passed >= v_total_classroom_tasks AND v_total_classroom_tasks > 0 THEN
+        CALL sp_award_achievement(p_user_id, 'all_tasks_completed', 'classroom', p_classroom_id);
+    END IF;
+END$$
+
 DELIMITER ;

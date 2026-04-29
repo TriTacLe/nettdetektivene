@@ -21,6 +21,9 @@ const settingsOpen = ref(false)
 const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login', 'join-classroom', 'set-display-name'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
+const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
+const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PRE_CLASSROOM_ROUTES.has(route.name as string))
+
 const notificationOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
   ...notificationOpts,
@@ -31,6 +34,11 @@ const { data: notificationsData } = useQuery({
 const unreadCount = computed(() =>
   (notificationsData.value?.data ?? []).filter((n: { isRead?: boolean }) => !n.isRead).length
 )
+
+function logout() {
+  authStore.logout()
+  router.push({ name: 'student-login' })
+}
 
 function goTo(path?: string) {
   if (path) {
@@ -74,9 +82,16 @@ function goTo(path?: string) {
         </svg>
         <span v-if="unreadCount > 0" class="nav-bell-badge">{{ unreadCount }}</span>
       </button>
-      <span v-if="!authStore.isTeacher && authStore.user" class="nav-user">
+      <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
         {{ authStore.user.displayName }}
       </span>
+      <button
+        v-if="showLogout"
+        class="nav-button btn-bare logout-button"
+        @click="logout"
+      >
+        Logg ut
+      </button>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
         <button class="nav-button btn-bare" aria-label="Go forward">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -230,5 +245,20 @@ function goTo(path?: string) {
   font-weight: 700;
   color: white;
   margin: 0 16px 0 42px;
+}
+
+.logout-button {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: rgba(0, 0, 0, 0.55);
 }
 </style>
