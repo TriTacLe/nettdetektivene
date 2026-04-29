@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import GuidanceComponent from './GuidanceComponent.vue'
-import type { NewsChallenge, NewsArticle } from '../types'
+import type { NewsAnswers, NewsChallenge } from '../types'
 
-const props = defineProps<{ challenge: NewsChallenge; question?: string; tip?: string }>()
+defineProps<{ challenge: NewsChallenge; question?: string; tip?: string }>()
 const emit = defineEmits<{
-  complete: []
-  failed: [reason: string]
+  submit: [answers: NewsAnswers]
 }>()
 
-const selected = ref<NewsArticle | null>(null)
+const selectedIndex = ref<number | null>(null)
 
-function choose(article: NewsArticle) {
-  if (selected.value !== null) return
-  selected.value = article
-  if (article.isReal) {
-    emit('complete')
-  } else {
-    emit('failed', 'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.')
-  }
+function choose(index: number) {
+  if (selectedIndex.value !== null) return
+  selectedIndex.value = index
+  emit('submit', { selectedIndex: index })
 }
 </script>
 
@@ -31,18 +26,18 @@ function choose(article: NewsArticle) {
 
     <div class="articles">
       <article
-        v-for="(article, i) in props.challenge.articles"
+        v-for="(article, i) in challenge.articles"
         :key="i"
         class="article-card"
-        :class="{ 'is-selected': selected === article }"
+        :class="{ 'is-selected': selectedIndex === i }"
       >
         <img class="article-image" :src="article.imagePath" alt="Nyhetsartikkel" />
 
         <button
           type="button"
-          class="article-choice"
-          :disabled="selected !== null"
-          @click="choose(article)"
+          class="article-choice btn-bare"
+          :disabled="selectedIndex !== null"
+          @click="choose(i)"
         >
           Dette er den ekte nyheten
         </button>

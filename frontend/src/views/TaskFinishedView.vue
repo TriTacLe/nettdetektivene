@@ -163,10 +163,21 @@ onUnmounted(() => {
 
 // ---- Navigation ----
 function goToNextTask() {
+  const testCid = stopStore.testModeClassroomId
   if (stopId && stopStore.isAllComplete(stopId)) {
-    router.push({ name: 'stop-finished', query: { stop: stopId } })
+    // Datasenteret is the final boss — finishing it triggers the ending
+    // cutscene before the celebration screen. Teachers in test mode get
+    // the same flow so they can preview it.
+    if (stopId === 'datasenteret') {
+      router.push({ name: 'ending' })
+    } else {
+      router.push({ name: 'stop-finished', query: { stop: stopId } })
+    }
   } else if (stopId) {
-    router.push(`/stops/${stopId}`)
+    const query = testCid ? `?test=true&classroomId=${testCid}` : ''
+    router.push(`/stops/${stopId}${query}`)
+  } else if (testCid) {
+    router.push(`/classroom/${testCid}/test-game`)
   } else {
     router.push({ name: 'game-map' })
   }

@@ -401,13 +401,11 @@ Classroom class1 = classrooms.get("class1");
         {"Første Oppgave",     "Fullfør din første oppgave",                    "🎯", "task_completed",      "first_task"},
         {"Nyhetsjeger",        "Fullfør alle oppgaver i Nyhetskvartalet",        "📰", "location_completed",  "nyhetskvartalet"},
         {"Fotoproff",          "Fullfør alle oppgaver hos Fotografen",            "📸", "location_completed",  "fotografen"},
-        {"Postmester",         "Fullfør alle oppgaver på Postkontoret",           "📬", "location_completed",  "postkontoret"},
-        {"Passordvokter",      "Fullfør alle oppgaver i Passordbanken",           "🔐", "location_completed",  "passordbanken"},
-        {"Markedsekspert",     "Fullfør alle oppgaver på Markedsplassen",         "🛒", "location_completed",  "markedsplassen"},
-        {"Sosial Detektiv",    "Fullfør alle oppgaver på Sosialen",               "🕵️", "location_completed",  "sosialen"},
         {"Datamester",         "Fullfør alle oppgaver i Datasenteret",            "💻", "location_completed",  "datasenteret"},
         {"Ukens Mysterium",    "Fullfør ukens mysterium",                         "🔍", "ukens_mysterium",     ""},
         {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
+        {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
+        {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},
         {"Perfekt Score",      "Få 100 poeng på en oppgave",                     "💯", "perfect_score",       "100_points"},
     };
 

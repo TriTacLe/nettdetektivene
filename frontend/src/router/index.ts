@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useStopStore } from '@/stores/StopStore'
+import { useAuthStore } from '@/stores/AuthStore'
+import './types'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,21 +29,9 @@ const router = createRouter({
       component: () => import('../views/GameMapView.vue'),
     },
     {
-      path: '/stops/nyhetskvartalet',
-      name: 'nyhetskvartalet',
-      component: () => import('../views/NyhetskvartaletView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
       path: '/stops/nyhetskvartalet/:taskId',
       name: 'nyhetskvartalet-task',
       component: () => import('../views/NyhetskvartaletTaskView.vue'),
-      meta: { music: 'dark' },
-    },
-    {
-      path: '/stops/fotografen',
-      name: 'fotografen',
-      component: () => import('../views/FotografenView.vue'),
       meta: { music: 'dark' },
     },
     {
@@ -48,11 +39,6 @@ const router = createRouter({
       name: 'fotografen-task',
       component: () => import('../views/FotografenTaskView.vue'),
       meta: { music: 'dark' },
-    },
-    {
-      path: '/stops/datasenteret/:taskId',
-      name: 'datasenteret-task',
-      component: () => import('../views/TaskView.vue'),
     },
     {
       path: '/stops/:stopId/:taskId',
@@ -89,7 +75,6 @@ const router = createRouter({
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/classroom/:id/test-game',
@@ -112,27 +97,14 @@ const router = createRouter({
       component: () => import('../views/teacher/TeacherSettingsView.vue'),
     },
     {
-      path: '/classroom-overview',
-      name: 'classroom-overview',
-      component: () => import('../views/teacher/ClassroomOverviewView.vue'),
-      // beforeEnter: requireTeacher,
-    },
-    {
       path: '/classroom/new',
       name: 'create-classroom',
       component: () => import('../views/teacher/CreateClassroomView.vue'),
-      // beforeEnter: requireTeacher,
     },
     {
       path: '/classroom/:id',
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
-      // beforeEnter: requireTeacher,
-    },
-    {
-      path: '/classroom/:id/tasks',
-      name: 'classroom-tasks',
-      component: () => import('../views/teacher/ClassroomTasksView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',
@@ -180,9 +152,10 @@ const router = createRouter({
       component: () => import('../views/AwaitingApprovalView.vue'),
     },
     {
-      path: '/introduction',
-      name: 'introduction',
-      component: () => import('../views/Introduction.vue'),
+      path: '/ending',
+      name: 'ending',
+      component: () => import('../views/EndingView.vue'),
+      meta: { music: 'datasenteret' },
     },
     {
       path: '/task-finished',
@@ -220,4 +193,61 @@ const router = createRouter({
     },
   ],
 })
+
+const PUBLIC_ROUTES = new Set([
+  'start', 'student-login', 'teacher-login'
+])
+
+const AUTH_ROUTES = new Set([
+  'join-classroom', 'set-display-name', 'awaiting-approval',
+])
+
+const TEACHER_ROUTES = new Set([
+  'teacher-home', 'classroom-test-game', 'teacher-leaderboard',
+  'teacher-classroom-leaderboard', 'settings',
+  'create-classroom', 'classroom-detail',
+  'classroom-task-create', 'classroom-task-edit', 'classroom-students',
+  'classroom-settings', 'edit-classroom', 'classroom-student-progress',
+  'teacher-notifications',
+])
+
+const STUDENT_ROUTES = new Set([
+  'student-home', 'game-map', 'nyhetskvartalet-task',
+  'fotografen-task', 'stop-task', 'stop',
+  'student-profile', 'edit-avatar', 'notebook',
+  'student-leaderboard', 'ending', 'task-finished',
+  'stop-finished', 'task-failed', 'tasks',
+  'achievements',
+])
+
+// Routes that belong to the test-mode flow. Leaving any of these while
+// testModeClassroomId is set means the teacher exited test mode, so we
+// drop the flag + the local "completed" marks loadTasksTestMode left.
+function isTestModeRoute(path: string, name: unknown): boolean {
+  if (path.startsWith('/stops/')) return true
+  if (/^\/classroom\/[^/]+\/test-game$/.test(path)) return true
+  if (typeof name === 'string') {
+    return ['task-finished', 'task-failed', 'stop-finished', 'ending'].includes(name)
+  }
+  return false
+}
+
+router.beforeEach((to) => {
+  const stop = useStopStore()
+  if (stop.testModeClassroomId && !isTestModeRoute(to.path, to.name)) {
+    stop.exitTestMode()
+  }
+
+  const auth = useAuthStore()
+  const name = to.name = to.name as string
+
+  if (PUBLIC_ROUTES.has(name)) return true
+  if (!auth.isAuthenticated) return { name: 'start' }
+  if (TEACHER_ROUTES.has(name) && !auth.isTeacher) return { name: 'start' }
+  if (STUDENT_ROUTES.has(name) && !auth.isStudent) return { name: 'start' }
+  if (AUTH_ROUTES.has(name) && !auth.isStudent) return true
+
+  return true
+})
+
 export default router

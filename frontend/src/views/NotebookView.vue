@@ -39,45 +39,6 @@ const BACKEND_TO_TASK_TYPE: Record<string, TaskType> = Object.fromEntries(
   Object.entries(STOP_LOCATION_KEY).map(([taskType, backendKey]) => [backendKey, taskType as TaskType]),
 )
 
-// Temporary fallback until backend auto-generates tips on task completion
-const FALLBACK_AUTO_NOTES: Record<TaskType, string[]> = {
-  [TaskType.NEWS]: [
-    'Sjekk alltid kilden før du deler en nyhet',
-    'Falske nyheter bruker ofte dramatiske overskrifter',
-    'Søk opp saken på flere uavhengige nettsteder',
-  ],
-  [TaskType.PHOTO]: [
-    'Bilder kan enkelt manipuleres med AI',
-    'Bruk omvendt bildesøk for å verifisere bilder',
-    'Sjekk metadata og konteksten rundt bildet',
-  ],
-  [TaskType.EMAIL]: [
-    'Ikke klikk på lenker i uventede e-poster',
-    'Sjekk avsenderens faktiske e-postadresse nøye',
-    'Legitime tjenester ber aldri om passord på e-post',
-  ],
-  [TaskType.PASSWORD]: [
-    'Bruk lange passord med tall, bokstaver og symboler',
-    'Ikke bruk samme passord på flere tjenester',
-    'En passordbehandler hjelper deg å holde orden',
-  ],
-  [TaskType.MARKETPLACE]: [
-    'Vær skeptisk til tilbud som virker for gode til å være sanne',
-    'Betal aldri med gavekort eller kryptovaluta til ukjente',
-    'Sjekk selgerens anmeldelser og profil grundig',
-  ],
-  [TaskType.SOCIAL]: [
-    'Del ikke personlig informasjon med ukjente på nett',
-    'Tenk deg om to ganger før du aksepterer venneforespørsler',
-    'Innstillinger for personvern bør gjennomgås jevnlig',
-  ],
-  [TaskType.BOSS]: [
-    'Oppdater alltid programvare og operativsystem',
-    'Totrinnspålogging gir ekstra beskyttelse for kontoene dine',
-    'Vær forsiktig med hvilke apper du gir tilgang til',
-  ],
-}
-
 const classroomId = computed(() => route.query.classroomId as string | undefined)
 
 const reflections = ref<Record<string, string>>({})
@@ -165,7 +126,7 @@ function nextSpread(): void {
 
 function getAutoNotes(stopLocation: string): string[] {
   const raw = entriesByStop.value[stopLocation]?.autoNotes
-  if (!raw) return FALLBACK_AUTO_NOTES[stopLocation as TaskType] ?? []
+  if (!raw) return []
   try {
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : [raw]

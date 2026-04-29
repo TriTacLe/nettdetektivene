@@ -37,7 +37,7 @@ watch(classroomTask, (task) => {
   const parsed = parseTaskContent(t.content, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
-    const content = parsed?.news ?? parsed
+    const content = (parsed as any)?.news ?? parsed as any
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
@@ -53,7 +53,7 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = parsed?.photo ?? parsed
+    const content = (parsed as any)?.photo ?? parsed as any
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
@@ -64,9 +64,7 @@ watch(classroomTask, (task) => {
       alternatives: (content?.alternatives ?? []).map((a: any) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
-        description: a.description ?? '',
         correctType: a.correctType ?? 'ekte',
-        begrunnelserText: (a.begrunnelser ?? []).join('\n'),
       })),
     }
     draft.value = photoDraft
@@ -85,7 +83,7 @@ const saveMutation = useMutation({
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['teacher-classroom-tasks', classroomId] })
-    router.push({ name: 'classroom-tasks', params: { id: classroomId } })
+    router.push({ name: 'classroom-detail', params: { id: classroomId } })
   },
   onError: (error: Error) => {
     serverError.value = error.message || 'Kunne ikke oppdatere oppgaven'
@@ -126,8 +124,6 @@ function validate() {
     if (!draft.value.description.trim()) throw new Error('Oppgaven må ha en beskrivelse')
     for (const alt of draft.value.alternatives) {
       if (!alt.image && !alt.existingImagePath) throw new Error('Alle alternativer må ha et bilde')
-      if (!alt.description.trim()) throw new Error('Alle alternativer må ha en beskrivelse')
-      if (!alt.begrunnelserText.trim()) throw new Error('Alle alternativer må ha minst én begrunnelse')
     }
   }
 }
@@ -152,7 +148,7 @@ function addAlternative() {
     return
   }
   serverError.value = null
-  draft.value.alternatives.push({ existingImagePath: null, image: null, description: '', correctType: 'ekte', begrunnelserText: '' })
+  draft.value.alternatives.push({ existingImagePath: null, image: null, correctType: 'ekte' })
 }
 
 function removeAlternative(index: number) {
@@ -185,7 +181,7 @@ function submit() {
           <div class="task-template task-template--news">
             <div class="task-template__hero">
               <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-tasks', params: { id: classroomId } })">←</button>
+                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
                 <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
                   {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
                 </button>
@@ -203,12 +199,12 @@ function submit() {
                   <span class="task-field-label">Vanskelighetsgrad</span>
                   <div class="diff-selector">
                     <button v-for="n in 3" :key="n" type="button"
-                      :class="['diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
                       @click="selectDifficulty(n)">
                       <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
                     </button>
                     <button type="button"
-                      :class="['diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
                       @click="selectDatasenteret()">
                       Datasenteret
                     </button>
@@ -263,7 +259,7 @@ function submit() {
           <div class="task-template task-template--photo">
             <div class="task-template__hero">
               <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-tasks', params: { id: classroomId } })">←</button>
+                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
                 <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
                   {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
                 </button>
@@ -281,12 +277,12 @@ function submit() {
                   <span class="task-field-label">Vanskelighetsgrad</span>
                   <div class="diff-selector">
                     <button v-for="n in 3" :key="n" type="button"
-                      :class="['diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
                       @click="selectDifficulty(n)">
                       <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
                     </button>
                     <button type="button"
-                      :class="['diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
                       @click="selectDatasenteret()">
                       Datasenteret
                     </button>
@@ -319,22 +315,12 @@ function submit() {
                 </div>
 
                 <label class="task-field">
-                  <span>Beskrivelse</span>
-                  <input v-model="alt.description" type="text" placeholder="Legg til kontekst for elevene..." />
-                </label>
-
-                <label class="task-field">
                   <span>Bildetypen er</span>
                   <select v-model="alt.correctType">
                     <option value="ekte">Ekte</option>
                     <option value="ai-generert">KI-generert</option>
                     <option value="manipulert">Manipulert</option>
                   </select>
-                </label>
-
-                <label class="task-field">
-                  <span>Begrunnelser, én per linje</span>
-                  <textarea v-model="alt.begrunnelserText" rows="4" />
                 </label>
 
                 <button type="button" class="task-upload-remove" :disabled="draft.alternatives.length <= 2" @click="removeAlternative(index)">
@@ -497,7 +483,7 @@ function submit() {
   align-items: center;
   gap: 1px;
   padding: 0.4rem 0.6rem;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.6rem;
   background: white;
   cursor: pointer;
@@ -557,7 +543,7 @@ function submit() {
 .task-field textarea,
 .task-field select {
   background: white;
-  border: 2px solid #d1d5db;
+  border: 2px solid #111111;
   border-radius: 0.8rem;
   padding: 0.85rem 1rem;
   font-size: 1rem;
@@ -703,7 +689,7 @@ function submit() {
 .task-create-add {
   align-self: start;
   background: #eff6ff;
-  border-color: #3b82f6;
+  border-color: #111111;
   color: #1d4ed8;
 }
 

@@ -3,11 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
+import { useDialogRunner } from '@/composables/UseDialogRunner'
+import { nyhetskvartaletIntro } from '@/data/taskDialogs/nyhetskvartalet'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import type { TaskDTO, NewsChallenge } from '@/types'
+import type { TaskDTO, NewsChallenge, NewsAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -23,6 +27,17 @@ const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
+
+const storyStore = useStoryProgressStore()
+const introRunner = useDialogRunner(nyhetskvartaletIntro, 'start')
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_NYHETSKVARTALET))
+function onIntroAdvance() {
+  introRunner.advance()
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_NYHETSKVARTALET)
+  }
+}
 
 onMounted(async () => {
   console.log('[NyhetskvartaletTaskView] Loading task with ID:', taskId)
@@ -74,45 +89,54 @@ const challenge = computed<NewsChallenge | null>(() => {
 const taskQuestion = computed(() => task.value?.content?.news?.question)
 const taskTip = computed(() => task.value?.content?.news?.hint)
 
-async function submitAttempt(score: number) {
+function isCorrectLocally(answers: NewsAnswers): boolean {
+  const articles = task.value?.content?.news?.articles ?? []
+  return Boolean(articles[answers.selectedIndex]?.isReal)
+}
+
+const FAILURE_REASON =
+  'Du valgte den falske nyheten. Sjekk alltid kilden, se etter troverdige forfattere og vær kritisk til overdrevne overskrifter.'
+
+async function onSubmit(answers: NewsAnswers) {
+  if (testClassroomId) {
+    routeResult(isCorrectLocally(answers))
+    return
+  }
+
   try {
     submitting.value = true
     const classroomId = await fetchClassroomId()
-    if (classroomId) {
-      await TaskAttemptService.submitAttempt(taskId, classroomId, score)
-      return true
+    if (!classroomId) {
+      error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
+      return
     }
-    error.value = 'Fant ikke et aktivt klasserom for å lagre oppgaveforsøket.'
-    return false
+    const result = await TaskAttemptService.submitAttempt(taskId, classroomId, answers)
+    routeResult(result.passed)
   } catch (err) {
     console.error('Failed to submit attempt:', err)
     error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
-    return false
   } finally {
     submitting.value = false
   }
 }
 
-async function onComplete() {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(100)
-    if (!wasSaved) return
+function routeResult(passed: boolean) {
+  if (passed) {
+    router.push({
+      name: 'task-finished',
+      query: { stop: 'nyhetskvartalet', taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
+    })
+  } else {
+    router.push({
+      name: 'task-failed',
+      query: {
+        stop: 'nyhetskvartalet',
+        taskId,
+        reason: FAILURE_REASON,
+        ...(testClassroomId ? { classroomId: testClassroomId } : {}),
+      },
+    })
   }
-  router.push({
-    name: 'task-finished',
-    query: { stop: 'nyhetskvartalet', taskId, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
-}
-
-async function onFailed(reason: string) {
-  if (!testClassroomId) {
-    const wasSaved = await submitAttempt(0)
-    if (!wasSaved) return
-  }
-  router.push({
-    name: 'task-failed',
-    query: { stop: 'nyhetskvartalet', taskId, reason, ...(testClassroomId ? { classroomId: testClassroomId } : {}) },
-  })
 }
 </script>
 
@@ -120,7 +144,7 @@ async function onFailed(reason: string) {
   <SceneComponent
     :title="task?.title ?? 'Nyhetskvartalet'"
     :previous="previousRoute"
-    background="/NyhetskvartaletBackground.png"
+    background="/NyhetskvartaletBackground.jpg"
   >
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
@@ -128,11 +152,17 @@ async function onFailed(reason: string) {
     <template v-else>
       <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
       <NyhetskvartaletComponent
+        v-if="introDone"
         :challenge="challenge"
         :question="taskQuestion"
         :tip="taskTip"
-        @complete="onComplete"
-        @failed="onFailed"
+        @submit="onSubmit"
+      />
+      <CutsceneDialog
+        v-if="!introDone && introRunner.currentScene.value"
+        :key="introRunner.currentScene.value.id"
+        :scene="introRunner.currentScene.value"
+        @done="onIntroAdvance"
       />
     </template>
   </SceneComponent>
