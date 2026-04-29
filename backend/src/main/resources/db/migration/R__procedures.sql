@@ -185,4 +185,29 @@ FROM classroom_student
 WHERE user_id = p_student_user_id;
 END$$
 
+-- -------------------------------------------------------------
+-- sp_award_achievement
+-- looks up an achievement by trigger_type/trigger_ref
+-- -------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_award_achievement$$
+CREATE PROCEDURE sp_award_achievement(
+    IN p_user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_trigger_type VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_trigger_ref VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+)
+BEGIN
+    DECLARE v_ach_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+
+    SELECT achievement_id INTO v_ach_id
+    FROM achievement
+    WHERE trigger_type = p_trigger_type AND trigger_ref = p_trigger_ref
+    LIMIT 1;
+
+    IF v_ach_id IS NOT NULL THEN
+        INSERT IGNORE INTO user_achievement (user_id, achievement_id, classroom_id, earned_at)
+        VALUES (p_user_id, v_ach_id, p_classroom_id, NOW());
+    END IF;
+END$$
+
 DELIMITER ;
