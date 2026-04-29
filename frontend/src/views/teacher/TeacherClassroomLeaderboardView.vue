@@ -25,7 +25,7 @@ const entries = computed(() => data.value?.data ?? [])
   <SceneComponent
     :title="classroomTitle"
     background="/StartBackground.jpg"
-    @previous="router.push({ name: 'teacher-leaderboard' })"
+    previous="/teacher-leaderboard"
   >
     <div class="flex justify-center p-4 flex-1">
       <div class="w-full max-w-2xl bg-white/90 rounded-2xl p-6 flex flex-col gap-4">

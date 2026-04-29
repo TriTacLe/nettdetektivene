@@ -47,7 +47,6 @@ const menuItems = [
 <template>
   <SceneComponent
     title="Lærerportal"
-    previous="/teacher-login"
     background="/StartBackground.jpg">
 
     <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10">
