@@ -1,20 +1,24 @@
 import { client } from '@/generated-client/client.gen'
-
-const SESSION_KEY = 'auth'
-
-function getToken(): string | undefined {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
-    return raw ? (JSON.parse(raw) as { token?: string }).token : undefined
-  } catch {
-    return undefined
-  }
-}
+import { AUTH_ENDPOINT_PATTERN, readSession, refreshAccessToken } from '@/lib/TokenRefresh'
 
 client.setConfig({ baseUrl: '' })
 
 client.interceptors.request.use((request) => {
-  const token = getToken()
+  const { token } = readSession()
   if (token) request.headers.set('Authorization', `Bearer ${token}`)
   return request
+})
+
+client.interceptors.response.use(async (response, request) => {
+  if (response.status !== 401 || AUTH_ENDPOINT_PATTERN.test(request.url)) {
+    return response
+  }
+
+  const newToken = await refreshAccessToken()
+
+  const retryRequest = new Request(request, {
+    headers: new Headers(request.headers),
+  })
+  retryRequest.headers.set('Authorization', `Bearer ${newToken}`)
+  return fetch(retryRequest)
 })
