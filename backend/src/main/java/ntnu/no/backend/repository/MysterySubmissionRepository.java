@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * Repository for {@link MysterySubmission} entities.
  *
- * @author tri, aninesst
+ * @author aninesst
  * @version 0.2
  * @since 0.1
  * @see MysterySubmission
@@ -27,6 +27,15 @@ public interface MysterySubmissionRepository extends JpaRepository<MysterySubmis
    * @return submissions for the classroom
    */
   List<MysterySubmission> findByClassroom_Id(UUID classroomId);
+
+  /**
+   * Finds submissions in a classroom made by a specific student.
+   *
+   *  classroomId the classroom id
+   *  userId the student id
+   *  matching submissions
+   */
+  List<MysterySubmission> findByClassroom_IdAndUserSubmittedBy_Id(UUID classroomId, UUID userId);
 
   /**
    * Finds all submissions in a classroom with a given status.

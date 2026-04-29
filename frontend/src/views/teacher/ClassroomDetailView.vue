@@ -89,6 +89,15 @@ const resetName = useMutation({
     const { data } = await apiClient.post(`/classrooms/${classroomId}/students/${userId}/reset-name`)
     return data
   },
+  {
+    title: 'Mysterie',
+    subtitle: 'Ukens Mysterie innsendinger',
+    route: 'classroom-mysteries',
+  },
+  {
+    title: 'Test Spillet',
+    subtitle: 'Spill som elev',
+    route: 'classroom-test-game',
   onSuccess: () => {
     resetTarget.value = null
     queryClient.invalidateQueries({ queryKey: getStudentsQueryKey({ path: { classroomId } }) })

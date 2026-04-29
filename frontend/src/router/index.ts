@@ -72,6 +72,21 @@ const router = createRouter({
       component: () => import('../views/EditAvatarView.vue'),
     },
     {
+      path: '/student/classrooms/:classroomId/mystery',
+      name: 'student-weekly-mystery',
+      component: () => import('@/views/WeeklyMysteryChoiceView.vue'),
+    },
+    {
+      path: '/student/classrooms/:classroomId/mystery/play',
+      name: 'student-weekly-mystery-play',
+      component: () => import('@/views/WeeklyMysteryPlayView.vue'),
+    },
+    {
+      path: '/student/classrooms/:classroomId/mystery/submit',
+      name: 'student-weekly-mystery-submit',
+      component: () => import('@/views/WeeklyMysteryStudentView.vue'),
+    },
+    {
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
@@ -105,6 +120,17 @@ const router = createRouter({
       path: '/classroom/:id',
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/mysteries',
+      name: 'classroom-mysteries',
+      component: () => import('../views/teacher/WeeklyMysteryTeacherView.vue'),
+    },
+    {
+      path: '/classroom/:id/tasks',
+      name: 'classroom-tasks',
+      component: () => import('../views/teacher/ClassroomTasksView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',
