@@ -339,27 +339,22 @@ private void seedTasks() {
   }
 
   private void enroll(User student, Classroom classroom) {
-    if (student == null || classroom == null) {
+    if (student == null || classroom == null) return;
+    ClassroomStudentId id = new ClassroomStudentId(classroom.getId(), student.getId());
+    if (classroomStudentRepository.existsById(id)) return;
+    if (classroomStudentRepository.findByUser(student).isPresent()) {
+      log.debug("Student {} already enrolled in a classroom, skipping", student.getDisplayName());
       return;
     }
-    ClassroomStudentId id = new ClassroomStudentId(classroom.getId(), student.getId());
-    
-    try {
-      // Let database handle duplicate detection - more reliable than checking repository
-      ClassroomStudent studentMember = ClassroomStudent.builder()
-          .id(id)
-          .classroom(classroom)
-          .user(student)
-          .displayName(student.getDisplayName())
-          .isAllowed(true)
-          .nameChangeStatus(NameChangeStatus.NONE)
-          .build();
-      classroomStudentRepository.save(studentMember);
-      log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
-    } catch (Exception e) {
-      // Ignore if already exists (constraint violation)
-      log.debug("Student {} already enrolled in {}", student.getDisplayName(), classroom.getTitle());
-    }
+    classroomStudentRepository.saveAndFlush(ClassroomStudent.builder()
+        .id(id)
+        .classroom(classroom)
+        .user(student)
+        .displayName(student.getDisplayName())
+        .isAllowed(true)
+        .nameChangeStatus(NameChangeStatus.NONE)
+        .build());
+    log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
   }
 
   // -----------------------------------------------------------------------
