@@ -13,6 +13,7 @@ import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type { DialogChoice } from '@/types/cutscene'
+import { useToast } from '@/composables/UseToast'
 
 const corkboardImage = '/corkboard.jpg'
 const mapImage = '/map.jpg'
@@ -23,10 +24,12 @@ const leaderboardImage = '/leaderboard.jpg'
 const mysteryImage = '/mystery-magnifier.png'
 
 const router = useRouter()
+const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
+const classroomLoading = ref(true)
 const showHelp = ref(false)
 
 function onIntroDone() {
@@ -145,6 +148,15 @@ async function goToNotebook() {
   router.push({ name: 'notebook', query: { classroomId: classroomId.value } })
 }
 
+function goToMystery() {
+  if (classroomLoading.value) return
+  if (!classroomId.value) {
+    showToast('Du er ikke med i noen klasse ennå.', 'error')
+    return
+  }
+  router.push({ name: 'student-weekly-mystery', params: { classroomId: classroomId.value } })
+}
+
 function toggleHelp() {
   showHelp.value = !showHelp.value
 }
@@ -173,6 +185,8 @@ onMounted(async () => {
     classroomId.value = classrooms[0]?.id ?? null
   } catch {
     classroomId.value = null
+  } finally {
+    classroomLoading.value = false
   }
 
   if (boardFrame.value) {
@@ -308,7 +322,7 @@ onUnmounted(() => {
             :rotation="-1"
             pin-color="#e03131"
             width="clamp(6.35rem, 9vw, 7.85rem)"
-            @click="goTo('/mystery')"
+            @click="goToMystery"
           >
             <div class="image-note">
               <img :src="mysteryImage" alt="Ukens Mysterium" class="mystery-image image-note-bg" />

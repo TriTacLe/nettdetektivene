@@ -132,6 +132,11 @@ pids
 coverage/
 .nyc_output
 
+# Test uploads (generated during test execution)
+test-uploads/
+uploads/
+tmp/uploads/
+
 # Cypress
 cypress/videos/
 cypress/screenshots/

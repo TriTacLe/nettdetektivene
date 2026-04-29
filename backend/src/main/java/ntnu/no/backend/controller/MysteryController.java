@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.mystery.MysteryReviewDTO;
 import ntnu.no.backend.dto.mystery.MysterySubmissionRequestDTO;
 import ntnu.no.backend.dto.mystery.MysterySubmissionResponseDTO;
+import ntnu.no.backend.dto.mystery.MysteryTaskCreateRequestDTO;
+import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.service.MysteryService;
 import ntnu.no.backend.shared.ApiResponse;
@@ -29,7 +31,7 @@ import java.util.UUID;
  * Endpoints for mystery submission management.
  *
  * @author aninesst
- * @version 0.1
+ * @version 0.2
  * @since 0.1
  */
 @Tag(name = "Mysteries", description = "Endpoints for mystery submissions")
@@ -71,6 +73,22 @@ public class MysteryController {
   }
 
   /**
+   * Returns the authenticated student's own submissions in a classroom.
+   *
+   * @param classroomId the classroom id
+   * @param user the authenticated student
+   * @return submissions made by the authenticated student
+   */
+  @Operation(summary = "Get my mystery submissions by classroom")
+  @GetMapping("/classroom/{classroomId}/mine")
+  @PreAuthorize("hasAuthority('student')")
+  public ResponseEntity<ApiResponse<List<MysterySubmissionResponseDTO>>> getMySubmissions(
+      @PathVariable UUID classroomId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getMySubmissions(classroomId, user.getId())));
+  }
+
+  /**
    * Returns pending submissions in a classroom. Restricted to instructors.
    *
    * @param classroomId the classroom id
@@ -103,6 +121,25 @@ public class MysteryController {
   }
 
   /**
+   * Creates and assigns a classroom task from a mystery submission.
+   *
+   * @param submissionId the submission id
+   * @param dto task creation options
+   * @param user the authenticated instructor
+   * @return created classroom task
+   */
+  @Operation(summary = "Create a classroom task from a mystery submission")
+  @PostMapping("/{submissionId}/task")
+  @PreAuthorize("hasAuthority('instructor')")
+  public ResponseEntity<ApiResponse<ClassroomTaskResponseDTO>> createTaskFromSubmission(
+      @PathVariable UUID submissionId,
+      @RequestBody @Valid MysteryTaskCreateRequestDTO dto,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.ok(mysteryService.createTaskFromSubmission(submissionId, dto, user.getId())));
+  }
+
+  /**
    * Returns the featured submission in a classroom.
    *
    * @param classroomId the classroom id
@@ -114,5 +151,13 @@ public class MysteryController {
   public ResponseEntity<ApiResponse<MysterySubmissionResponseDTO>> getFeaturedSubmission(
       @PathVariable UUID classroomId) {
     return ResponseEntity.ok(ApiResponse.ok(mysteryService.getFeaturedSubmission(classroomId)));
+  }
+
+  @Operation(summary = "Get all featured mystery submissions by classroom, newest first")
+  @GetMapping("/classroom/{classroomId}/featured/all")
+  @PreAuthorize("hasAnyAuthority('student', 'instructor')")
+  public ResponseEntity<ApiResponse<List<MysterySubmissionResponseDTO>>> getAllFeaturedSubmissions(
+      @PathVariable UUID classroomId) {
+    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getAllFeaturedSubmissions(classroomId)));
   }
 }
