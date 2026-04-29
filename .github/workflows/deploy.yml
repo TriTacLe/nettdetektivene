@@ -76,9 +76,6 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to Production
-        env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "echo '${{ secrets.PAT_TOKEN }}' | docker login ghcr.io -u tritacle --password-stdin"
+          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "docker login ghcr.io -u tritacle --password-stdin" <<< "${{ secrets.PAT_TOKEN }}"
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
