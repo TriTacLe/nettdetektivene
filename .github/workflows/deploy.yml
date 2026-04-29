@@ -80,5 +80,6 @@ jobs:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin && cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
+          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "echo '${{ secrets.PAT_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
 
