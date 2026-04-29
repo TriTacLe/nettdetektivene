@@ -64,7 +64,7 @@ function goTo(path?: string) {
     <div class="nav-right">
       <button
         v-if="authStore.isTeacher && showSettings"
-        class="nav-bell"
+        class="nav-bell btn-bare"
         :aria-label="unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Ingen uleste varsler'"
         @click="router.push({ name: 'teacher-notifications' })"
       >
