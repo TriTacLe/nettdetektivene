@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { endingDialogs, endingStartId } from '@/data/EndingDialogs'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import { useStopStore } from '@/stores/StopStore'
 import type { DialogChoice } from '@/types/cutscene'
 
 const router = useRouter()
+const storyStore = useStoryProgressStore()
+const stopStore = useStopStore()
 const runner = useDialogRunner(endingDialogs, endingStartId)
 
 function finish() {
+  if (!stopStore.testModeClassroomId) storyStore.advance(StoryStep.ENDING)
   router.push({ name: 'stop-finished', query: { stop: 'datasenteret' } })
 }
 
@@ -21,6 +27,12 @@ function onChoose(choice: DialogChoice) {
   runner.advance(choice)
   if (runner.isFinished.value) finish()
 }
+
+onMounted(() => {
+  if (!stopStore.testModeClassroomId && storyStore.hasSeen(StoryStep.ENDING)) {
+    finish()
+  }
+})
 </script>
 
 <template>

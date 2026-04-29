@@ -10,6 +10,7 @@ import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { fotografenIntro } from '@/data/taskDialogs/fotografen'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type { TaskDTO, FotografenChallenge } from '@/types'
 import { TaskType } from '@/types'
 
@@ -27,11 +28,15 @@ const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
 
+const storyStore = useStoryProgressStore()
 const introRunner = useDialogRunner(fotografenIntro, 'start')
-const introDone = ref(false)
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_FOTOGRAFEN))
 function onIntroAdvance() {
   introRunner.advance()
-  if (introRunner.isFinished.value) introDone.value = true
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_FOTOGRAFEN)
+  }
 }
 
 onMounted(async () => {

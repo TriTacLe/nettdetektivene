@@ -6,6 +6,7 @@ import type { UserDTO, FeideLoginRequest } from '@/types'
 import { UserRole } from '@/types'
 import { useToast } from '@/composables/UseToast'
 import { useStopStore } from '@/stores/StopStore'
+import { useStoryProgressStore } from '@/stores/StoryProgressStore'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -30,6 +31,7 @@ export const useAuthStore = defineStore(
       stop.exitTestMode()
       stop.clearCompleted()
       stop.clearTasks()
+      useStoryProgressStore().clear()
     }
 
     async function login(credentials: { email: string; password: string }): Promise<void> {
@@ -40,6 +42,7 @@ export const useAuthStore = defineStore(
       resetStopState()
       await fetchMe()
       await useStopStore().loadCompleted()
+      await useStoryProgressStore().load()
     }
 
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
@@ -50,6 +53,7 @@ export const useAuthStore = defineStore(
       resetStopState()
       await fetchMe()
       await useStopStore().loadCompleted()
+      await useStoryProgressStore().load()
     }
 
     async function fetchMe(): Promise<void> {

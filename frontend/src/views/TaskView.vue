@@ -11,6 +11,7 @@ import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { datasenteretIntro } from '@/data/taskDialogs/datasenteret'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type { TaskDTO, NewsChallenge, FotografenChallenge } from '@/types'
 import { TaskType } from '@/types'
 
@@ -29,13 +30,15 @@ const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
 
-// Per-task intro cutscene. Only render for the first task in the boss area
-// so the player isn't lectured at on every attempt within the same run.
+const storyStore = useStoryProgressStore()
 const introRunner = useDialogRunner(datasenteretIntro, 'start')
-const introDone = ref(false)
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_DATASENTERET))
 function onIntroAdvance() {
   introRunner.advance()
-  if (introRunner.isFinished.value) introDone.value = true
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_DATASENTERET)
+  }
 }
 
 onMounted(async () => {

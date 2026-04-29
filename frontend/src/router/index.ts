@@ -165,11 +165,6 @@ const router = createRouter({
       component: () => import('../views/AwaitingApprovalView.vue'),
     },
     {
-      path: '/introduction',
-      name: 'introduction',
-      component: () => import('../views/Introduction.vue'),
-    },
-    {
       path: '/ending',
       name: 'ending',
       component: () => import('../views/EndingView.vue'),

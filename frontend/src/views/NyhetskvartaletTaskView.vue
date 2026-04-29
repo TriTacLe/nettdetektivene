@@ -6,6 +6,7 @@ import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { nyhetskvartaletIntro } from '@/data/taskDialogs/nyhetskvartalet'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
@@ -27,11 +28,15 @@ const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
 
+const storyStore = useStoryProgressStore()
 const introRunner = useDialogRunner(nyhetskvartaletIntro, 'start')
-const introDone = ref(false)
+const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_NYHETSKVARTALET))
 function onIntroAdvance() {
   introRunner.advance()
-  if (introRunner.isFinished.value) introDone.value = true
+  if (introRunner.isFinished.value) {
+    introDone.value = true
+    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_NYHETSKVARTALET)
+  }
 }
 
 onMounted(async () => {

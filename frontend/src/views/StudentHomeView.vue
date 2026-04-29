@@ -5,9 +5,14 @@ import { useQuery } from '@tanstack/vue-query'
 import SceneComponent from '../components/SceneComponent.vue'
 import BoardNote from '../components/BoardNote.vue'
 import AvatarPreview from '@/components/avatar/AvatarPreview.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import ClassroomService from '@/services/ClassroomService'
 import { getProfileOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import { parseAvatarConfig } from '@/utils/avatar'
+import { useDialogRunner } from '@/composables/UseDialogRunner'
+import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
+import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import type { DialogChoice } from '@/types/cutscene'
 
 const corkboardImage = '/corkboard.jpg'
 const mapImage = '/map.jpg'
@@ -17,8 +22,27 @@ const notebookImage = '/notebook.jpg'
 const leaderboardImage = '/leaderboard.jpg'
 
 const router = useRouter()
+const storyStore = useStoryProgressStore()
+const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
+const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
 const showHelp = ref(false)
+
+function onIntroDone() {
+  introRunner.advance()
+  if (introRunner.isFinished.value) {
+    showIntro.value = false
+    storyStore.advance(StoryStep.INTRODUCTION)
+  }
+}
+
+function onIntroChoose(choice: DialogChoice) {
+  introRunner.advance(choice)
+  if (introRunner.isFinished.value) {
+    showIntro.value = false
+    storyStore.advance(StoryStep.INTRODUCTION)
+  }
+}
 const boardFrame = ref<HTMLElement | null>(null)
 const stringPaths = ref<string[]>([])
 let boardResizeObserver: ResizeObserver | null = null
@@ -154,6 +178,11 @@ onMounted(async () => {
     boardResizeObserver = new ResizeObserver(updateStringPaths)
     boardResizeObserver.observe(boardFrame.value)
   }
+
+  if (!storyStore.loaded) await storyStore.load()
+  if (!storyStore.hasSeen(StoryStep.INTRODUCTION)) {
+    showIntro.value = true
+  }
 })
 
 watch(studentName, () => updateStringPaths())
@@ -169,8 +198,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <SceneComponent title="Tavle">
-    <div class="student-home">
+  <SceneComponent :title="showIntro ? 'Introduksjon' : 'Tavle'" :background="showIntro ? '/StartBackground.jpg' : undefined">
+    <CutsceneDialog
+      v-if="showIntro && introRunner.currentScene.value"
+      :key="introRunner.currentScene.value.id"
+      :scene="introRunner.currentScene.value"
+      @done="onIntroDone"
+      @choose="onIntroChoose"
+    />
+    <div v-show="!showIntro" class="student-home">
       <div ref="boardFrame" class="board-frame">
         <img :src="corkboardImage" alt="Korktavle" class="corkboard-image" />
         <svg class="string-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -552,4 +588,5 @@ onUnmounted(() => {
 .fade-leave-to {
   opacity: 0;
 }
+
 </style>

@@ -339,4 +339,5 @@ function closeLockedPopup() {
 .final-boss {
   left: 72%;
 }
+
 </style>

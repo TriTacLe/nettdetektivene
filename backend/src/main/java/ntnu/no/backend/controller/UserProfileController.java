@@ -15,9 +15,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * Endpoints for user profile management.
@@ -69,6 +72,28 @@ public class UserProfileController {
    * @param feideId the FEIDE identifier of the user
    * @return {@code 200 OK} with the user's profile
    */
+  @Operation(summary = "Get the authenticated user's story progression")
+  @PreAuthorize("isAuthenticated()")
+  @GetMapping("/me/story-progress")
+  public ResponseEntity<ApiResponse<Map<String, Integer>>> getStoryProgress(@AuthenticationPrincipal User user) {
+    int step = userProfileService.getStoryProgress(user);
+    return ResponseEntity.ok(ApiResponse.ok(Map.of("step", step)));
+  }
+
+  @Operation(summary = "Advance the authenticated user's story progression")
+  @PreAuthorize("isAuthenticated()")
+  @PostMapping("/me/story-progress")
+  public ResponseEntity<ApiResponse<Map<String, Integer>>> advanceStoryProgress(
+      @AuthenticationPrincipal User user,
+      @RequestBody Map<String, Integer> body) {
+    Integer step = body == null ? null : body.get("step");
+    if (step == null || step < 0) {
+      return ResponseEntity.badRequest().body(ApiResponse.error("Invalid step"));
+    }
+    int updated = userProfileService.advanceStoryProgress(user, step);
+    return ResponseEntity.ok(ApiResponse.ok(Map.of("step", updated)));
+  }
+
   @Operation(summary = "Get a user profile by FEIDE identifier")
   @PreAuthorize("isAuthenticated()")
   @GetMapping("/{feideId}")
