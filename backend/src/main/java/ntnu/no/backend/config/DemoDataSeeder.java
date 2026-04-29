@@ -22,7 +22,7 @@ import java.util.*;
  * Demo data seeder activated with the "seed" Spring profile.
  *
  * Run with:
- *   mvn spring-boot:run -Dspring-boot.run.profiles=seed
+ * mvn spring-boot:run -Dspring-boot.run.profiles=seed
  *
  * Creates institutions, teachers, classrooms, tasks (all 7 stops),
  * students with varied progress, notebook entries, and achievements.
@@ -112,11 +112,11 @@ public class DemoDataSeeder implements CommandLineRunner {
 
   private void seedInstitutions() {
     String[][] data = {
-        {"NTNU Trondheim", "ntnu"},
-        {"OsloMet",        "oslomet"},
-        {"UiO",            "uio"},
-        {"NTNU Gjøvik",    "ntnu-gjovik"},
-        {"BI",             "bi"},
+        { "NTNU Trondheim", "ntnu" },
+        { "OsloMet", "oslomet" },
+        { "UiO", "uio" },
+        { "NTNU Gjøvik", "ntnu-gjovik" },
+        { "BI", "bi" },
     };
     for (String[] row : data) {
       Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
@@ -133,10 +133,10 @@ public class DemoDataSeeder implements CommandLineRunner {
 
   private void seedInstructors() {
     Object[][] data = {
-        {"nora@ntnu.no",   "Nora Lilliedahl Kirknes",  "nora",  "ntnu"},
-        {"tri@ntnu.no",    "Tri Tac Le",               "tri",   "ntnu"},
-        {"anine@ntnu.no",  "Anine Selle Standnes",     "anine", "ntnu"},
-        {"gustav@ntnu.no", "Gustav Haverstad Skyberg",  "gustav","ntnu"},
+        { "nora@ntnu.no", "Nora Lilliedahl Kirknes", "nora", "ntnu" },
+        { "tri@ntnu.no", "Tri Tac Le", "tri", "ntnu" },
+        { "anine@ntnu.no", "Anine Selle Standnes", "anine", "ntnu" },
+        { "gustav@ntnu.no", "Gustav Haverstad Skyberg", "gustav", "ntnu" },
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -151,11 +151,11 @@ public class DemoDataSeeder implements CommandLineRunner {
 
   private void seedClassrooms() {
     Object[][] data = {
-        {"5A - Datadetektiver",   "Lær å være trygg på nettet",      "nora",  "ntnu",     "class1"},
-        {"6B - Nettvett",         "Slik beskytter du deg selv",     "nora",  "ntnu",     "class2"},
-        {"7C - Sikker på nett",   "Vær smart på internett",         "tri",   "ntnu",     "class3"},
-        {"8D - Bottle FC",        "Arsenal - The Gunners",          "gustav","ntnu",     "class4"},
-        {"9E - Relegation FC",    "Tottenham Hotspur Spurs",        "anine", "ntnu",     "class5"},
+        { "5A - Datadetektiver", "Lær å være trygg på nettet", "nora", "ntnu", "class1" },
+        { "6B - Nettvett", "Slik beskytter du deg selv", "nora", "ntnu", "class2" },
+        { "7C - Sikker på nett", "Vær smart på internett", "tri", "ntnu", "class3" },
+        { "8D - Bottle FC", "Arsenal - The Gunners", "gustav", "ntnu", "class4" },
+        { "9E - Relegation FC", "Tottenham Hotspur Spurs", "anine", "ntnu", "class5" },
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -175,40 +175,41 @@ public class DemoDataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Tasks  (3 per stop, all 7 stops)
+  // Tasks (3 per stop, all 7 stops)
   // -----------------------------------------------------------------------
 
-private void seedTasks() {
-    // {title, type, stop, difficulty, ownerKey} - kid-friendly tasks for 3-7 graders
+  private void seedTasks() {
+    // {title, type, stop, difficulty, ownerKey} - kid-friendly tasks for 3-7
+    // graders
     Object[][] taskDefs = {
         // nyhetskvartalet
-        {"Hva er sant?",                   TaskType.NEWS,        "nyhetskvartalet", 1, "nora"},
-        {"Sjekk kilden",                  TaskType.NEWS,        "nyhetskvartalet", 1, "nora"},
-        {"Falske nyheter",                TaskType.NEWS,        "nyhetskvartalet", 2, "nora"},
+        { "Hva er sant?", TaskType.NEWS, "nyhetskvartalet", 1, "nora" },
+        { "Sjekk kilden", TaskType.NEWS, "nyhetskvartalet", 1, "nora" },
+        { "Falske nyheter", TaskType.NEWS, "nyhetskvartalet", 2, "nora" },
         // fotografen
-        {"Er bildet ekte?",               TaskType.PHOTO,       "fotografen",      1, "nora"},
-        {"Redigerte bilder",              TaskType.PHOTO,       "fotografen",      1, "nora"},
-        {"Hvem er på bildet?",            TaskType.PHOTO,       "fotografen",      2, "nora"},
+        { "Er bildet ekte?", TaskType.PHOTO, "fotografen", 1, "nora" },
+        { "Redigerte bilder", TaskType.PHOTO, "fotografen", 1, "nora" },
+        { "Hvem er på bildet?", TaskType.PHOTO, "fotografen", 2, "nora" },
         // postkontoret
-        {"Er e-posten ekte?",             TaskType.EMAIL,       "postkontoret",    1, "nora"},
-        {"Utrygge e-poster",              TaskType.EMAIL,       "postkontoret",    1, "nora"},
-        {"Hvem sender e-posten?",         TaskType.EMAIL,       "postkontoret",    2, "nora"},
+        { "Er e-posten ekte?", TaskType.EMAIL, "postkontoret", 1, "nora" },
+        { "Utrygge e-poster", TaskType.EMAIL, "postkontoret", 1, "nora" },
+        { "Hvem sender e-posten?", TaskType.EMAIL, "postkontoret", 2, "nora" },
         // passordbanken
-        {"Lag et bra passord",            TaskType.PASSWORD,    "passordbanken",   1, "nora"},
-        {"Sterke passord",                TaskType.PASSWORD,    "passordbanken",   1, "nora"},
-        {"Husk passordet ditt",           TaskType.PASSWORD,    "passordbanken",   2, "nora"},
+        { "Lag et bra passord", TaskType.PASSWORD, "passordbanken", 1, "nora" },
+        { "Sterke passord", TaskType.PASSWORD, "passordbanken", 1, "nora" },
+        { "Husk passordet ditt", TaskType.PASSWORD, "passordbanken", 2, "nora" },
         // markedsplassen
-        {"Trygg handel",                  TaskType.MARKETPLACE, "markedsplassen",  1, "tri"},
-        {"Falske annonser",               TaskType.MARKETPLACE, "markedsplassen",  1, "tri"},
-        {"Kjop trygt",                    TaskType.MARKETPLACE, "markedsplassen",  2, "tri"},
+        { "Trygg handel", TaskType.MARKETPLACE, "markedsplassen", 1, "tri" },
+        { "Falske annonser", TaskType.MARKETPLACE, "markedsplassen", 1, "tri" },
+        { "Kjop trygt", TaskType.MARKETPLACE, "markedsplassen", 2, "tri" },
         // sosialen
-        {"Personvern",                    TaskType.SOCIAL,      "sosialen",        1, "anine"},
-        {"Vær snill på nett",             TaskType.SOCIAL,      "sosialen",        1, "anine"},
-        {"Del med omhu",                  TaskType.SOCIAL,      "sosialen",        2, "anine"},
+        { "Personvern", TaskType.SOCIAL, "sosialen", 1, "anine" },
+        { "Vær snill på nett", TaskType.SOCIAL, "sosialen", 1, "anine" },
+        { "Del med omhu", TaskType.SOCIAL, "sosialen", 2, "anine" },
         // datasenteret
-        {"Beskyt informasjon",            TaskType.BOSS,        "datasenteret",    2, "nora"},
-        {"Sikker backup",                 TaskType.BOSS,        "datasenteret",    2, "anine"},
-        {"Datadetektiv-mester",           TaskType.BOSS,        "datasenteret",    3, "gustav"},
+        { "Beskyt informasjon", TaskType.BOSS, "datasenteret", 2, "nora" },
+        { "Sikker backup", TaskType.BOSS, "datasenteret", 2, "anine" },
+        { "Datadetektiv-mester", TaskType.BOSS, "datasenteret", 3, "gustav" },
     };
 
     Classroom class1 = classrooms.get("class1");
@@ -264,39 +265,39 @@ private void seedTasks() {
   }
 
   // -----------------------------------------------------------------------
-  // Students  (one classroom each — unique constraint enforced by DB)
+  // Students (one classroom each — unique constraint enforced by DB)
   // -----------------------------------------------------------------------
 
   private void seedStudents() {
     // {email, displayName, key} - funny tech-loaded purpose names for kids app
     String[][] data = {
         // Developers with tech-funny loaded purpose names
-        {"siljelund@nettdetektivene.no",  "Silje Sjerm-monitoren",     "siljelund"},
-        {"segward@nettdetektivene.no",   "Segward System-sjefen",     "segward"},
-        {"aninstan@nettdetektivene.no",  "Anine App-arkitekten",      "aninstan"},
-        {"regine@nettdetektivene.no",    "Regine Router-ridderen",    "regine"},
-        {"vetleni@nettdetektivene.no",   "Vetle Vits-mesteren",      "vetleni"},
+        { "siljelund@nettdetektivene.no", "Silje Sjerm-monitoren", "siljelund" },
+        { "segward@nettdetektivene.no", "Segward System-sjefen", "segward" },
+        { "aninstan@nettdetektivene.no", "Anine App-arkitekten", "aninstan" },
+        { "regine@nettdetektivene.no", "Regine Router-ridderen", "regine" },
+        { "vetleni@nettdetektivene.no", "Vetle Vits-mesteren", "vetleni" },
         // Instructors as students for testing (tech versions)
-        {"tri-student@nettdetektivene.no",   "Tri Tech-trollkarlen",    "tri-student"},
-        {"gustav-student@nettdetektivene.no", "Gustav GPU-guruen",      "gustav-student"},
-        {"nora-student@nettdetektivene.no",  "Nora Nett-bytteren",     "nora-student"},
-        {"anine-student@nettdetektivene.no",  "Anine Algo-angriperen",  "anine-student"},
+        { "tri-student@nettdetektivene.no", "Tri Tech-trollkarlen", "tri-student" },
+        { "gustav-student@nettdetektivene.no", "Gustav GPU-guruen", "gustav-student" },
+        { "nora-student@nettdetektivene.no", "Nora Nett-bytteren", "nora-student" },
+        { "anine-student@nettdetektivene.no", "Anine Algo-angriperen", "anine-student" },
         // Arsenal players - Bottle FC (tech-loaded purpose)
-        {"saka@nettdetektivene.no",      "Saka Sikkerhets-kjorer",    "saka"},
-        {"odegaard@nettdetektivene.no",  "Odegaard Online-opptreder", "odegaard"},
-        {"rice@nettdetektivene.no",      "Rice RAM-rederen",          "rice"},
-        {"saliba@nettdetektivene.no",    "Saliba Sentinel-sjefen",    "saliba"},
-        {"gabriel@nettdetektivene.no",   "Gabriel Gigabyte-gardisten","gabriel"},
-        {"partey@nettdetektivene.no",    "Partey Port-vakten",        "partey"},
-        {"martinelli@nettdetektivene.no", "Martinelli Melding-mesteren","martinelli"},
+        { "saka@nettdetektivene.no", "Saka Sikkerhets-kjorer", "saka" },
+        { "odegaard@nettdetektivene.no", "Odegaard Online-opptreder", "odegaard" },
+        { "rice@nettdetektivene.no", "Rice RAM-rederen", "rice" },
+        { "saliba@nettdetektivene.no", "Saliba Sentinel-sjefen", "saliba" },
+        { "gabriel@nettdetektivene.no", "Gabriel Gigabyte-gardisten", "gabriel" },
+        { "partey@nettdetektivene.no", "Partey Port-vakten", "partey" },
+        { "martinelli@nettdetektivene.no", "Martinelli Melding-mesteren", "martinelli" },
         // Tottenham players - Relegation FC (Spurs) - tech-loaded purpose
-        {"son@nettdetektivene.no",       "Son Server-sjefen",        "son"},
-        {"kane@nettdetektivene.no",      "Kane Koden",               "kane"},
-        {"maddison@nettdetektivene.no",  "Maddison Malware-motstander","maddison"},
-        {"romero@nettdetektivene.no",    "Romero ROM-rappfoten",      "romero"},
-        {"porro@nettdetektivene.no",     "Porro Proxy-politiet",     "porro"},
-        {"udogie@nettdetektivene.no",    "Udogie USB-borgeren",      "udogie"},
-        {"bissouma@nettdetektivene.no",  "Bissouma Brannmur-beretningen","bissouma"},
+        { "son@nettdetektivene.no", "Son Server-sjefen", "son" },
+        { "kane@nettdetektivene.no", "Kane Koden", "kane" },
+        { "maddison@nettdetektivene.no", "Maddison Malware-motstander", "maddison" },
+        { "romero@nettdetektivene.no", "Romero ROM-rappfoten", "romero" },
+        { "porro@nettdetektivene.no", "Porro Proxy-politiet", "porro" },
+        { "udogie@nettdetektivene.no", "Udogie USB-borgeren", "udogie" },
+        { "bissouma@nettdetektivene.no", "Bissouma Brannmur-beretningen", "bissouma" },
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -339,9 +340,11 @@ private void seedTasks() {
   }
 
   private void enroll(User student, Classroom classroom) {
-    if (student == null || classroom == null) return;
+    if (student == null || classroom == null)
+      return;
     ClassroomStudentId id = new ClassroomStudentId(classroom.getId(), student.getId());
-    if (classroomStudentRepository.existsById(id)) return;
+    if (classroomStudentRepository.existsById(id))
+      return;
     if (classroomStudentRepository.findByUser(student).isPresent()) {
       log.debug("Student {} already enrolled in a classroom, skipping", student.getDisplayName());
       return;
@@ -376,7 +379,8 @@ private void seedTasks() {
     // Star developers in class1: all 18 tasks, score 95-100
     for (String key : List.of("siljelund", "segward")) {
       User u = users.get(key);
-      if (hasAttempts(u.getId(), class1Id)) continue;
+      if (hasAttempts(u.getId(), class1Id))
+        continue;
       for (int i = 0; i < allTasks.size(); i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), class1Id, 95 + (i % 5));
       }
@@ -393,7 +397,8 @@ private void seedTasks() {
     // Medium developers in class2: first 8 tasks, score 75-85
     for (String key : List.of("regine", "vetleni")) {
       User u = users.get(key);
-      if (hasAttempts(u.getId(), class2Id)) continue;
+      if (hasAttempts(u.getId(), class2Id))
+        continue;
       for (int i = 0; i < 8; i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), class2Id, 75 + (i % 11));
       }
@@ -402,7 +407,8 @@ private void seedTasks() {
     // Early starter instructors in class3: first 3 tasks
     for (String key : List.of("tri-student", "gustav-student")) {
       User u = users.get(key);
-      if (hasAttempts(u.getId(), class3Id)) continue;
+      if (hasAttempts(u.getId(), class3Id))
+        continue;
       for (int i = 0; i < 3; i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), class3Id, 85);
       }
@@ -454,32 +460,52 @@ private void seedTasks() {
   // Notebook entries
   // -----------------------------------------------------------------------
 
-private void seedNotebookEntries() {
+  private void seedNotebookEntries() {
     Classroom class1 = classrooms.get("class1");
     Classroom class2 = classrooms.get("class2");
     Classroom class3 = classrooms.get("class3");
 
     Object[][] entries = {
         // class1 - 5A - Datadetektiver (real developers)
-        {class1, "siljelund",   "nyhetskvartalet", "Jeg hoerte at falske nyheter ofte har morsomme overskrifter. Naa sjekker jeg alltid kilden!", generateAutoNotes("nyhetskvartalet")},
-        {class1, "siljelund",   "fotografen",      "Det var lett aa endre bilder! Jeg skal vre mer kritisk fremover.", generateAutoNotes("fotografen")},
-        {class1, "segward",     "postkontoret",    "Noen e-poster ser veldig ekte ut. Jeg sjekker alltid avsenderadresse naa.", generateAutoNotes("postkontoret")},
-        {class1, "segward",     "passordbanken",   "Passord maa vaere sterke! Jeg husker ikke mine bra passord lenger.", generateAutoNotes("passordbanken")},
-        {class1, "segward",     "markedsplassen",  "Falske annonser er vanskelige aa se! Jeg sjekker alltid rating naa.", generateAutoNotes("markedsplassen")},
-        {class1, "segward",     "sosialen",        "Alt jeg skriver paa internett blir der. Det er litt skummelt!", generateAutoNotes("sosialen")},
-        {class1, "aninstan",    "nyhetskvartalet", "Noen ting du leser paa nettet er ikke sanne!", generateAutoNotes("nyhetskvartalet")},
-        {class1, "aninstan",    "fotografen",      "Bilder kan endres med apper.", generateAutoNotes("fotografen")},
-        {class1, "aninstan",    "postkontoret",    "Personlige e-poster kan stjele passord.", generateAutoNotes("postkontoret")},
-        {class1, "aninstan",    "passordbanken",   "Bruk tall og bokstaver i passord.", generateAutoNotes("passordbanken")},
+        { class1, "siljelund", "nyhetskvartalet",
+            "Jeg hoerte at falske nyheter ofte har morsomme overskrifter. Naa sjekker jeg alltid kilden!",
+            generateAutoNotes("nyhetskvartalet") },
+        { class1, "siljelund", "fotografen", "Det var lett aa endre bilder! Jeg skal vre mer kritisk fremover.",
+            generateAutoNotes("fotografen") },
+        { class1, "segward", "postkontoret",
+            "Noen e-poster ser veldig ekte ut. Jeg sjekker alltid avsenderadresse naa.",
+            generateAutoNotes("postkontoret") },
+        { class1, "segward", "passordbanken", "Passord maa vaere sterke! Jeg husker ikke mine bra passord lenger.",
+            generateAutoNotes("passordbanken") },
+        { class1, "segward", "markedsplassen", "Falske annonser er vanskelige aa se! Jeg sjekker alltid rating naa.",
+            generateAutoNotes("markedsplassen") },
+        { class1, "segward", "sosialen", "Alt jeg skriver paa internett blir der. Det er litt skummelt!",
+            generateAutoNotes("sosialen") },
+        { class1, "aninstan", "nyhetskvartalet", "Noen ting du leser paa nettet er ikke sanne!",
+            generateAutoNotes("nyhetskvartalet") },
+        { class1, "aninstan", "fotografen", "Bilder kan endres med apper.", generateAutoNotes("fotografen") },
+        { class1, "aninstan", "postkontoret", "Personlige e-poster kan stjele passord.",
+            generateAutoNotes("postkontoret") },
+        { class1, "aninstan", "passordbanken", "Bruk tall og bokstaver i passord.",
+            generateAutoNotes("passordbanken") },
         // class2 - 6B - Nettvett (real developers)
-        {class2, "regine",      "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden.", generateAutoNotes("nyhetskvartalet")},
-        {class2, "regine",      "fotografen",      "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå.", generateAutoNotes("fotografen")},
-        {class2, "vetleni",     "postkontoret",    "Phishing er vanskeligere å oppdage enn jeg trodde.", generateAutoNotes("postkontoret")},
-        {class2, "vetleni",     "passordbanken",   "Et sterkt passord er første forsvarslinje. Byttet alle passord!", generateAutoNotes("passordbanken")},
+        { class2, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden.",
+            generateAutoNotes("nyhetskvartalet") },
+        { class2, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå.",
+            generateAutoNotes("fotografen") },
+        { class2, "vetleni", "postkontoret", "Phishing er vanskeligere å oppdage enn jeg trodde.",
+            generateAutoNotes("postkontoret") },
+        { class2, "vetleni", "passordbanken", "Et sterkt passord er første forsvarslinje. Byttet alle passord!",
+            generateAutoNotes("passordbanken") },
         // class3 - 7C - Sikker paa nett (instructors as students)
-        {class3, "tri-student", "nyhetskvartalet", "Falske nyheter sprer seg fort paa sosiale medier. Lærte teknikker for faktasjekk.", generateAutoNotes("nyhetskvartalet")},
-        {class3, "tri-student", "fotografen",      "Bildeanalyse er viktigere enn jeg trodde. AI-genererte bilder er技 vanskelige!", generateAutoNotes("fotografen")},
-        {class3, "gustav-student", "postkontoret", "Phishing-angrep blir stadig mer sofistikerte. Dobbeltsjekk alltid!", generateAutoNotes("postkontoret")},
+        { class3, "tri-student", "nyhetskvartalet",
+            "Falske nyheter sprer seg fort paa sosiale medier. Lærte teknikker for faktasjekk.",
+            generateAutoNotes("nyhetskvartalet") },
+        { class3, "tri-student", "fotografen",
+            "Bildeanalyse er viktigere enn jeg trodde. AI-genererte bilder er技 vanskelige!",
+            generateAutoNotes("fotografen") },
+        { class3, "gustav-student", "postkontoret",
+            "Phishing-angrep blir stadig mer sofistikerte. Dobbeltsjekk alltid!", generateAutoNotes("postkontoret") },
     };
 
     for (Object[] row : entries) {
@@ -489,7 +515,8 @@ private void seedNotebookEntries() {
       boolean exists = notebookEntryRepository
           .findByClassroom_IdAndUser_Id(classroom.getId(), student.getId())
           .stream().anyMatch(e -> stopLocation.equals(e.getStopLocation()));
-      if (exists) continue;
+      if (exists)
+        continue;
       notebookEntryRepository.save(NotebookEntry.builder()
           .user(student)
           .classroom(classroom)
@@ -503,24 +530,26 @@ private void seedNotebookEntries() {
 
   private String generateAutoNotes(String stopLocation) {
     return switch (stopLocation) {
-      case "nyhetskvartalet" -> """
-          {
-            "key_concepts": ["kildehenvisninger", "forfattere", "datoer", "overskrifter"],
-            "tips": ["Sjekk alltid hvem som har skrevet artikkelen", "Vær skeptisk til sansomlige nettsteder", "Se etter service panels og om-oss"],
-            "resources": ["https://faktisk.no", "https://sok.dagbladet.no/faktiskhet"],
-            "hints_used": 2,
-            "time_spent": 450
-          }
-          """;
-      case "fotografen" -> """
-          {
-            "image_analysis": ["Se på lyskilder og skygger", "Sjekk for inkonsistenser", "Vær ekstra kritisk til AI-genererte bilder"],
-            "indicators": ["For mange fingre", "Unaturlige teksturer", "Fantastisk elementer"],
-            "verification": ["Bruk Google Images for reverse bilde-søk", "Sjekk metadata hvis tilgjengelig"],
-            "hints_used": 1,
-            "time_spent": 380
-          }
-          """;
+      case "nyhetskvartalet" ->
+        """
+            {
+              "key_concepts": ["kildehenvisninger", "forfattere", "datoer", "overskrifter"],
+              "tips": ["Sjekk alltid hvem som har skrevet artikkelen", "Vær skeptisk til sansomlige nettsteder", "Se etter service panels og om-oss"],
+              "resources": ["https://faktisk.no", "https://sok.dagbladet.no/faktiskhet"],
+              "hints_used": 2,
+              "time_spent": 450
+            }
+            """;
+      case "fotografen" ->
+        """
+            {
+              "image_analysis": ["Se på lyskilder og skygger", "Sjekk for inkonsistenser", "Vær ekstra kritisk til AI-genererte bilder"],
+              "indicators": ["For mange fingre", "Unaturlige teksturer", "Fantastisk elementer"],
+              "verification": ["Bruk Google Images for reverse bilde-søk", "Sjekk metadata hvis tilgjengelig"],
+              "hints_used": 1,
+              "time_spent": 380
+            }
+            """;
       case "postkontoret" -> """
           {
             "cybersecurity": ["To-faktor-autentisering", "Sårbar passordpolitikk", "Phishing-angrep"],
@@ -582,19 +611,21 @@ private void seedNotebookEntries() {
   private void seedAchievements() {
     // {title, description, icon, triggerType, triggerRef}
     String[][] data = {
-        {"Første Oppgave",     "Fullfør din første oppgave",                    "🎯", "task_completed",      "first_task"},
-        {"Nyhetsjeger",        "Fullfør alle oppgaver i Nyhetskvartalet",        "📰", "location_completed",  "nyhetskvartalet"},
-        {"Fotoproff",          "Fullfør alle oppgaver hos Fotografen",            "📸", "location_completed",  "fotografen"},
-        {"Datamester",         "Fullfør alle oppgaver i Datasenteret",            "💻", "location_completed",  "datasenteret"},
-        {"Ukens Mysterium",    "Fullfør ukens mysterium",                         "🔍", "ukens_mysterium",     ""},
-        {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
-        {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
-        {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},
-        {"Perfekt Score",      "Få 100 poeng på en oppgave",                     "💯", "perfect_score",       "100_points"},
+        { "Første Oppgave", "Fullfør din første oppgave", "🎯", "task_completed", "first_task" },
+        { "Nyhetsjeger", "Fullfør alle oppgaver i Nyhetskvartalet", "📰", "location_completed", "nyhetskvartalet" },
+        { "Fotoproff", "Fullfør alle oppgaver hos Fotografen", "📸", "location_completed", "fotografen" },
+        { "Datamester", "Fullfør alle oppgaver i Datasenteret", "💻", "location_completed", "datasenteret" },
+        { "Ukens Mysterium", "Fullfør ukens mysterium", "🔍", "ukens_mysterium", "" },
+        { "Sikkerhetsmester", "Fullfør alle oppgaver i et klasserom", "🏆", "all_tasks_completed", "classroom" },
+        { "Plettfri Detektiv", "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",
+            "classroom" },
+        { "Aldri Gi Opp", "Feil 10 oppgaveforsøk", "💪", "tasks_failed", "10" },
+        { "Perfekt Score", "Få 100 poeng på en oppgave", "💯", "perfect_score", "100_points" },
     };
 
     for (String[] row : data) {
-      if (achievementRepository.existsByTitle(row[0])) continue;
+      if (achievementRepository.existsByTitle(row[0]))
+        continue;
       achievementRepository.save(Achievement.builder()
           .title(row[0])
           .descAch(row[1])
@@ -672,23 +703,24 @@ private void seedNotebookEntries() {
     log.info("User achievements seeding complete");
   }
 
-  private void awardAchievements(User user, Classroom classroom, List<Achievement> achievements, List<String> achievementTitles) {
+  private void awardAchievements(User user, Classroom classroom, List<Achievement> achievements,
+      List<String> achievementTitles) {
     for (String achievementTitle : achievementTitles) {
       achievements.stream()
-        .filter(a -> a.getTitle().equals(achievementTitle))
-        .findFirst()
-        .ifPresent(achievement -> {
-          UserAchievementId id = new UserAchievementId(user.getId(), achievement.getId());
-          if (!userAchievementRepository.existsById(id)) {
-            userAchievementRepository.save(UserAchievement.builder()
-                .id(id)
-                .user(user)
-                .achievement(achievement)
-                .classroom(classroom)
-                .build());
-            log.info("Awarded '{}' to {}", achievementTitle, user.getDisplayName());
-          }
-        });
+          .filter(a -> a.getTitle().equals(achievementTitle))
+          .findFirst()
+          .ifPresent(achievement -> {
+            UserAchievementId id = new UserAchievementId(user.getId(), achievement.getId());
+            if (!userAchievementRepository.existsById(id)) {
+              userAchievementRepository.save(UserAchievement.builder()
+                  .id(id)
+                  .user(user)
+                  .achievement(achievement)
+                  .classroom(classroom)
+                  .build());
+              log.info("Awarded '{}' to {}", achievementTitle, user.getDisplayName());
+            }
+          });
     }
   }
 
@@ -745,7 +777,8 @@ private void seedNotebookEntries() {
     log.info("Instructors  : 4 (Nora, Tri, Anine, Gustav)");
     log.info("Classrooms   : {} classrooms with 18 tasks each", classrooms.size());
     log.info("Tasks        : {} tasks (all stops)", allTasks.size());
-    long studentsCount = users.entrySet().stream().filter(e -> !List.of("nora", "tri", "anine", "gustav").contains(e.getKey())).count();
+    long studentsCount = users.entrySet().stream()
+        .filter(e -> !List.of("nora", "tri", "anine", "gustav").contains(e.getKey())).count();
     log.info("Students     : {} students across classrooms", studentsCount);
     log.info("");
     log.info("LOGIN (password: password123)");
@@ -761,7 +794,8 @@ private void seedNotebookEntries() {
       long siljelundAchievements = userAchievementRepository.findByUserId(siljelund.getId()).size();
       long siljelundNotebooks = notebookEntryRepository
           .findByClassroom_IdAndUser_Id(classrooms.get("class1").getId(), siljelund.getId()).size();
-      log.info("  Silje Sjerm-monitoren: {} achievements, {} notebook entries", siljelundAchievements, siljelundNotebooks);
+      log.info("  Silje Sjerm-monitoren: {} achievements, {} notebook entries", siljelundAchievements,
+          siljelundNotebooks);
     }
     User segward = users.get("segward");
     if (segward != null) {
@@ -792,16 +826,17 @@ private void seedNotebookEntries() {
         "son", "kane", "maddison", "romero", "porro", "udogie", "bissouma");
     for (String key : studentKeys) {
       User student = users.get(key);
-      if (student == null) continue;
+      if (student == null)
+        continue;
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
       if (membership == null) {
         log.error("  ERROR: Student {} has no classroom membership!", key);
       } else {
         log.info("  Student {} -> Classroom: {}, isAllowed: {}, DisplayName: {}",
-                 student.getDisplayName(),
-                 membership.getClassroom().getTitle(),
-                 membership.isAllowed(),
-                 membership.getDisplayName());
+            student.getDisplayName(),
+            membership.getClassroom().getTitle(),
+            membership.isAllowed(),
+            membership.getDisplayName());
       }
     }
     log.info("Enrollment verification complete.");
@@ -837,13 +872,13 @@ private void seedNotebookEntries() {
     // Week 48, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Jeg lærte at ikke alle bilder på nettet er ekte! Noen er laget av kunstig intelligens.",
-        "https://example.com/bilde1.jpg", 48, 2025, true,
+        "https://www.medietilsynet.no/digitale-medier/skole/deepfakes/fra-goy-til-guffent-pa-et-oyeblikk/", 48, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 48, 2025 - segward approved
     createMysterySubmissionWithStatus(users.get("segward"), class1,
         "Funnet en nettside som ser ekte ut, men har falske nyheter!",
-        "https://example.com/nettside2.jpg", 48, 2025, false,
+        "https://snl.no/falske_nyheter", 48, 2025, false,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 49, 2025 - aninstan rejected
@@ -855,7 +890,7 @@ private void seedNotebookEntries() {
     // Week 50, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Phishing e-poster kan se veldig ekte ut. Sjekk alltid avsender!",
-        "https://example.com/phishing1.jpg", 50, 2025, true,
+        "https://snl.no/phishing", 50, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 51, 2025 - segward pending
@@ -866,7 +901,7 @@ private void seedNotebookEntries() {
     // Week 52, 2025 - aninstan approved
     createMysterySubmissionWithStatus(users.get("aninstan"), class1,
         "Jeg oppdaget en falske butikk paa nettet som solgte dyre varer billig!",
-        "https://example.com/butikk1.jpg", 52, 2025, false,
+        "https://snl.no/nettsvindel", 52, 2025, false,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // === CURRENT WEEK (Week 1-2, 2026) ===
@@ -882,35 +917,37 @@ private void seedNotebookEntries() {
     if (class4 != null && users.get("saka") != null) {
       createPendingMysterySubmission(users.get("saka"), class4,
         "Fotballspillere far mye personlig info pa nettet. Hvordan kan vi beskytte oss?",
-        "https://example.com/fotball1.jpg", 2, 2026, false);
+        null, 2, 2026, false);
     }
 
-    // Week 2, 2026 - Arsenal player approved
+    // Week 2, 2026 - Arsenal player approved & featured
     if (class4 != null && users.get("odegaard") != null) {
       User triInstructor = users.get("tri");
       createMysterySubmissionWithStatus(users.get("odegaard"), class4,
         "Det er mange falske profiler som later som aa være kjendiser pa sosiale medier!",
-        "https://example.com/sosial1.jpg", 2, 2026, true,
+        "https://snl.no/nettsvindel", 2, 2026, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, triInstructor);
     }
 
-    // Week 2, 2026 - Tottenham player rejected
-    if (class5 != null && users.get("kane") != null) {
-      User anineInstructor = users.get("anine");
-      createMysterySubmissionWithStatus(users.get("kane"), class5,
+  // Week 2, 2026 - Tottenham player rejected
+  if(class5!=null&&users.get("kane")!=null)
+  {
+    User anineInstructor = users.get("anine");
+    createMysterySubmissionWithStatus(users.get("kane"), class5,
         "Er det trygt aa trykke pa alle lenker i e-post?",
         null, 2, 2026, false,
         ntnu.no.backend.model.enums.MysteryStatus.REJECTED, anineInstructor);
-    }
+  }
 
-    // Week 2, 2026 - Tottenham player pending
-    if (class5 != null && users.get("son") != null) {
+  // Week 2, 2026 - Tottenham player pending
+  if(class5!=null&&users.get("son")!=null)
+  {
       createPendingMysterySubmission(users.get("son"), class5,
         "Jeg fikk en e-post som sa at jeg hadde vunnet i lotto, men jeg ikke spiller lotto!",
-        "https://example.com/lotto1.jpg", 2, 2026, false);
+        "https://snl.no/nettfiske", 2, 2026, false);
     }
 
-    log.info("Mystery submissions seeded");
+  log.info("Mystery submissions seeded");
   }
 
   private void createMysterySubmissionWithStatus(User student, Classroom classroom, String description,

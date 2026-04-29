@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
-import ClassroomService from '@/services/ClassroomService'
 import MysteryService from '@/services/MysteryService'
-import { useStudentStore } from '@/stores/StudentStore'
 import type { MysteryStatus, MysterySubmissionResponseDTO } from '@/types'
 
-const studentStore = useStudentStore()
+const router = useRouter()
+const route = useRoute()
 const categories = ['Falsk nyhet', 'Manipulert bilde', 'Mistenkelig nettside']
-const classroomId = ref<string | null>(studentStore.classroomId)
+const classroomId = computed(() => String(route.params.classroomId))
 const selectedCategory = ref(categories[0])
 const exampleUrl = ref('')
 const description = ref('')
@@ -22,7 +22,7 @@ const successMessage = ref('')
 const currentWeek = computed(() => submissions.value[0]?.weekNumber ?? featuredSubmission.value?.weekNumber ?? getIsoWeek(new Date()))
 const weeklyPrompt = computed(() => featuredSubmission.value?.mysDesc || 'Har du sett en falsk nyhet på nettet denne uken?')
 const visibleSubmissions = computed(() => [...submissions.value].sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt)).slice(0, 4))
-const canSubmit = computed(() => Boolean(classroomId.value && selectedCategory.value && description.value.trim()))
+const canSubmit = computed(() => Boolean(selectedCategory.value && description.value.trim()))
 
 onMounted(loadMysteryData)
 
@@ -30,14 +30,6 @@ async function loadMysteryData() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    if (!classroomId.value) {
-      const classrooms = await ClassroomService.getMyClassrooms()
-      classroomId.value = classrooms[0]?.id ?? null
-    }
-    if (!classroomId.value) {
-      errorMessage.value = 'Fant ikke klasserommet ditt.'
-      return
-    }
     const [mine, featured] = await Promise.all([
       MysteryService.getMySubmissions(classroomId.value),
       MysteryService.getFeaturedSubmission(classroomId.value),
@@ -52,7 +44,7 @@ async function loadMysteryData() {
 }
 
 async function submitMystery() {
-  if (!classroomId.value || !canSubmit.value) return
+  if (!canSubmit.value) return
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -97,7 +89,7 @@ function getIsoWeek(date: Date) {
 </script>
 
 <template>
-  <SceneComponent title="Ukens Mysterium" previous="/student-home" background="/NyhetskvartaletBackground.png">
+  <SceneComponent title="Ukens Mysterium" background="/NyhetskvartaletBackground.png" @previous="router.back()">
     <main class="mystery-page">
       <section class="mystery-layout">
         <div class="left-column">
