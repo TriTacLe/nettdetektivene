@@ -97,12 +97,6 @@ const router = createRouter({
       component: () => import('../views/teacher/TeacherSettingsView.vue'),
     },
     {
-      path: '/classroom-overview',
-      name: 'classroom-overview',
-      component: () => import('../views/teacher/ClassroomOverviewView.vue'),
-      // beforeEnter: requireTeacher,
-    },
-    {
       path: '/classroom/new',
       name: 'create-classroom',
       component: () => import('../views/teacher/CreateClassroomView.vue'),
@@ -113,11 +107,6 @@ const router = createRouter({
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
       // beforeEnter: requireTeacher,
-    },
-    {
-      path: '/classroom/:id/tasks',
-      name: 'classroom-tasks',
-      component: () => import('../views/teacher/ClassroomTasksView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',

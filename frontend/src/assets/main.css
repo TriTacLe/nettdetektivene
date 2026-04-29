@@ -197,6 +197,55 @@ button:not(.btn-bare):disabled,
   padding: 0 0.4rem;
 }
 
+/* Two-column dashboard layout used by TeacherHome and ClassroomDetail:
+   main content on the left, persistent menu column docked to the right
+   edge of the viewport. Collapses to a single column on narrow screens
+   with the menu floated above the main content. */
+.scene-split-layout {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 1rem 16rem 2rem 1.5rem;
+}
+.scene-split-grid {
+  display: block;
+  width: 100%;
+  max-width: 60rem;
+}
+.scene-split-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+.scene-split-side {
+  position: fixed;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+@media (max-width: 768px) {
+  .scene-split-layout {
+    padding: 1rem 1rem 2rem;
+  }
+  .scene-split-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .scene-split-side {
+    position: static;
+    transform: none;
+    order: -1;
+    align-items: stretch;
+    margin-bottom: 1rem;
+  }
+}
+
 /* Sizing helpers shared by the three teacher "overview" pages
    (ClassroomOverview, ClassroomStudentsView, ClassroomTasksView).
    Big primary "+ create" button at the top, and chunky action

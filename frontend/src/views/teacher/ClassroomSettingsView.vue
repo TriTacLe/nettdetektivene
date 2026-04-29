@@ -14,7 +14,7 @@ async function deleteClassroom() {
   if (!confirm('Er du sikker på at du vil slette klasserommet? Dette kan ikke angres.')) return
   try {
     await ClassroomService.deleteClassroom(classroomId)
-    router.push({ name: 'classroom-overview' })
+    router.push({ name: 'teacher-home' })
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Kunne ikke slette klasserommet'
   }
