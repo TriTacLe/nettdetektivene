@@ -13,7 +13,6 @@ on:
 
 jobs:
   test:
-    if: github.repository != 'OrbitNTNU/nettdetektivene'
     runs-on: ntnu-runners
 
     steps:
