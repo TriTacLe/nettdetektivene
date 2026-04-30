@@ -34,6 +34,12 @@ public interface TaskBestScoreRepository extends JpaRepository<TaskBestScore, Ta
       String stopLocation
   );
 
+  boolean existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+      UUID userId,
+      UUID taskId,
+      UUID classroomId
+  );
+
   @Query("SELECT bs.task.id FROM TaskBestScore bs " +
       "WHERE bs.user.id = :userId AND bs.firstPassedAt IS NOT NULL")
   List<UUID> findPassedTaskIdsByUserId(@Param("userId") UUID userId);

@@ -421,22 +421,20 @@ function formatTime(iso: string): string {
       <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 mt-6 bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 w-fit mx-auto">
         <button
           :disabled="currentPage === 1"
-          style="all: unset; cursor: pointer; font-weight: bold; color: white; font-size: 1rem;"
-          :style="currentPage === 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+          class="btn-bare text-white font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed"
           @click="setPage(currentPage - 1)"
         >
-          ←
+          &larr;
         </button>
         <span class="text-white text-sm font-medium px-3">
           Side {{ currentPage }} av {{ totalPages }}
         </span>
         <button
           :disabled="currentPage === totalPages"
-          style="all: unset; cursor: pointer; font-weight: bold; color: white; font-size: 1rem;"
-          :style="currentPage === totalPages ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+          class="btn-bare text-white font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed"
           @click="setPage(currentPage + 1)"
         >
-          →
+          &rarr;
         </button>
       </div>
     </div>
