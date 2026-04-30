@@ -1,7 +1,7 @@
 .PHONY: dev prod down clean logs status test test-backend test-frontend test-e2e test-coverage
 
 # configurable
-SERVICES_DEV = mysql backend
+SERVICES_DEV = mysql backend frontend
 SERVICES_PROD = mysql backend frontend
 
 # Dev
@@ -25,8 +25,26 @@ dev:
 	echo ""
 
 	@echo "Backend is up"
-	@echo "Backend: http://localhost:8080"
-	@echo "MySQL:   localhost:3307"
+
+	@echo "Waiting for frontend (http://localhost:5173)..."
+	@retries=30; \
+	until curl -s http://localhost:5173 >/dev/null 2>&1; do \
+		if [ $$retries -le 0 ]; then \
+			echo "Frontend did not become ready in time"; \
+			echo "Last frontend logs:"; \
+			docker compose logs --tail=50 frontend; \
+			exit 1; \
+		fi; \
+		printf "."; \
+		retries=$$((retries-1)); \
+		sleep 2; \
+	done; \
+	echo ""
+
+	@echo "Frontend is up"
+	@echo "Frontend: http://localhost:5173"
+	@echo "Backend:  http://localhost:8080"
+	@echo "MySQL:    localhost:3307"
 
 	@echo "Running factory.sh seed..."
 	@if [ -x scripts/factory.sh ]; then \
@@ -36,7 +54,7 @@ dev:
 	fi
 
 	@echo "Streaming logs (Ctrl+C to stop)..."
-	docker compose logs -f backend mysql
+	docker compose logs -f backend frontend mysql
 
 
 # Prod
