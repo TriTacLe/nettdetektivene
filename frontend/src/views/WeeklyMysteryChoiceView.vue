@@ -29,6 +29,10 @@ function handleChoose(choice: DialogChoice) {
 function handleDone() {
   router.push('/student-home')
 }
+
+function handleBack() {
+  router.push('/student-home')
+}
 </script>
 
 <template>
@@ -37,5 +41,6 @@ function handleDone() {
     :start-at-last-line="startAtLastLine"
     @choose="handleChoose"
     @done="handleDone"
+    @back="handleBack"
   />
 </template>
