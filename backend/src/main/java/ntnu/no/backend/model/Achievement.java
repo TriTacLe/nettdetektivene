@@ -61,6 +61,13 @@ public class Achievement extends BaseEntity {
   private String triggerRef;
 
   /**
+   * XP granted to a user the first time they earn this achievement.
+   * Applied automatically by {@code trg_user_achievement_xp}.
+   */
+  @Column(name = "xp_reward", nullable = false)
+  private int xpReward;
+
+  /**
    * Timestamp of when this achievement was created. Set once on persist.
    */
   @Column(name = "created_at", nullable = false, updatable = false)
