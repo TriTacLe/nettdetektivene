@@ -2,7 +2,6 @@ package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
@@ -42,7 +41,6 @@ import java.util.UUID;
  * @version 0.2
  * @since 0.1
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClassroomService {
@@ -305,40 +303,24 @@ public class ClassroomService {
     List<ClassroomStudent> approvedStudents = classroomStudentRepository
         .findAllByClassroomAndIsAllowedIsTrue(classroom);
 
-    log.info("[unlockNewTask] classroom={} newTask={} stop={} sortOrder={} earlierInStopCount={} globalPredecessor={} approvedStudents={}",
-        classroom.getId(), newTask.getTask().getId(), stopLocation, newTask.getSortOrder(),
-        earlierInStop.size(),
-        globalPredecessor == null ? "none" : globalPredecessor.getTask().getId(),
-        approvedStudents.size());
-
     for (ClassroomStudent student : approvedStudents) {
       UUID userId = student.getUser().getId();
 
       boolean shouldUnlock;
-      String reason;
       if (!earlierInStop.isEmpty()) {
-        long passedCount = earlierInStop.stream().filter(ct -> taskBestScoreRepository
+        shouldUnlock = earlierInStop.stream().allMatch(ct -> taskBestScoreRepository
             .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
-                userId, ct.getTask().getId(), classroom.getId()))
-            .count();
-        shouldUnlock = passedCount == earlierInStop.size();
-        reason = "perStop passed=" + passedCount + "/" + earlierInStop.size();
+                userId, ct.getTask().getId(), classroom.getId()));
       } else {
         shouldUnlock = globalPredecessor == null
             || taskBestScoreRepository
                 .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
                     userId, globalPredecessor.getTask().getId(), classroom.getId());
-        reason = "globalPredecessor=" + (globalPredecessor == null ? "none" : "passed=" + shouldUnlock);
       }
-
-      log.info("[unlockNewTask]   user={} shouldUnlock={} reason=\"{}\"", userId, shouldUnlock, reason);
 
       if (!shouldUnlock) continue;
       if (userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
-          userId, classroom.getId(), newTask.getTask().getId())) {
-        log.info("[unlockNewTask]   user={} already unlocked - skipping", userId);
-        continue;
-      }
+          userId, classroom.getId(), newTask.getTask().getId())) continue;
 
       userTaskUnlockedRepository.save(
           UserTaskUnlocked.builder()
@@ -349,7 +331,6 @@ public class ClassroomService {
               .unlockedAt(LocalDateTime.now())
               .build()
       );
-      log.info("[unlockNewTask]   user={} unlocked task={}", userId, newTask.getTask().getId());
     }
   }
 
