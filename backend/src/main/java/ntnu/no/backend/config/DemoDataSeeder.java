@@ -352,26 +352,43 @@ public class DemoDataSeeder implements CommandLineRunner {
     log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
   }
 
-  private String buildTaskContent(String title, TaskType type) {
+private String buildTaskContent(String title, TaskType type) {
     if (type == TaskType.NEWS) {
-      return switch (title) {
-        case "Hva er sant?" -> "{\"question\":\"Hvilken overskrift er fra en ekte nettavis?\",\"hint\":\"Sjekk nettadressen – ekte norske nyheter har kjente domener som nrk.no eller vg.no.\",\"articles\":[{\"imagePath\":\"https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500\",\"isReal\":true},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/d/d9/Example_bank_phishing_email.svg\",\"isReal\":false}]}";
-        case "Sjekk kilden" -> "{\"question\":\"Hvilken nyhet kommer fra en pålitelig kilde?\",\"hint\":\"Pålitelige kilder har tydelig forfatternavn, dato og lenke til originalen.\",\"articles\":[{\"imagePath\":\"https://images.unsplash.com/photo-1495020689067-958852a7765e?w=500\",\"isReal\":true},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/b/bd/Lottoscamimage1.jpg\",\"isReal\":false}]}";
-        case "Falske nyheter" -> "{\"question\":\"Klarer du å avsløre den falske nyheten?\",\"hint\":\"Falske nyheter bruker ofte dramatiske ord og mangler tydelig kilde.\",\"articles\":[{\"imagePath\":\"https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=500\",\"isReal\":true},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/a/a5/GAN_deepfake_white_girl.jpg\",\"isReal\":false}]}";
-        default -> "{\"question\":\"Hvilken av disse er ekte?\",\"hint\":\"Se nøye på detaljene.\",\"articles\":[{\"imagePath\":\"https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500\",\"isReal\":true},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/d/d9/Example_bank_phishing_email.svg\",\"isReal\":false}]}";
-      };
+      return """
+          {
+            "question": "Hvilken av disse nyhetene er ekte?",
+            "hint": "Se etter kildehenvisninger og datoer i artiklene.",
+            "articles": [
+              { "imagePath": "upload://fake-article-1.jpg", "isReal": false },
+              { "imagePath": "upload://real-article-1.png", "isReal": true }
+            ]
+          }
+          """;
     }
     if (type == TaskType.PHOTO) {
-      return switch (title) {
-        case "Er bildet ekte?" -> "{\"description\":\"Er disse bildene ekte fotografier eller laget av kunstig intelligens?\",\"hint\":\"AI-bilder har ofte urealistiske detaljer som rare ører, uskarp bakgrunn eller rare hender.\",\"alternatives\":[{\"imagePath\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400\",\"correctType\":\"ekte\"},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/a/a5/GAN_deepfake_white_girl.jpg\",\"correctType\":\"ai-generert\"}]}";
-        case "Redigerte bilder" -> "{\"description\":\"Hvilke av disse bildene er ekte og hvilke er redigert?\",\"hint\":\"Se etter urealistiske kanter, unaturlig lys eller detaljer som ikke stemmer.\",\"alternatives\":[{\"imagePath\":\"https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400\",\"correctType\":\"ekte\"},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/f/f2/Male_and_female_deepfake.jpg\",\"correctType\":\"manipulert\"}]}";
-        case "Hvem er på bildet?" -> "{\"description\":\"Er disse personene virkelige eller laget av en datamaskin?\",\"hint\":\"AI-genererte ansikter mangler ofte naturlige asymmetrier og detaljer i ørene.\",\"alternatives\":[{\"imagePath\":\"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400\",\"correctType\":\"ekte\"},{\"imagePath\":\"https://upload.wikimedia.org/wikipedia/commons/a/a5/GAN_deepfake_white_girl.jpg\",\"correctType\":\"ai-generert\"}]}";
-        default -> "{\"description\":\"Er dette bildet ekte?\",\"hint\":\"Se nøye på detaljene.\",\"alternatives\":[{\"imagePath\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400\",\"correctType\":\"ekte\"}]}";
-      };
+      return """
+          {
+            "description": "Hvilken type bilde er dette?",
+            "alternatives": [
+              { "imagePath": "upload://real-photo-1.jpeg", "description": "Bilde av en by ved solnedgang", "correctType": "ekte",
+                "begrunnelser": ["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"] },
+              { "imagePath": "upload://fake-photo-1.jpg",  "description": "Portrett av en person utendørs", "correctType": "ai-generert",
+                "begrunnelser": ["Urealistiske detaljer i bakgrunnen","Feil antall fingre","Unaturlig tekstur på huden"] },
+              { "imagePath": "upload://fake-photo-1.jpg",  "description": "Folkemengde på et torg", "correctType": "manipulert",
+                "begrunnelser": ["Inkonsistente skygger","Synlig kloning av personer","Feil perspektiv"] }
+            ]
+}
+           """;
     }
-    return "{\"description\":\"" + title + "\"}";
+    return """
+        {
+          "description": "%s"
+        }
+        """.formatted(title);
   }
 
+  // -----------------------------------------------------------------------
+  // Task attempts — via sp_submit_attempt so trg_attempt_sync fires
   // -----------------------------------------------------------------------
   // Task attempts — via sp_submit_attempt so trg_attempt_sync fires
   // -----------------------------------------------------------------------

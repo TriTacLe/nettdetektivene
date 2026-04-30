@@ -12,10 +12,7 @@ import {
   getAchievementsForStudentOptions,
   getAllAchievementsOptions,
 } from '@/generated-client/@tanstack/vue-query.gen.ts'
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/dev
 
 const route = useRoute()
 const classroomId = route.params.id as string
