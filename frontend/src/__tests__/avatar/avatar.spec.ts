@@ -5,6 +5,7 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { createTestingPinia } from '@pinia/testing'
 import { parseAvatarConfig } from '../../utils/avatar'
 import { DEFAULT_AVATAR_CONFIG } from '../../types/avatar'
+import type { AvatarConfig } from '../../types/avatar'
 import AvatarEditor from '../../components/avatar/AvatarEditor.vue'
 
 vi.mock('@/components/SceneComponent.vue', () => ({
@@ -176,6 +177,52 @@ describe('AvatarEditor', () => {
     const hatGroup = groups.find((g) => g.attributes('aria-label') === 'Hatt')
     expect(hatGroup).toBeTruthy()
     expect(hatGroup!.findAll('[role="radio"]')).toHaveLength(4)
+  })
+
+  it('hides categories listed in hideCategories', () => {
+    const wrapper = mount(AvatarEditor, {
+      props: { modelValue: { ...DEFAULT_AVATAR_CONFIG }, hideCategories: ['prop'] },
+      global: { plugins: [router] },
+    })
+    const labels = wrapper.findAll('[role="radiogroup"]').map((g) => g.attributes('aria-label'))
+    expect(labels).not.toContain('Tilbehør')
+    expect(labels).toContain('Hår')
+  })
+
+  it('does not emit update when a locked option is clicked', async () => {
+    const locked = new Set(['round', 'sunglasses', 'eyepatch'])
+    const wrapper = mount(AvatarEditor, {
+      props: { modelValue: { ...DEFAULT_AVATAR_CONFIG }, lockedOptions: locked },
+      global: { plugins: [router] },
+    })
+    const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    await roundBtn!.trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toBeFalsy()
+  })
+
+  it('marks locked options with is-locked class and aria-disabled', () => {
+    const locked = new Set(['round'])
+    const wrapper = mount(AvatarEditor, {
+      props: { modelValue: { ...DEFAULT_AVATAR_CONFIG }, lockedOptions: locked },
+      global: { plugins: [router] },
+    })
+    const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    expect(roundBtn!.classes()).toContain('is-locked')
+    expect(roundBtn!.attributes('aria-disabled')).toBe('true')
+  })
+
+  it('shows lock overlay with level text on locked options', () => {
+    const locked = new Set(['round'])
+    const wrapper = mount(AvatarEditor, {
+      props: { modelValue: { ...DEFAULT_AVATAR_CONFIG }, lockedOptions: locked },
+      global: { plugins: [router] },
+    })
+    const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    expect(roundBtn!.find('.lock-overlay').exists()).toBe(true)
+    expect(roundBtn!.find('.lock-level').text()).toBe('Nivå 2')
   })
 })
 

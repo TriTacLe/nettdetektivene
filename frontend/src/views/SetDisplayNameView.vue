@@ -23,8 +23,9 @@ const update = useMutation({
     await authStore.fetchMe()
     router.push({ name: 'join-classroom' })
   },
-  onError: (e: Error) => {
-    fieldError.value = e.message ?? 'Kunne ikke lagre profilen'
+  onError: (e: unknown) => {
+    const msg = (e as { message?: string })?.message
+    fieldError.value = msg && !(e instanceof TypeError) ? msg : 'Kunne ikke lagre profilen. Prøv igjen.'
   },
 })
 
@@ -67,9 +68,9 @@ function handleSubmit() {
                 class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700"
                 @keyup.enter="handleSubmit"
               />
-              <span v-if="fieldError" class="text-red-600 text-xs font-semibold">
+              <p v-if="fieldError" class="profile-save-error" role="alert">
                 {{ fieldError }}
-              </span>
+              </p>
             </div>
 
             <div class="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
@@ -87,10 +88,25 @@ function handleSubmit() {
         </template>
         <template #right>
           <div class="p-3 pt-9 min-h-0 overflow-visible lg:overflow-hidden">
-            <AvatarEditor v-model="avatarConfig" />
+            <AvatarEditor v-model="avatarConfig" :hide-categories="['prop']" />
           </div>
         </template>
       </CaseFile>
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.profile-save-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 4px 0 0;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+</style>
