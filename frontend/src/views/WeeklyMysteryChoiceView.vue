@@ -10,6 +10,7 @@ const router = useRouter()
 
 const classroomId = computed(() => String(route.params.classroomId))
 const scene = computed(() => mysteryDialogs[mysteryStartId]!)
+const startAtLastLine = computed(() => route.query.skip === '1')
 
 function handleChoose(choice: DialogChoice) {
   if (choice.flag === 'play') {
@@ -31,5 +32,10 @@ function handleDone() {
 </script>
 
 <template>
-  <CutsceneDialog :scene="scene" @choose="handleChoose" @done="handleDone" />
+  <CutsceneDialog
+    :scene="scene"
+    :start-at-last-line="startAtLastLine"
+    @choose="handleChoose"
+    @done="handleDone"
+  />
 </template>

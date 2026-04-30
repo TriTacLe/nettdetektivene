@@ -35,10 +35,22 @@ const canSubmit = computed(
     ),
 )
 
-const previousPath = '/student-home'
+const previousPath = computed(() =>
+  classroomId.value
+    ? `/student/classrooms/${classroomId.value}/mystery?skip=1`
+    : '/student-home',
+)
 
 function goBack() {
-  router.push(previousPath)
+  if (!classroomId.value) {
+    router.push('/student-home')
+    return
+  }
+  router.push({
+    name: 'student-weekly-mystery',
+    params: { classroomId: classroomId.value },
+    query: { skip: '1' },
+  })
 }
 
 function handleImageChange(event: Event) {
@@ -69,7 +81,7 @@ async function submitMystery() {
       image.value,
     )
     toast.showSuccess('Mysteriet er sendt til læreren')
-    router.push(previousPath)
+    goBack()
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : 'Kunne ikke sende inn mysteriet.'

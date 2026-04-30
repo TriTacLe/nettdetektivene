@@ -8,6 +8,7 @@ import { useAudioStore } from '@/stores/AudioStore'
 const props = defineProps<{
   scene: DialogScene
   charsPerSecond?: number
+  startAtLastLine?: boolean
 }>()
 
 const audio = useAudioStore()
@@ -18,10 +19,12 @@ const emit = defineEmits<{
   choose: [choice: DialogChoice]
 }>()
 
-const lineIndex = ref(0)
+const lineIndex = ref(props.startAtLastLine ? Math.max(0, props.scene.lines.length - 1) : 0)
 // Prefer explicit prop; otherwise read live text speed from preferences.
 const charsPerSecond = computed(() => props.charsPerSecond ?? textSpeed.value)
-watch(() => props.scene.id, () => { lineIndex.value = 0 })
+watch(() => props.scene.id, () => {
+  lineIndex.value = props.startAtLastLine ? Math.max(0, props.scene.lines.length - 1) : 0
+})
 
 const currentLine = computed(() => props.scene.lines[lineIndex.value])
 const currentText = computed(() => currentLine.value?.text ?? '')
@@ -75,7 +78,10 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  if (props.startAtLastLine) skip()
+  window.addEventListener('keydown', onKeydown)
+})
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 

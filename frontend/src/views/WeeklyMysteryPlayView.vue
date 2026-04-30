@@ -35,10 +35,16 @@ function goToDetail(submissionId: string) {
   })
 }
 
-const previousPath = '/student-home'
+const previousPath = computed(
+  () => `/student/classrooms/${classroomId.value}/mystery?skip=1`,
+)
 
 function goBack() {
-  router.push(previousPath)
+  router.push({
+    name: 'student-weekly-mystery',
+    params: { classroomId: classroomId.value },
+    query: { skip: '1' },
+  })
 }
 </script>
 
