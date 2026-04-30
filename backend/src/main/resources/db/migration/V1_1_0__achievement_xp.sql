@@ -4,4 +4,4 @@
 -- trg_user_achievement_xp in R__triggers.sql.
 
 ALTER TABLE achievement
-    ADD COLUMN xp_reward INT NOT NULL DEFAULT 50;
+    ADD COLUMN xp_reward INT NOT NULL DEFAULT 25;
