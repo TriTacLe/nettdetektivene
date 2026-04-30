@@ -87,8 +87,7 @@ Over 70% of adults express concerns about information legitimacy, and children a
 ├── compose.yaml          # Development Docker Compose configuration
 ├── compose.prod.yaml     # Production Docker Compose configuration
 ├── .env                  # Root environment variables (MySQL + JWT secrets)
-├── scripts/
-│   └── factory.sh        # Idempotent test data seeding script
+├── scripts/              # Helper shell scripts (issue tooling, etc.)
 ├── backend/
 │   ├── Dockerfile        # Multi-stage build for Spring Boot
 │   ├── pom.xml           # Maven dependencies and build configuration
@@ -213,27 +212,32 @@ The `Makefile` is the recommended entry point for all operations.
 
 ### 3. Database Seeding
 
-The seeding process is driven by a single idempotent script: `scripts/factory.sh`. This script creates test data including institutions, users, classrooms, tasks, achievements, and sample submissions.
+Seeding is driven by an idempotent Java component, `DataSeeder` (`backend/src/main/java/ntnu/no/backend/config/DataSeeder.java`), gated by the Spring `seed` profile. It creates institutions, users, classrooms, tasks (with real seed images copied into `uploads/tasks/seed/`), achievements, notebook entries, and sample mystery submissions.
 
 **Automatic Seeding:**
-`make dev` automatically runs the seeding script once the backend becomes healthy.
+`make dev` runs the backend with `SPRING_PROFILES_ACTIVE=dev,seed` (set in `compose.yaml`), so seeding fires on the first healthy startup. Re-running is safe — every step uses `findBy*` lookups before inserting.
 
 **Manual Seeding:**
+To run the seeder against a local DB outside Docker:
 
 ```bash
-bash scripts/factory.sh
+cd backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=seed
 ```
 
 **What Gets Created:**
 
-- Institution: NTNU
-- Default teachers: `laerer@ntnu.no`, `instructor@test.no`, `admin@test.no`
-- Students: `student1@test.no` through `student5@test.no`
-- Classroom: **Testklasse 1** with all students joined and approved
-- **11 tasks:**
-  - 3 NEWS tasks (Nyhetskvartalet) — identify real vs fake news articles
-  - 3 PHOTO tasks (Fotografen) — classify images (Ekte/AI-generert/Manipulert)
-  - 5 mixed NEWS/PHOTO tasks (Datasenteret/boss area) with high difficulty
+- Institutions: NTNU Trondheim, OsloMet
+- Teachers: `laerer@ntnu.no`, `lars@oslomet.no`, `instructor@test.no`, `admin@test.no`
+- Students: 8 named detectives (`anine@nettdetektivene.no` etc.) plus `student1..5@ntnu.no`
+- Classrooms: 5A Digital Sikkerhet, 6B Nettvett, 7C Cybersecurity, Testklasse 1 (with enrollments + approvals)
+- **36 tasks** seeded into every classroom:
+  - 8 NEWS tasks (Nyhetskvartalet) — real-vs-fake article pairs at difficulties 1–3
+  - 8 PHOTO tasks (Fotografen) — real / AI / manipulated triplets at difficulties 1–3
+  - 8 BOSS tasks (Datasenteret) — mixed NEWS + PHOTO at difficulties 4–5
+  - 12 text-only tasks (postkontoret, passordbanken, markedsplassen, sosialen)
+- Achievements (incl. the secret `caught_hacker` and `quiz_perfect`)
+- Sample mystery submissions and notebook entries
 
 **Default Credentials:**
 All accounts use password: `password123`

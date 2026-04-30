@@ -1,5 +1,7 @@
 package ntnu.no.backend.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ntnu.no.backend.model.*;
@@ -63,6 +65,7 @@ public class DataSeeder implements CommandLineRunner {
   private final MysterySubmissionRepository mysterySubmissionRepository;
   private final PasswordEncoder passwordEncoder;
   private final JdbcTemplate jdbcTemplate;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Value("${app.uploads.root:uploads}")
   private String uploadsRoot;
@@ -139,9 +142,12 @@ public class DataSeeder implements CommandLineRunner {
   // -----------------------------------------------------------------------
 
   private void seedInstructors() {
+    // {email, displayName, key, institutionKey}
     Object[][] data = {
-        {"laerer@ntnu.no",  "Lærer",  "nora",  "ntnu"},
-        {"lars@oslomet.no", "Lærer Lars", "lars", "oslomet"},
+        {"laerer@ntnu.no",       "Lærer Lærersen",  "nora",       "ntnu"},
+        {"lars@oslomet.no",      "Lærer Lars",      "lars",       "oslomet"},
+        {"instructor@test.no",   "Test Instructor", "test-instr", "ntnu"},
+        {"admin@test.no",        "Test Admin",      "test-admin", "ntnu"},
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -159,6 +165,7 @@ public class DataSeeder implements CommandLineRunner {
         {"5A - Digital Sikkerhet", "Introduksjon til digital sikkerhet", "nora", "ntnu", "class1"},
         {"6B - Nettvett",          "Lær om nettvett og personvern",       "nora", "ntnu", "class2"},
         {"7C - Cybersecurity",     "Grunnleggende cybersecurity",          "lars", "oslomet", "class3"},
+        {"Testklasse 1",           "Auto-seeded test classroom",          "test-instr", "ntnu", "test-class"},
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -178,78 +185,270 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Tasks  (3 per stop, all 7 stops)
+  // Tasks
+  // Rich NEWS / PHOTO / BOSS tasks built from real seed images under
+  // /seed-images/. Plus simple text-only tasks for the other four stops.
   // -----------------------------------------------------------------------
 
+  /** Spec for one NEWS task — a fake/real article pair. */
+  private record NewsTaskSpec(
+      String title, String stop, int difficulty, String hint,
+      String fakeImage, String realImage) {}
+
+  /** Spec for one PHOTO task — three alternatives keyed by their kind. */
+  private record PhotoTaskSpec(
+      String title, String stop, int difficulty, String hint,
+      String realImage, String aiImage, String manipulatedImage) {}
+
+  /** Spec for a text-only task (no images). */
+  private record TextTaskSpec(
+      String title, TaskType type, String stop, int difficulty, String description, String ownerKey) {}
+
   private void seedTasks() {
-    // {title, type, stop, difficulty, ownerKey}
-    Object[][] taskDefs = {
-        // nyhetskvartalet
-        {"Gjenkjenn falske nyheter",       TaskType.NEWS,        "nyhetskvartalet", 1, "nora"},
-        {"Kildesjekk av nettsider",        TaskType.NEWS,        "nyhetskvartalet", 2, "nora"},
-        {"Kjennetegn på clickbait",        TaskType.NEWS,        "nyhetskvartalet", 2, "nora"},
-        // fotografen
-        {"Spor bildemanipulasjon",         TaskType.PHOTO,       "fotografen",      2, "nora"},
-        {"Personvern i bilder",            TaskType.PHOTO,       "fotografen",      2, "nora"},
-        {"Metadata i foto",                TaskType.PHOTO,       "fotografen",      3, "nora"},
-        // postkontoret
-        {"Gjenkjenn phishing-e-post",      TaskType.EMAIL,       "postkontoret",    1, "nora"},
-        {"Farlig e-postvedlegg",           TaskType.EMAIL,       "postkontoret",    2, "nora"},
-        {"Spoofed avsenderadresse",        TaskType.EMAIL,       "postkontoret",    3, "nora"},
-        // passordbanken
-        {"Lag et sterkt passord",          TaskType.PASSWORD,    "passordbanken",   1, "nora"},
-        {"Passordgjenbruk og risiko",      TaskType.PASSWORD,    "passordbanken",   2, "nora"},
-        {"To-faktor autentisering",        TaskType.PASSWORD,    "passordbanken",   3, "nora"},
-        // markedsplassen
-        {"Trygg netthandel",               TaskType.MARKETPLACE, "markedsplassen",  1, "lars"},
-        {"Gjenkjenn falske annonser",      TaskType.MARKETPLACE, "markedsplassen",  2, "lars"},
-        {"Unngå svindel på finn.no",       TaskType.MARKETPLACE, "markedsplassen",  3, "lars"},
-        // sosialen
-        {"Personvern på sosiale medier",   TaskType.SOCIAL,      "sosialen",        1, "lars"},
-        {"Digitalt fotavtrykk",            TaskType.SOCIAL,      "sosialen",        2, "lars"},
-        {"Nettvett og digital mobbing",    TaskType.SOCIAL,      "sosialen",        3, "lars"},
-        // datasenteret
-        {"Kryptering og sikker lagring",   TaskType.BOSS,        "datasenteret",    4, "nora"},
-        {"Sikkerhetskopiering",            TaskType.BOSS,        "datasenteret",    4, "nora"},
-        {"Digital Sikkerhetsmester",       TaskType.BOSS,        "datasenteret",    5, "nora"},
-    };
-
-Classroom class1 = classrooms.get("class1");
-    Classroom class2 = classrooms.get("class2");
-    Classroom class3 = classrooms.get("class3");
     short order = 0;
-    for (Object[] row : taskDefs) {
-      Task task = taskRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
-        log.info("Task: {} @ {}", row[0], row[2]);
-        return taskRepository.save(Task.builder()
-            .title((String) row[0])
-            .taskType((TaskType) row[1])
-            .stopLocation((String) row[2])
-            .difficulty((Integer) row[3])
-            .content("{\"description\": \"" + row[0] + "\", \"difficulty\": " + row[3] + "}")
-            .owner(users.get(row[4]))
-            .isActive(true)
-            .build());
-      });
 
-      allTasks.add(task);
+    // ----- Nyhetskvartalet (NEWS) — 8 tasks ---------------------------------
+    NewsTaskSpec[] newsSpecs = {
+        new NewsTaskSpec("Ekte eller falsk nyhet (nivå 1)", "nyhetskvartalet", 1,
+            "Sjekk om kilden virker troverdig.", "fakeArticle1.png", "realArticle1.png"),
+        new NewsTaskSpec("Sak fra hverdagen (nivå 1)", "nyhetskvartalet", 1,
+            "Spør deg selv: hvem har skrevet dette?", "fakeArticle2.png", "realArticle2.png"),
+        new NewsTaskSpec("Overskriften som lokker (nivå 2)", "nyhetskvartalet", 2,
+            "Clickbait skriker etter klikk uten å gi svar.", "fakeArticle3.png", "realArticle3.png"),
+        new NewsTaskSpec("Følg pengene (nivå 2)", "nyhetskvartalet", 2,
+            "Hvem tjener på at du tror saken?", "fakeArticle4.png", "realArticle4.png"),
+        new NewsTaskSpec("Kildehenvisning eller ikke (nivå 3)", "nyhetskvartalet", 3,
+            "Reelle saker pleier å nevne navngitte kilder.", "fakeArticle5.png", "realArticle5.png"),
+        new NewsTaskSpec("Den klassiske svindelen (nivå 3)", "nyhetskvartalet", 3,
+            "Sjekk dato og publiseringssted.", "fake-article-1.jpg", "real-article-1.png"),
+        new NewsTaskSpec("Tabloid versus saklig (nivå 2)", "nyhetskvartalet", 2,
+            "Følelsesladde ord er et faresignal.", "fakeArticle1.png", "realArticle3.png"),
+        new NewsTaskSpec("Krysspeilet sak (nivå 3)", "nyhetskvartalet", 3,
+            "Søk opp saken – flere kilder = mer troverdig.", "fakeArticle2.png", "realArticle5.png"),
+    };
+    for (NewsTaskSpec spec : newsSpecs) {
+      Task t = upsertNewsTask(spec, "nora");
+      attachToAllClassrooms(t, order++);
+    }
 
-      ClassroomTaskId id1 = new ClassroomTaskId(class1.getId(), task.getId());
-      if (!classroomTaskRepository.existsById(id1)) {
-        classroomTaskRepository.save(ClassroomTask.builder()
-            .id(id1).classroom(class1).task(task).sortOrder(order).isActive(true).build());
+    // ----- Fotografen (PHOTO) — 8 tasks -------------------------------------
+    PhotoTaskSpec[] photoSpecs = {
+        new PhotoTaskSpec("Ekte, AI eller manipulert (nivå 1)", "fotografen", 1,
+            "Se etter unaturlig perspektiv og rare detaljer.",
+            "realPhoto1.png", "aiPhoto1.png", "psPhoto1.png"),
+        new PhotoTaskSpec("Tre påstander – ett bilde stemmer (nivå 1)", "fotografen", 1,
+            "Konsistente skygger er gull verdt.",
+            "realPhoto2.png", "aiPhoto2.png", "psPhoto2.jpg"),
+        new PhotoTaskSpec("Manipulert eller bare merkelig? (nivå 2)", "fotografen", 2,
+            "Studer tekstur og lys.",
+            "realPhoto3.png", "aiPhoto3.png", "psPhoto3.png"),
+        new PhotoTaskSpec("Den AI-genererte detaljen (nivå 2)", "fotografen", 2,
+            "Hender og tekst er klassiske AI-fallgruver.",
+            "realPhoto4.png", "aiPhoto4.png", "psPhoto4.png"),
+        new PhotoTaskSpec("Falske bevis (nivå 3)", "fotografen", 3,
+            "Klonete piksler = klassisk Photoshop.",
+            "realPhoto5.png", "aiPhoto5.png", "psPhoto5.png"),
+        new PhotoTaskSpec("Avansert bildeanalyse (nivå 3)", "fotografen", 3,
+            "Sammenlign bakgrunn, lys og perspektiv samtidig.",
+            "realPhoto6.png", "aiPhoto6.png", "psPhoto6.png"),
+        new PhotoTaskSpec("Krysset materiale (nivå 2)", "fotografen", 2,
+            "Bytter mellom tre stiler – la blikket lete.",
+            "realPhoto1.png", "aiPhoto3.png", "psPhoto5.png"),
+        new PhotoTaskSpec("Ekspertens dilemma (nivå 3)", "fotografen", 3,
+            "Selv eksperter må gå nøye til verks.",
+            "real-photo-1.jpeg", "fake-photo-1.jpg", "psPhoto1.png"),
+    };
+    for (PhotoTaskSpec spec : photoSpecs) {
+      Task t = upsertPhotoTask(spec, "nora");
+      attachToAllClassrooms(t, order++);
+    }
+
+    // ----- Datasenteret (BOSS) — 8 mixed tasks ------------------------------
+    NewsTaskSpec[] bossNews = {
+        new NewsTaskSpec("Datatyven sin første løgn", "datasenteret", 4,
+            "Datatyven planter falsk omtale – avslør den.", "fakeArticle1.png", "realArticle1.png"),
+        new NewsTaskSpec("Avslør den falske rapporten", "datasenteret", 5,
+            "Sammenlign påstander mot pålitelige kilder.", "fakeArticle3.png", "realArticle4.png"),
+        new NewsTaskSpec("Sannhetens øyeblikk", "datasenteret", 5,
+            "Den sanne saken er ofte minst spennende.", "fakeArticle5.png", "realArticle2.png"),
+        new NewsTaskSpec("Pressen mot byen", "datasenteret", 4,
+            "Detektivens fokus: faktasjekk hver setning.", "fake-article-1.jpg", "realArticle5.png"),
+    };
+    for (NewsTaskSpec spec : bossNews) {
+      Task t = upsertNewsTask(spec, "nora");
+      attachToAllClassrooms(t, order++);
+    }
+    PhotoTaskSpec[] bossPhotos = {
+        new PhotoTaskSpec("Manipulert bevismateriale", "datasenteret", 4,
+            "Datatyven manipulerer bilder – fordel rolle riktig.",
+            "realPhoto2.png", "aiPhoto1.png", "psPhoto3.png"),
+        new PhotoTaskSpec("Endelig konfrontasjon", "datasenteret", 5,
+            "Siste runde: alt du har lært om skygger og artefakter.",
+            "realPhoto4.png", "aiPhoto5.png", "psPhoto6.png"),
+        new PhotoTaskSpec("Maskens fall", "datasenteret", 5,
+            "Få ned datatyvens fasade.",
+            "real-photo-1.jpeg", "aiPhoto2.png", "psPhoto4.png"),
+        new PhotoTaskSpec("Detektivens prøve", "datasenteret", 4,
+            "Tenk som en detektiv – analyser hver detalj.",
+            "realPhoto5.png", "aiPhoto3.png", "psPhoto2.jpg"),
+    };
+    for (PhotoTaskSpec spec : bossPhotos) {
+      Task t = upsertPhotoTask(spec, "nora");
+      attachToAllClassrooms(t, order++);
+    }
+
+    // ----- Text-only stops — 12 tasks (unchanged shape) ---------------------
+    TextTaskSpec[] textSpecs = {
+        new TextTaskSpec("Gjenkjenn phishing-e-post",   TaskType.EMAIL,       "postkontoret",   1, "Lær å spotte mistenkelige e-poster.",     "nora"),
+        new TextTaskSpec("Farlig e-postvedlegg",        TaskType.EMAIL,       "postkontoret",   2, "Hvilke vedlegg bør du aldri åpne?",      "nora"),
+        new TextTaskSpec("Spoofed avsenderadresse",     TaskType.EMAIL,       "postkontoret",   3, "Sjekk avsenderens domene nøye.",         "nora"),
+        new TextTaskSpec("Lag et sterkt passord",       TaskType.PASSWORD,    "passordbanken",  1, "Lengde slår kompleksitet.",              "nora"),
+        new TextTaskSpec("Passordgjenbruk og risiko",   TaskType.PASSWORD,    "passordbanken",  2, "Ett lekket passord kan låse opp alt.",   "nora"),
+        new TextTaskSpec("To-faktor autentisering",     TaskType.PASSWORD,    "passordbanken",  3, "2FA gjør innbrudd mye vanskeligere.",    "nora"),
+        new TextTaskSpec("Trygg netthandel",            TaskType.MARKETPLACE, "markedsplassen", 1, "Hva kjennetegner en trygg butikk?",      "lars"),
+        new TextTaskSpec("Gjenkjenn falske annonser",   TaskType.MARKETPLACE, "markedsplassen", 2, "Pris for godt til å være sant?",         "lars"),
+        new TextTaskSpec("Unngå svindel på finn.no",    TaskType.MARKETPLACE, "markedsplassen", 3, "Forhåndsbetaling er en rød flagg.",      "lars"),
+        new TextTaskSpec("Personvern på sosiale medier",TaskType.SOCIAL,      "sosialen",       1, "Hva deler du, og med hvem?",             "lars"),
+        new TextTaskSpec("Digitalt fotavtrykk",         TaskType.SOCIAL,      "sosialen",       2, "Det du legger ut, varer.",               "lars"),
+        new TextTaskSpec("Nettvett og digital mobbing", TaskType.SOCIAL,      "sosialen",       3, "Hvordan reagerer du smart?",             "lars"),
+    };
+    for (TextTaskSpec spec : textSpecs) {
+      Task t = upsertTextTask(spec);
+      attachToAllClassrooms(t, order++);
+    }
+  }
+
+  /** Builds + saves a NEWS task, copying its two seed images into uploads/. */
+  private Task upsertNewsTask(NewsTaskSpec spec, String ownerKey) {
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    if (existing.isPresent()) {
+      allTasks.add(existing.get());
+      return existing.get();
+    }
+    String fakeUrl = copyTaskSeedImage("seed-images/news/" + spec.fakeImage());
+    String realUrl = copyTaskSeedImage("seed-images/news/" + spec.realImage());
+    Map<String, Object> content = new LinkedHashMap<>();
+    content.put("question", "Hvilken nyhet er ekte?");
+    content.put("hint", spec.hint());
+    // Shuffle deterministically per-title so the real article isn't always
+    // in slot 1 — the player can't fall into a positional pattern across
+    // tasks, but reseeding the same DB still produces the same layout.
+    content.put("articles", shuffleStable(List.of(
+        Map.of("imagePath", fakeUrl, "isReal", false),
+        Map.of("imagePath", realUrl, "isReal", true)), spec.title()));
+    Task task = taskRepository.save(Task.builder()
+        .title(spec.title())
+        .taskType(TaskType.NEWS)
+        .stopLocation(spec.stop())
+        .difficulty(spec.difficulty())
+        .content(toJson(content))
+        .owner(users.get(ownerKey))
+        .isActive(true)
+        .build());
+    allTasks.add(task);
+    log.info("Task: {} @ {} (NEWS)", spec.title(), spec.stop());
+    return task;
+  }
+
+  /** Builds + saves a PHOTO task with three alternatives. */
+  private Task upsertPhotoTask(PhotoTaskSpec spec, String ownerKey) {
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    if (existing.isPresent()) {
+      allTasks.add(existing.get());
+      return existing.get();
+    }
+    String realUrl = copyTaskSeedImage("seed-images/photos/" + spec.realImage());
+    String aiUrl = copyTaskSeedImage("seed-images/photos/" + spec.aiImage());
+    String psUrl = copyTaskSeedImage("seed-images/photos/" + spec.manipulatedImage());
+    Map<String, Object> content = new LinkedHashMap<>();
+    content.put("description", "Klassifiser hvert bilde: ekte, AI-generert eller manipulert.");
+    content.put("hint", spec.hint());
+    // Shuffle deterministically per-title so the [real, ai, manipulated]
+    // order isn't fixed across tasks — players can't memorize the slot.
+    content.put("alternatives", shuffleStable(List.of(
+        Map.of("imagePath", realUrl, "correctType", "ekte"),
+        Map.of("imagePath", aiUrl,   "correctType", "ai-generert"),
+        Map.of("imagePath", psUrl,   "correctType", "manipulert")), spec.title()));
+    TaskType type = "datasenteret".equals(spec.stop()) ? TaskType.BOSS : TaskType.PHOTO;
+    Task task = taskRepository.save(Task.builder()
+        .title(spec.title())
+        .taskType(type)
+        .stopLocation(spec.stop())
+        .difficulty(spec.difficulty())
+        .content(toJson(content))
+        .owner(users.get(ownerKey))
+        .isActive(true)
+        .build());
+    allTasks.add(task);
+    log.info("Task: {} @ {} ({})", spec.title(), spec.stop(), type);
+    return task;
+  }
+
+  /** Builds + saves a text-only task (no seed images). */
+  private Task upsertTextTask(TextTaskSpec spec) {
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    if (existing.isPresent()) {
+      allTasks.add(existing.get());
+      return existing.get();
+    }
+    Map<String, Object> content = new LinkedHashMap<>();
+    content.put("description", spec.description());
+    content.put("difficulty", spec.difficulty());
+    Task task = taskRepository.save(Task.builder()
+        .title(spec.title())
+        .taskType(spec.type())
+        .stopLocation(spec.stop())
+        .difficulty(spec.difficulty())
+        .content(toJson(content))
+        .owner(users.get(spec.ownerKey()))
+        .isActive(true)
+        .build());
+    allTasks.add(task);
+    log.info("Task: {} @ {} ({})", spec.title(), spec.stop(), spec.type());
+    return task;
+  }
+
+  /** Copies a classpath seed image to the uploads dir and returns its public URL. */
+  private String copyTaskSeedImage(String classpathLocation) {
+    String filename = Paths.get(classpathLocation).getFileName().toString();
+    Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize().resolve("tasks").resolve("seed");
+    Path targetFile = targetDir.resolve(filename);
+    try {
+      Files.createDirectories(targetDir);
+      try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+        Files.copy(in, targetFile, StandardCopyOption.REPLACE_EXISTING);
       }
-      ClassroomTaskId id2 = new ClassroomTaskId(class2.getId(), task.getId());
-      if (!classroomTaskRepository.existsById(id2)) {
-        classroomTaskRepository.save(ClassroomTask.builder()
-            .id(id2).classroom(class2).task(task).sortOrder(order).isActive(true).build());
-      }
-      ClassroomTaskId id3 = new ClassroomTaskId(class3.getId(), task.getId());
-      if (!classroomTaskRepository.existsById(id3)) {
-        classroomTaskRepository.save(ClassroomTask.builder()
-            .id(id3).classroom(class3).task(task).sortOrder(order).isActive(true).build());
-      }
-      order++;
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to copy seed task image: " + classpathLocation, e);
+    }
+    return "/uploads/tasks/seed/" + filename;
+  }
+
+  /**
+   * Shuffles {@code input} with a {@link Random} seeded by the hash of
+   * {@code seed}. Stable across runs (same seed → same order) but every
+   * distinct seed gets a different permutation.
+   */
+  private <T> List<T> shuffleStable(List<T> input, String seed) {
+    List<T> copy = new ArrayList<>(input);
+    Collections.shuffle(copy, new Random((long) seed.hashCode()));
+    return copy;
+  }
+
+  private String toJson(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Failed to serialize task content", e);
+    }
+  }
+
+  private void attachToAllClassrooms(Task task, short order) {
+    for (Classroom classroom : classrooms.values()) {
+      ClassroomTaskId id = new ClassroomTaskId(classroom.getId(), task.getId());
+      if (classroomTaskRepository.existsById(id)) continue;
+      classroomTaskRepository.save(ClassroomTask.builder()
+          .id(id).classroom(classroom).task(task).sortOrder(order).isActive(true).build());
     }
   }
 
@@ -268,6 +467,11 @@ Classroom class1 = classrooms.get("class1");
         {"vetle@nettdetektivene.no",   "Vekter Vetle",   "vetle"},
         {"regine@nettdetektivene.no",  "Radar-Regine",   "regine"},
         {"segward@nettdetektivene.no", "Sikker-Segward", "segward"},
+        {"student1@ntnu.no",           "Student 1",      "test-student-1"},
+        {"student2@ntnu.no",           "Student 2",      "test-student-2"},
+        {"student3@ntnu.no",           "Student 3",      "test-student-3"},
+        {"student4@ntnu.no",           "Student 4",      "test-student-4"},
+        {"student5@ntnu.no",           "Student 5",      "test-student-5"},
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -295,6 +499,13 @@ Classroom class1 = classrooms.get("class1");
     }
     // class3
     enroll(users.get("segward"), class3);
+
+    // testklasse — factory.sh-style throwaway accounts
+    Classroom testClass = classrooms.get("test-class");
+    for (String key : List.of(
+        "test-student-1", "test-student-2", "test-student-3", "test-student-4", "test-student-5")) {
+      enroll(users.get(key), testClass);
+    }
   }
 
   private void enroll(User student, Classroom classroom) {
@@ -588,7 +799,9 @@ Classroom class1 = classrooms.get("class1");
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of("anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward");
+    List<String> studentKeys = List.of(
+        "anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward",
+        "test-student-1", "test-student-2", "test-student-3", "test-student-4", "test-student-5");
     for (String key : studentKeys) {
       User student = users.get(key);
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
