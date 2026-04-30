@@ -22,10 +22,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class SideQuestServiceTest {
@@ -36,6 +38,15 @@ class SideQuestServiceTest {
   @Mock UserAchievementRepository userAchievementRepository;
 
   @InjectMocks SideQuestService service;
+
+  @Test
+  void upsert_rejectsUnknownQuestKey() {
+    UUID userId = UUID.randomUUID();
+    assertThatThrownBy(() -> service.upsert(userId, "totally-bogus", 1, SideQuestStatus.ACTIVE))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("Unknown side quest");
+    verify(sideQuestRepository, never()).save(any(UserSideQuest.class));
+  }
 
   @Test
   void upsert_inserts_whenNoRow() {

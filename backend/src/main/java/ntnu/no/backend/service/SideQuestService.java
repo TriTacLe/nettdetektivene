@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -36,10 +37,16 @@ public class SideQuestService {
   /** Side-quest key whose completion is mirrored by the legacy
    * {@code caught_hacker} secret achievement, used for backfill. */
   private static final String HACKER_QUEST_KEY = "hacker";
+  private static final String DETECTIVE_QUIZ_QUEST_KEY = "detective_quiz";
   private static final String HACKER_ACHIEVEMENT_REF = "caught_hacker";
   /** Stage value to surface for the synthetic backfilled hacker row.
    *  Matches the final stage of the hacker arc on the frontend. */
   private static final int HACKER_COMPLETED_STAGE = 1;
+  /** Whitelist of quest keys that can be advanced through {@link #upsert}.
+   *  Keeps clients from polluting the table with arbitrary keys and from
+   *  sneaking in unregistered quest names. */
+  private static final Set<String> KNOWN_QUEST_KEYS =
+      Set.of(HACKER_QUEST_KEY, DETECTIVE_QUIZ_QUEST_KEY);
 
   private final UserSideQuestRepository sideQuestRepository;
   private final UserRepository userRepository;
@@ -81,6 +88,9 @@ public class SideQuestService {
    */
   @Transactional
   public SideQuestStateDTO upsert(UUID userId, String questKey, int stage, SideQuestStatus status) {
+    if (questKey == null || !KNOWN_QUEST_KEYS.contains(questKey)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown side quest");
+    }
     if (stage < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "stage must be >= 0");
     }
