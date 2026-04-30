@@ -90,8 +90,9 @@ public class MysteryController {
   @GetMapping("/classroom/{classroomId}")
   @PreAuthorize("hasAuthority('instructor')")
   public ResponseEntity<ApiResponse<List<MysteryReviewDTO>>> getSubmissionsByClassroom(
-      @PathVariable UUID classroomId) {
-    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getSubmissionsByClassroom(classroomId)));
+      @PathVariable UUID classroomId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getSubmissionsByClassroom(classroomId, user.getId())));
   }
 
   @Operation(summary = "Get my mystery submissions in a classroom (student)")
@@ -107,8 +108,9 @@ public class MysteryController {
   @GetMapping("/classroom/{classroomId}/pending")
   @PreAuthorize("hasAuthority('instructor')")
   public ResponseEntity<ApiResponse<List<MysteryReviewDTO>>> getPendingSubmissions(
-      @PathVariable UUID classroomId) {
-    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getPendingSubmissions(classroomId)));
+      @PathVariable UUID classroomId,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.ok(ApiResponse.ok(mysteryService.getPendingSubmissions(classroomId, user.getId())));
   }
 
   @Operation(summary = "Approve or reject a mystery submission (teacher)")

@@ -12,6 +12,7 @@ import ntnu.no.backend.model.MysterySubmission;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.enums.MysteryStatus;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.MysteryCompletionRepository;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -44,6 +46,7 @@ class MysteryServiceTest {
   @Mock ClassroomRepository classroomRepository;
   @Mock UserRepository userRepository;
   @Mock ClassroomStudentRepository classroomStudentRepository;
+  @Mock ClassroomInstructorRepository classroomInstructorRepository;
   @Mock MysteryImageStorageService mysteryImageStorageService;
 
   @InjectMocks
@@ -135,7 +138,7 @@ class MysteryServiceTest {
     assertThat(result.correct()).isTrue();
     assertThat(result.completed()).isTrue();
     assertThat(result.alreadyCompleted()).isFalse();
-    verify(mysteryCompletionRepository).save(any(MysteryCompletion.class));
+    verify(mysteryCompletionRepository).saveAndFlush(any(MysteryCompletion.class));
   }
 
   @Test
@@ -158,7 +161,7 @@ class MysteryServiceTest {
 
     assertThat(result.correct()).isFalse();
     assertThat(result.completed()).isFalse();
-    verify(mysteryCompletionRepository, never()).save(any());
+    verify(mysteryCompletionRepository, never()).saveAndFlush(any());
   }
 
   @Test
@@ -189,6 +192,7 @@ class MysteryServiceTest {
 
     when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(reviewer));
+    when(classroomInstructorRepository.existsById(any())).thenReturn(true);
     when(mysterySubmissionRepository.save(existing)).thenReturn(existing);
 
     MysteryReviewActionDTO action = MysteryReviewActionDTO.builder().mysStatus(MysteryStatus.APPROVED).build();
@@ -196,6 +200,71 @@ class MysteryServiceTest {
 
     assertThat(result.mysStatus()).isEqualTo(MysteryStatus.APPROVED);
     assertThat(result.reviewedBy()).isEqualTo(reviewerId);
+  }
+
+  @Test
+  void reviewSubmission_throwsAccessDenied_whenReviewerIsNotInstructorOfClassroom() {
+    UUID submissionId = UUID.randomUUID();
+    UUID reviewerId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
+    User student = User.builder().id(UUID.randomUUID()).build();
+    User reviewer = User.builder().id(reviewerId).build();
+    MysterySubmission existing = submission(submissionId, classroom, student, MysteryStatus.PENDING);
+
+    when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(reviewer));
+    when(classroomInstructorRepository.existsById(any())).thenReturn(false);
+
+    MysteryReviewActionDTO action = MysteryReviewActionDTO.builder().mysStatus(MysteryStatus.APPROVED).build();
+    assertThatThrownBy(() -> mysteryService.reviewSubmission(submissionId, action, reviewerId))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void getSubmissionsByClassroom_throwsAccessDenied_whenNotInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
+
+    when(classroomInstructorRepository.existsById(any())).thenReturn(false);
+
+    assertThatThrownBy(() -> mysteryService.getSubmissionsByClassroom(classroomId, instructorId))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void getPendingSubmissions_throwsAccessDenied_whenNotInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    UUID instructorId = UUID.randomUUID();
+
+    when(classroomInstructorRepository.existsById(any())).thenReturn(false);
+
+    assertThatThrownBy(() -> mysteryService.getPendingSubmissions(classroomId, instructorId))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void completeMystery_correctPickRaceLost_returnsAlreadyCompleted() {
+    UUID submissionId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder().id(classroomId).build();
+    User other = User.builder().id(UUID.randomUUID()).build();
+    User user = User.builder().id(userId).build();
+    MysterySubmission existing = submission(submissionId, classroom, other, MysteryStatus.APPROVED);
+    existing.setCorrectIndex((byte) 1);
+
+    when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(classroomStudentRepository.findById(any())).thenReturn(Optional.of(ClassroomStudent.builder().isAllowed(true).build()));
+    when(mysteryCompletionRepository.existsByIdUserIdAndIdSubmissionId(userId, submissionId)).thenReturn(false);
+    when(mysteryCompletionRepository.saveAndFlush(any(MysteryCompletion.class)))
+        .thenThrow(new DataIntegrityViolationException("Duplicate primary key (parallel insert)"));
+
+    MysteryCompletionResponseDTO result = mysteryService.completeMystery(submissionId, (byte) 1, userId);
+
+    assertThat(result.correct()).isTrue();
+    assertThat(result.completed()).isTrue();
+    assertThat(result.alreadyCompleted()).isTrue();
   }
 
   @Test
@@ -211,6 +280,7 @@ class MysteryServiceTest {
 
     when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(User.builder().id(reviewerId).build()));
+    when(classroomInstructorRepository.existsById(any())).thenReturn(true);
 
     assertThatThrownBy(() -> mysteryService.reviewSubmission(
         submissionId,

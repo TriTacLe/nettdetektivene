@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import SceneComponent from '@/components/SceneComponent.vue'
 import MysteryService from '@/services/MysteryService'
 import { useToast } from '@/composables/UseToast'
+import { getMyAchievementsQueryKey } from '@/generated-client/@tanstack/vue-query.gen'
 import type { MysteryPlayDTO } from '@/types'
 
 const route = useRoute()
@@ -46,7 +47,7 @@ async function pickAlternative(selectedIndex: number) {
     if (result.correct) {
       mystery.value = { ...mystery.value, completed: true }
       toast.showSuccess('Riktig svar!')
-      await queryClient.invalidateQueries({ queryKey: ['getMyAchievements'] })
+      await queryClient.invalidateQueries({ queryKey: getMyAchievementsQueryKey() })
       router.push({ name: 'student-weekly-mystery-play', params: { classroomId: classroomId.value } })
     } else {
       wrongIndex.value = selectedIndex

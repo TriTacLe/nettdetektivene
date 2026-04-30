@@ -142,7 +142,7 @@ class MysteryControllerTest {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
 
-    when(mysteryService.getSubmissionsByClassroom(classroomId))
+    when(mysteryService.getSubmissionsByClassroom(eq(classroomId), any()))
         .thenReturn(List.of(reviewDto(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING)));
 
     mockMvc.perform(get("/api/v1/mysteries/classroom/{id}", classroomId)

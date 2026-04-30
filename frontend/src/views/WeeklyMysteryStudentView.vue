@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import MysteryService from '@/services/MysteryService'
@@ -48,6 +48,10 @@ function handleImageChange(event: Event) {
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
   imagePreview.value = file ? URL.createObjectURL(file) : null
 }
+
+onUnmounted(() => {
+  if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
+})
 
 async function submitMystery() {
   if (!classroomId.value || !canSubmit.value || !image.value) return

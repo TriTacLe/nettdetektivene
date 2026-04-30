@@ -5,7 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +26,9 @@ import java.util.UUID;
  */
 @Service
 public class MysteryImageStorageService {
+
+  /** Hard cap on stored mystery images. Spring's multipart limit is the outer guard. */
+  private static final long MAX_BYTES = 10L * 1024 * 1024;
 
   private final Path uploadsRoot;
 
@@ -70,6 +76,21 @@ public class MysteryImageStorageService {
     String contentType = image.getContentType();
     if (contentType == null || !contentType.startsWith("image/")) {
       throw new IllegalArgumentException("Only image uploads are supported");
+    }
+    if (image.getSize() > MAX_BYTES) {
+      throw new IllegalArgumentException("Image exceeds maximum allowed size");
+    }
+
+    // Verify the bytes actually decode as an image. Guards against a client
+    // labelling arbitrary bytes with image/* in the Content-Type header.
+    BufferedImage decoded;
+    try (InputStream in = image.getInputStream()) {
+      decoded = ImageIO.read(in);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Could not read uploaded image", e);
+    }
+    if (decoded == null) {
+      throw new IllegalArgumentException("Uploaded file is not a valid image");
     }
   }
 

@@ -13,14 +13,17 @@ import ntnu.no.backend.model.MysteryCompletion;
 import ntnu.no.backend.model.MysteryCompletionId;
 import ntnu.no.backend.model.MysterySubmission;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.model.enums.MysteryStatus;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.MysteryCompletionRepository;
 import ntnu.no.backend.repository.MysterySubmissionRepository;
 import ntnu.no.backend.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,7 @@ public class MysteryService {
   private final ClassroomRepository classroomRepository;
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
   private final MysteryImageStorageService mysteryImageStorageService;
 
   /**
@@ -158,14 +162,21 @@ public class MysteryService {
           .user(user)
           .submission(submission)
           .build();
-      mysteryCompletionRepository.save(completion);
+      try {
+        mysteryCompletionRepository.saveAndFlush(completion);
+      } catch (DataIntegrityViolationException raceLost) {
+        // Concurrent correct pick from the same user already inserted the row
+        // (composite PK on user_id+submission_id). Treat as already completed.
+        alreadyCompleted = true;
+      }
     }
 
     return new MysteryCompletionResponseDTO(correct, correct || alreadyCompleted, alreadyCompleted);
   }
 
   @Transactional(readOnly = true)
-  public List<MysteryReviewDTO> getSubmissionsByClassroom(UUID classroomId) {
+  public List<MysteryReviewDTO> getSubmissionsByClassroom(UUID classroomId, UUID instructorId) {
+    verifyInstructorOfClassroom(classroomId, instructorId);
     return mysterySubmissionRepository.findByClassroom_Id(classroomId)
         .stream()
         .map(MysterySubmissionMapper::toReviewDto)
@@ -186,7 +197,8 @@ public class MysteryService {
   }
 
   @Transactional(readOnly = true)
-  public List<MysteryReviewDTO> getPendingSubmissions(UUID classroomId) {
+  public List<MysteryReviewDTO> getPendingSubmissions(UUID classroomId, UUID instructorId) {
+    verifyInstructorOfClassroom(classroomId, instructorId);
     return mysterySubmissionRepository.findByClassroom_IdAndMysStatus(classroomId, MysteryStatus.PENDING)
         .stream()
         .map(MysterySubmissionMapper::toReviewDto)
@@ -200,6 +212,8 @@ public class MysteryService {
 
     User reviewer = userRepository.findById(reviewerId)
         .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + reviewerId));
+
+    verifyInstructorOfClassroom(submission.getClassroom().getId(), reviewerId);
 
     if (dto.getMysStatus() == MysteryStatus.PENDING) {
       throw new IllegalArgumentException("Reviewed submission must be approved or rejected");
@@ -222,6 +236,18 @@ public class MysteryService {
 
     if (membership == null || !membership.isAllowed()) {
       throw new AccessDeniedException("You are not an approved member of this classroom");
+    }
+  }
+
+  private void verifyInstructorOfClassroom(UUID classroomId, UUID instructorId) {
+    boolean assigned = classroomInstructorRepository.existsById(
+        ClassroomInstructorId.builder()
+            .classroomId(classroomId)
+            .userId(instructorId)
+            .build()
+    );
+    if (!assigned) {
+      throw new AccessDeniedException("You are not an instructor of this classroom");
     }
   }
 }
