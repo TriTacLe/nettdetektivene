@@ -80,21 +80,21 @@ export interface TaskDTO {
   difficulty: number;
   isActive: boolean;
   stopLocation: string | null;
-  content: any;
+  content: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface NewsChallengeContent {
   hint?: string;
-  articles?: any[];
+  articles?: { imagePath?: string; isReal: boolean }[];
   question?: string;
 }
 
 export interface PhotoChallengeContent {
   description?: string;
   hint?: string;
-  alternatives?: any[];
+  alternatives?: { imagePath?: string; description?: string; correctType: string; begrunnelser?: string[] }[];
 }
 
 export interface NotebookEntryDTO {
@@ -253,7 +253,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
-  content?: any
+  content?: Record<string, unknown>
 }
 
 export interface NewsAnswers {
@@ -322,4 +322,42 @@ export interface NotificationDTO {
   refId: string | null
   isRead: boolean
   createdAt: string
+}
+
+export type MysteryStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface MysterySubmissionRequestDTO {
+  classroomId: string
+  mysDesc: string
+  attachmentUrl?: string | null
+}
+
+export interface MysterySubmissionResponseDTO {
+  id: string
+  classroomId: string
+  submittedBy: string
+  mysDesc: string
+  attachmentUrl: string | null
+  mysStatus: MysteryStatus
+  reviewedBy: string | null
+  reviewedAt: string | null
+  isFeatured: boolean
+  weekNumber: number
+  weekYear: number
+  submittedAt: string
+}
+
+export interface MysteryReviewDTO {
+  mysStatus: MysteryStatus
+  isFeatured: boolean
+}
+
+export interface MysteryTaskCreateRequestDTO {
+  title: string
+  taskType: TaskType
+  stopLocation?: string | null
+  difficulty: number
+  content?: string | null
+  sortOrder?: number | null
+  isActive?: boolean | null
 }

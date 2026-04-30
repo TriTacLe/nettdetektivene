@@ -23,6 +23,7 @@ import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
@@ -52,6 +53,7 @@ public class ClassroomService {
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final TaskBestScoreRepository taskBestScoreRepository;
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
@@ -214,9 +216,12 @@ public class ClassroomService {
       throw new IllegalArgumentException("Task is already assigned to this classroom");
     }
 
-    short sortOrder = dto.getSortOrder() != null
-      ? dto.getSortOrder()
-      : (short) (classroomTaskRepository.findAllByClassroom_IdOrderBySortOrderAsc(classroomId).size() + 1);
+    // Place the new task at the end of its stop's sortOrder range and shift any
+    // later-stop tasks up by one. The trg_attempt_sync trigger walks the chain
+    // strictly by ascending sortOrder, so appending at the global end (the
+    // naive default) would cause new tasks added to early stops to be skipped
+    // entirely once a student crossed into a later stop.
+    short sortOrder = placeTaskInStopChain(classroomId, task.getStopLocation());
 
     ClassroomTask classroomTask = ClassroomTask.builder()
       .id(classroomTaskId)
@@ -228,13 +233,105 @@ public class ClassroomService {
 
     classroomTaskRepository.save(classroomTask);
 
-    // If students were already approved when this task was added, the
-    // join-time trigger already fired with no tasks available. Re-run the
-    // first-task unlock so they get access. Idempotent for students who
-    // already have the first task unlocked.
-    unlockFirstTaskForApprovedStudents(classroom);
+    // Cover students who already cleared every earlier task in this stop
+    // before the new one was added — they would otherwise never trigger an
+    // unlock for it through the normal attempt-completion chain.
+    unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
     return ClassroomTaskMapper.toDTO(classroomTask);
+  }
+
+  private short placeTaskInStopChain(UUID classroomId, String stopLocation) {
+    List<ClassroomTask> all = classroomTaskRepository
+        .findAllByClassroom_IdOrderBySortOrderAsc(classroomId);
+    if (all.isEmpty()) return (short) 1;
+
+    short maxOverall = all.get(all.size() - 1).getSortOrder();
+
+    if (stopLocation == null) {
+      return (short) (maxOverall + 1);
+    }
+
+    Short maxInStop = all.stream()
+        .filter(ct -> stopLocation.equals(ct.getTask().getStopLocation()))
+        .map(ClassroomTask::getSortOrder)
+        .max(Short::compareTo)
+        .orElse(null);
+
+    if (maxInStop == null) {
+      // First task for this stop in the classroom: append at the end.
+      return (short) (maxOverall + 1);
+    }
+
+    short insertAt = (short) (maxInStop + 1);
+    if (insertAt > maxOverall) {
+      // Stop is already last in the chain — nothing to shift.
+      return insertAt;
+    }
+
+    // Shift every existing task at or beyond the insertion point up by one.
+    // Apply in reverse order so we never collide with a row we haven't moved
+    // yet (composite PK is by (classroom_id, task_id) so sortOrder isn't
+    // unique, but reverse iteration keeps the operation predictable).
+    List<ClassroomTask> toShift = all.stream()
+        .filter(ct -> ct.getSortOrder() >= insertAt)
+        .sorted((a, b) -> Short.compare(b.getSortOrder(), a.getSortOrder()))
+        .toList();
+    for (ClassroomTask ct : toShift) {
+      ct.setSortOrder((short) (ct.getSortOrder() + 1));
+    }
+    return insertAt;
+  }
+
+  private void unlockNewTaskForEligibleStudents(Classroom classroom, ClassroomTask newTask) {
+    if (Boolean.FALSE.equals(newTask.getIsActive())) return;
+
+    String stopLocation = newTask.getTask().getStopLocation();
+    List<ClassroomTask> activeTasks = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+
+    List<ClassroomTask> earlierInStop = activeTasks.stream()
+        .filter(ct -> stopLocation != null && stopLocation.equals(ct.getTask().getStopLocation()))
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .toList();
+
+    ClassroomTask globalPredecessor = activeTasks.stream()
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .reduce((a, b) -> a.getSortOrder() >= b.getSortOrder() ? a : b)
+        .orElse(null);
+
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+
+      boolean shouldUnlock;
+      if (!earlierInStop.isEmpty()) {
+        shouldUnlock = earlierInStop.stream().allMatch(ct -> taskBestScoreRepository
+            .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                userId, ct.getTask().getId(), classroom.getId()));
+      } else {
+        shouldUnlock = globalPredecessor == null
+            || taskBestScoreRepository
+                .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                    userId, globalPredecessor.getTask().getId(), classroom.getId());
+      }
+
+      if (!shouldUnlock) continue;
+      if (userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
+          userId, classroom.getId(), newTask.getTask().getId())) continue;
+
+      userTaskUnlockedRepository.save(
+          UserTaskUnlocked.builder()
+              .id(new UserTaskUnlockedId(userId, classroom.getId(), newTask.getTask().getId()))
+              .user(student.getUser())
+              .classroom(classroom)
+              .task(newTask.getTask())
+              .unlockedAt(LocalDateTime.now())
+              .build()
+      );
+    }
   }
 
   @Transactional

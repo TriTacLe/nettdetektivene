@@ -145,6 +145,11 @@ async function goToNotebook() {
   router.push({ name: 'notebook', query: { classroomId: classroomId.value } })
 }
 
+function goToMystery() {
+  if (!classroomId.value) return
+  router.push({ name: 'student-weekly-mystery', params: { classroomId: classroomId.value } })
+}
+
 function toggleHelp() {
   showHelp.value = !showHelp.value
 }
@@ -308,7 +313,7 @@ onUnmounted(() => {
             :rotation="-1"
             pin-color="#e03131"
             width="clamp(6.35rem, 9vw, 7.85rem)"
-            @click="goTo('/mystery')"
+            @click="goToMystery"
           >
             <div class="image-note">
               <img :src="mysteryImage" alt="Ukens Mysterium" class="mystery-image image-note-bg" />

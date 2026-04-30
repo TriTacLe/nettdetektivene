@@ -34,7 +34,7 @@ const saveError = ref('')
 const save = useMutation({
   ...updateProfileMutation(),
   onSuccess: () => router.push({ name: 'student-profile' }),
-  onError: (e: any) => {
+  onError: (e: Error) => {
     saveError.value = e.message ?? 'Kunne ikke lagre profilen'
   },
 })

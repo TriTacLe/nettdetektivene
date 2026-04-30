@@ -134,7 +134,7 @@ const saveMutation = useMutation({
       savedStop.value = null
     }, 2000)
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     saveError.value = e?.message ?? 'Kunne ikke lagre'
     savingStop.value = null
   },
