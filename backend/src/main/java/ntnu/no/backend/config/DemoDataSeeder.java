@@ -194,10 +194,11 @@ public class DemoDataSeeder implements CommandLineRunner {
 
   private void seedInstructors() {
     Object[][] data = {
-        { "nora@ntnu.no", "Nora Lilliedahl Kirknes", "nora", "ntnu" },
-        { "tri@ntnu.no", "Tri Tac Le", "tri", "ntnu" },
-        { "anine@ntnu.no", "Anine Selle Standnes", "anine", "ntnu" },
-        { "gustav@ntnu.no", "Gustav Haverstad Skyberg", "gustav", "ntnu" },
+        { "nora@ntnu.no",    "Nora Lilliedahl Kirknes", "nora",    "ntnu" },
+        { "tri@ntnu.no",     "Tri Tac Le",              "tri",     "ntnu" },
+        { "anine@ntnu.no",   "Anine Selle Standnes",    "anine",   "ntnu" },
+        { "gustav@ntnu.no",  "Gustav Haverstad Skyberg", "gustav",  "ntnu" },
+        { "laerer@ntnu.no",  "Lærer Lærersen",           "laerer",  "ntnu" },
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -211,12 +212,13 @@ public class DemoDataSeeder implements CommandLineRunner {
   // -----------------------------------------------------------------------
 
   private void seedClassrooms() {
+    // All classrooms owned by nora so a single teacher login shows all of them
     Object[][] data = {
         { "5A - Datadetektiver", "Lær å være trygg på nettet", "nora", "ntnu", "class1" },
         { "6B - Nettvett", "Slik beskytter du deg selv", "nora", "ntnu", "class2" },
-        { "7C - Sikker på nett", "Vær smart på internett", "tri", "ntnu", "class3" },
-        { "8D - Bottle FC", "Arsenal - The Gunners", "gustav", "ntnu", "class4" },
-        { "9E - Relegation FC", "Tottenham Hotspur Spurs", "anine", "ntnu", "class5" },
+        { "7C - Sikker på nett", "Vær smart på internett", "nora", "ntnu", "class3" },
+        { "8D - Bottle FC", "Arsenal - The Gunners", "nora", "ntnu", "class4" },
+        { "9E - Relegation FC", "Tottenham Hotspur Spurs", "nora", "ntnu", "class5" },
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
