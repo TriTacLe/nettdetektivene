@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   ClassroomResponseDTO,
   ClassroomRequestDTO,
+  ClassroomInstructorResponseDTO,
   ClassroomStudentResponseDTO,
   ClassroomTaskResponseDTO,
 } from "@/types";
@@ -114,6 +115,25 @@ async function updateClassroomTask(
   return data.data
 }
 
+async function getInstructors(classroomId: string): Promise<ClassroomInstructorResponseDTO[]> {
+  const { data } = await apiClient.get<ApiResponse<ClassroomInstructorResponseDTO[]>>(
+    `/classrooms/${classroomId}/instructors`
+  )
+  return data.data
+}
+
+async function addInstructor(classroomId: string, email: string): Promise<ClassroomInstructorResponseDTO> {
+  const { data } = await apiClient.post<ApiResponse<ClassroomInstructorResponseDTO>>(
+    `/classrooms/${classroomId}/instructors`,
+    { email }
+  )
+  return data.data
+}
+
+async function leaveClassroom(classroomId: string): Promise<void> {
+  await apiClient.delete(`/classrooms/${classroomId}/instructors/me`)
+}
+
 export default {
   getMyClassrooms,
   getAllClassrooms,
@@ -129,4 +149,7 @@ export default {
   assignTaskToClassroom,
   removeClassroomTask,
   updateClassroomTask,
+  getInstructors,
+  addInstructor,
+  leaveClassroom,
 }

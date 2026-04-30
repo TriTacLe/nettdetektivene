@@ -2,11 +2,14 @@ package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.classroom.ClassroomInstructorResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskUpdateRequestDTO;
+import ntnu.no.backend.exception.ConflictException;
+import ntnu.no.backend.mapper.ClassroomInstructorMapper;
 import ntnu.no.backend.mapper.ClassroomMapper;
 import ntnu.no.backend.mapper.ClassroomTaskMapper;
 import ntnu.no.backend.model.Classroom;
@@ -17,6 +20,8 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.UserTaskUnlocked;
 import ntnu.no.backend.model.UserTaskUnlockedId;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -27,6 +32,7 @@ import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +43,8 @@ import java.util.UUID;
 /**
  * Service for managing classrooms.
  *
- * @author tri, aninesst
- * @version 0.2
+ * @author tri, aninesst, norakirknes
+ * @version 0.3
  * @since 0.1
  */
 @Service
@@ -54,6 +60,7 @@ public class ClassroomService {
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
   private final TaskBestScoreRepository taskBestScoreRepository;
+  private final NotificationService notificationService;
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
@@ -411,5 +418,68 @@ public class ClassroomService {
 
   private String generateJoinCode() {
     return UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+  }
+
+  public void assertIsInstructor(User caller, Classroom classroom) {
+    if (!classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)) {
+      throw new AccessDeniedException("You are not an instructor of this classroom");
+    }
+  }
+
+  @Transactional
+  public ClassroomInstructorResponseDTO addInstructor(UUID classroomId, String email, User caller) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    assertIsInstructor(caller, classroom);
+
+    User target = userRepository.findByEmail(email)
+        .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+
+    boolean isTeacher = target.getRoles().stream()
+        .anyMatch(role -> "instructor".equals(role.getAuthority()));
+    if (!isTeacher) {
+      throw new IllegalArgumentException("User is not a teacher");
+    }
+
+    if (classroomInstructorRepository.existsByClassroomAndUser(classroom, target)) {
+      throw new ConflictException("User is already an instructor of this classroom");
+    }
+
+    ClassroomInstructor instructor = ClassroomInstructor.builder()
+        .id(new ClassroomInstructorId(classroomId, target.getId()))
+        .classroom(classroom)
+        .user(target)
+        .build();
+    classroomInstructorRepository.save(instructor);
+
+    notificationService.createTeacherAddedNotification(target, classroom);
+
+    return ClassroomInstructorMapper.toDTO(instructor);
+  }
+
+  @Transactional
+  public void leaveClassroom(UUID classroomId, User caller) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    assertIsInstructor(caller, classroom);
+
+    long count = classroomInstructorRepository.countByClassroom(classroom);
+    if (count <= 1) {
+      throw new ConflictException("Cannot leave classroom: at least one teacher required");
+    }
+
+    classroomInstructorRepository.deleteByClassroomAndUser(classroom, caller);
+  }
+
+  @Transactional(readOnly = true)
+  public List<ClassroomInstructorResponseDTO> getInstructors(UUID classroomId) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    return classroomInstructorRepository.findAllByClassroom(classroom).stream()
+        .map(ClassroomInstructorMapper::toDTO)
+        .toList();
   }
 }

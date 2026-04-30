@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.classroom.AddInstructorRequestDTO;
+import ntnu.no.backend.dto.classroom.ClassroomInstructorResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
@@ -166,5 +168,34 @@ public class ClassroomController {
     return ResponseEntity.ok(ApiResponse.ok(
         classroomService.updateClassroomTask(classroomId, taskId, dto)
     ));
+  }
+
+  @PostMapping("/{id}/instructors")
+  @Operation(summary = "Add a teacher as co-instructor to a classroom")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<ClassroomInstructorResponseDTO>> addInstructor(
+      @PathVariable UUID id,
+      @RequestBody @Valid AddInstructorRequestDTO dto,
+      @AuthenticationPrincipal User user) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.ok(classroomService.addInstructor(id, dto.email(), user)));
+  }
+
+  @DeleteMapping("/{id}/instructors/me")
+  @Operation(summary = "Leave a classroom as an instructor")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<Void> leaveClassroom(
+      @PathVariable UUID id,
+      @AuthenticationPrincipal User user) {
+    classroomService.leaveClassroom(id, user);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{id}/instructors")
+  @Operation(summary = "List all instructors for a classroom")
+  @PreAuthorize("hasAnyAuthority('instructor', 'inst_admin', 'sys_admin')")
+  public ResponseEntity<ApiResponse<List<ClassroomInstructorResponseDTO>>> getInstructors(
+      @PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.ok(classroomService.getInstructors(id)));
   }
 }
