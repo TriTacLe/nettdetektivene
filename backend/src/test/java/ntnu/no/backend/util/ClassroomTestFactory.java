@@ -137,6 +137,7 @@ public class ClassroomTestFactory {
       .user(user)
       .assignedAt(LocalDateTime.now())
       .build();
+  }
 
   public static ClassroomStudentResponseDTO classroomStudentResponseDTO(UUID classroomId, UUID userId) {
     return new ClassroomStudentResponseDTO(
