@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ntnu.no.backend.model.*;
 import ntnu.no.backend.model.auth.*;
-import ntnu.no.backend.model.classroom.ClassroomInstructor;
-import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
@@ -64,7 +62,6 @@ public class DemoDataSeeder implements CommandLineRunner {
   private final RoleRepository roleRepository;
   private final InstitutionRepository institutionRepository;
   private final ClassroomRepository classroomRepository;
-  private final ClassroomInstructorRepository classroomInstructorRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
   private final TaskRepository taskRepository;
@@ -236,6 +233,12 @@ public class DemoDataSeeder implements CommandLineRunner {
       });
       classrooms.put((String) row[4], c);
     }
+  }
+
+  // trg_classroom_auto_instructor fires AFTER INSERT on classroom and adds
+  // the creator as instructor automatically — nothing to do here in Java.
+  private void seedClassroomInstructors() {
+    log.info("Classroom instructors handled by trg_classroom_auto_instructor trigger");
   }
 
   // -----------------------------------------------------------------------
