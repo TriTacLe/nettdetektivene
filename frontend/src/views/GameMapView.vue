@@ -65,7 +65,7 @@ const houses = [
 const lockedPopup = ref<string | null>(null)
 const showHackerDialog = ref(false)
 const hackerCaught = ref(false)
-const SECRET_HACKER_CHANCE = 0.05
+const SECRET_HACKER_CHANCE = 0.2
 let mql: MediaQueryList | null = null
 const isMobile = ref(false)
 
