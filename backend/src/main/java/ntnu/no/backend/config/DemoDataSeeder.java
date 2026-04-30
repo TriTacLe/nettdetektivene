@@ -872,7 +872,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     // Week 48, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Jeg lærte at ikke alle bilder på nettet er ekte! Noen er laget av kunstig intelligens.",
-        "https://www.medietilsynet.no/digitale-medier/skole/deepfakes/fra-goy-til-guffent-pa-et-oyeblikk/", 48, 2025, true,
+        "https://upload.wikimedia.org/wikipedia/commons/a/a5/GAN_deepfake_white_girl.jpg", 48, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 48, 2025 - segward approved
@@ -890,7 +890,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     // Week 50, 2025 - siljelund approved & featured
     createMysterySubmissionWithStatus(users.get("siljelund"), class1,
         "Phishing e-poster kan se veldig ekte ut. Sjekk alltid avsender!",
-        "https://snl.no/phishing", 50, 2025, true,
+        "https://upload.wikimedia.org/wikipedia/commons/d/d9/Example_bank_phishing_email.svg", 50, 2025, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, noraInstructor);
 
     // Week 51, 2025 - segward pending
@@ -925,7 +925,7 @@ public class DemoDataSeeder implements CommandLineRunner {
       User triInstructor = users.get("tri");
       createMysterySubmissionWithStatus(users.get("odegaard"), class4,
         "Det er mange falske profiler som later som aa være kjendiser pa sosiale medier!",
-        "https://snl.no/nettsvindel", 2, 2026, true,
+        "https://images.unsplash.com/photo-1665470909901-162912ec16f7?w=800", 2, 2026, true,
         ntnu.no.backend.model.enums.MysteryStatus.APPROVED, triInstructor);
     }
 
@@ -944,7 +944,7 @@ public class DemoDataSeeder implements CommandLineRunner {
   {
       createPendingMysterySubmission(users.get("son"), class5,
         "Jeg fikk en e-post som sa at jeg hadde vunnet i lotto, men jeg ikke spiller lotto!",
-        "https://snl.no/nettfiske", 2, 2026, false);
+        "https://upload.wikimedia.org/wikipedia/commons/b/bd/Lottoscamimage1.jpg", 2, 2026, false);
     }
 
   log.info("Mystery submissions seeded");
