@@ -50,6 +50,7 @@ function deleteClassroom(id: string) {
 
 <template>
   <div class="overview-content">
+    <h2 class="panel-title">Mine klasserom</h2>
     <div
       v-if="error"
       class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
@@ -122,6 +123,19 @@ function deleteClassroom(id: string) {
   margin-top: 1.5rem;
 }
 
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: none;
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+}
+
 .row-list {
   display: flex;
   flex-direction: column;
@@ -131,7 +145,7 @@ function deleteClassroom(id: string) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.875rem;
   backdrop-filter: blur(4px);
-  height: calc(100vh - 12rem);
+  max-height: calc(100vh - 12rem);
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
@@ -165,13 +179,11 @@ function deleteClassroom(id: string) {
   font-size: 1.125rem;
   font-weight: 800;
   color: #111827;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   flex: 1;
-  min-width: 6rem;
+  min-width: 4rem;
   -webkit-text-stroke: 0;
   text-shadow: none;
+  word-break: break-word;
 }
 
 .row-stat {
