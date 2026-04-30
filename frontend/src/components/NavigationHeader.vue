@@ -16,7 +16,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const settingsOpen = ref(false)
 
-const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login', 'join-classroom', 'set-display-name'])
+const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
 const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
