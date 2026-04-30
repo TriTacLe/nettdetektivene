@@ -34,7 +34,9 @@ const earnedAchievements = computed(() =>
 )
 
 const notEarnedAchievements = computed(() =>
-  allAchievements.value.filter((a) => a.id && !earnedIds.value.has(a.id))
+  allAchievements.value.filter(
+    (a) => a.id && !earnedIds.value.has(a.id) && a.triggerType !== 'secret',
+  ),
 )
 </script>
 

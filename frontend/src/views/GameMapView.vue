@@ -3,6 +3,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
+import secretHackerScene from '@/data/SecretHackerDialog'
+import AchievementService from '@/services/AchievementService'
 
 const router = useRouter()
 
@@ -60,8 +63,37 @@ const houses = [
 ]
 
 const lockedPopup = ref<string | null>(null)
+const showHackerDialog = ref(false)
+const hackerCaught = ref(false)
+const SECRET_HACKER_CHANCE = 0.05
 let mql: MediaQueryList | null = null
 const isMobile = ref(false)
+
+function maybeTriggerHackerEncounter(e: MouseEvent) {
+  if (hackerCaught.value || showHackerDialog.value) return
+  const target = e.target as HTMLElement | null
+  if (
+    target?.closest('.map-object') ||
+    target?.closest('.locked-popup') ||
+    target?.closest('.map-header') ||
+    target?.closest('.cutscene')
+  ) {
+    return
+  }
+  if (Math.random() < SECRET_HACKER_CHANCE) {
+    showHackerDialog.value = true
+  }
+}
+
+async function onHackerDialogDone() {
+  showHackerDialog.value = false
+  hackerCaught.value = true
+  try {
+    await AchievementService.awardSecret('caught_hacker')
+  } catch {
+    // Surface nothing — the achievement is a fun easter egg, not load-bearing.
+  }
+}
 
 function handleOrientationChange(e: MediaQueryListEvent) {
   isMobile.value = e.matches
@@ -72,6 +104,7 @@ onMounted(() => {
   isMobile.value = mql.matches
   mql.addEventListener('change', handleOrientationChange)
 
+  stopStore.clearSeenPickers()
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
   stopStore.loadTasks('datasenteret', true)
@@ -143,11 +176,17 @@ const roadPath = computed(() => {
 </script>
 
 <template>
-  <div class="game-map">
+  <div class="game-map" @click="maybeTriggerHackerEncounter">
     <picture class="map-bg-wrapper" aria-hidden="true">
       <source media="(max-aspect-ratio: 1/1)" srcset="/bybakgrunn-mobil.svg" />
       <img class="map-bg" src="/bybakgrunn.svg" alt="" aria-hidden="true" />
     </picture>
+
+    <CutsceneDialog
+      v-if="showHackerDialog"
+      :scene="secretHackerScene"
+      @done="onHackerDialogDone"
+    />
 
     <NavigationHeader
       title="Utendørs"

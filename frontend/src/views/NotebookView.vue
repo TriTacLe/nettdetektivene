@@ -48,7 +48,7 @@ const savedStop = ref<string | null>(null)
 const saveError = ref<string | null>(null)
 const currentSpread = ref(0)
 
-const ALL_STOPS = Object.values(TaskType)
+const ALL_STOPS: TaskType[] = [TaskType.NEWS, TaskType.PHOTO, TaskType.BOSS]
 
 const isMobile = ref(window.innerWidth <= 1000)
 

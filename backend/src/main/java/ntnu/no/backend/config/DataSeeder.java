@@ -491,7 +491,6 @@ Classroom class1 = classrooms.get("class1");
         {"Fotoproff",          "Fullfør alle oppgaver hos Fotografen",            "📸", "location_completed",  "fotografen"},
         {"Datamester",         "Fullfør alle oppgaver i Datasenteret",            "💻", "location_completed",  "datasenteret"},
         {"Første mysterium løst", "Løs ditt første ukens mysterium",              "🔍", "mystery_solved",      "first"},
-        {"Fem mysterier løst",    "Løs fem ukens mysterier",                       "🏅", "mystery_solved",      "5"},
         {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
         {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
         {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},
