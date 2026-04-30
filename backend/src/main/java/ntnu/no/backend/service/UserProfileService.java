@@ -118,10 +118,9 @@ import org.springframework.transaction.annotation.Transactional;
               notifyInstructorsOfInappropriateName(user, dto.getDisplayName());                                                      
               throw new IllegalArgumentException("Brukernavnet inneholder upassende ord");                                           
             }                                                                                                                        
-            if (membership.getNameChangeStatus() != NameChangeStatus.PENDING) {                                                      
-              jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",                                                       
-                  user.getId().toString(), dto.getDisplayName());                                                                    
-              notifyInstructorsOfNameChange(user, dto.getDisplayName());                                                             
+            if (membership.getNameChangeStatus() != NameChangeStatus.PENDING) {
+              jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
+                  user.getId().toString(), dto.getDisplayName());
             }                                                                                                                        
           } else {                                                                                                                   
             profile.setDisplayName(dto.getDisplayName());                                                                            
@@ -160,27 +159,4 @@ import org.springframework.transaction.annotation.Transactional;
           ));                                                                                                                        
     }                                                                                                                                
                                                                                                                                      
-    /**                                                                                                                              
-     * Creates a notification for each instructor in the classroom                                                                   
-     * of the student requesting the name change                                                                                     
-     *                                                                                                                               
-     * @param student the student requesting a name change                                                                           
-     * @param requestedName the requested name                                                                                       
-     */                                                                                                                              
-    private void notifyInstructorsOfNameChange(User student, String requestedName) {                                                 
-      ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);                                     
-      if (membership == null) return;                                                                                                
-                                                                                                                                     
-      classroomInstructorRepository.findAllByClassroom(membership.getClassroom())                                                    
-          .forEach(instructor -> notificationRepository.save(                                                                        
-              Notification.builder()                                                                                                 
-                  .user(instructor.getUser())                                                                                        
-                  .classroom(membership.getClassroom())                                                                              
-                  .msg(student.getDisplayName() + " ønsker å bytte navn til \"" + requestedName + "\"")                              
-                  .refType("name_change")                                                                                            
-                  .refId(student.getId())                                                                                            
-                  .isRead(false)                                                                                                     
-                  .build()                                                                                                           
-          ));                                                                                                                        
-    }
 }
