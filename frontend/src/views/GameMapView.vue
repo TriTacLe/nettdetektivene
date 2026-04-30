@@ -181,13 +181,9 @@ onMounted(async () => {
   stopStore.loadTasks('fotografen', true)
   stopStore.loadTasks('datasenteret', true)
 
-  if (!sideQuestStore.loaded) {
-    try {
-      await sideQuestStore.load()
-    } catch {
-      return
-    }
-  }
+  // load() swallows network errors internally and just leaves loaded=true,
+  // so we don't need our own try/catch here.
+  if (!sideQuestStore.loaded) await sideQuestStore.load()
   if (Math.random() >= SIDE_QUEST_TRIGGER_CHANCE) return
   const pick = pickSideQuest()
   if (!pick) return
