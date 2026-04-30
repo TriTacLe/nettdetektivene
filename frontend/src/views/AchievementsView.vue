@@ -34,9 +34,13 @@ const earnedAchievements = computed(() =>
 )
 
 const notEarnedAchievements = computed(() =>
-  allAchievements.value.filter(
-    (a) => a.id && !earnedIds.value.has(a.id) && a.triggerType !== 'secret',
-  ),
+  allAchievements.value
+    .filter((a) => a.id && !earnedIds.value.has(a.id))
+    .map((a) =>
+      a.triggerType === 'secret'
+        ? { ...a, title: 'Skjult medalje', descAch: 'Utforsk for å avsløre denne medaljen.' }
+        : a,
+    ),
 )
 </script>
 
