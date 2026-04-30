@@ -125,6 +125,12 @@ const router = createRouter({
       path: '/classroom/:id',
       name: 'classroom-detail',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/tasks',
+      name: 'classroom-tasks',
+      component: () => import('../views/teacher/ClassroomDetailView.vue'),
     },
     {
       path: '/classroom/:id/tasks/new',

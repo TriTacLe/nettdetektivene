@@ -34,7 +34,7 @@ watch(classroomTask, (task) => {
   initialized.value = true
   const t = task.task
 
-  const parsed = parseTaskContent(t.content, t.taskType)
+  const parsed = parseTaskContent(t.content as string, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
     const wrapper = parsed as { news?: NewsChallengeContent } | null

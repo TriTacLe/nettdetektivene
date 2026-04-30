@@ -9,11 +9,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
-const email = ref('student1@test.no')
-const password = ref('password123')
-const serverError = ref('')
-const isLoading = ref(false)
-
+// Test credentials for project demo - not dangerous
+  const email = ref('siljelund@nettdetektivene.no')
+  const password = ref('password123')
+  const serverError = ref('')
+  const isLoading = ref(false)
 const fieldErrors = ref({ email: '', password: '' })
 
 function validate(): boolean {
@@ -39,7 +39,11 @@ async function handleLogin(): Promise<void> {
 
   isLoading.value = true
   try {
-    await authStore.feideLogin({ email: email.value, affiliation: 'student', password: password.value })
+    await authStore.feideLogin({
+      email: email.value,
+      affiliation: 'student',
+      password: password.value,
+    })
 
     const emailPrefix = authStore.user?.email?.split('@')[0]
     if (authStore.user?.displayName === emailPrefix) {
@@ -59,7 +63,9 @@ async function handleLogin(): Promise<void> {
       }
       router.push({ name: 'student-home' })
     } else {
-      const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, { headers })
+      const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, {
+        headers,
+      })
       if (statusRes.ok) {
         router.push({ name: 'awaiting-approval' })
       } else {
@@ -72,15 +78,10 @@ async function handleLogin(): Promise<void> {
     isLoading.value = false
   }
 }
-
 </script>
 
 <template>
-  <SceneComponent
-    title="Feide elev innlogging"
-    previous="/start"
-    background="/whiteBgImage.jpg"
-  >
+  <SceneComponent title="Feide elev innlogging" previous="/start" background="/whiteBgImage.jpg">
     <div class="login-shell">
       <div class="login-card-stage">
         <div class="login-card">
@@ -158,9 +159,7 @@ async function handleLogin(): Promise<void> {
             </button>
           </div>
 
-          <div class="login-footer">
-            Feide
-          </div>
+          <div class="login-footer">Feide</div>
         </div>
       </div>
     </div>

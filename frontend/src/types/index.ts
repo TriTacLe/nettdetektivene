@@ -80,21 +80,21 @@ export interface TaskDTO {
   difficulty: number;
   isActive: boolean;
   stopLocation: string | null;
-  content: Record<string, unknown>;
+  content: NewsChallengeContent | PhotoChallengeContent | unknown;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface NewsChallengeContent {
   hint?: string;
-  articles?: { imagePath?: string; isReal: boolean }[];
+  articles?: NewsArticle[];
   question?: string;
 }
 
 export interface PhotoChallengeContent {
   description?: string;
   hint?: string;
-  alternatives?: { imagePath?: string; description?: string; correctType: string; begrunnelser?: string[] }[];
+  alternatives?: PhotoAlternative[];
 }
 
 export interface NotebookEntryDTO {
@@ -253,7 +253,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
-  content?: Record<string, unknown>
+  content?: NewsChallengeContent | PhotoChallengeContent | unknown
 }
 
 export interface NewsAnswers {

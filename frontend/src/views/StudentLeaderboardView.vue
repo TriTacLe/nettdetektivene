@@ -8,15 +8,15 @@ import { useStudentStore } from '@/stores/StudentStore'
 const studentStore = useStudentStore()
 const institutionId = computed(() => studentStore.institutionId)
 
-const { data, isLoading, isError } = useQuery(
+const queryOptions = computed(() =>
   institutionId.value
-    ? getClassroomsLeaderboardByInstitutionOptions({
-        path: { institutionId: institutionId.value },
-      })
-    : { queryKey: ['leaderboard-disabled'] as const, queryFn: () => null, enabled: false },
+    ? getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
+    : { queryKey: ['leaderboard-disabled'], queryFn: () => null, enabled: false } as any,
 )
 
-const entries = computed(() => (data.value as { data?: unknown[] } | null)?.data ?? [])
+const { data, isLoading, isError } = useQuery(queryOptions)
+
+const entries = computed(() => (data.value as any)?.data ?? [])
 </script>
 
 <template>

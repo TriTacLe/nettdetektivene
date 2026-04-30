@@ -58,7 +58,7 @@ watch(
         <CaseFile tab-label="MIN DETEKTIV">
           <template #left>
             <div class="profile-card-inner">
-              <AvatarPreview :config="avatarCfg" :size="avatarSize" />
+              <AvatarPreview :config="avatarCfg" :size="avatarSize" :lazy-load="false" />
 
               <button
                 class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition"
