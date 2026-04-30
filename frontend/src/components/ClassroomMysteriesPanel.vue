@@ -64,6 +64,12 @@ function statusText(submission: MysteryReviewDTO) {
   if (submission.mysStatus === 'REJECTED') return 'Forkastet'
   return 'Venter'
 }
+
+function statusDotClass(submission: MysteryReviewDTO) {
+  if (submission.mysStatus === 'APPROVED') return 'status-dot--green'
+  if (submission.mysStatus === 'REJECTED') return 'status-dot--red'
+  return 'status-dot--amber'
+}
 </script>
 
 <template>
@@ -77,46 +83,47 @@ function statusText(submission: MysteryReviewDTO) {
         Ingen innsendinger ennå.
       </p>
 
-      <article
+      <div
         v-for="(submission, i) in sortedSubmissions"
         v-else
         :key="submission.id"
-        class="card"
-        :style="{ animationDelay: `${i * 0.05}s` }"
+        class="row-wrapper"
+        :style="{ animationDelay: `${0.04 + i * 0.02}s` }"
       >
-        <header class="card-header">
-          <span class="submitter">{{ submission.submittedByName || 'Ukjent elev' }}</span>
+        <div class="row">
+          <span class="row-name">{{ submission.submittedByName || 'Ukjent elev' }}</span>
           <span class="status-badge" :class="`status-badge--${submission.mysStatus.toLowerCase()}`">
+            <span class="status-dot" :class="statusDotClass(submission)" aria-hidden="true" />
             {{ statusText(submission) }}
           </span>
-        </header>
-
-        <div class="card-actions">
-          <button
-            type="button"
-            class="btn-bare action-btn"
-            @click="openPreview(submission)"
-          >
-            Forhåndsvis
-          </button>
-          <button
-            type="button"
-            class="btn-bare action-btn"
-            :disabled="submission.mysStatus === 'APPROVED'"
-            @click="approve(submission)"
-          >
-            Godkjenn
-          </button>
-          <button
-            type="button"
-            class="btn-bare action-btn action-btn-danger"
-            :disabled="submission.mysStatus === 'REJECTED'"
-            @click="reject(submission)"
-          >
-            Forkast
-          </button>
+          <div class="row-actions">
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--preview"
+              @click="openPreview(submission)"
+            >
+              Forhåndsvis
+            </button>
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--approve"
+              :disabled="submission.mysStatus === 'APPROVED'"
+              @click="approve(submission)"
+            >
+              Godkjenn
+            </button>
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--reject"
+              :disabled="submission.mysStatus === 'REJECTED'"
+              @click="reject(submission)"
+              :aria-label="`Forkast bidrag fra ${submission.submittedByName}`"
+            >
+              ✕
+            </button>
+          </div>
         </div>
-      </article>
+      </div>
     </div>
 
     <Transition name="fade">
@@ -164,41 +171,43 @@ function statusText(submission: MysteryReviewDTO) {
   overflow-y: auto;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 0;
+.row-wrapper {
   animation: slideUp 0.4s ease-out both;
-  overflow: hidden;
 }
 
-.card-header {
+.row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.55rem 0.85rem;
-  background: #111;
-  color: white;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  clip-path: var(--notch-clip);
+  border: none;
+  text-align: left;
 }
 
-.submitter {
-  flex: 1;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: white;
+.row-name {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 5rem;
+  flex: 1;
 }
 
 .status-badge {
-  font-size: 0.7rem;
-  font-weight: 800;
-  border-radius: 0;
-  padding: 0.1rem 0.45rem;
-  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-badge--approved {
@@ -216,111 +225,81 @@ function statusText(submission: MysteryReviewDTO) {
   color: #92400e;
 }
 
-.alternatives {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.alternative {
+.status-dot--amber { background: #d97706; }
+.status-dot--green { background: #16a34a; }
+.status-dot--red { background: #dc2626; }
+
+.row-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0;
-  background: #fff;
-  color: #1f2937;
-  font-size: 0.85rem;
-  font-weight: 600;
-  line-height: 1.3;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.alternative--correct {
-  border-color: #16a34a;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.alternative-marker {
-  width: 0.85rem;
-  text-align: center;
-  font-weight: 800;
-  color: #16a34a;
-  font-size: 0.85rem;
-}
-
-.alternative-text {
-  flex: 1;
-  -webkit-text-stroke: 0;
-  text-shadow: none;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.4rem;
-  justify-content: flex-end;
-  padding: 0.55rem 0.85rem;
-}
-
-.action-btn {
-  position: relative;
-  isolation: isolate;
+.row-btn {
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  min-height: 1.8rem;
-  padding: 0.25rem 0.7rem;
-  border: none;
-  border-radius: 0 !important;
-  clip-path: var(--notch-clip);
+  justify-content: center;
+}
+
+.row-btn:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+.row-btn--preview {
+  background: #e0e7ff;
+  color: #1e3a8a;
+  border: 1.5px solid #c7d2fe;
+}
+
+.row-btn--preview:hover {
+  background: #c7d2fe;
+  border-color: #a5b4fc;
+}
+
+.row-btn--approve {
+  background: #15803d;
+  color: white;
+}
+
+.row-btn--approve:hover:not(:disabled) {
+  background: #166534;
+}
+
+.row-btn--reject {
   background: transparent;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #1f2937;
-  cursor: pointer;
+  color: #6b7280;
+  width: 2.75rem;
+  padding: 0;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #d1d5db;
-  z-index: -2;
-}
-
-.action-btn::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  clip-path: var(--notch-clip);
-  background: white;
-  z-index: -1;
-  transition: background 0.15s;
-}
-
-.action-btn:hover:not(:disabled)::after {
-  background: #f9fafb;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-btn-danger {
-  color: #b91c1c;
-}
-
-.action-btn-danger::before {
-  background: #fca5a5;
-}
-
-.action-btn-danger:hover:not(:disabled)::after {
+.row-btn--reject:hover:not(:disabled) {
   background: #fef2f2;
+  color: #dc2626;
+}
+
+.row-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .empty-state {
