@@ -323,3 +323,41 @@ export interface NotificationDTO {
   isRead: boolean
   createdAt: string
 }
+
+export type MysteryStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface MysterySubmissionRequestDTO {
+  classroomId: string
+  mysDesc: string
+  attachmentUrl?: string | null
+}
+
+export interface MysterySubmissionResponseDTO {
+  id: string
+  classroomId: string
+  submittedBy: string
+  mysDesc: string
+  attachmentUrl: string | null
+  mysStatus: MysteryStatus
+  reviewedBy: string | null
+  reviewedAt: string | null
+  isFeatured: boolean
+  weekNumber: number
+  weekYear: number
+  submittedAt: string
+}
+
+export interface MysteryReviewDTO {
+  mysStatus: MysteryStatus
+  isFeatured: boolean
+}
+
+export interface MysteryTaskCreateRequestDTO {
+  title: string
+  taskType: TaskType
+  stopLocation?: string | null
+  difficulty: number
+  content?: string | null
+  sortOrder?: number | null
+  isActive?: boolean | null
+}
