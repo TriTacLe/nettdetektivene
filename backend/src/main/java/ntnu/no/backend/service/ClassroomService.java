@@ -23,6 +23,7 @@ import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
@@ -52,6 +53,7 @@ public class ClassroomService {
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final TaskBestScoreRepository taskBestScoreRepository;
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
@@ -228,13 +230,51 @@ public class ClassroomService {
 
     classroomTaskRepository.save(classroomTask);
 
-    // If students were already approved when this task was added, the
-    // join-time trigger already fired with no tasks available. Re-run the
-    // first-task unlock so they get access. Idempotent for students who
-    // already have the first task unlocked.
-    unlockFirstTaskForApprovedStudents(classroom);
+    // The trg_attempt_sync trigger only unlocks the next task in sortOrder when
+    // a student passes the previous one. A task added after students have
+    // already progressed past its sortOrder slot would never get unlocked.
+    // Mirror the trigger's chain rule here so newly added tasks become
+    // available to anyone who has already cleared the predecessor.
+    unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
     return ClassroomTaskMapper.toDTO(classroomTask);
+  }
+
+  private void unlockNewTaskForEligibleStudents(Classroom classroom, ClassroomTask newTask) {
+    if (Boolean.FALSE.equals(newTask.getIsActive())) return;
+
+    ClassroomTask predecessor = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId())
+        .stream()
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .reduce((a, b) -> a.getSortOrder() >= b.getSortOrder() ? a : b)
+        .orElse(null);
+
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+
+      boolean shouldUnlock = predecessor == null
+          || taskBestScoreRepository
+              .existsByIdUserIdAndIdTaskIdAndIdClassroomIdAndFirstPassedAtIsNotNull(
+                  userId, predecessor.getTask().getId(), classroom.getId());
+
+      if (!shouldUnlock) continue;
+      if (userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
+          userId, classroom.getId(), newTask.getTask().getId())) continue;
+
+      userTaskUnlockedRepository.save(
+          UserTaskUnlocked.builder()
+              .id(new UserTaskUnlockedId(userId, classroom.getId(), newTask.getTask().getId()))
+              .user(student.getUser())
+              .classroom(classroom)
+              .task(newTask.getTask())
+              .unlockedAt(LocalDateTime.now())
+              .build()
+      );
+    }
   }
 
   @Transactional
