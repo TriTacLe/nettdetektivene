@@ -132,14 +132,54 @@ export const useAudioStore = defineStore('audio', () => {
     sessionStorage.setItem('audio_autoAdvance', String(autoAdvance.value))
   }
 
-  // Fire-and-forget short SFX. Each call gets its own Audio element so
-  // overlapping ticks don't cancel each other.
+  // High-frequency SFX (typing ticks fire ~45x/sec) is far too heavy for
+  // HTMLAudioElement.play() — each call has its own decode/start latency and
+  // GC pressure. WebAudio decodes once into a shared AudioBuffer and spawns
+  // cheap AudioBufferSourceNodes per play.
+  let sfxContext: AudioContext | null = null
+  const sfxBuffers = new Map<string, AudioBuffer>()
+  const sfxLoading = new Set<string>()
+
+  function ensureSfxContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null
+    const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!Ctor) return null
+    if (!sfxContext) sfxContext = new Ctor()
+    return sfxContext
+  }
+
+  async function loadSfxBuffer(src: string, ctx: AudioContext) {
+    if (sfxBuffers.has(src) || sfxLoading.has(src)) return
+    sfxLoading.add(src)
+    try {
+      const res = await fetch(src)
+      const arr = await res.arrayBuffer()
+      const buf = await ctx.decodeAudioData(arr)
+      sfxBuffers.set(src, buf)
+    } catch {
+      // Ignore — playSfx will silently no-op until the buffer loads next time.
+    } finally {
+      sfxLoading.delete(src)
+    }
+  }
+
   function playSfx(src: string) {
     const vol = effectiveSfxVolume()
     if (vol <= 0) return
-    const el = new Audio(src)
-    el.volume = vol
-    el.play().catch(() => {})
+    const ctx = ensureSfxContext()
+    if (!ctx) return
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+    const buf = sfxBuffers.get(src)
+    if (!buf) {
+      loadSfxBuffer(src, ctx).catch(() => {})
+      return
+    }
+    const source = ctx.createBufferSource()
+    source.buffer = buf
+    const gain = ctx.createGain()
+    gain.gain.value = vol
+    source.connect(gain).connect(ctx.destination)
+    source.start(0)
   }
 
   function playTypingTick() {
