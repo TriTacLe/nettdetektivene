@@ -15,6 +15,7 @@ import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type {
   TaskDTO,
   NewsChallenge,
+  NewsArticle,
   FotografenChallenge,
   NewsAnswers,
   PhotoAnswers,
@@ -86,7 +87,7 @@ const newsChallenge = computed<NewsChallenge | null>(() => {
   const rawContent = task.value?.content
   const content = (rawContent as { news?: NewsChallengeContent })?.news ?? rawContent as NewsChallengeContent | null
   if (!content?.articles?.length || content.articles.length < 2) return null
-  return content.articles.slice(0, 2) as unknown as NewsChallenge
+  return { articles: content.articles.slice(0, 2) as [NewsArticle, NewsArticle] }
 })
 
 const photoChallenge = computed<FotografenChallenge | null>(() => {
