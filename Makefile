@@ -46,12 +46,7 @@ dev:
 	@echo "Backend:  http://localhost:8080"
 	@echo "MySQL:    localhost:3307"
 
-	@echo "Running factory.sh seed..."
-	@if [ -x scripts/factory.sh ]; then \
-		bash scripts/factory.sh || echo "  Warning: factory.sh exited with errors (continuing)"; \
-	else \
-		echo "scripts/factory.sh not found - skipping"; \
-	fi
+	@echo "Seeding handled by the backend's DataSeeder (Spring 'seed' profile, set in compose.yaml)."
 
 	@echo "Streaming logs (Ctrl+C to stop)..."
 	docker compose logs -f backend frontend mysql

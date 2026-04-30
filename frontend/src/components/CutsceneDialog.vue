@@ -61,6 +61,7 @@ function advance() {
 }
 
 function choose(choice: DialogChoice) {
+  if (choice.disabled) return
   if (!isComplete.value) {
     skip()
     return
@@ -82,7 +83,7 @@ function onKeydown(e: KeyboardEvent) {
   if (showChoices.value && /^Digit[1-4]$/.test(e.code)) {
     const idx = Number(e.code.replace('Digit', '')) - 1
     const choice = props.scene.choices?.[idx]
-    if (choice) {
+    if (choice && !choice.disabled) {
       e.preventDefault()
       choose(choice)
     }
@@ -145,11 +146,38 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         <button
           v-for="(choice, i) in scene.choices"
           :key="choice.next + i"
+          type="button"
           class="btn-vn dialog-choice"
+          :class="{
+            'dialog-choice--locked': choice.disabled,
+            'dialog-choice--done': choice.done,
+          }"
+          :disabled="choice.disabled"
+          :aria-disabled="choice.disabled || undefined"
           @click.stop="choose(choice)"
         >
-          <span class="dialog-choice-key">{{ i + 1 }}</span>
-          <span class="dialog-choice-label">{{ choice.label }}</span>
+          <span class="dialog-choice-key">
+            <svg
+              v-if="choice.disabled"
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              aria-hidden="true"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span v-else-if="choice.done" class="dialog-choice-check" aria-hidden="true">&#10003;</span>
+            <template v-else>{{ i + 1 }}</template>
+          </span>
+          <span class="dialog-choice-body">
+            <span class="dialog-choice-label">{{ choice.label }}</span>
+            <span v-if="choice.hint" class="dialog-choice-hint">{{ choice.hint }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -252,7 +280,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .cutscene-text {
   position: absolute;
   left: 50%;
-  bottom: 5vh;
+  bottom: 16vh;
   transform: translateX(-50%);
   z-index: 3;
   width: min(70vw, 60rem);
@@ -265,7 +293,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 @media (max-width: 640px) {
   .cutscene-character { height: 70vh; right: 0; }
-  .cutscene-text { width: calc(100% - 2.5rem); bottom: 1.5rem; }
+  .cutscene-text { width: calc(100% - 2.5rem); bottom: 6rem; }
 }
 
 .dialog-name {
@@ -279,14 +307,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .dialog-text {
-  font-size: 1.2rem;
+  font-size: 1.9rem;
   font-weight: 500;
   color: #ffffff;
-  line-height: 1.55;
-  min-height: 3.4em;
+  line-height: 1.45;
+  min-height: 2.9em;
   text-shadow:
     0 2px 4px rgba(0, 0, 0, 0.95),
     0 0 14px rgba(0, 0, 0, 0.75);
+}
+
+@media (max-width: 640px) {
+  .dialog-text {
+    font-size: 1.5rem;
+  }
 }
 
 .dialog-caret {
@@ -326,7 +360,60 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   flex-shrink: 0;
 }
 
-.dialog-choice-label { flex: 1; white-space: nowrap; }
+.dialog-choice-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.dialog-choice-label {
+  flex: 1;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.dialog-choice-hint {
+  font-size: 0.8rem;
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: left;
+  line-height: 1.3;
+}
+
+.dialog-choice-check {
+  color: #22c55e;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.dialog-choice--done {
+  border-color: rgba(34, 197, 94, 0.65) !important;
+}
+
+.dialog-choice--locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialog-choice--locked:hover,
+.dialog-choice--locked:focus-visible {
+  transform: none;
+  filter: none;
+}
+
+.dialog-choice--locked .dialog-choice-key {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dialog-choice--locked .dialog-choice-hint {
+  color: rgba(255, 255, 255, 0.6);
+}
 
 /* Progress dots + hint sit discreetly bottom-right so they don't
    compete with the dialog block. */
@@ -354,15 +441,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .dialog-dot.active { background: var(--color-nd-glow, #f0c040); }
 
 .dialog-hint {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  gap: 0.45rem;
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.95),
+    0 0 14px rgba(0, 0, 0, 0.7);
 }
 .dialog-arrow {
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   animation: arrow-pulse 1.2s ease-in-out infinite;
 }
 @keyframes arrow-pulse {

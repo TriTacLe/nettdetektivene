@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
@@ -36,5 +37,13 @@ public class UserAchievementController {
   public ResponseEntity<ApiResponse<List<UserAchievementResponseDTO>>> getAchievementsForStudent(
       @PathVariable UUID userId) {
     return ResponseEntity.ok(ApiResponse.ok(userAchievementService.getAchievementsForUser(userId)));
+  }
+
+  @PostMapping("/secret/{triggerRef}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<UserAchievementResponseDTO>> awardSecret(
+      @AuthenticationPrincipal User user,
+      @PathVariable String triggerRef) {
+    return ResponseEntity.ok(ApiResponse.ok(userAchievementService.awardSecret(user.getId(), triggerRef)));
   }
 }

@@ -10,7 +10,7 @@ const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
 // Test credentials for project demo - not dangerous
-  const email = ref('siljelund@nettdetektivene.no')
+  const email = ref('student1@ntnu.no')
   const password = ref('password123')
   const serverError = ref('')
   const isLoading = ref(false)

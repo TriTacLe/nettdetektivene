@@ -3,10 +3,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '../components/SceneComponent.vue'
 import NyhetskvartaletComponent from '../components/NyhetskvartaletComponent.vue'
-import CutsceneDialog from '@/components/CutsceneDialog.vue'
-import { useDialogRunner } from '@/composables/UseDialogRunner'
-import { nyhetskvartaletIntro } from '@/data/taskDialogs/nyhetskvartalet'
-import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
@@ -27,17 +23,6 @@ const task = ref<TaskDTO | null>(null)
 const isLoading = ref(true)
 const error = ref('')
 const submitting = ref(false)
-
-const storyStore = useStoryProgressStore()
-const introRunner = useDialogRunner(nyhetskvartaletIntro, 'start')
-const introDone = ref(!!testClassroomId || storyStore.hasSeen(StoryStep.TASK_INTRO_NYHETSKVARTALET))
-function onIntroAdvance() {
-  introRunner.advance()
-  if (introRunner.isFinished.value) {
-    introDone.value = true
-    if (!testClassroomId) storyStore.advance(StoryStep.TASK_INTRO_NYHETSKVARTALET)
-  }
-}
 
 onMounted(async () => {
   console.log('[NyhetskvartaletTaskView] Loading task with ID:', taskId)
@@ -159,17 +144,10 @@ function routeResult(passed: boolean) {
     <template v-else>
       <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
       <NyhetskvartaletComponent
-        v-if="introDone"
         :challenge="challenge"
         :question="taskQuestion"
         :tip="taskTip"
         @submit="onSubmit"
-      />
-      <CutsceneDialog
-        v-if="!introDone && introRunner.currentScene.value"
-        :key="introRunner.currentScene.value.id"
-        :scene="introRunner.currentScene.value"
-        @done="onIntroAdvance"
       />
     </template>
   </SceneComponent>
