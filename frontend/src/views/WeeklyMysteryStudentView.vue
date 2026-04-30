@@ -89,7 +89,7 @@ function getIsoWeek(date: Date) {
 </script>
 
 <template>
-  <SceneComponent title="Ukens Mysterium" background="/NyhetskvartaletBackground.png" @previous="router.back()">
+  <SceneComponent title="Ukens Mysterium" background="/NyhetskvartaletBackground.png" @back="router.back()">
     <main class="mystery-page">
       <section class="mystery-layout">
         <div class="left-column">

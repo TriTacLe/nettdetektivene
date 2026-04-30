@@ -42,7 +42,7 @@ function cleanDesc(desc: string) {
   <SceneComponent
     title="Ukens mysterium"
     background="/StartBackground.jpg"
-    @previous="router.push({ name: 'student-weekly-mystery', params: { classroomId } })"
+    @back="router.push({ name: 'student-weekly-mystery', params: { classroomId } })"
   >
     <div class="flex flex-1 justify-center p-6 overflow-y-auto">
       <div class="w-full max-w-3xl flex flex-col gap-8">

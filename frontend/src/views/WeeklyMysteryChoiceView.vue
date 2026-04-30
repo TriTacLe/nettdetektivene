@@ -35,7 +35,7 @@ function goToSubmit() {
   <SceneComponent
     :title="classroomTitle"
     background="/StartBackground.jpg"
-    @previous="router.back()"
+    @back="router.back()"
   >
     <div class="flex flex-1 items-center justify-center p-6">
       <div class="w-full max-w-4xl">

@@ -26,6 +26,9 @@ const attrs = useAttrs()
 const route = useRoute()
 const router = useRouter()
 
+// Show the back arrow if a path is provided OR if the parent listens to @back
+const previousForHeader = computed(() => props.previous ?? (attrs.onBack ? '_' : undefined))
+
 // Background priority: explicit prop > route meta > default
 const resolvedBackground = computed(() => {
   if (props.background) return props.background
@@ -53,7 +56,7 @@ function handleBack() {
     <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }"></div>
     <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
     <div class="scene-content">
-      <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
+      <NavigationHeader :title="title" :previous="previousForHeader" :next="next" @back="handleBack" />
       <div class="scene-body">
         <slot />
       </div>
