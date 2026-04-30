@@ -244,7 +244,7 @@ router.beforeEach((to) => {
   if (PUBLIC_ROUTES.has(name)) return true
   if (!auth.isAuthenticated) return { name: 'start' }
   if (TEACHER_ROUTES.has(name) && !auth.isTeacher) return { name: 'start' }
-  if (STUDENT_ROUTES.has(name) && !auth.isStudent) return { name: 'start' }
+  if (STUDENT_ROUTES.has(name) && !auth.isStudent && !isTestModeRoute(to.path, to.name)) return { name: 'start' }
   if (AUTH_ROUTES.has(name) && !auth.isStudent) return true
 
   return true
