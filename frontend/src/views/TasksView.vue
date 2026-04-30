@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { fetchAllTasks } from '@/services/TaskService'
 import type { TaskDTO } from '@/types'
 
-const router = useRouter()
 const tasks = ref<TaskDTO[]>([])
 const isLoading = ref(true)
 const error = ref('')
@@ -21,7 +19,7 @@ onMounted(async () => {
   }
 })
 
-const formatContent = (content: any) => {
+const formatContent = (content: Record<string, unknown> | null) => {
   if (!content) return 'Ingen innhold'
   return JSON.stringify(content, null, 2)
 }
