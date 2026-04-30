@@ -14,7 +14,6 @@ import { introductionDialogs, introductionStartId } from '@/data/IntroductionDia
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import type { DialogChoice } from '@/types/cutscene'
 
-const corkboardImage = '/corkboard.jpg'
 const mapImage = '/map.jpg'
 const badgeImage = '/unlockedBadge.png'
 const questionmarkImage = '/questionmarkIcon.png'
@@ -111,15 +110,6 @@ function buildSaggingPath(
   return `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`
 }
 
-function buildPathsFromPinCenters(pinCenters: Array<{ x: number; y: number }>) {
-  const paths: string[] = []
-  for (let i = 0; i < pinCenters.length - 1; i++) {
-    const start = pinCenters[i]
-    const end = pinCenters[i + 1]
-    if (start && end) paths.push(buildSaggingPath(start, end))
-  }
-  return paths
-}
 
 async function updateStringPaths() {
   await nextTick()
