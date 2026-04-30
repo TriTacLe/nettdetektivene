@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
+import { computed, getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { DialogChoice, DialogScene } from '@/types/cutscene'
 import { useTypewriter } from '@/composables/UseTypewriter'
@@ -20,8 +20,10 @@ const emit = defineEmits<{
   back: []
 }>()
 
-const attrs = useAttrs()
-const showBack = computed(() => Boolean(attrs.onBack))
+// `back` is declared in defineEmits, so Vue strips `onBack` out of $attrs.
+// Read it off the vnode props instead, which always carries listeners.
+const instance = getCurrentInstance()
+const showBack = computed(() => Boolean(instance?.vnode.props?.onBack))
 
 const lineIndex = ref(props.startAtLastLine ? Math.max(0, props.scene.lines.length - 1) : 0)
 // Prefer explicit prop; otherwise read live text speed from preferences.
