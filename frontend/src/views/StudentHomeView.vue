@@ -12,6 +12,7 @@ import { parseAvatarConfig } from '@/utils/avatar'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import type { DialogChoice } from '@/types/cutscene'
 import { useToast } from '@/composables/UseToast'
 
@@ -26,16 +27,23 @@ const mysteryImage = '/mystery-magnifier.png'
 const router = useRouter()
 const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
+const authStore = useAuthStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
 const classroomLoading = ref(true)
 const showHelp = ref(false)
 
+function markIntroSeen() {
+  const key = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  localStorage.setItem(key, '1')
+}
+
 function onIntroDone() {
   introRunner.advance()
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -44,6 +52,7 @@ function onIntroChoose(choice: DialogChoice) {
   introRunner.advance(choice)
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -195,7 +204,8 @@ onMounted(async () => {
   }
 
   if (!storyStore.loaded) await storyStore.load()
-  if (!storyStore.hasSeen(StoryStep.INTRODUCTION)) {
+  const introLocalKey = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  if (!storyStore.hasSeen(StoryStep.INTRODUCTION) && !localStorage.getItem(introLocalKey)) {
     showIntro.value = true
   }
 })
