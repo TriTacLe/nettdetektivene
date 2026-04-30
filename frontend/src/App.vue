@@ -26,6 +26,7 @@ const MUSIC_TRACKS: Record<string, string> = {
   nyhetskvartalet:  '/music/nyhetskvartalet.mp3',
   fotografen:       '/music/fotografen.mp3',
   datasenteret:     '/music/datasenteret.mp3',
+  mystery:          '/music/mystery.mp3',
 }
 
 const DEFAULT_TRACK = '/music/main.mp3'

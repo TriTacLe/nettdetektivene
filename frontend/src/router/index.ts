@@ -75,21 +75,25 @@ const router = createRouter({
       path: '/student/classrooms/:classroomId/mystery',
       name: 'student-weekly-mystery',
       component: () => import('../views/WeeklyMysteryChoiceView.vue'),
+      meta: { music: 'mystery' },
     },
     {
       path: '/student/classrooms/:classroomId/mystery/play',
       name: 'student-weekly-mystery-play',
       component: () => import('../views/WeeklyMysteryPlayView.vue'),
+      meta: { music: 'mystery' },
     },
     {
       path: '/student/classrooms/:classroomId/mystery/play/:submissionId',
       name: 'student-weekly-mystery-detail',
       component: () => import('../views/WeeklyMysteryDetailView.vue'),
+      meta: { music: 'mystery' },
     },
     {
       path: '/student/classrooms/:classroomId/mystery/submit',
       name: 'student-weekly-mystery-submit',
       component: () => import('../views/WeeklyMysteryStudentView.vue'),
+      meta: { music: 'mystery' },
     },
     {
       path: '/teacher-home',
