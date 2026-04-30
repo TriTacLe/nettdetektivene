@@ -4,7 +4,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { createTestingPinia } from '@pinia/testing'
 import { parseAvatarConfig } from '../../utils/avatar'
-import { DEFAULT_AVATAR_CONFIG, PROP_UNLOCK_LEVELS } from '../../types/avatar'
+import { DEFAULT_AVATAR_CONFIG } from '../../types/avatar'
 import type { AvatarConfig } from '../../types/avatar'
 import AvatarEditor from '../../components/avatar/AvatarEditor.vue'
 
