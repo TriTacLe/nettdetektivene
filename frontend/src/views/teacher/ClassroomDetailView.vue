@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import SidePanelMenu, { type SidePanelMenuItem } from '@/components/SidePanelMenu.vue'
 import ClassroomTasksPanel from '@/components/ClassroomTasksPanel.vue'
+import ClassroomMysteriesPanel from '@/components/ClassroomMysteriesPanel.vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { Bell, Settings, Gamepad2, X, Search } from 'lucide-vue-next'
 import {
@@ -182,7 +183,7 @@ function onDialogKeydown(e: KeyboardEvent) {
 }
 
 // --- Helpers ---
-function studentAriaLabel(s: any): string {
+function studentAriaLabel(s: { displayName?: string; userId?: string; isAllowed?: boolean }): string {
   if (!s.isAllowed) return `${s.displayName}, venter pa godkjenning`
   const entry = getLeaderboardEntry(s.userId)
   const score = entry ? `, poeng ${entry.totalScore}` : ''
@@ -190,7 +191,7 @@ function studentAriaLabel(s: any): string {
   return `Se progresjon for ${s.displayName}${score}${rank}`
 }
 
-function navigateToStudent(student: any) {
+function navigateToStudent(student: { userId?: string; isAllowed?: boolean }) {
   if (!student.isAllowed) return
   router.push({ name: 'classroom-student-progress', params: { id: classroomId, userId: student.userId } })
 }
@@ -209,13 +210,14 @@ function handleMenuItem(item: SidePanelMenuItem) {
   router.push({ name: item.key, params: { id: classroomId } })
 }
 
-type DetailTab = 'students' | 'tasks'
+type DetailTab = 'students' | 'tasks' | 'mysteries'
 const activeTab = ref<DetailTab>('students')
 const tabs: { key: DetailTab; label: string }[] = [
   { key: 'students', label: 'Elever' },
   { key: 'tasks', label: 'Oppgaver' },
+  { key: 'mysteries', label: 'Ukens mysterium' },
 ]
-const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null })
+const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null, mysteries: null })
 
 function setTabRef(key: DetailTab, el: Element | null) {
   tabRefs.value[key] = el as HTMLButtonElement | null
@@ -224,7 +226,7 @@ function setTabRef(key: DetailTab, el: Element | null) {
 function onTabKeydown(e: KeyboardEvent) {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
   e.preventDefault()
-  const order: DetailTab[] = ['students', 'tasks']
+  const order: DetailTab[] = ['students', 'tasks', 'mysteries']
   const i = order.indexOf(activeTab.value)
   const next = e.key === 'ArrowRight'
     ? order[(i + 1) % order.length]!
@@ -239,6 +241,7 @@ function onTabKeydown(e: KeyboardEvent) {
     :title="classroom?.title || 'Klasserom'"
     previous="/teacher-home"
     background="/StartBackground.jpg"
+    dimOverlay
   >
     <div class="scene-split-layout">
       <div class="scene-split-grid">
@@ -266,7 +269,7 @@ function onTabKeydown(e: KeyboardEvent) {
               @click="activeTab = tab.key"
             >
               <span class="tab-label">{{ tab.label }}</span>
-              <span class="tab-count">
+              <span v-if="tab.key !== 'mysteries'" class="tab-count">
                 {{ tab.key === 'students' ? allStudents.length : totalTasks }}
               </span>
             </button>
@@ -279,6 +282,15 @@ function onTabKeydown(e: KeyboardEvent) {
             aria-labelledby="tab-tasks"
           >
             <ClassroomTasksPanel :classroom-id="classroomId" />
+          </div>
+
+          <div
+            v-show="activeTab === 'mysteries'"
+            :id="`tab-panel-mysteries`"
+            role="tabpanel"
+            aria-labelledby="tab-mysteries"
+          >
+            <ClassroomMysteriesPanel :classroom-id="classroomId" />
           </div>
 
           <div
@@ -477,6 +489,7 @@ function onTabKeydown(e: KeyboardEvent) {
 <style scoped>
 .tab-bar {
   display: flex;
+  justify-content: center;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
@@ -893,6 +906,62 @@ function onTabKeydown(e: KeyboardEvent) {
 .dialog-btn--danger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 950px) {
+  .student-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .sr-name {
+    width: 100%;
+    white-space: normal;
+    min-width: 0;
+  }
+
+  .sr-stat {
+    font-size: 0.8125rem;
+  }
+
+  .sr-progress {
+    display: none;
+  }
+
+  .sr-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sr-btn {
+    font-size: 0.8125rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-btn--approve {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-btn--reset {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-chevron {
+    display: none;
+  }
+
+  .student-list {
+    padding: 0.75rem;
+  }
+
+  .tab-bar {
+    padding: 0 0.5rem;
+  }
 }
 
 @keyframes slideUp {

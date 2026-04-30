@@ -205,7 +205,9 @@ function toRelativePath(path: string): string {
   return path
 }
 
-export function parseTaskContent(contentString: string, taskType: string) {
+type ParsedContent = { news: NewsChallengeContent } | { photo: PhotoChallengeContent } | NewsChallengeContent | PhotoChallengeContent | null
+
+export function parseTaskContent(contentString: string, taskType: string): ParsedContent {
   try {
     const content = typeof contentString === 'string' ? JSON.parse(contentString) : contentString
     const normalizedContent = normalizeTaskAssetUrls(content)
@@ -215,7 +217,7 @@ export function parseTaskContent(contentString: string, taskType: string) {
     } else if (taskType === 'PHOTO') {
       return { photo: normalizedContent as PhotoChallengeContent }
     }
-    return normalizedContent
+    return normalizedContent as NewsChallengeContent | PhotoChallengeContent
   } catch (error) {
     console.error('Failed to parse task content:', error)
     return null

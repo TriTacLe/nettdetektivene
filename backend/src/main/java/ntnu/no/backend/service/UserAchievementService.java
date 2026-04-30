@@ -12,10 +12,11 @@ import java.util.UUID;
 
 /**
  * Service for reading achievements earned by users.
- * Achievements are awarded exclusively by the {@code trg_mystery_approved} trigger.
+ * Achievements are awarded exclusively by database triggers
+ * ({@code trg_attempt_sync}, {@code trg_notify_stop_completed}, {@code trg_mystery_approved}).
  *
- * @author tri
- * @version 0.1
+ * @author tri, norakirknes
+ * @version 0.2
  * @since 0.1
  */
 @Service

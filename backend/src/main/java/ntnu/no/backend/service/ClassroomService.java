@@ -2,11 +2,14 @@ package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import ntnu.no.backend.dto.classroom.ClassroomInstructorResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskUpdateRequestDTO;
+import ntnu.no.backend.exception.ConflictException;
+import ntnu.no.backend.mapper.ClassroomInstructorMapper;
 import ntnu.no.backend.mapper.ClassroomMapper;
 import ntnu.no.backend.mapper.ClassroomTaskMapper;
 import ntnu.no.backend.model.Classroom;
@@ -17,15 +20,19 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.UserTaskUnlocked;
 import ntnu.no.backend.model.UserTaskUnlockedId;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +43,8 @@ import java.util.UUID;
 /**
  * Service for managing classrooms.
  *
- * @author tri, aninesst
- * @version 0.2
+ * @author tri, aninesst, norakirknes
+ * @version 0.3
  * @since 0.1
  */
 @Service
@@ -52,6 +59,8 @@ public class ClassroomService {
   private final UserRepository userRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
   private final ClassroomInstructorRepository classroomInstructorRepository;
+  private final TaskBestScoreRepository taskBestScoreRepository;
+  private final NotificationService notificationService;
 
   @Transactional(readOnly = true)
   public List<ClassroomResponseDTO> getClassroomsForInstructor(User instructor) {
@@ -214,9 +223,12 @@ public class ClassroomService {
       throw new IllegalArgumentException("Task is already assigned to this classroom");
     }
 
-    short sortOrder = dto.getSortOrder() != null
-      ? dto.getSortOrder()
-      : (short) (classroomTaskRepository.findAllByClassroom_IdOrderBySortOrderAsc(classroomId).size() + 1);
+    // Place the new task at the end of its stop's sortOrder range and shift any
+    // later-stop tasks up by one. The trg_attempt_sync trigger walks the chain
+    // strictly by ascending sortOrder, so appending at the global end (the
+    // naive default) would cause new tasks added to early stops to be skipped
+    // entirely once a student crossed into a later stop.
+    short sortOrder = placeTaskInStopChain(classroomId, task.getStopLocation());
 
     ClassroomTask classroomTask = ClassroomTask.builder()
       .id(classroomTaskId)
@@ -228,13 +240,105 @@ public class ClassroomService {
 
     classroomTaskRepository.save(classroomTask);
 
-    // If students were already approved when this task was added, the
-    // join-time trigger already fired with no tasks available. Re-run the
-    // first-task unlock so they get access. Idempotent for students who
-    // already have the first task unlocked.
-    unlockFirstTaskForApprovedStudents(classroom);
+    // Cover students who already cleared every earlier task in this stop
+    // before the new one was added — they would otherwise never trigger an
+    // unlock for it through the normal attempt-completion chain.
+    unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
     return ClassroomTaskMapper.toDTO(classroomTask);
+  }
+
+  private short placeTaskInStopChain(UUID classroomId, String stopLocation) {
+    List<ClassroomTask> all = classroomTaskRepository
+        .findAllByClassroom_IdOrderBySortOrderAsc(classroomId);
+    if (all.isEmpty()) return (short) 1;
+
+    short maxOverall = all.get(all.size() - 1).getSortOrder();
+
+    if (stopLocation == null) {
+      return (short) (maxOverall + 1);
+    }
+
+    Short maxInStop = all.stream()
+        .filter(ct -> stopLocation.equals(ct.getTask().getStopLocation()))
+        .map(ClassroomTask::getSortOrder)
+        .max(Short::compareTo)
+        .orElse(null);
+
+    if (maxInStop == null) {
+      // First task for this stop in the classroom: append at the end.
+      return (short) (maxOverall + 1);
+    }
+
+    short insertAt = (short) (maxInStop + 1);
+    if (insertAt > maxOverall) {
+      // Stop is already last in the chain — nothing to shift.
+      return insertAt;
+    }
+
+    // Shift every existing task at or beyond the insertion point up by one.
+    // Apply in reverse order so we never collide with a row we haven't moved
+    // yet (composite PK is by (classroom_id, task_id) so sortOrder isn't
+    // unique, but reverse iteration keeps the operation predictable).
+    List<ClassroomTask> toShift = all.stream()
+        .filter(ct -> ct.getSortOrder() >= insertAt)
+        .sorted((a, b) -> Short.compare(b.getSortOrder(), a.getSortOrder()))
+        .toList();
+    for (ClassroomTask ct : toShift) {
+      ct.setSortOrder((short) (ct.getSortOrder() + 1));
+    }
+    return insertAt;
+  }
+
+  private void unlockNewTaskForEligibleStudents(Classroom classroom, ClassroomTask newTask) {
+    if (Boolean.FALSE.equals(newTask.getIsActive())) return;
+
+    String stopLocation = newTask.getTask().getStopLocation();
+    List<ClassroomTask> activeTasks = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+
+    List<ClassroomTask> earlierInStop = activeTasks.stream()
+        .filter(ct -> stopLocation != null && stopLocation.equals(ct.getTask().getStopLocation()))
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .toList();
+
+    ClassroomTask globalPredecessor = activeTasks.stream()
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .reduce((a, b) -> a.getSortOrder() >= b.getSortOrder() ? a : b)
+        .orElse(null);
+
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+
+      boolean shouldUnlock;
+      if (!earlierInStop.isEmpty()) {
+        shouldUnlock = earlierInStop.stream().allMatch(ct -> taskBestScoreRepository
+            .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                userId, ct.getTask().getId(), classroom.getId()));
+      } else {
+        shouldUnlock = globalPredecessor == null
+            || taskBestScoreRepository
+                .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                    userId, globalPredecessor.getTask().getId(), classroom.getId());
+      }
+
+      if (!shouldUnlock) continue;
+      if (userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
+          userId, classroom.getId(), newTask.getTask().getId())) continue;
+
+      userTaskUnlockedRepository.save(
+          UserTaskUnlocked.builder()
+              .id(new UserTaskUnlockedId(userId, classroom.getId(), newTask.getTask().getId()))
+              .user(student.getUser())
+              .classroom(classroom)
+              .task(newTask.getTask())
+              .unlockedAt(LocalDateTime.now())
+              .build()
+      );
+    }
   }
 
   @Transactional
@@ -314,5 +418,68 @@ public class ClassroomService {
 
   private String generateJoinCode() {
     return UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+  }
+
+  public void assertIsInstructor(User caller, Classroom classroom) {
+    if (!classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)) {
+      throw new AccessDeniedException("You are not an instructor of this classroom");
+    }
+  }
+
+  @Transactional
+  public ClassroomInstructorResponseDTO addInstructor(UUID classroomId, String email, User caller) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    assertIsInstructor(caller, classroom);
+
+    User target = userRepository.findByEmail(email)
+        .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+
+    boolean isTeacher = target.getRoles().stream()
+        .anyMatch(role -> "instructor".equals(role.getAuthority()));
+    if (!isTeacher) {
+      throw new IllegalArgumentException("User is not a teacher");
+    }
+
+    if (classroomInstructorRepository.existsByClassroomAndUser(classroom, target)) {
+      throw new ConflictException("User is already an instructor of this classroom");
+    }
+
+    ClassroomInstructor instructor = ClassroomInstructor.builder()
+        .id(new ClassroomInstructorId(classroomId, target.getId()))
+        .classroom(classroom)
+        .user(target)
+        .build();
+    classroomInstructorRepository.save(instructor);
+
+    notificationService.createTeacherAddedNotification(target, classroom);
+
+    return ClassroomInstructorMapper.toDTO(instructor);
+  }
+
+  @Transactional
+  public void leaveClassroom(UUID classroomId, User caller) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    assertIsInstructor(caller, classroom);
+
+    long count = classroomInstructorRepository.countByClassroom(classroom);
+    if (count <= 1) {
+      throw new ConflictException("Cannot leave classroom: at least one teacher required");
+    }
+
+    classroomInstructorRepository.deleteByClassroomAndUser(classroom, caller);
+  }
+
+  @Transactional(readOnly = true)
+  public List<ClassroomInstructorResponseDTO> getInstructors(UUID classroomId) {
+    Classroom classroom = classroomRepository.findByIdAndDeletedAtIsNull(classroomId)
+        .orElseThrow(() -> new EntityNotFoundException("Classroom not found with id: " + classroomId));
+
+    return classroomInstructorRepository.findAllByClassroom(classroom).stream()
+        .map(ClassroomInstructorMapper::toDTO)
+        .toList();
   }
 }

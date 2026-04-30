@@ -25,12 +25,6 @@ const selectedType = computed<TaskType.NEWS | TaskType.PHOTO | null>(() => {
 
 const serverError = ref<string | null>(null)
 
-const difficultyLevels = [
-  { value: 1, stars: '★', label: '1 stjerne' },
-  { value: 2, stars: '★★', label: '2 stjerner' },
-  { value: 3, stars: '★★★', label: '3 stjerner' },
-  { value: 4, stars: '⬡', label: 'Datasenteret' },
-] as const
 
 const newsDraft = ref<TeacherNewsTaskDraft>({
   type: TaskType.NEWS,
@@ -166,7 +160,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 <template>
   <SceneComponent
     :title="classroom?.title ? `Ny oppgave: ${classroom.title}` : 'Ny oppgave'"
-    :previous="selectedType ? `/classroom/${classroomId}/tasks` : `/classroom/${classroomId}`"
+    :previous="`/classroom/${classroomId}`"
     background="/corkboard.jpg"
   >
     <div class="task-create-page">
@@ -192,63 +186,37 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
       </section>
 
       <form v-else class="task-create-panel task-create-form" :class="{ 'task-create-panel--photo': selectedType === TaskType.PHOTO }" @submit.prevent="submit">
-        <div class="task-create-topbar">
-          <div>
-            <p class="task-create-eyebrow">Oppgavemal</p>
-            <h2 class="task-create-heading">
-              {{ selectedType === TaskType.NEWS ? 'Nyhetskvartalet-mal' : 'Fotografen-mal' }}
-            </h2>
-          </div>
-          <button type="button" class="task-create-switch" @click="router.replace({ name: 'classroom-task-create', params: { id: classroomId } })">
-            Bytt type
-          </button>
-        </div>
+        <h2 class="task-create-heading">
+          {{ selectedType === TaskType.NEWS ? 'Nyhetskvartalet-mal' : 'Fotografen-mal' }}
+        </h2>
 
         <div v-if="serverError" class="task-create-error">{{ serverError }}</div>
 
         <template v-if="selectedType === TaskType.NEWS">
           <div class="task-template task-template--news">
             <div class="task-template__hero">
-              <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">
-                  ←
-                </button>
-                <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
-                  {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre Oppgave' }}
-                </button>
-              </div>
-              <div class="task-template__headline">
-                <h3>Nyhetskvartal template</h3>
-                <p>Last opp én god og én falsk nyhetsartikkel. Elevene velger hvilken de tror er ekte.</p>
-              </div>
-              <div class="task-field-grid">
-                <label class="task-field">
-                  <span>Tittel</span>
-                  <input v-model="newsDraft.title" type="text" />
-                </label>
-                <div class="task-field">
-                  <span class="task-field-label">Vanskelighetsgrad</span>
-                  <div class="diff-selector">
-                    <button v-for="n in 3" :key="n" type="button"
-                      :class="['btn-bare diff-btn', { 'diff-btn--active': newsDraft.difficulty === n && newsDraft.stopLocation !== 'datasenteret' }]"
-                      @click="selectDifficulty(n)">
-                      <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
-                    </button>
-                    <button type="button"
-                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': newsDraft.stopLocation === 'datasenteret' }]"
-                      @click="selectDatasenteret()">
-                      Datasenteret
-                    </button>
-                  </div>
+              <div class="task-field">
+                <span class="task-field-label">Vanskelighetsgrad</span>
+                <div class="diff-selector">
+                  <button v-for="n in 3" :key="n" type="button"
+                    :class="['btn-bare diff-btn', { 'diff-btn--active': newsDraft.difficulty === n && newsDraft.stopLocation !== 'datasenteret' }]"
+                    @click="selectDifficulty(n)">
+                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                  </button>
+                  <button type="button"
+                    :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': newsDraft.stopLocation === 'datasenteret' }]"
+                    @click="selectDatasenteret()">
+                    Datasenteret
+                  </button>
                 </div>
               </div>
               <label class="task-field">
-                <span>Spørsmål</span>
-                <textarea v-model="newsDraft.question" rows="2" />
+                <span>Tittel</span>
+                <input v-model="newsDraft.title" type="text" />
               </label>
               <label class="task-field">
-                <span>Hint</span>
-                <textarea v-model="newsDraft.hint" rows="2" />
+                <span>Spørsmål</span>
+                <textarea v-model="newsDraft.question" rows="2" />
               </label>
             </div>
 
@@ -259,9 +227,6 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                 class="task-upload-card task-upload-card--news"
                 :class="article.isReal ? 'task-upload-card--good' : 'task-upload-card--fake'"
               >
-                <span class="task-card-badge">
-                  {{ article.isReal ? '✓ God artikkel' : '✕ Falsk artikkel' }}
-                </span>
                 <div class="task-upload-box">
                   <img v-if="previewUrl(article.image)" :src="previewUrl(article.image)!" class="task-existing-preview" alt="Forhåndsvisning" />
                   <strong>{{ article.image ? article.image.name : 'Klikk for å laste opp' }}</strong>
@@ -286,46 +251,28 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
         <template v-else>
           <div class="task-template task-template--photo">
             <div class="task-template__hero">
-              <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">
-                  ←
-                </button>
-                <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
-                  {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre Oppgave' }}
-                </button>
-              </div>
-              <div class="task-template__headline">
-                <h3>Fotoboksen oppgave template</h3>
-                <p>Last opp bilder. Elevene velger for hvert bilde: Ekte / KI-generert / Manipulert.</p>
-              </div>
-              <div class="task-field-grid">
-                <label class="task-field">
-                  <span>Tittel</span>
-                  <input v-model="photoDraft.title" type="text" />
-                </label>
-                <div class="task-field">
-                  <span class="task-field-label">Vanskelighetsgrad</span>
-                  <div class="diff-selector">
-                    <button v-for="n in 3" :key="n" type="button"
-                      :class="['btn-bare diff-btn', { 'diff-btn--active': photoDraft.difficulty === n && photoDraft.stopLocation !== 'datasenteret' }]"
-                      @click="selectDifficulty(n)">
-                      <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
-                    </button>
-                    <button type="button"
-                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': photoDraft.stopLocation === 'datasenteret' }]"
-                      @click="selectDatasenteret()">
-                      Datasenteret
-                    </button>
-                  </div>
+              <div class="task-field">
+                <span class="task-field-label">Vanskelighetsgrad</span>
+                <div class="diff-selector">
+                  <button v-for="n in 3" :key="n" type="button"
+                    :class="['btn-bare diff-btn', { 'diff-btn--active': photoDraft.difficulty === n && photoDraft.stopLocation !== 'datasenteret' }]"
+                    @click="selectDifficulty(n)">
+                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                  </button>
+                  <button type="button"
+                    :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': photoDraft.stopLocation === 'datasenteret' }]"
+                    @click="selectDatasenteret()">
+                    Datasenteret
+                  </button>
                 </div>
               </div>
               <label class="task-field">
-                <span>Oppgavetekst</span>
-                <textarea v-model="photoDraft.description" rows="2" />
+                <span>Tittel</span>
+                <input v-model="photoDraft.title" type="text" />
               </label>
               <label class="task-field">
-                <span>Hint</span>
-                <textarea v-model="photoDraft.hint" rows="2" />
+                <span>Oppgavetekst</span>
+                <textarea v-model="photoDraft.description" rows="2" />
               </label>
             </div>
 
@@ -362,6 +309,15 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
             </div>
           </div>
         </template>
+
+        <div class="task-template__actions task-template__actions--bottom">
+          <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
+            {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre Oppgave' }}
+          </button>
+          <button type="button" class="task-create-switch" @click="router.replace({ name: 'classroom-task-create', params: { id: classroomId } })">
+            Bytt type
+          </button>
+        </div>
       </form>
     </div>
   </SceneComponent>
@@ -369,20 +325,20 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 <style scoped>
 .task-create-page {
-  padding: 1.5rem;
+  padding: 1rem;
   overflow-y: auto;
 }
 
 .task-create-panel {
-  max-width: 1080px;
+  max-width: 980px;
   margin: 0 auto;
-  background: linear-gradient(180deg, rgba(255, 250, 240, 0.96), rgba(255, 255, 255, 0.94));
-  border: 2px solid rgba(154, 52, 18, 0.24);
-  border-radius: 1.5rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
-  padding: 1.5rem;
-  max-height: calc(100vh - 8rem);
-  overflow-y: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .task-create-panel--photo {
@@ -440,7 +396,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-type-tag {
   display: inline-flex;
   padding: 0.3rem 0.7rem;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.78);
   font-size: 0.8rem;
   font-weight: 800;
@@ -449,25 +405,30 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-create-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .task-template {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .task-template__hero {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.7rem;
 }
 
 .task-template__actions {
   display: flex;
   gap: 0.8rem;
   align-items: center;
+}
+
+.task-template__actions--bottom {
+  justify-content: flex-end;
+  padding-top: 0.5rem;
 }
 
 .task-template__back,
@@ -493,7 +454,6 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   width: 3rem;
   min-width: 3rem;
   padding-inline: 0;
-  border-radius: 999px;
 }
 
 .task-template__save {
@@ -502,23 +462,24 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-template__headline {
   text-align: center;
-  margin: 0.2rem 0 0.5rem;
+  margin: 0;
 }
 
 .task-template__headline h3 {
   margin: 0;
   color: white;
-  font-size: clamp(1.6rem, 2.2vw, 2.35rem);
-  font-weight: 900;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
   -webkit-text-stroke: 0;
 }
 
 .task-template__headline p {
-  margin: 0.6rem 0 0;
-  color: rgba(49, 46, 129, 0.85);
-  font-size: 0.95rem;
-  font-weight: 700;
+  margin: 0.2rem 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .task-create-topbar {
@@ -557,20 +518,21 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   border: 1px solid #fca5a5;
   color: #991b1b;
   padding: 0.8rem 1rem;
-  border-radius: 0.9rem;
+  border-radius: 0;
   font-weight: 700;
 }
 
 .task-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .task-field-label {
-  color: #7c2d12;
+  color: white;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .diff-selector {
@@ -585,7 +547,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   gap: 1px;
   padding: 0.4rem 0.6rem;
   border: 2px solid #111111;
-  border-radius: 0.6rem;
+  border-radius: 0;
   background: white;
   cursor: pointer;
   font-size: 0.8rem;
@@ -635,9 +597,10 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .task-field span {
-  color: #7c2d12;
+  color: white;
   font-weight: 800;
   font-size: 0.95rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .task-field input,
@@ -645,17 +608,22 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-field select {
   background: white;
   border: 2px solid #111111;
-  border-radius: 0.8rem;
-  padding: 0.85rem 1rem;
+  border-radius: 0;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
   font-weight: 500;
   color: #111827;
 }
 
+.task-field textarea {
+  min-height: 3rem;
+  resize: vertical;
+}
+
 .task-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.6rem;
 }
 
 .task-card-grid--news {
@@ -669,12 +637,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-upload-card {
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid #fed7aa;
-  border-radius: 1rem;
-  padding: 1rem;
+  border: 2px solid #111;
+  border-radius: 0;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.6rem;
 }
 
 .task-upload-card--news {
@@ -723,9 +691,9 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-upload-box {
   position: relative;
-  min-height: 110px;
+  min-height: 260px;
   border: 2px dashed #cbd5e1;
-  border-radius: 0.85rem;
+  border-radius: 0;
   background: linear-gradient(180deg, #fff, #f8fafc);
   display: flex;
   flex-direction: column;
@@ -735,7 +703,17 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   text-align: center;
   gap: 0.35rem;
   color: #64748b;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
+
+.task-upload-box:hover {
+  border-color: #92400e;
+  background: linear-gradient(180deg, #fff, #fef3c7);
+}
+
+.task-upload-box strong { font-size: 0.95rem; }
+.task-upload-box p { font-size: 0.82rem; }
 
 .task-upload-box strong {
   color: #0f172a;
@@ -759,17 +737,18 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .task-upload-box--compact {
-  min-height: 96px;
+  min-height: 220px;
 }
 
 .task-existing-preview {
   width: 100%;
-  max-height: 80px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  opacity: 0.85;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 0;
+  opacity: 0.95;
   position: relative;
   z-index: 1;
+  background: #f1f5f9;
 }
 
 .task-check {
@@ -806,6 +785,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   align-items: center;
   justify-content: center;
   border-style: dashed;
+  border-radius: 0;
   font-size: 2rem;
   background: rgba(255, 255, 255, 0.72);
 }
@@ -869,7 +849,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   align-items: center;
   gap: 0.25rem;
   padding: 0.6rem 0.4rem;
-  border-radius: 0.75rem;
+  border-radius: 0;
   border: 2px solid #111111;
   background: white;
   cursor: pointer;

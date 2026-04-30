@@ -22,13 +22,15 @@ import java.time.LocalDateTime;
 
 /**
  * Represents a mystery submission made by a student within a classroom.
- * Status transitions (PENDING → APPROVED/REJECTED) trigger the
- * {@code trg_mystery_approved} database trigger which creates a notification
- * and awards an achievement — do NOT replicate this logic in Java.
  *
- * @author tri
- * @version 0.1
- * @since 0.1
+ * <p>A submission contains an uploaded image and three text alternatives,
+ * one of which is marked as the correct answer. After approval by an
+ * instructor it becomes playable by other students in the classroom.</p>
+ *
+ * <p>Status transitions (PENDING → APPROVED/REJECTED) trigger
+ * {@code trg_mystery_approved} which notifies the submitter. The
+ * "mystery_solved" achievement is awarded to the SOLVER (not the submitter)
+ * by {@code trg_mystery_completion}.</p>
  */
 @Entity
 @Table(name="mystery_submission")
@@ -38,75 +40,43 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class MysterySubmission extends BaseEntity{
+public class MysterySubmission extends BaseEntity {
 
-  /**
-   * The classroom this submission belongs to.
-   */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "classroom_id", nullable = false)
   private Classroom classroom;
 
-  /**
-   * The student who submitted this mystery.
-   */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "submitted_by", nullable = false)
   private User userSubmittedBy;
 
-  /**
-   * The description of the mystery submitted by the student.
-   */
-  @Column(name = "mys_desc", columnDefinition = "TEXT", nullable = false)
-  private String mysDesc;
+  @Column(name = "image_path", nullable = false, length = 500)
+  private String imagePath;
 
-  /**
-   * Optional URL to an attachment (image, file) supporting the submission.
-   */
-  @Column(name = "attachment_url")
-  private String attachmentUrl;
+  @Column(name = "alternative_1", columnDefinition = "TEXT", nullable = false)
+  private String alternative1;
 
-  /**
-   * Current review status of the submission. Defaults to {@link MysteryStatus#PENDING}.
-   */
+  @Column(name = "alternative_2", columnDefinition = "TEXT", nullable = false)
+  private String alternative2;
+
+  @Column(name = "alternative_3", columnDefinition = "TEXT", nullable = false)
+  private String alternative3;
+
+  /** Index of the correct alternative: 0, 1, or 2. */
+  @Column(name = "correct_index", nullable = false)
+  private byte correctIndex;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "mys_status", nullable = false)
   private MysteryStatus mysStatus = MysteryStatus.PENDING;
 
-  /**
-   * The instructor who reviewed this submission. {@code null} if not yet reviewed.
-   */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "reviewed_by")
   private User userReviewedBy;
 
-  /**
-   * Timestamp of when the submission was reviewed. {@code null} if not yet reviewed.
-   */
   @Column(name = "reviewed_at")
   private LocalDateTime reviewedAt;
 
-  /**
-   * Whether this submission has been featured. Defaults to {@code false}.
-   */
-  @Column(name = "is_featured", nullable = false)
-  private boolean isFeatured = false;
-
-  /**
-   * The week number within the year this mystery is associated with.
-   */
-  @Column(name = "week_number")
-  private int weekNumber;
-
-  /**
-   * The year this mystery is associated with.
-   */
-  @Column(name = "week_year")
-  private int weekYear;
-
-  /**
-   * Timestamp of when this submission was created. Set once on persist.
-   */
   @CreationTimestamp
   @Column(name = "submitted_at", nullable = false, updatable = false)
   private LocalDateTime submittedAt;

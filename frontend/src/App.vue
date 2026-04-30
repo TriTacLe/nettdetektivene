@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAudioStore } from '@/stores/AudioStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useStopStore } from '@/stores/StopStore'
-import Toast from '@/components/Toast.vue'
+import Toast from '@/components/ToastMessage.vue'
 import { useToast } from '@/composables/UseToast'
 
 const route = useRoute()
@@ -26,6 +26,7 @@ const MUSIC_TRACKS: Record<string, string> = {
   nyhetskvartalet:  '/music/nyhetskvartalet.mp3',
   fotografen:       '/music/fotografen.mp3',
   datasenteret:     '/music/datasenteret.mp3',
+  mystery:          '/music/mystery.mp3',
 }
 
 const DEFAULT_TRACK = '/music/main.mp3'

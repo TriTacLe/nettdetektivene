@@ -23,11 +23,12 @@ import java.time.LocalDateTime;
  * Uses a composite primary key {@link UserAchievementId} of {@code user_id} and
  * {@code achievement_id}.
  *
- * <p>Achievements are awarded automatically by the {@code trg_mystery_approved} trigger
- * — do NOT award achievements manually in service code.</p>
+ * <p>Achievements are awarded automatically by database triggers
+ * ({@code trg_attempt_sync}, {@code trg_notify_stop_completed},
+ * {@code trg_mystery_approved}), do NOT award achievements manually in service code.</p>
  *
- * @author tri
- * @version 0.1
+ * @author tri, norakirknes
+ * @version 0.2
  * @since 0.1
  * @see UserAchievementId
  * @see Achievement

@@ -63,12 +63,13 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          pull: false
+          no-cache: true
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: github.repository == 'OrbitNTNU/nettdetektivene'
     steps:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.8.0

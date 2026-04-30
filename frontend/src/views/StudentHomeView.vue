@@ -12,7 +12,9 @@ import { parseAvatarConfig } from '@/utils/avatar'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import type { DialogChoice } from '@/types/cutscene'
+import { useToast } from '@/composables/UseToast'
 
 const mapImage = '/map.jpg'
 const badgeImage = '/unlockedBadge.png'
@@ -22,16 +24,25 @@ const leaderboardImage = '/leaderboard.jpg'
 const mysteryImage = '/mystery-magnifier.png'
 
 const router = useRouter()
+const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
+const authStore = useAuthStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
+const classroomLoading = ref(true)
 const showHelp = ref(false)
+
+function markIntroSeen() {
+  const key = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  localStorage.setItem(key, '1')
+}
 
 function onIntroDone() {
   introRunner.advance()
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -40,6 +51,7 @@ function onIntroChoose(choice: DialogChoice) {
   introRunner.advance(choice)
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -110,7 +122,6 @@ function buildSaggingPath(
   return `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`
 }
 
-
 async function updateStringPaths() {
   await nextTick()
 
@@ -154,7 +165,11 @@ async function goToNotebook() {
 }
 
 function goToMystery() {
-  if (!classroomId.value) return
+  if (classroomLoading.value) return
+  if (!classroomId.value) {
+    showToast('Du er ikke med i noen klasse ennå.', 'error')
+    return
+  }
   router.push({ name: 'student-weekly-mystery', params: { classroomId: classroomId.value } })
 }
 
@@ -186,6 +201,8 @@ onMounted(async () => {
     classroomId.value = classrooms[0]?.id ?? null
   } catch {
     classroomId.value = null
+  } finally {
+    classroomLoading.value = false
   }
 
   if (boardFrame.value) {
@@ -194,7 +211,8 @@ onMounted(async () => {
   }
 
   if (!storyStore.loaded) await storyStore.load()
-  if (!storyStore.hasSeen(StoryStep.INTRODUCTION)) {
+  const introLocalKey = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  if (!storyStore.hasSeen(StoryStep.INTRODUCTION) && !localStorage.getItem(introLocalKey)) {
     showIntro.value = true
   }
 })
@@ -240,7 +258,7 @@ onUnmounted(() => {
             @click="goTo('/student-profile')"
           >
             <div class="profile-note">
-              <AvatarPreview :config="avatarCfg" :size="104" />
+              <AvatarPreview :config="avatarCfg" :size="104" :lazy-load="false" />
               <p class="image-note-title">{{ studentName }}</p>
             </div>
           </BoardNote>
@@ -393,7 +411,7 @@ onUnmounted(() => {
             <p class="image-note-title">Notatbok</p>
           </div>
         </BoardNote>
-        <BoardNote :rotation="2.5" pin-color="#e03131" width="100%" @click="goTo('/mystery')">
+        <BoardNote :rotation="2.5" pin-color="#e03131" width="100%" @click="goToMystery">
           <div class="image-note">
             <img :src="mysteryImage" alt="Ukens Mysterium" class="mystery-image mobile-nav-img" />
             <p class="image-note-title">Ukens Mysterium</p>
@@ -538,7 +556,6 @@ onUnmounted(() => {
 
 .mobile-help-content {
   position: relative;
-  /* Lined paper + red margin + paper texture — same palette as BoardNote */
   background-image:
     repeating-linear-gradient(
       transparent,
@@ -660,8 +677,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* Soft directional light from upper-left, plus a corner vignette so the
-   board has visible depth. Sits above the cork image, below the notes. */
 .board-frame::after {
   content: '';
   position: absolute;
@@ -673,14 +688,6 @@ onUnmounted(() => {
     radial-gradient(ellipse 80% 80% at 50% 110%, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 60%),
     radial-gradient(ellipse 80% 80% at 50% -10%, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0) 60%);
   mix-blend-mode: multiply;
-}
-
-.corkboard-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
 }
 
 .string-layer {
@@ -841,7 +848,6 @@ onUnmounted(() => {
   border: 1px solid rgba(167, 133, 28, 0.12);
 }
 
-
 .note-map {
   top: 46%;
   left: 49%;
@@ -865,15 +871,12 @@ onUnmounted(() => {
   left: 29%;
 }
 
-
 .help-overlay {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 50;
 }
-
-
 
 .help-note-title {
   margin: 0 0 0.25rem;
@@ -898,7 +901,7 @@ onUnmounted(() => {
 .fade-leave-to {
   opacity: 0;
 }
-
 </style>
+
 
 

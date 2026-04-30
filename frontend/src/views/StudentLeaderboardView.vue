@@ -8,13 +8,13 @@ import { useStudentStore } from '@/stores/StudentStore'
 const studentStore = useStudentStore()
 const institutionId = computed(() => studentStore.institutionId)
 
-const { data, isLoading, isError } = useQuery(
+const queryOptions = computed(() =>
   institutionId.value
-    ? getClassroomsLeaderboardByInstitutionOptions({
-        path: { institutionId: institutionId.value },
-      })
-    : { enabled: false } as any,
+    ? getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
+    : { queryKey: ['leaderboard-disabled'], queryFn: () => null, enabled: false } as any,
 )
+
+const { data, isLoading, isError } = useQuery(queryOptions)
 
 const entries = computed(() => (data.value as any)?.data ?? [])
 </script>

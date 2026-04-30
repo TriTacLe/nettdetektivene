@@ -11,7 +11,7 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import type { TaskDTO, NewsChallenge, NewsAnswers } from '@/types'
+import type { TaskDTO, NewsArticle, NewsChallengeContent, NewsAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -57,10 +57,9 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'nyhetskvartalet',
-          content: taskFromStore.content
+          content: taskFromStore.content,
         }
         console.log('[NyhetskvartaletTaskView] Task from store content:', task.value?.content)
-        console.log('[NyhetskvartaletTaskView] Task from store content.news:', task.value?.content?.news)
       } else {
         console.warn('[NyhetskvartaletTaskView] Task not found in store, fetching from API')
         task.value = await fetchTaskById(taskId)
@@ -80,18 +79,26 @@ onMounted(async () => {
   }
 })
 
-const challenge = computed<NewsChallenge | null>(() => {
-  const content = task.value?.content?.news
+const challenge = computed(() => {
+  const rawContent = task.value?.content
+  const content = (rawContent as { news?: NewsChallengeContent })?.news ?? rawContent as NewsChallengeContent | null
   if (!content?.articles?.length) return null
-  return { articles: content.articles }
+  return { articles: content.articles as [NewsArticle, NewsArticle] }
 })
 
-const taskQuestion = computed(() => task.value?.content?.news?.question)
-const taskTip = computed(() => task.value?.content?.news?.hint)
+const taskQuestion = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { news?: NewsChallengeContent })?.news?.question ?? (rawContent as NewsChallengeContent)?.question
+})
+const taskTip = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { news?: NewsChallengeContent })?.news?.hint ?? (rawContent as NewsChallengeContent)?.hint
+})
 
 function isCorrectLocally(answers: NewsAnswers): boolean {
-  const articles = task.value?.content?.news?.articles ?? []
-  return Boolean(articles[answers.selectedIndex]?.isReal)
+  const articles = (task.value?.content as { news?: NewsChallengeContent })?.news?.articles ?? []
+  const idx = answers.selectedIndex
+  return Boolean(articles[idx]?.isReal)
 }
 
 const FAILURE_REASON =

@@ -6,16 +6,25 @@ import ntnu.no.backend.model.*;
 import ntnu.no.backend.model.auth.*;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
+import ntnu.no.backend.model.enums.MysteryStatus;
 import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.model.enums.TaskType;
 import ntnu.no.backend.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -51,8 +60,12 @@ public class DataSeeder implements CommandLineRunner {
   private final TaskRepository taskRepository;
   private final NotebookEntryRepository notebookEntryRepository;
   private final AchievementRepository achievementRepository;
+  private final MysterySubmissionRepository mysterySubmissionRepository;
   private final PasswordEncoder passwordEncoder;
   private final JdbcTemplate jdbcTemplate;
+
+  @Value("${app.uploads.root:uploads}")
+  private String uploadsRoot;
 
   private final Map<String, User> users = new HashMap<>();
   private final Map<String, Institution> institutions = new HashMap<>();
@@ -78,6 +91,7 @@ public class DataSeeder implements CommandLineRunner {
       seedEnrollments();
       seedTaskAttempts();
       seedNotebookEntries();
+      seedMysterySubmissions();
       seedAchievementsIfMissing();
       verifyTaskAssignments();
       verifyEnrollments();
@@ -392,6 +406,80 @@ Classroom class1 = classrooms.get("class1");
   }
 
   // -----------------------------------------------------------------------
+  // Mystery submissions — three pending submissions in class1
+  // -----------------------------------------------------------------------
+
+  private void seedMysterySubmissions() {
+    Classroom class1 = classrooms.get("class1");
+    if (!mysterySubmissionRepository.findByClassroom_Id(class1.getId()).isEmpty()) {
+      log.info("Mystery submissions already seeded for class1, skipping");
+      return;
+    }
+
+    // {submitterKey, sourceImage, alt0, alt1, alt2, correctIndex}
+    Object[][] data = {
+        {
+            "anine",
+            "seed-images/news/fake-article-1.jpg",
+            "Artikkelen er ekte og publisert av en kjent avis",
+            "Artikkelen er en falsk nyhet med oppdiktede kilder",
+            "Artikkelen er satire og ikke ment alvorlig",
+            (byte) 1,
+        },
+        {
+            "nora-student",
+            "seed-images/news/real-article-1.png",
+            "Bildet er et AI-generert portrett",
+            "Bildet er manipulert i Photoshop",
+            "Bildet er et ekte pressefoto",
+            (byte) 2,
+        },
+        {
+            "gustav",
+            "seed-images/photos/fake-photo-1.jpg",
+            "Bildet er ekte og uredigert",
+            "Bildet er AI-generert",
+            "Bildet er en collage av flere bilder",
+            (byte) 1,
+        },
+    };
+
+    for (Object[] row : data) {
+      User submitter = users.get((String) row[0]);
+      String storedPath = copySeedImageToUploads((String) row[1]);
+      MysterySubmission submission = MysterySubmission.builder()
+          .classroom(class1)
+          .userSubmittedBy(submitter)
+          .imagePath(storedPath)
+          .alternative1((String) row[2])
+          .alternative2((String) row[3])
+          .alternative3((String) row[4])
+          .correctIndex((byte) row[5])
+          .mysStatus(MysteryStatus.PENDING)
+          .build();
+      mysterySubmissionRepository.save(submission);
+      log.info("Mystery submission: {} (PENDING)", submitter.getDisplayName());
+    }
+  }
+
+  /** Copies a classpath seed image into the uploads folder and returns its public URL. */
+  private String copySeedImageToUploads(String classpathLocation) {
+    String filename = Paths.get(classpathLocation).getFileName().toString();
+    String batchId = "seed";
+    Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize().resolve("mysteries").resolve(batchId);
+    Path targetFile = targetDir.resolve(filename);
+    try {
+      Files.createDirectories(targetDir);
+      try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+        Files.copy(in, targetFile, StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to copy seed mystery image: " + classpathLocation, e);
+    }
+    return "/uploads/mysteries/" + batchId + "/" + filename;
+  }
+
+  // -----------------------------------------------------------------------
   // Achievements
   // -----------------------------------------------------------------------
 
@@ -402,7 +490,8 @@ Classroom class1 = classrooms.get("class1");
         {"Nyhetsjeger",        "Fullfør alle oppgaver i Nyhetskvartalet",        "📰", "location_completed",  "nyhetskvartalet"},
         {"Fotoproff",          "Fullfør alle oppgaver hos Fotografen",            "📸", "location_completed",  "fotografen"},
         {"Datamester",         "Fullfør alle oppgaver i Datasenteret",            "💻", "location_completed",  "datasenteret"},
-        {"Ukens Mysterium",    "Fullfør ukens mysterium",                         "🔍", "ukens_mysterium",     ""},
+        {"Første mysterium løst", "Løs ditt første ukens mysterium",              "🔍", "mystery_solved",      "first"},
+        {"Fem mysterier løst",    "Løs fem ukens mysterier",                       "🏅", "mystery_solved",      "5"},
         {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
         {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
         {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},

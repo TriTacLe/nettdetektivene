@@ -72,6 +72,30 @@ const router = createRouter({
       component: () => import('../views/EditAvatarView.vue'),
     },
     {
+      path: '/student/classrooms/:classroomId/mystery',
+      name: 'student-weekly-mystery',
+      component: () => import('../views/WeeklyMysteryChoiceView.vue'),
+      meta: { music: 'mystery' },
+    },
+    {
+      path: '/student/classrooms/:classroomId/mystery/play',
+      name: 'student-weekly-mystery-play',
+      component: () => import('../views/WeeklyMysteryPlayView.vue'),
+      meta: { music: 'mystery' },
+    },
+    {
+      path: '/student/classrooms/:classroomId/mystery/play/:submissionId',
+      name: 'student-weekly-mystery-detail',
+      component: () => import('../views/WeeklyMysteryDetailView.vue'),
+      meta: { music: 'mystery' },
+    },
+    {
+      path: '/student/classrooms/:classroomId/mystery/submit',
+      name: 'student-weekly-mystery-submit',
+      component: () => import('../views/WeeklyMysteryStudentView.vue'),
+      meta: { music: 'mystery' },
+    },
+    {
       path: '/teacher-home',
       name: 'teacher-home',
       component: () => import('../views/teacher/TeacherHomeView.vue'),
@@ -104,6 +128,12 @@ const router = createRouter({
     {
       path: '/classroom/:id',
       name: 'classroom-detail',
+      component: () => import('../views/teacher/ClassroomDetailView.vue'),
+      // beforeEnter: requireTeacher,
+    },
+    {
+      path: '/classroom/:id/tasks',
+      name: 'classroom-tasks',
       component: () => import('../views/teacher/ClassroomDetailView.vue'),
     },
     {
@@ -218,6 +248,7 @@ const STUDENT_ROUTES = new Set([
   'student-leaderboard', 'ending', 'task-finished',
   'stop-finished', 'task-failed', 'tasks',
   'achievements',
+  'student-weekly-mystery', 'student-weekly-mystery-play', 'student-weekly-mystery-detail', 'student-weekly-mystery-submit',
 ])
 
 // Routes that belong to the test-mode flow. Leaving any of these while
@@ -244,7 +275,7 @@ router.beforeEach((to) => {
   if (PUBLIC_ROUTES.has(name)) return true
   if (!auth.isAuthenticated) return { name: 'start' }
   if (TEACHER_ROUTES.has(name) && !auth.isTeacher) return { name: 'start' }
-  if (STUDENT_ROUTES.has(name) && !auth.isStudent) return { name: 'start' }
+  if (STUDENT_ROUTES.has(name) && !auth.isStudent && !isTestModeRoute(to.path, to.name)) return { name: 'start' }
   if (AUTH_ROUTES.has(name) && !auth.isStudent) return true
 
   return true
