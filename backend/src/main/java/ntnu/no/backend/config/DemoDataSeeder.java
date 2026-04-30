@@ -377,7 +377,7 @@ private String buildTaskContent(String title, TaskType type) {
               { "imagePath": "upload://fake-photo-1.jpg",  "description": "Folkemengde på et torg", "correctType": "manipulert",
                 "begrunnelser": ["Inkonsistente skygger","Synlig kloning av personer","Feil perspektiv"] }
             ]
-}
+          }
            """;
     }
     return """
@@ -594,18 +594,17 @@ private String buildTaskContent(String title, TaskType type) {
   // -----------------------------------------------------------------------
 
   private void seedAchievements() {
-    // {title, description, icon, triggerType, triggerRef}
+    // {title, description, icon, triggerType, triggerRef} - matches factory.sh
     String[][] data = {
-        { "Første Oppgave", "Fullfør din første oppgave", "🎯", "task_completed", "first_task" },
-        { "Nyhetsjeger", "Fullfør alle oppgaver i Nyhetskvartalet", "📰", "location_completed", "nyhetskvartalet" },
-        { "Fotoproff", "Fullfør alle oppgaver hos Fotografen", "📸", "location_completed", "fotografen" },
-        { "Datamester", "Fullfør alle oppgaver i Datasenteret", "💻", "location_completed", "datasenteret" },
-        { "Ukens Mysterium", "Fullfør ukens mysterium", "🔍", "ukens_mysterium", "" },
-        { "Sikkerhetsmester", "Fullfør alle oppgaver i et klasserom", "🏆", "all_tasks_completed", "classroom" },
-        { "Plettfri Detektiv", "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",
+        { "Første Oppgave", "Fullfør din første oppgave", "", "task_completed", "first_task" },
+        { "Nyhetsjeger", "Fullfør alle oppgaver i Nyhetskvartalet", "", "location_completed", "nyhetskvartalet" },
+        { "Fotoproff", "Fullfør alle oppgaver hos Fotografen", "", "location_completed", "fotografen" },
+        { "Datamester", "Fullfør alle oppgaver i Datasenteret", "", "location_completed", "datasenteret" },
+        { "Ukens Mysterium", "Fullfør ukens mysterium", "", "ukens_mysterium", null },
+        { "Sikkerhetsmester", "Fullfør alle oppgaver i et klasserom", "", "all_tasks_completed", "classroom" },
+        { "Plettfri Detektiv", "Fullfør alle oppgaver i et klasserom uten å feile", "", "perfect_classroom",
             "classroom" },
-        { "Aldri Gi Opp", "Feil 10 oppgaveforsøk", "💪", "tasks_failed", "10" },
-        { "Perfekt Score", "Få 100 poeng på en oppgave", "💯", "perfect_score", "100_points" },
+        { "Aldri Gi Opp", "Feil 10 oppgaveforsøk", "", "tasks_failed", "10" },
     };
 
     for (String[] row : data) {
