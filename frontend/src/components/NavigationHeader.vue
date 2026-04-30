@@ -230,10 +230,16 @@ function goTo(path?: string) {
 .nav-title {
   flex: 1;
   text-align: left;
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.6rem;
+  font-weight: 400;
   color: white;
   margin: 0 16px 0 42px;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  letter-spacing: 0.03em;
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  padding-top: 10px;
 }
 
 .logout-button {

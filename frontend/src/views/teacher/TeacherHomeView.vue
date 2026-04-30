@@ -41,6 +41,7 @@ function handleSelect(item: SidePanelMenuItem) {
   <SceneComponent
     title="Lærerportal"
     background="/StartBackground.jpg"
+    dimOverlay
   >
     <div class="scene-split-layout">
       <div class="scene-split-grid">
