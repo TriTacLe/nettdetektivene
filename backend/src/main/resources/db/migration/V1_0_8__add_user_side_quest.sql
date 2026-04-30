@@ -7,7 +7,7 @@ CREATE TABLE user_side_quest
     user_id    CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     quest_key  VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     stage      INT       NOT NULL DEFAULT 0,
-    status     ENUM('active', 'completed', 'abandoned') NOT NULL DEFAULT 'active',
+    status     ENUM('ACTIVE', 'COMPLETED', 'ABANDONED') NOT NULL DEFAULT 'ACTIVE',
     updated_at DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (user_id, quest_key),
