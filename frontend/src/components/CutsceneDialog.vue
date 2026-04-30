@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { DialogChoice, DialogScene } from '@/types/cutscene'
 import { useTypewriter } from '@/composables/UseTypewriter'
@@ -17,7 +17,11 @@ const { textSpeed } = storeToRefs(audio)
 const emit = defineEmits<{
   done: []
   choose: [choice: DialogChoice]
+  back: []
 }>()
+
+const attrs = useAttrs()
+const showBack = computed(() => Boolean(attrs.onBack))
 
 const lineIndex = ref(props.startAtLastLine ? Math.max(0, props.scene.lines.length - 1) : 0)
 // Prefer explicit prop; otherwise read live text speed from preferences.
@@ -63,6 +67,11 @@ function choose(choice: DialogChoice) {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  if (showBack.value && e.code === 'Escape') {
+    e.preventDefault()
+    emit('back')
+    return
+  }
   if (e.code === 'Space' || e.code === 'Enter') {
     e.preventDefault()
     advance()
@@ -97,6 +106,25 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :style="{ backgroundImage: `url('${scene.background}')` }"
     />
     <div class="cutscene-tint" aria-hidden="true" />
+
+    <button
+      v-if="showBack"
+      type="button"
+      class="cutscene-back btn-bare"
+      aria-label="Tilbake"
+      @click.stop="emit('back')"
+    >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="12" fill="white" />
+        <path
+          d="M14 8L10 12L14 16"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
 
     <img
       class="cutscene-character"
@@ -159,6 +187,31 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   background-size: cover;
   background-position: center;
   z-index: 0;
+}
+
+.cutscene-back {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.cutscene-back:hover { opacity: 0.85; }
+.cutscene-back:active { transform: scale(0.96); }
+
+.cutscene-back:focus-visible {
+  outline: 2px solid #ffd447;
+  outline-offset: 4px;
+  border-radius: 50%;
 }
 
 /* Dark layer between the background and the character — bumps text
