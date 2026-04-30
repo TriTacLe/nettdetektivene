@@ -82,6 +82,11 @@ const router = createRouter({
       component: () => import('../views/WeeklyMysteryPlayView.vue'),
     },
     {
+      path: '/student/classrooms/:classroomId/mystery/play/:submissionId',
+      name: 'student-weekly-mystery-detail',
+      component: () => import('../views/WeeklyMysteryDetailView.vue'),
+    },
+    {
       path: '/student/classrooms/:classroomId/mystery/submit',
       name: 'student-weekly-mystery-submit',
       component: () => import('../views/WeeklyMysteryStudentView.vue'),
@@ -233,7 +238,7 @@ const STUDENT_ROUTES = new Set([
   'student-leaderboard', 'ending', 'task-finished',
   'stop-finished', 'task-failed', 'tasks',
   'achievements',
-  'student-weekly-mystery', 'student-weekly-mystery-play', 'student-weekly-mystery-submit',
+  'student-weekly-mystery', 'student-weekly-mystery-play', 'student-weekly-mystery-detail', 'student-weekly-mystery-submit',
 ])
 
 // Routes that belong to the test-mode flow. Leaving any of these while

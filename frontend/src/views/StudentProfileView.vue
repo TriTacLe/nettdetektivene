@@ -95,12 +95,6 @@ watch(
                 </div>
               </div>
 
-              <button
-                class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 rounded-xl border-2 border-stone-700 shadow-md transition"
-                @click="authStore.logout()"
-              >
-                Logg ut
-              </button>
             </div>
           </template>
         </CaseFile>

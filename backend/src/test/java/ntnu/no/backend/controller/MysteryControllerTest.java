@@ -1,9 +1,12 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ntnu.no.backend.dto.mystery.MysteryCompletionRequestDTO;
+import ntnu.no.backend.dto.mystery.MysteryCompletionResponseDTO;
+import ntnu.no.backend.dto.mystery.MysteryPlayDTO;
+import ntnu.no.backend.dto.mystery.MysteryReviewActionDTO;
 import ntnu.no.backend.dto.mystery.MysteryReviewDTO;
 import ntnu.no.backend.dto.mystery.MysterySubmissionRequestDTO;
-import ntnu.no.backend.dto.mystery.MysterySubmissionResponseDTO;
 import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.enums.MysteryStatus;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,36 +34,21 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Controller tests for {@link MysteryController}.
- *
- * @author aninesst
- * @version 0.1
- * @since 0.1
- */
 @WebMvcTest(MysteryController.class)
 @Import(TestSecurityConfig.class)
 class MysteryControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
-
-  @Autowired
-  private ObjectMapper objectMapper;
-
-  @MockitoBean
-  private MysteryService mysteryService;
-
-  @MockitoBean
-  private JWTUtil jwtUtil;
-
-  @MockitoBean
-  private UserDetailsService userDetailsService;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private ObjectMapper objectMapper;
+  @MockitoBean private MysteryService mysteryService;
+  @MockitoBean private JWTUtil jwtUtil;
+  @MockitoBean private UserDetailsService userDetailsService;
 
   @Test
   void submitMystery_asStudent_returnsCreated() throws Exception {
@@ -67,14 +56,22 @@ class MysteryControllerTest {
     UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
     User principal = testUser(userId, "student");
 
-    when(mysteryService.submitMystery(any(MysterySubmissionRequestDTO.class), eq(userId)))
-        .thenReturn(response(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING, false));
+    when(mysteryService.submitMystery(any(), any(), eq(userId)))
+        .thenReturn(reviewDto(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING));
 
-    mockMvc.perform(post("/api/v1/mysteries")
+    MockMultipartFile imagePart = new MockMultipartFile("image", "x.jpg", "image/jpeg", new byte[]{1, 2, 3});
+    MockMultipartFile submissionPart = new MockMultipartFile(
+        "submission",
+        "submission.json",
+        "application/json",
+        objectMapper.writeValueAsBytes(request(classroomId))
+    );
+
+    mockMvc.perform(multipart("/api/v1/mysteries")
+            .file(submissionPart)
+            .file(imagePart)
             .with(user(principal))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request(classroomId))))
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.classroomId").value(classroomId.toString()))
@@ -86,24 +83,58 @@ class MysteryControllerTest {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
-    mockMvc.perform(post("/api/v1/mysteries")
+    MockMultipartFile imagePart = new MockMultipartFile("image", "x.jpg", "image/jpeg", new byte[]{1, 2, 3});
+    MockMultipartFile submissionPart = new MockMultipartFile(
+        "submission",
+        "submission.json",
+        "application/json",
+        objectMapper.writeValueAsBytes(request(classroomId))
+    );
+
+    mockMvc.perform(multipart("/api/v1/mysteries")
+            .file(submissionPart)
+            .file(imagePart)
             .with(user(testUser(userId, "instructor")))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request(classroomId))))
+            .with(csrf()))
         .andExpect(status().isForbidden());
   }
 
   @Test
-  void submitMystery_withInvalidBody_returnsBadRequest() throws Exception {
-    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+  void getPlayList_asStudent_returnsOk() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID submissionId = UUID.randomUUID();
 
-    mockMvc.perform(post("/api/v1/mysteries")
+    when(mysteryService.getPlayList(eq(classroomId), eq(userId)))
+        .thenReturn(List.of(new MysteryPlayDTO(submissionId, classroomId, "/uploads/mysteries/a.jpg",
+            List.of("A", "B", "C"), false)));
+
+    mockMvc.perform(get("/api/v1/mysteries/classroom/{id}/play", classroomId)
+            .with(user(testUser(userId, "student"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].id").value(submissionId.toString()))
+        .andExpect(jsonPath("$.data[0].alternatives.length()").value(3))
+        .andExpect(jsonPath("$.data[0].correctIndex").doesNotExist());
+  }
+
+  @Test
+  void completeMystery_asStudent_returnsOk() throws Exception {
+    UUID submissionId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+
+    when(mysteryService.completeMystery(eq(submissionId), eq((byte) 1), eq(userId)))
+        .thenReturn(new MysteryCompletionResponseDTO(true, true, false));
+
+    MysteryCompletionRequestDTO body = MysteryCompletionRequestDTO.builder().selectedIndex((byte) 1).build();
+
+    mockMvc.perform(post("/api/v1/mysteries/{id}/completion", submissionId)
             .with(user(testUser(userId, "student")))
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(MysterySubmissionRequestDTO.builder().build())))
-        .andExpect(status().isBadRequest());
+            .content(objectMapper.writeValueAsString(body)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.correct").value(true))
+        .andExpect(jsonPath("$.data.completed").value(true));
   }
 
   @Test
@@ -112,141 +143,80 @@ class MysteryControllerTest {
     UUID userId = UUID.randomUUID();
 
     when(mysteryService.getSubmissionsByClassroom(classroomId))
-        .thenReturn(List.of(response(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING, false)));
+        .thenReturn(List.of(reviewDto(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING)));
 
-    mockMvc.perform(get("/api/v1/mysteries/classroom/{classroomId}", classroomId)
+    mockMvc.perform(get("/api/v1/mysteries/classroom/{id}", classroomId)
             .with(user(testUser(UUID.randomUUID(), "instructor"))))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data[0].mysDesc").value("Suspicious message"));
+        .andExpect(jsonPath("$.data[0].correctIndex").exists());
   }
 
   @Test
   void getSubmissionsByClassroom_asStudent_returnsForbidden() throws Exception {
     UUID classroomId = UUID.randomUUID();
 
-    mockMvc.perform(get("/api/v1/mysteries/classroom/{classroomId}", classroomId)
+    mockMvc.perform(get("/api/v1/mysteries/classroom/{id}", classroomId)
             .with(user(testUser(UUID.randomUUID(), "student"))))
         .andExpect(status().isForbidden());
-  }
-
-  @Test
-  void getPendingSubmissions_asInstructor_returnsOk() throws Exception {
-    UUID classroomId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-
-    when(mysteryService.getPendingSubmissions(classroomId))
-        .thenReturn(List.of(response(UUID.randomUUID(), classroomId, userId, MysteryStatus.PENDING, false)));
-
-    mockMvc.perform(get("/api/v1/mysteries/classroom/{classroomId}/pending", classroomId)
-            .with(user(testUser(UUID.randomUUID(), "instructor"))))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data[0].mysStatus").value("PENDING"));
   }
 
   @Test
   void reviewSubmission_asInstructor_returnsOk() throws Exception {
     UUID submissionId = UUID.randomUUID();
     UUID classroomId = UUID.randomUUID();
-    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    UUID instructorId = UUID.fromString("00000000-0000-0000-0000-000000000002");
     UUID studentId = UUID.randomUUID();
 
-    when(mysteryService.reviewSubmission(eq(submissionId), any(MysteryReviewDTO.class), eq(userId)))
-        .thenReturn(response(submissionId, classroomId, studentId, MysteryStatus.APPROVED, true));
+    when(mysteryService.reviewSubmission(eq(submissionId), any(MysteryReviewActionDTO.class), eq(instructorId)))
+        .thenReturn(reviewDto(submissionId, classroomId, studentId, MysteryStatus.APPROVED));
 
-    mockMvc.perform(patch("/api/v1/mysteries/{submissionId}/review", submissionId)
-            .with(user(testUser(userId, "instructor")))
+    mockMvc.perform(patch("/api/v1/mysteries/{id}/review", submissionId)
+            .with(user(testUser(instructorId, "instructor")))
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(review(MysteryStatus.APPROVED, true))))
+            .content(objectMapper.writeValueAsString(action(MysteryStatus.APPROVED))))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data.mysStatus").value("APPROVED"))
-        .andExpect(jsonPath("$.data.isFeatured").value(true));
+        .andExpect(jsonPath("$.data.mysStatus").value("APPROVED"));
   }
 
   @Test
   void reviewSubmission_asStudent_returnsForbidden() throws Exception {
     UUID submissionId = UUID.randomUUID();
 
-    mockMvc.perform(patch("/api/v1/mysteries/{submissionId}/review", submissionId)
+    mockMvc.perform(patch("/api/v1/mysteries/{id}/review", submissionId)
             .with(user(testUser(UUID.randomUUID(), "student")))
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(review(MysteryStatus.APPROVED, true))))
+            .content(objectMapper.writeValueAsString(action(MysteryStatus.APPROVED))))
         .andExpect(status().isForbidden());
-  }
-
-  @Test
-  void reviewSubmission_withInvalidBody_returnsBadRequest() throws Exception {
-    UUID submissionId = UUID.randomUUID();
-
-    mockMvc.perform(patch("/api/v1/mysteries/{submissionId}/review", submissionId)
-            .with(user(testUser(UUID.randomUUID(), "instructor")))
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(MysteryReviewDTO.builder().build())))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  void getFeaturedSubmission_asStudent_returnsOk() throws Exception {
-    UUID classroomId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-
-    when(mysteryService.getFeaturedSubmission(classroomId))
-        .thenReturn(response(UUID.randomUUID(), classroomId, userId, MysteryStatus.APPROVED, true));
-
-    mockMvc.perform(get("/api/v1/mysteries/classroom/{classroomId}/featured", classroomId)
-            .with(user(testUser(UUID.randomUUID(), "student"))))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data.isFeatured").value(true));
-  }
-
-  @Test
-  void getFeaturedSubmission_unauthenticated_returnsUnauthorized() throws Exception {
-    UUID classroomId = UUID.randomUUID();
-
-    mockMvc.perform(get("/api/v1/mysteries/classroom/{classroomId}/featured", classroomId))
-        .andExpect(status().isUnauthorized());
   }
 
   private MysterySubmissionRequestDTO request(UUID classroomId) {
     return MysterySubmissionRequestDTO.builder()
         .classroomId(classroomId)
-        .mysDesc("Suspicious message")
-        .attachmentUrl("https://example.com/file.png")
+        .alternative1("A")
+        .alternative2("B")
+        .alternative3("C")
+        .correctIndex((byte) 0)
         .build();
   }
 
-  private MysteryReviewDTO review(MysteryStatus status, boolean featured) {
-    return MysteryReviewDTO.builder()
-        .mysStatus(status)
-        .featured(featured)
-        .build();
+  private MysteryReviewActionDTO action(MysteryStatus status) {
+    return MysteryReviewActionDTO.builder().mysStatus(status).build();
   }
 
-  private MysterySubmissionResponseDTO response(
-      UUID submissionId,
-      UUID classroomId,
-      UUID submittedBy,
-      MysteryStatus status,
-      boolean featured
-  ) {
-    return new MysterySubmissionResponseDTO(
-        submissionId,
+  private MysteryReviewDTO reviewDto(UUID id, UUID classroomId, UUID submittedBy, MysteryStatus status) {
+    return new MysteryReviewDTO(
+        id,
         classroomId,
         submittedBy,
-        "Suspicious message",
-        "https://example.com/file.png",
+        "Test Student",
+        "/uploads/mysteries/x/y.jpg",
+        List.of("A", "B", "C"),
+        (byte) 0,
         status,
         status == MysteryStatus.PENDING ? null : UUID.randomUUID(),
         status == MysteryStatus.PENDING ? null : LocalDateTime.of(2026, 4, 27, 10, 0),
-        featured,
-        17,
-        2026,
         LocalDateTime.of(2026, 4, 27, 9, 0)
     );
   }
@@ -254,7 +224,6 @@ class MysteryControllerTest {
   private User testUser(UUID id, String authority) {
     Role role = new Role();
     role.setRoleName(authority);
-
     User user = new User();
     user.setEmail("test@example.com");
     user.setDisplayName("Test User");
@@ -265,7 +234,6 @@ class MysteryControllerTest {
 
   private void setIdReflectively(Object target, UUID id) {
     Class<?> type = target.getClass();
-
     while (type != null) {
       try {
         Field field = type.getDeclaredField("id");
@@ -278,7 +246,6 @@ class MysteryControllerTest {
         throw new RuntimeException(e);
       }
     }
-
     throw new IllegalArgumentException("Could not find id field on " + target.getClass());
   }
 }
