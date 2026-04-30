@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { Plus, Pencil } from 'lucide-vue-next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import ClassroomService from '@/services/ClassroomService'
 import type { ClassroomTaskResponseDTO } from '@/types'
@@ -16,19 +16,24 @@ const tasksQuery = useQuery({
   queryFn: () => ClassroomService.getClassroomTasks(props.classroomId, false, false),
 })
 
-const tasks = computed<ClassroomTaskResponseDTO[]>(() => tasksQuery.data.value ?? [])
+const tasks = computed<ClassroomTaskResponseDTO[]>(() => {
+  const all = tasksQuery.data.value ?? []
+  return [...all].sort((a, b) => {
+    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1
+    return a.sortOrder - b.sortOrder
+  })
+})
 
-const deleteTaskMutation = useMutation({
-  mutationFn: (taskId: string) => ClassroomService.removeClassroomTask(props.classroomId, taskId),
+const toggleActiveMutation = useMutation({
+  mutationFn: ({ taskId, isActive }: { taskId: string; isActive: boolean }) =>
+    ClassroomService.updateClassroomTask(props.classroomId, taskId, { isActive }),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['teacher-classroom-tasks', props.classroomId] })
   },
 })
 
-function handleDeleteTask(taskId: string, taskTitle: string) {
-  if (confirm(`Er du sikker på at du vil fjerne oppgaven "${taskTitle}" fra dette klasserommet?`)) {
-    deleteTaskMutation.mutate(taskId)
-  }
+function toggleActive(taskId: string, currentlyActive: boolean) {
+  toggleActiveMutation.mutate({ taskId, isActive: !currentlyActive })
 }
 
 function handleEditTask(taskId: string) {
@@ -51,18 +56,26 @@ function openCreateTask() {
     </div>
 
     <div class="row-list">
+      <button
+        class="btn-bare create-row"
+        @click="openCreateTask"
+        aria-label="Lag ny oppgave"
+      >
+        <Plus :size="18" aria-hidden="true" />
+        <span>Lag ny oppgave</span>
+      </button>
+
       <article
         v-for="(item, i) in tasks"
         :key="item.taskId"
         class="row"
+        :class="{ 'row--inactive': !item.isActive }"
         :style="{ animationDelay: `${i * 0.05}s` }"
       >
         <span class="row-title">{{ item.task.title }}</span>
 
-        <span class="row-stat">{{ item.task.taskType }}</span>
         <span class="row-stat">{{ item.task.stopLocation || 'ukjent stopp' }}</span>
         <span class="row-stat">niv. {{ item.task.difficulty }}</span>
-
         <span
           class="row-badge"
           :class="item.isActive ? 'badge-active' : 'badge-inactive'"
@@ -76,25 +89,16 @@ function openCreateTask() {
             Rediger
           </button>
           <button
-            class="btn-bare action-btn action-btn-danger"
-            :disabled="deleteTaskMutation.isPending.value"
-            @click="handleDeleteTask(item.taskId, item.task.title)"
+            class="btn-bare action-btn"
+            :class="item.isActive ? 'action-btn-deactivate' : 'action-btn-activate'"
+            :disabled="toggleActiveMutation.isPending.value"
+            :aria-label="item.isActive ? `Deaktiver ${item.task.title}` : `Aktiver ${item.task.title}`"
+            @click="toggleActive(item.taskId, item.isActive)"
           >
-            <Trash2 :size="18" aria-hidden="true" />
-            Slett
+            {{ item.isActive ? 'Deaktiver' : 'Aktiver' }}
           </button>
         </div>
       </article>
-
-      <button
-        class="btn-bare create-row"
-        :style="{ animationDelay: `${tasks.length * 0.05}s` }"
-        @click="openCreateTask"
-        aria-label="Lag ny oppgave"
-      >
-        <Plus :size="18" aria-hidden="true" />
-        <span>Lag ny oppgave</span>
-      </button>
     </div>
   </div>
 </template>
@@ -139,7 +143,8 @@ function openCreateTask() {
 .row {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   padding: 0.85rem 1.5rem;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
@@ -151,13 +156,11 @@ function openCreateTask() {
   font-size: 1.125rem;
   font-weight: 800;
   color: #111827;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 6rem;
+  flex: 1 1 100%;
+  min-width: 0;
   -webkit-text-stroke: 0;
   text-shadow: none;
+  word-break: break-word;
 }
 
 .row-stat {
@@ -172,10 +175,10 @@ function openCreateTask() {
 }
 
 .row-badge {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   border-radius: 9999px;
-  padding: 0.3rem 0.75rem;
+  padding: 0.2rem 0.65rem;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -188,6 +191,36 @@ function openCreateTask() {
 .badge-inactive {
   background: #fef3c7;
   color: #92400e;
+}
+
+.row--inactive {
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+
+.action-btn-deactivate {
+  color: #92400e;
+}
+
+.action-btn-deactivate::before {
+  background: #fde68a;
+}
+
+.action-btn-deactivate:hover:not(:disabled)::after {
+  background: #fef9c3;
+}
+
+.action-btn-activate {
+  color: #166534;
+}
+
+.action-btn-activate::before {
+  background: #86efac;
+}
+
+.action-btn-activate:hover:not(:disabled)::after {
+  background: #dcfce7;
 }
 
 .row-actions {
@@ -247,17 +280,6 @@ function openCreateTask() {
   cursor: not-allowed;
 }
 
-.action-btn-danger {
-  color: #b91c1c;
-}
-
-.action-btn-danger::before {
-  background: #fca5a5;
-}
-
-.action-btn-danger:hover:not(:disabled)::after {
-  background: #fef2f2;
-}
 
 .create-row {
   position: relative;
@@ -310,6 +332,47 @@ function openCreateTask() {
 .create-row:focus-visible {
   outline: 2px solid #d97706;
   outline-offset: 2px;
+}
+
+@media (max-width: 950px) {
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 0.75rem 1.25rem;
+    clip-path: none;
+    border-radius: 0.5rem;
+  }
+
+  .row-title {
+    white-space: normal;
+    min-width: 0;
+  }
+
+  .row-stat {
+    font-size: 0.8125rem;
+    display: inline;
+  }
+
+  .row-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.6875rem;
+  }
+
+  .row-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
 }
 
 @keyframes slideUp {

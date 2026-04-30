@@ -46,8 +46,9 @@ const menuItems = [
     title="Klasseromsstyring"
     :previous="`/classroom/${classroomId}`"
     background="/StartBackground.jpg"
+    dimOverlay
   >
-    <div class="flex flex-col items-center flex-1 w-full px-6 pb-10 pt-4">
+    <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10 pt-4">
       <div class="menu-stack">
         <div
           v-if="error"
