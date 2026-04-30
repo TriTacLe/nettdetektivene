@@ -71,9 +71,12 @@ watch(
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">Brukernavn</p>
                   <p class="profile-value font-bold text-stone-900">{{ profile.displayName ?? '---' }}</p>
-                  <p v-if="hasPendingNameChange" class="text-xs text-amber-700 font-semibold mt-1">
+                  <div
+                    v-if="hasPendingNameChange"
+                    class="w-full px-3 py-2 rounded-xl bg-amber-100 border-2 border-amber-400 text-amber-900 text-sm font-semibold text-center mt-2"
+                  >
                     Navneendring venter på godkjenning
-                  </p>
+                  </div>
                 </div>
 
                 <div>

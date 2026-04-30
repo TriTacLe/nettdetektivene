@@ -47,7 +47,7 @@ defineProps<{ tabLabel: string }>()
         font-weight="900"
         fill="#991b1b"
         letter-spacing="3"
-      >KLASSIFISERT</text>
+      >HEMMELIG</text>
     </svg>
   </div>
 </template>
