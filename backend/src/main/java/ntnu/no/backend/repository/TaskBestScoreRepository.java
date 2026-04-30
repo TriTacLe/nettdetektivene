@@ -34,7 +34,7 @@ public interface TaskBestScoreRepository extends JpaRepository<TaskBestScore, Ta
       String stopLocation
   );
 
-  boolean existsByIdUserIdAndIdTaskIdAndIdClassroomIdAndFirstPassedAtIsNotNull(
+  boolean existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
       UUID userId,
       UUID taskId,
       UUID classroomId

@@ -243,9 +243,16 @@ public class ClassroomService {
   private void unlockNewTaskForEligibleStudents(Classroom classroom, ClassroomTask newTask) {
     if (Boolean.FALSE.equals(newTask.getIsActive())) return;
 
-    ClassroomTask predecessor = classroomTaskRepository
-        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId())
-        .stream()
+    String stopLocation = newTask.getTask().getStopLocation();
+    List<ClassroomTask> activeTasks = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+
+    List<ClassroomTask> earlierInStop = activeTasks.stream()
+        .filter(ct -> stopLocation != null && stopLocation.equals(ct.getTask().getStopLocation()))
+        .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
+        .toList();
+
+    ClassroomTask globalPredecessor = activeTasks.stream()
         .filter(ct -> ct.getSortOrder() < newTask.getSortOrder())
         .reduce((a, b) -> a.getSortOrder() >= b.getSortOrder() ? a : b)
         .orElse(null);
@@ -256,10 +263,22 @@ public class ClassroomService {
     for (ClassroomStudent student : approvedStudents) {
       UUID userId = student.getUser().getId();
 
-      boolean shouldUnlock = predecessor == null
-          || taskBestScoreRepository
-              .existsByIdUserIdAndIdTaskIdAndIdClassroomIdAndFirstPassedAtIsNotNull(
-                  userId, predecessor.getTask().getId(), classroom.getId());
+      boolean shouldUnlock;
+      if (!earlierInStop.isEmpty()) {
+        // The new task slots into an existing stop. Unlock once the student
+        // has already cleared every earlier active task in that stop, since
+        // they would otherwise have nothing left to gate the new task on.
+        shouldUnlock = earlierInStop.stream().allMatch(ct -> taskBestScoreRepository
+            .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                userId, ct.getTask().getId(), classroom.getId()));
+      } else {
+        // First active task in its stop (or only task in the classroom):
+        // fall back to the global sortOrder chain.
+        shouldUnlock = globalPredecessor == null
+            || taskBestScoreRepository
+                .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                    userId, globalPredecessor.getTask().getId(), classroom.getId());
+      }
 
       if (!shouldUnlock) continue;
       if (userTaskUnlockedRepository.existsByUser_IdAndClassroom_IdAndTask_Id(
