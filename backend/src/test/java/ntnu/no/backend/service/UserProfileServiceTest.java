@@ -176,7 +176,6 @@ class UserProfileServiceTest {
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
     when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
-    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of());
 
     userProfileService.update(user, dto);
 
