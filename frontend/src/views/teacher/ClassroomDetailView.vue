@@ -239,6 +239,7 @@ function onTabKeydown(e: KeyboardEvent) {
     :title="classroom?.title || 'Klasserom'"
     previous="/teacher-home"
     background="/StartBackground.jpg"
+    dimOverlay
   >
     <div class="scene-split-layout">
       <div class="scene-split-grid">
@@ -477,6 +478,7 @@ function onTabKeydown(e: KeyboardEvent) {
 <style scoped>
 .tab-bar {
   display: flex;
+  justify-content: center;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
@@ -893,6 +895,62 @@ function onTabKeydown(e: KeyboardEvent) {
 .dialog-btn--danger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 950px) {
+  .student-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .sr-name {
+    width: 100%;
+    white-space: normal;
+    min-width: 0;
+  }
+
+  .sr-stat {
+    font-size: 0.8125rem;
+  }
+
+  .sr-progress {
+    display: none;
+  }
+
+  .sr-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sr-btn {
+    font-size: 0.8125rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-btn--approve {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-btn--reset {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
+
+  .sr-chevron {
+    display: none;
+  }
+
+  .student-list {
+    padding: 0.75rem;
+  }
+
+  .tab-bar {
+    padding: 0 0.5rem;
+  }
 }
 
 @keyframes slideUp {
