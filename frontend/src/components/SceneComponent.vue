@@ -9,9 +9,11 @@ const props = withDefaults(
     previous?: string
     next?: string
     background?: string
+    backgroundMobile?: string
     vignette?: boolean
     scanlines?: boolean
     dimOverlay?: boolean
+    overlayOpacity?: number
   }>(),
   {
     background: '/StartBackground.jpg',
@@ -49,8 +51,26 @@ function handleBack() {
 
 <template>
   <div class="scene" :class="{ scanlines: resolvedScanlines }">
-    <img class="scene-background" :src="resolvedBackground" alt="" aria-hidden="true" />
-    <div class="scene-overlay" :class="{ 'scene-overlay--dim': dimOverlay }"></div>
+    <template v-if="backgroundMobile">
+      <img
+        class="scene-background scene-background--desktop"
+        :src="resolvedBackground"
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        class="scene-background scene-background--mobile"
+        :src="backgroundMobile"
+        alt=""
+        aria-hidden="true"
+      />
+    </template>
+    <img v-else class="scene-background" :src="resolvedBackground" alt="" aria-hidden="true" />
+    <div
+      class="scene-overlay"
+      :class="{ 'scene-overlay--dim': dimOverlay }"
+      :style="overlayOpacity !== undefined ? { opacity: overlayOpacity } : {}"
+    ></div>
     <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
     <div class="scene-content">
       <NavigationHeader :title="title" :previous="previous" :next="next" @back="handleBack" />
@@ -118,5 +138,18 @@ function handleBack() {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+.scene-background--mobile {
+  display: none;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .scene-background--desktop {
+    display: none;
+  }
+  .scene-background--mobile {
+    display: block;
+  }
 }
 </style>
