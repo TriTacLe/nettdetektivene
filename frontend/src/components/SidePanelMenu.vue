@@ -34,6 +34,7 @@ function handleSelect(item: SidePanelMenuItem) {
       <span class="code-label">{{ code.label }}</span>
       <span class="code-value">{{ code.value }}</span>
     </div>
+    <h2 class="panel-title">Meny</h2>
 
     <div
       v-for="(item, i) in items"
@@ -66,32 +67,53 @@ function handleSelect(item: SidePanelMenuItem) {
   gap: 0.6rem;
 }
 
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: none;
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+  width: 100%;
+}
+
 .code-block {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.15rem;
-  margin-bottom: 0.6rem;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  width: 100%;
   animation: slideRight 0.4s ease-out both;
 }
 
 .code-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  letter-spacing: 0.12em;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
 }
 
 .code-value {
-  font-size: 1.75rem;
+  font-size: 2.75rem;
   font-weight: 800;
   color: #ffffff;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   line-height: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  -webkit-text-stroke: 0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
 
 .side-btn-wrap {
@@ -105,8 +127,8 @@ function handleSelect(item: SidePanelMenuItem) {
   align-items: center;
   gap: 0.85rem;
   min-height: 3.25rem;
-  min-width: 15rem;
-  padding: 1rem 2.25rem;
+  width: 100%;
+  padding: 1rem 3rem;
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0.04em;
