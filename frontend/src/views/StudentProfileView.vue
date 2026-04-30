@@ -58,7 +58,7 @@ watch(
         <CaseFile tab-label="MIN DETEKTIV">
           <template #left>
             <div class="profile-card-inner">
-              <AvatarPreview :config="avatarCfg" :size="avatarSize" />
+              <AvatarPreview :config="avatarCfg" :size="avatarSize" :lazy-load="false" />
 
               <button
                 class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition"
@@ -95,12 +95,6 @@ watch(
                 </div>
               </div>
 
-              <button
-                class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 rounded-xl border-2 border-stone-700 shadow-md transition"
-                @click="authStore.logout()"
-              >
-                Logg ut
-              </button>
             </div>
           </template>
         </CaseFile>

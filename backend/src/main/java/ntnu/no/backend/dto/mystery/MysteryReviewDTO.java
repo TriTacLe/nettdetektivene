@@ -1,31 +1,27 @@
 package ntnu.no.backend.dto.mystery;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ntnu.no.backend.model.enums.MysteryStatus;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 /**
- * Request DTO for reviewing a mystery submission.
- *
- * @author aninesst
- * @version 0.1
- * @since 0.1
+ * Teacher-facing view of a mystery submission. Includes {@code correctIndex}
+ * so reviewers can verify the answer makes sense before approving.
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "Request payload for reviewing a mystery submission")
-public class MysteryReviewDTO {
-
-  @NotNull(message = "Status is required")
-  @Schema(description = "Review status", example = "APPROVED")
-  private MysteryStatus mysStatus;
-
-  @Schema(description = "Whether this approved submission should be featured")
-  private boolean featured;
-}
+@Schema(description = "Teacher-facing mystery submission with correct answer")
+public record MysteryReviewDTO(
+    UUID id,
+    UUID classroomId,
+    UUID submittedBy,
+    String submittedByName,
+    String imagePath,
+    List<String> alternatives,
+    byte correctIndex,
+    MysteryStatus mysStatus,
+    UUID reviewedBy,
+    LocalDateTime reviewedAt,
+    LocalDateTime submittedAt
+) {}

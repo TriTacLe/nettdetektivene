@@ -19,7 +19,7 @@ onMounted(async () => {
   }
 })
 
-const formatContent = (content: Record<string, unknown> | null) => {
+const formatContent = (content: unknown) => {
   if (!content) return 'Ingen innhold'
   return JSON.stringify(content, null, 2)
 }

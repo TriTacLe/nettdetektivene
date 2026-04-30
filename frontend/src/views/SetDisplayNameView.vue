@@ -73,7 +73,7 @@ function handleSubmit() {
             </div>
 
             <div class="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-              <AvatarPreview :config="avatarConfig" :size="200" />
+              <AvatarPreview :config="avatarConfig" :size="200" :lazy-load="false" />
             </div>
 
             <button

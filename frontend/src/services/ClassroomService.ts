@@ -64,13 +64,18 @@ async function getUnlockedTasks(classroomId: string): Promise<ClassroomTaskRespo
 }
 
 async function getClassroomTasks(classroomId: string, activeOnly: boolean = true, includeUnlocked: boolean = true, testMode: boolean = false): Promise<ClassroomTaskResponseDTO[]> {
-  const params: Record<string, string> = {}
-  if (activeOnly) params.activeOnly = 'true'
-  if (includeUnlocked) params.includeUnlocked = 'true'
-  if (testMode) params.testMode = 'true'
+  const params: Record<string, boolean> = {}
+  if (activeOnly) params.activeOnly = true
+  if (includeUnlocked) params.includeUnlocked = true
+  if (testMode) params.testMode = true
 
-  const queryString = new URLSearchParams(params).toString()
-  const url = queryString ? `/classrooms/${classroomId}/tasks?${queryString}` : `/classrooms/${classroomId}/tasks`
+  const searchParams = new URLSearchParams()
+if (activeOnly) searchParams.append('activeOnly', 'true')
+if (includeUnlocked) searchParams.append('includeUnlocked', 'true')
+if (testMode) searchParams.append('testMode', 'true')
+
+const queryString = searchParams.toString()
+const url = queryString ? `/classrooms/${classroomId}/tasks?${queryString}` : `/classrooms/${classroomId}/tasks`
 
   const { data } = await apiClient.get<ApiResponse<ClassroomTaskResponseDTO[]>>(url)
   return data.data

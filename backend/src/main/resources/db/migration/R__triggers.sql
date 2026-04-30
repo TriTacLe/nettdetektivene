@@ -125,36 +125,51 @@ END$$
 
 -- -------------------------------------------------------------
 -- trg_mystery_approved
+-- Notifies the submitter when their mystery is approved. The
+-- "mystery_solved" achievement now belongs to solvers, not submitters,
+-- so it is awarded by trg_mystery_completion below.
 -- -------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_mystery_approved$$
 CREATE TRIGGER trg_mystery_approved
 AFTER UPDATE ON mystery_submission
 FOR EACH ROW
 BEGIN
-    DECLARE v_achievement_id CHAR(36) DEFAULT NULL;
-
     IF NEW.mys_status = 'APPROVED' AND OLD.mys_status <> 'APPROVED' THEN
-
         INSERT INTO notification
             (notification_id, recipient_id, classroom_id, msg, ref_type, ref_id, is_read, created_at)
         VALUES
             (UUID(), NEW.submitted_by, NEW.classroom_id,
-             'Bidraget ditt ble godkjent av læreren! Du har fått en medalje.',
+             'Bidraget ditt ble godkjent av læreren!',
              'mystery_submission', NEW.submission_id, 0, NOW());
+    END IF;
+END$$
 
-         SELECT achievement_id
-        INTO v_achievement_id
-        FROM achievement
-        WHERE trigger_type = 'ukens_mysterium'
-        LIMIT 1;
+-- -------------------------------------------------------------
+-- trg_mystery_completion
+-- Awards the solver an achievement on their 1st and 5th solved mystery.
+-- Reuses sp_award_achievement (R__procedures.sql) — the same pattern
+-- used for task-completion-driven achievements.
+-- -------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_mystery_completion$$
+CREATE TRIGGER trg_mystery_completion
+AFTER INSERT ON mystery_completion
+FOR EACH ROW
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+    DECLARE v_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 
-        IF v_achievement_id IS NOT NULL THEN
-            INSERT IGNORE INTO user_achievement
-                (user_id, achievement_id, classroom_id, earned_at)
-            VALUES
-                (NEW.submitted_by, v_achievement_id, NEW.classroom_id, NOW());
-        END IF;
+    SELECT COUNT(*) INTO v_count
+    FROM mystery_completion
+    WHERE user_id = NEW.user_id;
 
+    SELECT classroom_id INTO v_classroom_id
+    FROM mystery_submission
+    WHERE submission_id = NEW.submission_id;
+
+    IF v_count = 1 THEN
+        CALL sp_award_achievement(NEW.user_id, 'mystery_solved', 'first', v_classroom_id);
+    ELSEIF v_count = 5 THEN
+        CALL sp_award_achievement(NEW.user_id, 'mystery_solved', '5',     v_classroom_id);
     END IF;
 END$$
 

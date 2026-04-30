@@ -14,7 +14,7 @@ describe('StudentHomeView', () => {
   })
 
   it('shows the students name on the board', () => {
-    cy.contains('Agent Anine').should('be.visible')
+    cy.contains('Silje Sjerm-monitoren').should('be.visible')
   })
 
   it('navigate to leaderboard', () => {

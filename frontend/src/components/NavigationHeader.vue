@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/AuthStore.ts'
-import { getMyNotificationsOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import SettingsModal from './SettingsModal.vue'
 
 defineProps<{
@@ -23,17 +21,6 @@ const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string
 
 const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
 const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PRE_CLASSROOM_ROUTES.has(route.name as string) && !showSettings.value)
-
-const notificationOpts = getMyNotificationsOptions()
-const { data: notificationsData } = useQuery({
-  ...notificationOpts,
-  queryKey: notificationOpts.queryKey as readonly unknown[],
-  enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
-})
-
-const unreadCount = computed(() =>
-  (notificationsData.value?.data ?? []).filter((n: { isRead?: boolean }) => !n.isRead).length
-)
 
 function logout() {
   authStore.logout()
@@ -70,18 +57,6 @@ function goTo(path?: string) {
     <h1 class="nav-title">{{ title }}</h1>
 
     <div class="nav-right">
-      <button
-        v-if="authStore.isTeacher && showSettings"
-        class="nav-bell btn-bare"
-        :aria-label="unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Ingen uleste varsler'"
-        @click="router.push({ name: 'teacher-notifications' })"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
-        <span v-if="unreadCount > 0" class="nav-bell-badge">{{ unreadCount }}</span>
-      </button>
       <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
         {{ authStore.user.displayName }}
       </span>
@@ -204,38 +179,6 @@ function goTo(path?: string) {
   flex-shrink: 0;
   flex-direction: column;
   gap: 2px;
-}
-
-.nav-bell {
-  position: relative;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-bell:hover {
-  opacity: 0.8;
-}
-
-.nav-bell-badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  border-radius: 9999px;
-  min-width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
 }
 
 .nav-title {

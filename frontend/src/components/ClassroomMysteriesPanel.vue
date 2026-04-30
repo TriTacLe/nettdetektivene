@@ -1,38 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import MysteryService from '@/services/MysteryService'
-import { TaskType, type MysterySubmissionResponseDTO, type MysteryTaskCreateRequestDTO } from '@/types'
+import type { MysteryReviewDTO } from '@/types'
 
 const props = defineProps<{ classroomId: string }>()
 
-const submissions = ref<MysterySubmissionResponseDTO[]>([])
-const selectedSubmission = ref<MysterySubmissionResponseDTO | null>(null)
+const submissions = ref<MysteryReviewDTO[]>([])
 const isLoading = ref(false)
-const isSaving = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const previewSubmission = ref<MysteryReviewDTO | null>(null)
 
-const taskDraft = ref<MysteryTaskCreateRequestDTO>({
-  title: '',
-  taskType: TaskType.NEWS,
-  stopLocation: 'nyhetskvartalet',
-  difficulty: 1,
-  content: '',
-  isActive: true,
-})
+function openPreview(submission: MysteryReviewDTO) {
+  previewSubmission.value = submission
+}
+
+function closePreview() {
+  previewSubmission.value = null
+}
 
 const sortedSubmissions = computed(() =>
   [...submissions.value].sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt)),
-)
-const canCreateTask = computed(
-  () =>
-    Boolean(
-      selectedSubmission.value &&
-        taskDraft.value.title.trim() &&
-        taskDraft.value.taskType &&
-        taskDraft.value.difficulty >= 1 &&
-        taskDraft.value.difficulty <= 5,
-    ),
 )
 
 onMounted(loadSubmissions)
@@ -50,110 +38,37 @@ async function loadSubmissions() {
   }
 }
 
-function openCreateTask(submission: MysterySubmissionResponseDTO) {
-  selectedSubmission.value = submission
-  taskDraft.value = {
-    title: cleanDescription(submission).slice(0, 80) || 'Ukens mysterium',
-    taskType: guessTaskType(submission),
-    stopLocation: guessStopLocation(submission),
-    difficulty: 1,
-    content: makeDefaultContent(submission),
-    isActive: true,
-  }
-  successMessage.value = ''
-  errorMessage.value = ''
+async function approve(submission: MysteryReviewDTO) {
+  await review(submission, 'APPROVED', 'Mysteriet er godkjent.')
 }
 
-async function approveSubmission(submission: MysterySubmissionResponseDTO, featured = false) {
-  try {
-    const updated = await MysteryService.reviewSubmission(submission.id, {
-      mysStatus: 'APPROVED',
-      isFeatured: featured,
-    })
-    replaceSubmission(updated)
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Kunne ikke godkjenne innsendingen.'
-  }
+async function reject(submission: MysteryReviewDTO) {
+  await review(submission, 'REJECTED', 'Mysteriet er forkastet.')
 }
 
-async function rejectSubmission(submission: MysterySubmissionResponseDTO) {
-  try {
-    const updated = await MysteryService.reviewSubmission(submission.id, {
-      mysStatus: 'REJECTED',
-      isFeatured: false,
-    })
-    replaceSubmission(updated)
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Kunne ikke forkaste innsendingen.'
-  }
-}
-
-async function createTaskFromSubmission() {
-  if (!selectedSubmission.value || !canCreateTask.value) return
-  isSaving.value = true
+async function review(submission: MysteryReviewDTO, status: 'APPROVED' | 'REJECTED', okMessage: string) {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    await MysteryService.createTaskFromSubmission(selectedSubmission.value.id, {
-      ...taskDraft.value,
-      title: taskDraft.value.title.trim(),
-      stopLocation: taskDraft.value.stopLocation?.trim() || null,
-      content: taskDraft.value.content?.trim() || null,
-    })
-    submissions.value = await MysteryService.getSubmissionsByClassroom(props.classroomId)
-    selectedSubmission.value = null
-    successMessage.value = 'Oppgave opprettet og lagt til i klasserommet.'
+    const updated = await MysteryService.reviewSubmission(submission.id, { mysStatus: status })
+    submissions.value = submissions.value.map((s) => (s.id === updated.id ? updated : s))
+    successMessage.value = okMessage
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Kunne ikke lage oppgave av innsendingen.'
-  } finally {
-    isSaving.value = false
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Kunne ikke oppdatere innsendingen.'
   }
 }
 
-function replaceSubmission(updated: MysterySubmissionResponseDTO) {
-  submissions.value = submissions.value.map((submission) =>
-    submission.id === updated.id ? updated : submission,
-  )
-}
-
-function categoryFromSubmission(submission: MysterySubmissionResponseDTO) {
-  return submission.mysDesc.match(/^\[(.*?)]/)?.[1] ?? 'Falsk nyhet'
-}
-
-function cleanDescription(submission: MysterySubmissionResponseDTO) {
-  return submission.mysDesc.replace(/^\[.*?]\s*/, '')
-}
-
-function guessTaskType(submission: MysterySubmissionResponseDTO) {
-  const category = categoryFromSubmission(submission).toLowerCase()
-  if (category.includes('bilde')) return TaskType.PHOTO
-  return TaskType.NEWS
-}
-
-function guessStopLocation(submission: MysterySubmissionResponseDTO) {
-  return guessTaskType(submission) === TaskType.PHOTO ? 'fotografen' : 'nyhetskvartalet'
-}
-
-function makeDefaultContent(submission: MysterySubmissionResponseDTO) {
-  return JSON.stringify(
-    {
-      description: cleanDescription(submission),
-      sourceUrl: submission.attachmentUrl,
-      mysterySubmissionId: submission.id,
-      weekNumber: submission.weekNumber,
-      weekYear: submission.weekYear,
-    },
-    null,
-    2,
-  )
-}
-
-function statusText(submission: MysterySubmissionResponseDTO) {
-  if (submission.mysStatus === 'APPROVED') {
-    return submission.isFeatured ? 'Godkjent og fremhevet' : 'Godkjent'
-  }
+function statusText(submission: MysteryReviewDTO) {
+  if (submission.mysStatus === 'APPROVED') return 'Godkjent'
   if (submission.mysStatus === 'REJECTED') return 'Forkastet'
   return 'Venter'
+}
+
+function statusDotClass(submission: MysteryReviewDTO) {
+  if (submission.mysStatus === 'APPROVED') return 'status-dot--green'
+  if (submission.mysStatus === 'REJECTED') return 'status-dot--red'
+  return 'status-dot--amber'
 }
 </script>
 
@@ -162,95 +77,74 @@ function statusText(submission: MysterySubmissionResponseDTO) {
     <p v-if="errorMessage" class="message message--error">{{ errorMessage }}</p>
     <p v-if="successMessage" class="message message--success">{{ successMessage }}</p>
 
-    <div class="row-list">
+    <div class="card-list">
       <p v-if="isLoading" class="empty-state">Laster innsendinger...</p>
       <p v-else-if="sortedSubmissions.length === 0" class="empty-state">
         Ingen innsendinger ennå.
       </p>
 
-      <article
+      <div
         v-for="(submission, i) in sortedSubmissions"
         v-else
         :key="submission.id"
-        class="row"
-        :style="{ animationDelay: `${i * 0.05}s` }"
+        class="row-wrapper"
+        :style="{ animationDelay: `${0.04 + i * 0.02}s` }"
       >
-        <span class="row-week">Uke {{ submission.weekNumber }}</span>
-        <span class="row-title" :title="cleanDescription(submission)">
-          {{ cleanDescription(submission) }}
-        </span>
-        <span class="row-stat">{{ categoryFromSubmission(submission) }}</span>
-        <a
-          v-if="submission.attachmentUrl"
-          :href="submission.attachmentUrl"
-          target="_blank"
-          rel="noreferrer"
-          class="row-link"
-        >Lenke</a>
-        <span class="row-badge" :class="`badge-${submission.mysStatus.toLowerCase()}`">
-          {{ statusText(submission) }}
-        </span>
-
-        <div class="row-actions">
-          <button type="button" class="btn-bare action-btn" @click="approveSubmission(submission, true)">
-            Godkjenn
-          </button>
-          <button type="button" class="btn-bare action-btn action-btn-danger" @click="rejectSubmission(submission)">
-            Forkast
-          </button>
-          <button type="button" class="btn-bare action-btn" @click="openCreateTask(submission)">
-            Lag oppgave
-          </button>
+        <div class="row">
+          <span class="row-name">{{ submission.submittedByName || 'Ukjent elev' }}</span>
+          <span class="status-badge" :class="`status-badge--${submission.mysStatus.toLowerCase()}`">
+            <span class="status-dot" :class="statusDotClass(submission)" aria-hidden="true" />
+            {{ statusText(submission) }}
+          </span>
+          <div class="row-actions">
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--preview"
+              @click="openPreview(submission)"
+            >
+              Forhåndsvis
+            </button>
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--approve"
+              :disabled="submission.mysStatus === 'APPROVED'"
+              @click="approve(submission)"
+            >
+              Godkjenn
+            </button>
+            <button
+              type="button"
+              class="btn-bare row-btn row-btn--reject"
+              :disabled="submission.mysStatus === 'REJECTED'"
+              @click="reject(submission)"
+              :aria-label="`Forkast bidrag fra ${submission.submittedByName}`"
+            >
+              ✕
+            </button>
+          </div>
         </div>
-      </article>
+      </div>
     </div>
 
-    <form v-if="selectedSubmission" class="task-form" @submit.prevent="createTaskFromSubmission">
-      <h3 class="form-title">Lag oppgave av innsending</h3>
-
-      <label class="field">
-        <span>Tittel</span>
-        <input v-model="taskDraft.title" required />
-      </label>
-
-      <label class="field">
-        <span>Type</span>
-        <select v-model="taskDraft.taskType">
-          <option v-for="type in Object.values(TaskType)" :key="type" :value="type">
-            {{ type }}
-          </option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span>Stop location</span>
-        <input v-model="taskDraft.stopLocation" placeholder="nyhetskvartalet" />
-      </label>
-
-      <label class="field">
-        <span>Vanskelighetsgrad (1–5)</span>
-        <input v-model.number="taskDraft.difficulty" min="1" max="5" type="number" />
-      </label>
-
-      <label class="checkbox-field">
-        <input v-model="taskDraft.isActive" type="checkbox" />
-        <span>Aktiv i klasserommet</span>
-      </label>
-
-      <label class="field">
-        <span>Oppgaveinnhold (JSON)</span>
-        <textarea v-model="taskDraft.content" rows="10" />
-      </label>
-
-      <div class="actions actions--end">
-        <button type="button" class="btn-vn btn-vn-ghost" @click="selectedSubmission = null">
-          Avbryt
-        </button>
-        <button type="submit" class="btn-vn" :disabled="!canCreateTask || isSaving">
-          {{ isSaving ? 'Lagrer...' : 'Opprett oppgave' }}
-        </button>
+    <Transition name="fade">
+      <div v-if="previewSubmission" class="preview-overlay" @click.self="closePreview">
+        <div class="preview-modal">
+          <button type="button" class="btn-bare preview-close" aria-label="Lukk forhåndsvisning" @click="closePreview">×</button>
+          <img :src="previewSubmission.imagePath" alt="Forhåndsvisning" class="preview-image" />
+          <ul class="preview-alternatives">
+            <li
+              v-for="(text, index) in previewSubmission.alternatives"
+              :key="index"
+              class="preview-alternative"
+              :class="{ 'preview-alternative--correct': index === previewSubmission.correctIndex }"
+            >
+              <span class="preview-alternative-marker">{{ index === previewSubmission.correctIndex ? '✓' : '·' }}</span>
+              <span class="preview-alternative-text">{{ text }}</span>
+            </li>
+          </ul>
+        </div>
       </div>
-    </form>
+    </Transition>
   </div>
 </template>
 
@@ -264,168 +158,148 @@ function statusText(submission: MysterySubmissionResponseDTO) {
   margin-top: 0.5rem;
 }
 
-.row-list {
+.card-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 1rem;
+  padding: 0.6rem;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.875rem;
+  border-radius: 0;
   backdrop-filter: blur(4px);
   max-height: calc(100vh - 18rem);
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
-.row-list::-webkit-scrollbar {
-  width: 8px;
-}
-.row-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.row-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-}
-.row-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+.row-wrapper {
+  animation: slideUp 0.4s ease-out both;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1.5rem;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
   clip-path: var(--notch-clip);
-  animation: slideUp 0.4s ease-out both;
+  border: none;
+  text-align: left;
 }
 
-.row-week {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #64748b;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.row-title {
-  font-size: 1rem;
+.row-name {
+  font-size: 1.125rem;
   font-weight: 800;
   color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 5rem;
   flex: 1;
-  min-width: 6rem;
-  -webkit-text-stroke: 0;
-  text-shadow: none;
 }
 
-.row-stat {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.row-link {
-  color: #1d4ed8;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 700;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.row-badge {
-  font-size: 0.8rem;
-  font-weight: 700;
+  padding: 0.3rem 0.75rem;
   border-radius: 9999px;
-  padding: 0.25rem 0.65rem;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.badge-approved {
+.status-badge--approved {
   background: #dcfce7;
   color: #166534;
 }
 
-.badge-rejected {
+.status-badge--rejected {
   background: #fee2e2;
   color: #991b1b;
 }
 
-.badge-pending {
+.status-badge--pending {
   background: #fef3c7;
   color: #92400e;
 }
 
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--amber { background: #d97706; }
+.status-dot--green { background: #16a34a; }
+.status-dot--red { background: #dc2626; }
+
 .row-actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-  margin-left: auto;
 }
 
-.action-btn {
-  position: relative;
-  isolation: isolate;
+.row-btn {
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.95rem;
-  border: none;
-  border-radius: 0 !important;
-  clip-path: var(--notch-clip);
-  background: transparent;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1f2937;
-  cursor: pointer;
+  justify-content: center;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #d1d5db;
-  z-index: -2;
-}
-
-.action-btn::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  clip-path: var(--notch-clip);
-  background: white;
-  z-index: -1;
-  transition: background 0.15s;
-}
-
-.action-btn:hover:not(:disabled)::after {
-  background: #f9fafb;
-}
-
-.action-btn:focus-visible {
+.row-btn:focus-visible {
   outline: 2px solid #d97706;
   outline-offset: 2px;
 }
 
-.action-btn-danger {
-  color: #b91c1c;
+.row-btn--preview {
+  background: #e0e7ff;
+  color: #1e3a8a;
+  border: 1.5px solid #c7d2fe;
 }
 
-.action-btn-danger::before {
-  background: #fca5a5;
+.row-btn--preview:hover {
+  background: #c7d2fe;
+  border-color: #a5b4fc;
 }
 
-.action-btn-danger:hover:not(:disabled)::after {
+.row-btn--approve {
+  background: #15803d;
+  color: white;
+}
+
+.row-btn--approve:hover:not(:disabled) {
+  background: #166534;
+}
+
+.row-btn--reject {
+  background: transparent;
+  color: #6b7280;
+  width: 2.75rem;
+  padding: 0;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.row-btn--reject:hover:not(:disabled) {
   background: #fef2f2;
+  color: #dc2626;
+}
+
+.row-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .empty-state {
@@ -434,84 +308,6 @@ function statusText(submission: MysterySubmissionResponseDTO) {
   padding: 1.5rem;
   margin: 0;
   font-weight: 700;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.actions--end {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.task-form {
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 1rem;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  color: #0f172a;
-}
-
-.form-title {
-  margin: 0 0 0.25rem;
-  color: #0f172a;
-  font-size: 1.1rem;
-  font-weight: 800;
-  -webkit-text-stroke: 0;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.field span {
-  color: #1f2937;
-}
-
-.field select,
-.field textarea {
-  background: #fff;
-  color: #000;
-  border: 2px solid #000;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.field textarea {
-  resize: vertical;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.85rem;
-}
-
-.checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.checkbox-field input {
-  width: 1.1rem;
-  height: 1.1rem;
-  padding: 0;
-  border-width: 2px;
-  cursor: pointer;
 }
 
 .message {
@@ -532,5 +328,104 @@ function statusText(submission: MysterySubmissionResponseDTO) {
   color: #15803d;
   background: #dcfce7;
   border: 1px solid #86efac;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.preview-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.preview-image {
+  max-width: 90vw;
+  max-height: 65vh;
+  object-fit: contain;
+  background: #000;
+  border: 2px solid #fff;
+}
+
+.preview-alternatives {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(640px, 90vw);
+}
+
+.preview-alternative {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.preview-alternative--correct {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.preview-alternative-marker {
+  width: 1rem;
+  text-align: center;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.preview-alternative-text {
+  flex: 1;
+}
+
+.preview-close {
+  position: absolute;
+  top: -2.4rem;
+  right: -0.2rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: #111;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
