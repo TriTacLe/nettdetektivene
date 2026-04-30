@@ -24,10 +24,10 @@ const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string
 const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
 const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PRE_CLASSROOM_ROUTES.has(route.name as string) && !showSettings.value)
 
-const notificationOpts = getMyNotificationsOptions()
+const baseOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
-  ...notificationOpts,
-  queryKey: notificationOpts.queryKey as readonly unknown[],
+  queryKey: baseOpts.queryKey,
+  queryFn: baseOpts.queryFn,
   enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
 })
 
