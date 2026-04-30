@@ -113,7 +113,7 @@ function isCorrectLocally(answers: TaskAnswers): boolean {
     const alts = task.value?.content?.photo?.alternatives ?? []
     const sel = (answers as PhotoAnswers).selections
     if (sel.length !== alts.length) return false
-    return alts.every((alt: any, i: number) => sel[i]?.type === alt.correctType)
+    return alts.every((alt: { correctType: string }, i: number) => sel[i]?.type === alt.correctType)
   }
   return false
 }
@@ -126,7 +126,7 @@ function failureReason(answers: TaskAnswers): string {
     const alts = task.value?.content?.photo?.alternatives ?? []
     const sel = (answers as PhotoAnswers).selections
     const wrongIndexes = alts
-      .map((alt: any, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
+      .map((alt: { correctType: string }, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
       .filter((i: number | null): i is number => i !== null)
     const which = wrongIndexes.length === 1
       ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`

@@ -182,7 +182,7 @@ function onDialogKeydown(e: KeyboardEvent) {
 }
 
 // --- Helpers ---
-function studentAriaLabel(s: any): string {
+function studentAriaLabel(s: { displayName?: string; userId?: string; isAllowed?: boolean }): string {
   if (!s.isAllowed) return `${s.displayName}, venter pa godkjenning`
   const entry = getLeaderboardEntry(s.userId)
   const score = entry ? `, poeng ${entry.totalScore}` : ''
@@ -190,7 +190,7 @@ function studentAriaLabel(s: any): string {
   return `Se progresjon for ${s.displayName}${score}${rank}`
 }
 
-function navigateToStudent(student: any) {
+function navigateToStudent(student: { userId?: string; isAllowed?: boolean }) {
   if (!student.isAllowed) return
   router.push({ name: 'classroom-student-progress', params: { id: classroomId, userId: student.userId } })
 }

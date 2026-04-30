@@ -90,13 +90,13 @@ const taskTip = computed(() => task.value?.content?.photo?.hint)
 function isCorrectLocally(answers: PhotoAnswers): boolean {
   const alts = task.value?.content?.photo?.alternatives ?? []
   if (answers.selections.length !== alts.length) return false
-  return alts.every((alt: any, i: number) => answers.selections[i]?.type === alt.correctType)
+  return alts.every((alt: { correctType: string }, i: number) => answers.selections[i]?.type === alt.correctType)
 }
 
 function failureReason(answers: PhotoAnswers): string {
   const alts = task.value?.content?.photo?.alternatives ?? []
   const wrongIndexes = alts
-    .map((alt: any, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
+    .map((alt: { correctType: string }, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
     .filter((i: number | null): i is number => i !== null)
   const which = wrongIndexes.length === 1
     ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import ClassroomService from '@/services/ClassroomService'
 import { updateTeacherTaskFull } from '@/services/TaskService'
-import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft } from '@/types'
+import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft, type NewsChallengeContent, type PhotoChallengeContent } from '@/types'
 import { parseTaskContent } from '@/services/TaskService'
 
 const route = useRoute()
@@ -37,7 +37,8 @@ watch(classroomTask, (task) => {
   const parsed = parseTaskContent(t.content, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
-    const content = (parsed as any)?.news ?? parsed as any
+    const wrapper = parsed as { news?: NewsChallengeContent } | null
+    const content = wrapper?.news ?? (parsed as NewsChallengeContent | null)
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
@@ -45,7 +46,7 @@ watch(classroomTask, (task) => {
       stopLocation: t.stopLocation ?? 'nyhetskvartalet',
       question: content?.question ?? '',
       hint: content?.hint ?? '',
-      articles: (content?.articles ?? []).map((a: any) => ({
+      articles: (content?.articles ?? []).map((a) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         isReal: a.isReal,
@@ -53,7 +54,8 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = (parsed as any)?.photo ?? parsed as any
+    const wrapper = parsed as { photo?: PhotoChallengeContent } | null
+    const content = wrapper?.photo ?? (parsed as PhotoChallengeContent | null)
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
@@ -61,7 +63,7 @@ watch(classroomTask, (task) => {
       stopLocation: t.stopLocation ?? 'fotografen',
       description: content?.description ?? '',
       hint: content?.hint ?? '',
-      alternatives: (content?.alternatives ?? []).map((a: any) => ({
+      alternatives: (content?.alternatives ?? []).map((a) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         correctType: a.correctType ?? 'ekte',

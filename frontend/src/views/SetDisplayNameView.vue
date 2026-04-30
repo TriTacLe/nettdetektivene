@@ -23,7 +23,7 @@ const update = useMutation({
     await authStore.fetchMe()
     router.push({ name: 'join-classroom' })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     fieldError.value = e.message ?? 'Kunne ikke lagre profilen'
   },
 })
