@@ -726,12 +726,6 @@ function submit() {
     min-height: 44px;
     padding: 0.5rem 0.75rem;
   }
-
-  .task-field input,
-  .task-field textarea,
-  .task-field select {
-    font-size: 1rem;
-  }
 }
 
 @media (max-width: 1100px) {

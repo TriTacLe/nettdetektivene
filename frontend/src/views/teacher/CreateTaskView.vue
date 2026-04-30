@@ -837,10 +837,6 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
     padding: 0.5rem;
   }
 
-  .task-create-heading {
-    font-size: 1.2rem;
-  }
-
   .task-type-card {
     min-height: 160px;
   }
@@ -848,12 +844,6 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   .diff-btn {
     min-height: 44px;
     padding: 0.5rem 0.75rem;
-  }
-
-  .task-field input,
-  .task-field textarea,
-  .task-field select {
-    font-size: 1rem;
   }
 }
 
