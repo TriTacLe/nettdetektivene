@@ -9,13 +9,22 @@ import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
 import ntnu.no.backend.model.enums.TaskType;
 import ntnu.no.backend.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -63,6 +72,15 @@ public class DemoDataSeeder implements CommandLineRunner {
   private final PasswordEncoder passwordEncoder;
   private final JdbcTemplate jdbcTemplate;
 
+  @Value("${app.uploads.root:uploads}")
+  private String uploadsRoot;
+
+  private static final String SEED_BATCH = "seed";
+  private static final String IMG_FAKE_NEWS  = "/uploads/tasks/" + SEED_BATCH + "/fake-article-1.jpg";
+  private static final String IMG_REAL_NEWS  = "/uploads/tasks/" + SEED_BATCH + "/real-article-1.png";
+  private static final String IMG_REAL_PHOTO = "/uploads/tasks/" + SEED_BATCH + "/real-photo-1.jpeg";
+  private static final String IMG_FAKE_PHOTO = "/uploads/tasks/" + SEED_BATCH + "/fake-photo-1.jpg";
+
   private final Map<String, User> users = new HashMap<>();
   private final Map<String, Institution> institutions = new HashMap<>();
   private final Map<String, Classroom> classrooms = new HashMap<>();
@@ -78,6 +96,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     log.info("========================================");
 
     try {
+      seedImages();
       loadRoles();
       seedInstitutions();
       seedInstructors();
@@ -97,6 +116,40 @@ public class DemoDataSeeder implements CommandLineRunner {
     } catch (Exception e) {
       log.error("Seeding failed: {}", e.getMessage(), e);
       throw e;
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Seed images — copy classpath resources to the uploads volume once
+  // -----------------------------------------------------------------------
+
+  private void seedImages() {
+    String[] files = {
+        "fake-article-1.jpg",
+        "real-article-1.png",
+        "real-photo-1.jpeg",
+        "fake-photo-1.jpg",
+    };
+    Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize()
+        .resolve("tasks").resolve(SEED_BATCH);
+    try {
+      Files.createDirectories(targetDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Cannot create seed image directory: " + targetDir, e);
+    }
+    for (String filename : files) {
+      Path dest = targetDir.resolve(filename);
+      if (Files.exists(dest)) {
+        log.debug("Seed image already present: {}", filename);
+        continue;
+      }
+      ClassPathResource resource = new ClassPathResource("seed-images/" + filename);
+      try (InputStream in = resource.getInputStream()) {
+        Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        log.info("Seed image copied: {}", filename);
+      } catch (IOException e) {
+        throw new UncheckedIOException("Failed to copy seed image: " + filename, e);
+      }
     }
   }
 
@@ -182,7 +235,7 @@ public class DemoDataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Tasks (3 per stop, all 7 stops)
+  // Tasks (11 tasks: 3 stops — nyhetskvartalet, fotografen, datasenteret)
   // -----------------------------------------------------------------------
 
   private void seedTasks() {
@@ -352,43 +405,29 @@ public class DemoDataSeeder implements CommandLineRunner {
     log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
   }
 
-private String buildTaskContent(String title, TaskType type) {
+  private String buildTaskContent(String title, TaskType type) {
     if (type == TaskType.NEWS) {
+      String question = title.startsWith("Datatyven") || title.startsWith("Avslør") || title.startsWith("Sannhetens")
+          ? "Datatyven har plantet en falsk nyhet. Hvilken er ekte?"
+          : "Hvilken av disse nyhetene er ekte?";
+      String hint = title.startsWith("Datatyven") || title.startsWith("Avslør") || title.startsWith("Sannhetens")
+          ? "Sjekk kilden, forfatteren og datoen — de svakeste signalene avslører løgnen."
+          : "Se etter kildehenvisninger og datoer i artiklene.";
       return """
-          {
-            "question": "Hvilken av disse nyhetene er ekte?",
-            "hint": "Se etter kildehenvisninger og datoer i artiklene.",
-            "articles": [
-              { "imagePath": "upload://fake-article-1.jpg", "isReal": false },
-              { "imagePath": "upload://real-article-1.png", "isReal": true }
-            ]
-          }
-          """;
+          {"question":"%s","hint":"%s","articles":[{"imagePath":"%s","isReal":false},{"imagePath":"%s","isReal":true}]}"""
+          .formatted(question, hint, IMG_FAKE_NEWS, IMG_REAL_NEWS);
     }
     if (type == TaskType.PHOTO) {
+      String description = title.startsWith("Manipulert") || title.startsWith("Endelig")
+          ? "Datatyven har manipulert bevismateriale. Klassifiser hvert bilde riktig."
+          : "Hvilken type bilde er dette?";
       return """
-          {
-            "description": "Hvilken type bilde er dette?",
-            "alternatives": [
-              { "imagePath": "upload://real-photo-1.jpeg", "description": "Bilde av en by ved solnedgang", "correctType": "ekte",
-                "begrunnelser": ["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"] },
-              { "imagePath": "upload://fake-photo-1.jpg",  "description": "Portrett av en person utendørs", "correctType": "ai-generert",
-                "begrunnelser": ["Urealistiske detaljer i bakgrunnen","Feil antall fingre","Unaturlig tekstur på huden"] },
-              { "imagePath": "upload://fake-photo-1.jpg",  "description": "Folkemengde på et torg", "correctType": "manipulert",
-                "begrunnelser": ["Inkonsistente skygger","Synlig kloning av personer","Feil perspektiv"] }
-            ]
-          }
-           """;
+          {"description":"%s","alternatives":[{"imagePath":"%s","description":"Bilde av en by ved solnedgang","correctType":"ekte","begrunnelser":["Naturlig lysforhold","Konsistente skygger","Ingen synlige artefakter"]},{"imagePath":"%s","description":"Portrett av en person utendørs","correctType":"ai-generert","begrunnelser":["Urealistiske detaljer i bakgrunnen","Feil antall fingre","Unaturlig tekstur på huden"]},{"imagePath":"%s","description":"Folkemengde på et torg","correctType":"manipulert","begrunnelser":["Inkonsistente skygger","Synlig kloning av personer","Feil perspektiv"]}]}"""
+          .formatted(description, IMG_REAL_PHOTO, IMG_FAKE_PHOTO, IMG_FAKE_PHOTO);
     }
-    return """
-        {
-          "description": "%s"
-        }
-        """.formatted(title);
+    return "{\"description\":\"%s\"}".formatted(title);
   }
 
-  // -----------------------------------------------------------------------
-  // Task attempts — via sp_submit_attempt so trg_attempt_sync fires
   // -----------------------------------------------------------------------
   // Task attempts — via sp_submit_attempt so trg_attempt_sync fires
   // -----------------------------------------------------------------------

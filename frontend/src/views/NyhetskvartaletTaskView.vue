@@ -11,8 +11,7 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import { parseTaskContent } from '@/services/TaskService'
-import type { TaskDTO, NewsArticle, NewsChallengeContent, PhotoChallengeContent, NewsAnswers } from '@/types'
+import type { TaskDTO, NewsArticle, NewsChallengeContent, NewsAnswers } from '@/types'
 import { TaskType } from '@/types'
 
 const route = useRoute()
@@ -51,7 +50,6 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[NyhetskvartaletTaskView] Found task in store:', taskFromStore)
-        const rawContent = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -59,11 +57,9 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'nyhetskvartalet',
-          content: rawContent
+          content: taskFromStore.content,
         }
         console.log('[NyhetskvartaletTaskView] Task from store content:', task.value?.content)
-        const parsedNews = (rawContent as { news?: NewsChallengeContent })?.news ?? rawContent as NewsChallengeContent | null
-        console.log('[NyhetskvartaletTaskView] Task from store content.news:', parsedNews)
       } else {
         console.warn('[NyhetskvartaletTaskView] Task not found in store, fetching from API')
         task.value = await fetchTaskById(taskId)

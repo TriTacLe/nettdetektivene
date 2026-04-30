@@ -8,7 +8,6 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
-import { parseTaskContent } from '@/services/TaskService'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { fotografenIntro } from '@/data/taskDialogs/fotografen'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
@@ -51,7 +50,6 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[FotografenTaskView] Found task in store:', taskFromStore)
-        const rawContent = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -59,7 +57,7 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'fotografen',
-          content: rawContent
+          content: taskFromStore.content,
         }
         console.log('[FotografenTaskView] Task from store content:', task.value?.content)
       } else {
