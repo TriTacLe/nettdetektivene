@@ -203,70 +203,44 @@ public class DataSeeder implements CommandLineRunner {
       String title, String stop, int difficulty, String hint,
       String realImage, String aiImage, String manipulatedImage) {}
 
-  /** Spec for a text-only task (no images). */
-  private record TextTaskSpec(
-      String title, TaskType type, String stop, int difficulty, String description, String ownerKey) {}
-
   private void seedTasks() {
     short order = 0;
 
-    // ----- Nyhetskvartalet (NEWS) — 8 tasks ---------------------------------
+    // ----- Nyhetskvartalet (NEWS) — 3 tasks ---------------------------------
     NewsTaskSpec[] newsSpecs = {
         new NewsTaskSpec("Ekte eller falsk nyhet (nivå 1)", "nyhetskvartalet", 1,
             "Sjekk om kilden virker troverdig.", "fakeArticle1.png", "realArticle1.png"),
-        new NewsTaskSpec("Sak fra hverdagen (nivå 1)", "nyhetskvartalet", 1,
-            "Spør deg selv: hvem har skrevet dette?", "fakeArticle2.png", "realArticle2.png"),
         new NewsTaskSpec("Overskriften som lokker (nivå 2)", "nyhetskvartalet", 2,
             "Clickbait skriker etter klikk uten å gi svar.", "fakeArticle3.png", "realArticle3.png"),
-        new NewsTaskSpec("Følg pengene (nivå 2)", "nyhetskvartalet", 2,
-            "Hvem tjener på at du tror saken?", "fakeArticle4.png", "realArticle4.png"),
         new NewsTaskSpec("Kildehenvisning eller ikke (nivå 3)", "nyhetskvartalet", 3,
             "Reelle saker pleier å nevne navngitte kilder.", "fakeArticle5.png", "realArticle5.png"),
-        new NewsTaskSpec("Den klassiske svindelen (nivå 3)", "nyhetskvartalet", 3,
-            "Sjekk dato og publiseringssted.", "fake-article-1.jpg", "real-article-1.png"),
-        new NewsTaskSpec("Tabloid versus saklig (nivå 2)", "nyhetskvartalet", 2,
-            "Følelsesladde ord er et faresignal.", "fakeArticle1.png", "realArticle3.png"),
-        new NewsTaskSpec("Krysspeilet sak (nivå 3)", "nyhetskvartalet", 3,
-            "Søk opp saken – flere kilder = mer troverdig.", "fakeArticle2.png", "realArticle5.png"),
     };
     for (NewsTaskSpec spec : newsSpecs) {
-      Task t = upsertNewsTask(spec, "nora");
+      Task t = upsertNewsTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
     }
 
-    // ----- Fotografen (PHOTO) — 8 tasks -------------------------------------
+    // ----- Fotografen (PHOTO) — 3 tasks -------------------------------------
     PhotoTaskSpec[] photoSpecs = {
         new PhotoTaskSpec("Ekte, AI eller manipulert (nivå 1)", "fotografen", 1,
             "Se etter unaturlig perspektiv og rare detaljer.",
             "realPhoto1.png", "aiPhoto1.png", "psPhoto1.png"),
-        new PhotoTaskSpec("Tre påstander – ett bilde stemmer (nivå 1)", "fotografen", 1,
-            "Konsistente skygger er gull verdt.",
-            "realPhoto2.png", "aiPhoto2.png", "psPhoto2.jpg"),
         new PhotoTaskSpec("Manipulert eller bare merkelig? (nivå 2)", "fotografen", 2,
             "Studer tekstur og lys.",
             "realPhoto3.png", "aiPhoto3.png", "psPhoto3.png"),
-        new PhotoTaskSpec("Den AI-genererte detaljen (nivå 2)", "fotografen", 2,
-            "Hender og tekst er klassiske AI-fallgruver.",
-            "realPhoto4.png", "aiPhoto4.png", "psPhoto4.png"),
-        new PhotoTaskSpec("Falske bevis (nivå 3)", "fotografen", 3,
-            "Klonete piksler = klassisk Photoshop.",
-            "realPhoto5.png", "aiPhoto5.png", "psPhoto5.png"),
         new PhotoTaskSpec("Avansert bildeanalyse (nivå 3)", "fotografen", 3,
             "Sammenlign bakgrunn, lys og perspektiv samtidig.",
             "realPhoto6.png", "aiPhoto6.png", "psPhoto6.png"),
-        new PhotoTaskSpec("Krysset materiale (nivå 2)", "fotografen", 2,
-            "Bytter mellom tre stiler – la blikket lete.",
-            "realPhoto1.png", "aiPhoto3.png", "psPhoto5.png"),
-        new PhotoTaskSpec("Ekspertens dilemma (nivå 3)", "fotografen", 3,
-            "Selv eksperter må gå nøye til verks.",
-            "real-photo-1.jpeg", "fake-photo-1.jpg", "psPhoto1.png"),
     };
     for (PhotoTaskSpec spec : photoSpecs) {
-      Task t = upsertPhotoTask(spec, "nora");
+      Task t = upsertPhotoTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
     }
 
-    // ----- Datasenteret (BOSS) — 8 mixed tasks ------------------------------
+    // ----- Datasenteret — 5 mixed tasks (3 NEWS + 2 PHOTO) ------------------
+    // The frontend's TaskView only renders NEWS and PHOTO content shapes;
+    // keep the type aligned with the content even at the boss stop so we
+    // don't trip "Denne oppgavetypen har ikke noe innhold å vise ennå."
     NewsTaskSpec[] bossNews = {
         new NewsTaskSpec("Datatyven sin første løgn", "datasenteret", 4,
             "Datatyven planter falsk omtale – avslør den.", "fakeArticle1.png", "realArticle1.png"),
@@ -274,11 +248,9 @@ public class DataSeeder implements CommandLineRunner {
             "Sammenlign påstander mot pålitelige kilder.", "fakeArticle3.png", "realArticle4.png"),
         new NewsTaskSpec("Sannhetens øyeblikk", "datasenteret", 5,
             "Den sanne saken er ofte minst spennende.", "fakeArticle5.png", "realArticle2.png"),
-        new NewsTaskSpec("Pressen mot byen", "datasenteret", 4,
-            "Detektivens fokus: faktasjekk hver setning.", "fake-article-1.jpg", "realArticle5.png"),
     };
     for (NewsTaskSpec spec : bossNews) {
-      Task t = upsertNewsTask(spec, "nora");
+      Task t = upsertNewsTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
     }
     PhotoTaskSpec[] bossPhotos = {
@@ -288,35 +260,9 @@ public class DataSeeder implements CommandLineRunner {
         new PhotoTaskSpec("Endelig konfrontasjon", "datasenteret", 5,
             "Siste runde: alt du har lært om skygger og artefakter.",
             "realPhoto4.png", "aiPhoto5.png", "psPhoto6.png"),
-        new PhotoTaskSpec("Maskens fall", "datasenteret", 5,
-            "Få ned datatyvens fasade.",
-            "real-photo-1.jpeg", "aiPhoto2.png", "psPhoto4.png"),
-        new PhotoTaskSpec("Detektivens prøve", "datasenteret", 4,
-            "Tenk som en detektiv – analyser hver detalj.",
-            "realPhoto5.png", "aiPhoto3.png", "psPhoto2.jpg"),
     };
     for (PhotoTaskSpec spec : bossPhotos) {
-      Task t = upsertPhotoTask(spec, "nora");
-      attachToAllClassrooms(t, order++);
-    }
-
-    // ----- Text-only stops — 12 tasks (unchanged shape) ---------------------
-    TextTaskSpec[] textSpecs = {
-        new TextTaskSpec("Gjenkjenn phishing-e-post",   TaskType.EMAIL,       "postkontoret",   1, "Lær å spotte mistenkelige e-poster.",     "nora"),
-        new TextTaskSpec("Farlig e-postvedlegg",        TaskType.EMAIL,       "postkontoret",   2, "Hvilke vedlegg bør du aldri åpne?",      "nora"),
-        new TextTaskSpec("Spoofed avsenderadresse",     TaskType.EMAIL,       "postkontoret",   3, "Sjekk avsenderens domene nøye.",         "nora"),
-        new TextTaskSpec("Lag et sterkt passord",       TaskType.PASSWORD,    "passordbanken",  1, "Lengde slår kompleksitet.",              "nora"),
-        new TextTaskSpec("Passordgjenbruk og risiko",   TaskType.PASSWORD,    "passordbanken",  2, "Ett lekket passord kan låse opp alt.",   "nora"),
-        new TextTaskSpec("To-faktor autentisering",     TaskType.PASSWORD,    "passordbanken",  3, "2FA gjør innbrudd mye vanskeligere.",    "nora"),
-        new TextTaskSpec("Trygg netthandel",            TaskType.MARKETPLACE, "markedsplassen", 1, "Hva kjennetegner en trygg butikk?",      "lars"),
-        new TextTaskSpec("Gjenkjenn falske annonser",   TaskType.MARKETPLACE, "markedsplassen", 2, "Pris for godt til å være sant?",         "lars"),
-        new TextTaskSpec("Unngå svindel på finn.no",    TaskType.MARKETPLACE, "markedsplassen", 3, "Forhåndsbetaling er en rød flagg.",      "lars"),
-        new TextTaskSpec("Personvern på sosiale medier",TaskType.SOCIAL,      "sosialen",       1, "Hva deler du, og med hvem?",             "lars"),
-        new TextTaskSpec("Digitalt fotavtrykk",         TaskType.SOCIAL,      "sosialen",       2, "Det du legger ut, varer.",               "lars"),
-        new TextTaskSpec("Nettvett og digital mobbing", TaskType.SOCIAL,      "sosialen",       3, "Hvordan reagerer du smart?",             "lars"),
-    };
-    for (TextTaskSpec spec : textSpecs) {
-      Task t = upsertTextTask(spec);
+      Task t = upsertPhotoTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
     }
   }
@@ -372,10 +318,9 @@ public class DataSeeder implements CommandLineRunner {
         Map.of("imagePath", realUrl, "correctType", "ekte"),
         Map.of("imagePath", aiUrl,   "correctType", "ai-generert"),
         Map.of("imagePath", psUrl,   "correctType", "manipulert")), spec.title()));
-    TaskType type = "datasenteret".equals(spec.stop()) ? TaskType.BOSS : TaskType.PHOTO;
     Task task = taskRepository.save(Task.builder()
         .title(spec.title())
-        .taskType(type)
+        .taskType(TaskType.PHOTO)
         .stopLocation(spec.stop())
         .difficulty(spec.difficulty())
         .content(toJson(content))
@@ -383,31 +328,7 @@ public class DataSeeder implements CommandLineRunner {
         .isActive(true)
         .build());
     allTasks.add(task);
-    log.info("Task: {} @ {} ({})", spec.title(), spec.stop(), type);
-    return task;
-  }
-
-  /** Builds + saves a text-only task (no seed images). */
-  private Task upsertTextTask(TextTaskSpec spec) {
-    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
-    if (existing.isPresent()) {
-      allTasks.add(existing.get());
-      return existing.get();
-    }
-    Map<String, Object> content = new LinkedHashMap<>();
-    content.put("description", spec.description());
-    content.put("difficulty", spec.difficulty());
-    Task task = taskRepository.save(Task.builder()
-        .title(spec.title())
-        .taskType(spec.type())
-        .stopLocation(spec.stop())
-        .difficulty(spec.difficulty())
-        .content(toJson(content))
-        .owner(users.get(spec.ownerKey()))
-        .isActive(true)
-        .build());
-    allTasks.add(task);
-    log.info("Task: {} @ {} ({})", spec.title(), spec.stop(), spec.type());
+    log.info("Task: {} @ {} (PHOTO)", spec.title(), spec.stop());
     return task;
   }
 
@@ -461,12 +382,17 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedStudents() {
     // {email, displayName, key}
+    // student1..5 are clean fixtures with NO task progress so QA can play
+    // the full game flow as a fresh user. `tester` is the populated
+    // counterpart — all tasks completed — used to verify teacher
+    // dashboards / leaderboards / level progression.
     String[][] data = {
-        {"student1@ntnu.no", "Student 1", "student1"},
-        {"student2@ntnu.no", "Student 2", "student2"},
-        {"student3@ntnu.no", "Student 3", "student3"},
-        {"student4@ntnu.no", "Student 4", "student4"},
-        {"student5@ntnu.no", "Student 5", "student5"},
+        {"student1@ntnu.no", "Student 1",   "student1"},
+        {"student2@ntnu.no", "Student 2",   "student2"},
+        {"student3@ntnu.no", "Student 3",   "student3"},
+        {"student4@ntnu.no", "Student 4",   "student4"},
+        {"student5@ntnu.no", "Student 5",   "student5"},
+        {"tester@ntnu.no",   "Demo Tester", "tester"},
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -481,7 +407,7 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
-    for (String key : List.of("student1", "student2", "student3", "student4", "student5")) {
+    for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester")) {
       enroll(users.get(key), class1);
     }
   }
@@ -511,26 +437,15 @@ public class DataSeeder implements CommandLineRunner {
     Classroom class1 = classrooms.get("class1");
     UUID classroomId = class1.getId();
 
-    // Star students: all tasks, score 95-100
-    for (String key : List.of("student1", "student2", "student3")) {
-      User u = users.get(key);
-      if (hasAttempts(u.getId(), classroomId)) continue;
+    // Only the demo tester has task progress so student1..5 stay clean
+    // for QA flows that need a fresh user.
+    User tester = users.get("tester");
+    if (!hasAttempts(tester.getId(), classroomId)) {
       for (int i = 0; i < allTasks.size(); i++) {
-        submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
+        submitAttempt(tester.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
       }
+      log.info("Task attempts seeded for tester@ntnu.no via sp_submit_attempt");
     }
-
-    // Mid students: first 12 tasks, score 80-92
-    for (String key : List.of("student4", "student5")) {
-      User u = users.get(key);
-      if (hasAttempts(u.getId(), classroomId)) continue;
-      int cap = Math.min(12, allTasks.size());
-      for (int i = 0; i < cap; i++) {
-        submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 80 + (i % 13));
-      }
-    }
-
-    log.info("Task attempts seeded via sp_submit_attempt");
   }
 
   private boolean hasAttempts(UUID userId, UUID classroomId) {
@@ -559,12 +474,12 @@ public class DataSeeder implements CommandLineRunner {
   private void seedNotebookEntries() {
     Classroom class1 = classrooms.get("class1");
 
+    // Notebook reflections live alongside task progress, so they all
+    // belong to the demo tester. student1..5 stay empty.
     Object[][] entries = {
-        {class1, "student1", "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
-        {class1, "student2", "fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
-        {class1, "student3", "datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
-        {class1, "student4", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden."},
-        {class1, "student5", "fotografen",      "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå."},
+        {class1, "tester", "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
+        {class1, "tester", "fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
+        {class1, "tester", "datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
     };
 
     for (Object[] row : entries) {
@@ -768,15 +683,14 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Institutions : {}", institutions.size());
     log.info("Instructors  : laerer@ntnu.no, instructor@test.no, admin@test.no");
     log.info("Classrooms   : {}", classrooms.size());
-    log.info("Tasks        : {}", allTasks.size());
-    log.info("Students     : 5 (student1..5@ntnu.no)");
+    log.info("Tasks        : {} (3 NEWS, 3 PHOTO, 5 datasenteret)", allTasks.size());
+    log.info("Students     : 5 clean (student1..5@ntnu.no) + 1 demo (tester@ntnu.no)");
     log.info("Mysteries    : 5 PENDING submissions (one per student)");
     log.info("");
     log.info("LOGIN (password: password123)");
     log.info("  Teacher : laerer@ntnu.no");
-    log.info("  Student : student1@ntnu.no  (star — all tasks done)");
-    log.info("  Student : student4@ntnu.no  (mid — 12 tasks done)");
-    log.info("  Student : student5@ntnu.no  (mid — 12 tasks done)");
+    log.info("  Student : student1@ntnu.no  (clean — no progress)");
+    log.info("  Student : tester@ntnu.no    (demo — all tasks completed)");
     log.info("");
     log.info("CLASSROOM JOIN CODES:");
     classrooms.forEach((key, c) -> log.info("  {} : {}", c.getTitle(), c.getJoinCode()));
@@ -786,7 +700,7 @@ public class DataSeeder implements CommandLineRunner {
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of("student1", "student2", "student3", "student4", "student5");
+    List<String> studentKeys = List.of("student1", "student2", "student3", "student4", "student5", "tester");
     for (String key : studentKeys) {
       User student = users.get(key);
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);

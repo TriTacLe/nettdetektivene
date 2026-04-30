@@ -229,16 +229,15 @@ cd backend
 
 - Institution: NTNU Trondheim
 - Teachers: `laerer@ntnu.no`, `instructor@test.no`, `admin@test.no`
-- Students: `student1..5@ntnu.no` (5 students total)
-- Classroom: 5A Digital Sikkerhet (one classroom, all 5 students enrolled and approved)
-- 5 PENDING mystery submissions, one per student
-- **36 tasks** seeded into every classroom:
-  - 8 NEWS tasks (Nyhetskvartalet) — real-vs-fake article pairs at difficulties 1–3
-  - 8 PHOTO tasks (Fotografen) — real / AI / manipulated triplets at difficulties 1–3
-  - 8 BOSS tasks (Datasenteret) — mixed NEWS + PHOTO at difficulties 4–5
-  - 12 text-only tasks (postkontoret, passordbanken, markedsplassen, sosialen)
+- Students: `student1..5@ntnu.no` (clean fixtures, no progress) plus `tester@ntnu.no` (demo user with all tasks completed)
+- Classroom: 5A Digital Sikkerhet — one classroom, all 6 students enrolled and approved
+- **11 tasks** in the classroom:
+  - 3 NEWS tasks at Nyhetskvartalet (difficulties 1–3)
+  - 3 PHOTO tasks at Fotografen (difficulties 1–3)
+  - 5 mixed tasks at Datasenteret (3 NEWS + 2 PHOTO at difficulties 4–5)
+- 5 PENDING mystery submissions, one per student1..5
 - Achievements (incl. the secret `caught_hacker` and `quiz_perfect`)
-- Sample mystery submissions and notebook entries
+- Notebook entries on the tester user
 
 **Default Credentials:**
 All accounts use password: `password123`
