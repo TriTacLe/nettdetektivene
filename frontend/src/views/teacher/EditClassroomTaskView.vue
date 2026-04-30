@@ -711,6 +711,27 @@ function submit() {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .task-template__save {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-create-page {
+    padding: 0.5rem;
+  }
+
+  .diff-btn {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .task-field input,
+  .task-field textarea,
+  .task-field select {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 1100px) {

@@ -283,13 +283,13 @@ function formatTime(iso: string): string {
       </div>
     </transition>
 
-    <div class="overflow-y-auto flex-1 px-6 pb-10 w-full max-w-2xl mx-auto">
+    <div class="overflow-y-auto flex-1 px-3 sm:px-6 pb-10 w-full max-w-2xl mx-auto">
 
-      <div class="flex gap-3 flex-wrap mb-4 mt-2">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-4 mt-2">
         <select
           @change="setTypeFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value as any)"
           :value="activeTypeFilter ?? 'all'"
-          class="text-sm px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm"
+          class="text-sm px-3 py-2 sm:py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm w-full sm:w-auto"
         >
           <option value="all" class="text-gray-900">Alle varsler</option>
           <option value="COMPLETED" class="text-gray-900">Fullført</option>
@@ -306,7 +306,7 @@ function formatTime(iso: string): string {
           v-if="!classroomId"
           @change="setClassroomFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value)"
           :value="activeClassroomFilter ?? 'all'"
-          class="text-sm px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm"
+          class="text-sm px-3 py-2 sm:py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm w-full sm:w-auto"
         >
           <option value="all" class="text-gray-900">Alle klasser</option>
           <option v-for="classroom in availableClassrooms" :key="classroom.id" :value="classroom.id" class="text-gray-900">

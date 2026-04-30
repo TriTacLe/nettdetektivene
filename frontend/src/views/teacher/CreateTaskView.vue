@@ -821,13 +821,39 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
   .task-template__actions,
   .task-create-switch,
-  .task-create-add {
+  .task-create-add,
+  .task-template__save {
     width: 100%;
   }
 
   .task-template__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-create-page {
+    padding: 0.5rem;
+  }
+
+  .task-create-heading {
+    font-size: 1.2rem;
+  }
+
+  .task-type-card {
+    min-height: 160px;
+  }
+
+  .diff-btn {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .task-field input,
+  .task-field textarea,
+  .task-field select {
+    font-size: 1rem;
   }
 }
 

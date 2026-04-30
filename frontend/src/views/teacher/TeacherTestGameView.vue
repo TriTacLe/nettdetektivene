@@ -145,4 +145,27 @@ onMounted(async () => {
   letter-spacing: 0.05em;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+@media (max-width: 480px) {
+  .map-object {
+    width: 20%;
+  }
+
+  .name {
+    font-size: 0.75rem;
+  }
+
+  .test-mode-badge {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+    top: 3.5rem;
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .name {
+    font-size: 0.65rem;
+  }
+}
 </style>
