@@ -227,10 +227,11 @@ cd backend
 
 **What Gets Created:**
 
-- Institutions: NTNU Trondheim, OsloMet
-- Teachers: `laerer@ntnu.no`, `lars@oslomet.no`, `instructor@test.no`, `admin@test.no`
-- Students: 8 named detectives (`anine@nettdetektivene.no` etc.) plus `student1..5@ntnu.no`
-- Classrooms: 5A Digital Sikkerhet, 6B Nettvett, 7C Cybersecurity, Testklasse 1 (with enrollments + approvals)
+- Institution: NTNU Trondheim
+- Teachers: `laerer@ntnu.no`, `instructor@test.no`, `admin@test.no`
+- Students: `student1..5@ntnu.no` (5 students total)
+- Classroom: 5A Digital Sikkerhet (one classroom, all 5 students enrolled and approved)
+- 5 PENDING mystery submissions, one per student
 - **36 tasks** seeded into every classroom:
   - 8 NEWS tasks (Nyhetskvartalet) — real-vs-fake article pairs at difficulties 1–3
   - 8 PHOTO tasks (Fotografen) — real / AI / manipulated triplets at difficulties 1–3

@@ -134,7 +134,6 @@ public class DataSeeder implements CommandLineRunner {
   private void seedInstitutions() {
     String[][] data = {
         {"NTNU Trondheim", "ntnu"},
-        {"OsloMet",        "oslomet"},
     };
     for (String[] row : data) {
       Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
@@ -150,16 +149,15 @@ public class DataSeeder implements CommandLineRunner {
   // -----------------------------------------------------------------------
 
   private void seedInstructors() {
-    // {email, displayName, key, institutionKey}
-    Object[][] data = {
-        {"laerer@ntnu.no",       "Lærer Lærersen",  "nora",       "ntnu"},
-        {"lars@oslomet.no",      "Lærer Lars",      "lars",       "oslomet"},
-        {"instructor@test.no",   "Test Instructor", "test-instr", "ntnu"},
-        {"admin@test.no",        "Test Admin",      "test-admin", "ntnu"},
+    // {email, displayName, key}
+    String[][] data = {
+        {"laerer@ntnu.no",     "Lærer Lærersen",  "laerer"},
+        {"instructor@test.no", "Test Instructor", "test-instr"},
+        {"admin@test.no",      "Test Admin",      "test-admin"},
     };
-    for (Object[] row : data) {
-      User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
-      users.put((String) row[2], u);
+    for (String[] row : data) {
+      User u = createUser(row[0], row[1], List.of(instructorRole));
+      users.put(row[2], u);
       log.info("Instructor: {} ({})", row[1], row[0]);
     }
   }
@@ -170,10 +168,7 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedClassrooms() {
     Object[][] data = {
-        {"5A - Digital Sikkerhet", "Introduksjon til digital sikkerhet", "nora", "ntnu", "class1"},
-        {"6B - Nettvett",          "Lær om nettvett og personvern",       "nora", "ntnu", "class2"},
-        {"7C - Cybersecurity",     "Grunnleggende cybersecurity",          "lars", "oslomet", "class3"},
-        {"Testklasse 1",           "Auto-seeded test classroom",          "test-instr", "ntnu", "test-class"},
+        {"5A - Digital Sikkerhet", "Introduksjon til digital sikkerhet", "laerer", "ntnu", "class1"},
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -467,19 +462,11 @@ public class DataSeeder implements CommandLineRunner {
   private void seedStudents() {
     // {email, displayName, key}
     String[][] data = {
-        {"anine@nettdetektivene.no",   "Agent Anine",    "anine"},
-        {"nora-s@nettdetektivene.no",  "Detektiv Nora",  "nora-student"},
-        {"gustav@nettdetektivene.no",  "Guru Gustav",    "gustav"},
-        {"tri@nettdetektivene.no",     "Tri-Tech",       "tri"},
-        {"silje@nettdetektivene.no",   "Spion Silje",    "silje"},
-        {"vetle@nettdetektivene.no",   "Vekter Vetle",   "vetle"},
-        {"regine@nettdetektivene.no",  "Radar-Regine",   "regine"},
-        {"segward@nettdetektivene.no", "Sikker-Segward", "segward"},
-        {"student1@ntnu.no",           "Student 1",      "test-student-1"},
-        {"student2@ntnu.no",           "Student 2",      "test-student-2"},
-        {"student3@ntnu.no",           "Student 3",      "test-student-3"},
-        {"student4@ntnu.no",           "Student 4",      "test-student-4"},
-        {"student5@ntnu.no",           "Student 5",      "test-student-5"},
+        {"student1@ntnu.no", "Student 1", "student1"},
+        {"student2@ntnu.no", "Student 2", "student2"},
+        {"student3@ntnu.no", "Student 3", "student3"},
+        {"student4@ntnu.no", "Student 4", "student4"},
+        {"student5@ntnu.no", "Student 5", "student5"},
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -494,25 +481,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
-    Classroom class2 = classrooms.get("class2");
-    Classroom class3 = classrooms.get("class3");
-
-    // class1 — high/good performers for progress demo
-    for (String key : List.of("anine", "nora-student", "gustav", "tri", "silje")) {
+    for (String key : List.of("student1", "student2", "student3", "student4", "student5")) {
       enroll(users.get(key), class1);
-    }
-    // class2
-    for (String key : List.of("vetle", "regine")) {
-      enroll(users.get(key), class2);
-    }
-    // class3
-    enroll(users.get("segward"), class3);
-
-    // testklasse — factory.sh-style throwaway accounts
-    Classroom testClass = classrooms.get("test-class");
-    for (String key : List.of(
-        "test-student-1", "test-student-2", "test-student-3", "test-student-4", "test-student-5")) {
-      enroll(users.get(key), testClass);
     }
   }
 
@@ -541,8 +511,8 @@ public class DataSeeder implements CommandLineRunner {
     Classroom class1 = classrooms.get("class1");
     UUID classroomId = class1.getId();
 
-    // Star students: all 21 tasks, score 95-100
-    for (String key : List.of("anine", "nora-student", "gustav")) {
+    // Star students: all tasks, score 95-100
+    for (String key : List.of("student1", "student2", "student3")) {
       User u = users.get(key);
       if (hasAttempts(u.getId(), classroomId)) continue;
       for (int i = 0; i < allTasks.size(); i++) {
@@ -550,11 +520,12 @@ public class DataSeeder implements CommandLineRunner {
       }
     }
 
-    // Good students: first 12 tasks, score 80-92
-    for (String key : List.of("tri", "silje")) {
+    // Mid students: first 12 tasks, score 80-92
+    for (String key : List.of("student4", "student5")) {
       User u = users.get(key);
       if (hasAttempts(u.getId(), classroomId)) continue;
-      for (int i = 0; i < 12; i++) {
+      int cap = Math.min(12, allTasks.size());
+      for (int i = 0; i < cap; i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 80 + (i % 13));
       }
     }
@@ -587,22 +558,13 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedNotebookEntries() {
     Classroom class1 = classrooms.get("class1");
-    Classroom class2 = classrooms.get("class2");
 
     Object[][] entries = {
-        // 5A - Digital Sikkerhet
-        {class1, "anine",       "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
-        {class1, "nora-student","fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
-        {class1, "gustav",      "postkontoret",    "Phishing-e-poster ser veldig ekte ut. Sjekker alltid avsenderadressen."},
-        {class1, "tri",         "passordbanken",   "Passordgjenbruk er en stor risiko. Bruker passordbehandler nå."},
-        {class1, "silje",       "markedsplassen",  "Lærte å gjenkjenne falske annonser og unngå svindel på nettet."},
-        {class1, "anine",       "sosialen",        "Digitalt fotavtrykk er større enn jeg trodde. Tenker meg om nå."},
-        {class1, "nora-student","datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
-        // 6B - Nettvett
-        {class2, "regine",      "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden."},
-        {class2, "regine",      "fotografen",      "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå."},
-        {class2, "vetle",       "postkontoret",    "Phishing er vanskeligere å oppdage enn jeg trodde."},
-        {class2, "vetle",       "passordbanken",   "Et sterkt passord er første forsvarslinje. Byttet alle passord!"},
+        {class1, "student1", "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
+        {class1, "student2", "fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
+        {class1, "student3", "datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
+        {class1, "student4", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden."},
+        {class1, "student5", "fotografen",      "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå."},
     };
 
     for (Object[] row : entries) {
@@ -625,7 +587,7 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Mystery submissions — three pending submissions in class1
+  // Mystery submissions — five pending submissions in class1, one per student
   // -----------------------------------------------------------------------
 
   private void seedMysterySubmissions() {
@@ -638,27 +600,43 @@ public class DataSeeder implements CommandLineRunner {
     // {submitterKey, sourceImage, alt0, alt1, alt2, correctIndex}
     Object[][] data = {
         {
-            "anine",
-            "seed-images/news/fake-article-1.jpg",
+            "student1",
+            "seed-images/news/fakeArticle1.png",
             "Artikkelen er ekte og publisert av en kjent avis",
             "Artikkelen er en falsk nyhet med oppdiktede kilder",
             "Artikkelen er satire og ikke ment alvorlig",
             (byte) 1,
         },
         {
-            "nora-student",
-            "seed-images/news/real-article-1.png",
+            "student2",
+            "seed-images/news/realArticle2.png",
             "Bildet er et AI-generert portrett",
             "Bildet er manipulert i Photoshop",
             "Bildet er et ekte pressefoto",
             (byte) 2,
         },
         {
-            "gustav",
-            "seed-images/photos/fake-photo-1.jpg",
+            "student3",
+            "seed-images/photos/aiPhoto1.png",
             "Bildet er ekte og uredigert",
             "Bildet er AI-generert",
             "Bildet er en collage av flere bilder",
+            (byte) 1,
+        },
+        {
+            "student4",
+            "seed-images/photos/psPhoto4.png",
+            "Bildet er manipulert i Photoshop",
+            "Bildet er ekte og uredigert",
+            "Bildet er AI-generert",
+            (byte) 0,
+        },
+        {
+            "student5",
+            "seed-images/news/fakeArticle3.png",
+            "Saken har troverdige kilder",
+            "Saken er bevisst overdrevet for klikk",
+            "Saken er hentet fra en parodiside",
             (byte) 1,
         },
     };
@@ -788,16 +766,17 @@ public class DataSeeder implements CommandLineRunner {
     log.info("SEED SUMMARY");
     log.info("========================================");
     log.info("Institutions : {}", institutions.size());
-    log.info("Instructors  : laerer@ntnu.no, lars@oslomet.no");
+    log.info("Instructors  : laerer@ntnu.no, instructor@test.no, admin@test.no");
     log.info("Classrooms   : {}", classrooms.size());
-    log.info("Tasks        : {} (3 per stop, 7 stops)", allTasks.size());
-    log.info("Students     : 8");
+    log.info("Tasks        : {}", allTasks.size());
+    log.info("Students     : 5 (student1..5@ntnu.no)");
+    log.info("Mysteries    : 5 PENDING submissions (one per student)");
     log.info("");
     log.info("LOGIN (password: password123)");
     log.info("  Teacher : laerer@ntnu.no");
-    log.info("  Student : anine@nettdetektivene.no  (star — all tasks done)");
-    log.info("  Student : tri@nettdetektivene.no    (good — 12/21 tasks done)");
-    log.info("  Student : segward@nettdetektivene.no (no attempts)");
+    log.info("  Student : student1@ntnu.no  (star — all tasks done)");
+    log.info("  Student : student4@ntnu.no  (mid — 12 tasks done)");
+    log.info("  Student : student5@ntnu.no  (mid — 12 tasks done)");
     log.info("");
     log.info("CLASSROOM JOIN CODES:");
     classrooms.forEach((key, c) -> log.info("  {} : {}", c.getTitle(), c.getJoinCode()));
@@ -807,9 +786,7 @@ public class DataSeeder implements CommandLineRunner {
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of(
-        "anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward",
-        "test-student-1", "test-student-2", "test-student-3", "test-student-4", "test-student-5");
+    List<String> studentKeys = List.of("student1", "student2", "student3", "student4", "student5");
     for (String key : studentKeys) {
       User student = users.get(key);
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
