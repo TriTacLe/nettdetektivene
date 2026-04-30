@@ -1,7 +1,7 @@
 describe('Student login', () => {
   it('logs in as student and navigates to student home', () => {
     cy.visit('/student-login')
-    cy.get('#student-email').clear().type('anine@nettdetektivene.no')
+    cy.get('#student-email').clear().type('siljelund@nettdetektivene.no')
     cy.get('#student-password').clear().type('password123')
     cy.contains('button', 'Logg inn').click()
     cy.url().should('include', '/student-home')
@@ -9,7 +9,7 @@ describe('Student login', () => {
 
   it('shows error if wrong password', () => {
     cy.visit('/student-login')
-    cy.get('#student-email').clear().type('anine@nettdetektivene.no')
+    cy.get('#student-email').clear().type('siljelund@nettdetektivene.no')
     cy.get('#student-password').clear().type('feilpassord')
     cy.contains('button', 'Logg inn').click()
     cy.get('[role="alert"]').should('be.visible')
@@ -28,7 +28,7 @@ describe('Student login', () => {
 describe('Teacher login', () => {
   it('logs in and navigates to teacher-home', () => {
     cy.visit('/teacher-login')
-    cy.get('#teacher-email').clear().type('laerer@ntnu.no')
+    cy.get('#teacher-email').clear().type('nora@ntnu.no')
     cy.get('#teacher-password').clear().type('password123')
     cy.contains('button', 'Logg inn').click()
     cy.url().should('include', '/teacher-home')
@@ -36,7 +36,7 @@ describe('Teacher login', () => {
 
   it('shows error if wrong password', () => {
     cy.visit('/teacher-login')
-    cy.get('#teacher-email').clear().type('laerer@ntnu.no')
+    cy.get('#teacher-email').clear().type('nora@ntnu.no')
     cy.get('#teacher-password').clear().type('feilpassord')
     cy.contains('button', 'Logg inn').click()
     cy.get('[role="alert"]').should('be.visible')

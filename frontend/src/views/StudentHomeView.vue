@@ -241,7 +241,7 @@ onUnmounted(() => {
             @click="goTo('/student-profile')"
           >
             <div class="profile-note">
-              <AvatarPreview :config="avatarCfg" :size="84" />
+              <AvatarPreview :config="avatarCfg" :size="84" :lazy-load="false" />
               <p class="image-note-title">{{ studentName }}</p>
             </div>
           </BoardNote>
