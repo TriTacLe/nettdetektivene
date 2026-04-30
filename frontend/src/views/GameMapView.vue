@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
+
+const router = useRouter()
 
 const stopStore = useStopStore()
 
@@ -147,7 +149,12 @@ const roadPath = computed(() => {
       <img class="map-bg" src="/bybakgrunn.svg" alt="" aria-hidden="true" />
     </picture>
 
-    <NavigationHeader title="Utendørs" class="map-header" />
+    <NavigationHeader
+      title="Utendørs"
+      previous="student-home"
+      class="map-header"
+      @back="router.push('/student-home')"
+    />
 
     <svg class="path-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <defs>
