@@ -218,9 +218,12 @@ public class ClassroomService {
       throw new IllegalArgumentException("Task is already assigned to this classroom");
     }
 
-    short sortOrder = dto.getSortOrder() != null
-      ? dto.getSortOrder()
-      : (short) (classroomTaskRepository.findAllByClassroom_IdOrderBySortOrderAsc(classroomId).size() + 1);
+    // Place the new task at the end of its stop's sortOrder range and shift any
+    // later-stop tasks up by one. The trg_attempt_sync trigger walks the chain
+    // strictly by ascending sortOrder, so appending at the global end (the
+    // naive default) would cause new tasks added to early stops to be skipped
+    // entirely once a student crossed into a later stop.
+    short sortOrder = placeTaskInStopChain(classroomId, task.getStopLocation());
 
     ClassroomTask classroomTask = ClassroomTask.builder()
       .id(classroomTaskId)
@@ -232,14 +235,54 @@ public class ClassroomService {
 
     classroomTaskRepository.save(classroomTask);
 
-    // The trg_attempt_sync trigger only unlocks the next task in sortOrder when
-    // a student passes the previous one. A task added after students have
-    // already progressed past its sortOrder slot would never get unlocked.
-    // Mirror the trigger's chain rule here so newly added tasks become
-    // available to anyone who has already cleared the predecessor.
+    // Cover students who already cleared every earlier task in this stop
+    // before the new one was added — they would otherwise never trigger an
+    // unlock for it through the normal attempt-completion chain.
     unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
     return ClassroomTaskMapper.toDTO(classroomTask);
+  }
+
+  private short placeTaskInStopChain(UUID classroomId, String stopLocation) {
+    List<ClassroomTask> all = classroomTaskRepository
+        .findAllByClassroom_IdOrderBySortOrderAsc(classroomId);
+    if (all.isEmpty()) return (short) 1;
+
+    short maxOverall = all.get(all.size() - 1).getSortOrder();
+
+    if (stopLocation == null) {
+      return (short) (maxOverall + 1);
+    }
+
+    Short maxInStop = all.stream()
+        .filter(ct -> stopLocation.equals(ct.getTask().getStopLocation()))
+        .map(ClassroomTask::getSortOrder)
+        .max(Short::compareTo)
+        .orElse(null);
+
+    if (maxInStop == null) {
+      // First task for this stop in the classroom: append at the end.
+      return (short) (maxOverall + 1);
+    }
+
+    short insertAt = (short) (maxInStop + 1);
+    if (insertAt > maxOverall) {
+      // Stop is already last in the chain — nothing to shift.
+      return insertAt;
+    }
+
+    // Shift every existing task at or beyond the insertion point up by one.
+    // Apply in reverse order so we never collide with a row we haven't moved
+    // yet (composite PK is by (classroom_id, task_id) so sortOrder isn't
+    // unique, but reverse iteration keeps the operation predictable).
+    List<ClassroomTask> toShift = all.stream()
+        .filter(ct -> ct.getSortOrder() >= insertAt)
+        .sorted((a, b) -> Short.compare(b.getSortOrder(), a.getSortOrder()))
+        .toList();
+    for (ClassroomTask ct : toShift) {
+      ct.setSortOrder((short) (ct.getSortOrder() + 1));
+    }
+    return insertAt;
   }
 
   private void unlockNewTaskForEligibleStudents(Classroom classroom, ClassroomTask newTask) {
