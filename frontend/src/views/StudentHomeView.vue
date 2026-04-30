@@ -45,7 +45,7 @@ function onIntroChoose(choice: DialogChoice) {
   }
 }
 const boardFrame = ref<HTMLElement | null>(null)
-const stringPaths = ref<string[]>([])
+const stringPaths = ref<{ d: string; color: string }[]>([])
 let boardResizeObserver: ResizeObserver | null = null
 
 const noteOrder = [
@@ -60,14 +60,14 @@ const noteOrder = [
 
 type NoteKey = (typeof noteOrder)[number]
 const noteRefs: Partial<Record<NoteKey, HTMLElement>> = {}
-const stringConnections: Array<[NoteKey, NoteKey]> = [
-  ['note-profile', 'note-map'],
-  ['note-map', 'note-achievements'],
-  ['note-achievements', 'note-notebook'],
-  ['note-notebook', 'note-help'],
-  ['note-notebook', 'note-mystery'],
-  ['note-mystery', 'note-leaderboard'],
-  ['note-leaderboard', 'note-map'],
+const stringConnections: Array<[NoteKey, NoteKey, string]> = [
+  ['note-profile', 'note-map', '#9b1c1c'],
+  ['note-map', 'note-achievements', '#9b1c1c'],
+  ['note-achievements', 'note-notebook', '#9b1c1c'],
+  ['note-notebook', 'note-help', '#9b1c1c'],
+  ['note-notebook', 'note-mystery', '#9b1c1c'],
+  ['note-mystery', 'note-leaderboard', '#9b1c1c'],
+  ['note-leaderboard', 'note-map', '#9b1c1c'],
 ]
 const connectionSagOverrides: Partial<Record<`${NoteKey}->${NoteKey}`, number>> = {
   'note-notebook->note-help': 4,
@@ -127,8 +127,9 @@ async function updateStringPaths() {
   const board = boardFrame.value
   if (!board) return
 
-  const boardRect = board.getBoundingClientRect()
-  if (!boardRect.width || !boardRect.height) return
+  const svgEl = board.querySelector('.string-layer')
+  const refRect = svgEl ? svgEl.getBoundingClientRect() : board.getBoundingClientRect()
+  if (!refRect.width || !refRect.height) return
 
   const pinCenters = new Map<NoteKey, { x: number; y: number }>()
 
@@ -139,19 +140,19 @@ async function updateStringPaths() {
     if (!pin) return
     const pinRect = pin.getBoundingClientRect()
     pinCenters.set(key, {
-      x: ((pinRect.left + pinRect.width / 2 - boardRect.left) / boardRect.width) * 100,
-      y: ((pinRect.top + pinRect.height / 2 - boardRect.top) / boardRect.height) * 100,
+      x: ((pinRect.left + pinRect.width / 2 - refRect.left) / refRect.width) * 100,
+      y: ((pinRect.top + pinRect.height / 2 - refRect.top) / refRect.height) * 100,
     })
   })
 
   stringPaths.value = stringConnections
-  .map(([startKey, endKey]) => {
-    const start = pinCenters.get(startKey)
-    const end = pinCenters.get(endKey)
-    const sag = connectionSagOverrides[`${startKey}->${endKey}`]
-    return start && end ? buildSaggingPath(start, end, sag) : null
-  })
-  .filter((path): path is string => path !== null)
+    .map(([startKey, endKey, color]) => {
+      const start = pinCenters.get(startKey)
+      const end = pinCenters.get(endKey)
+      const sag = connectionSagOverrides[`${startKey}->${endKey}`]
+      return start && end ? { d: buildSaggingPath(start, end, sag), color } : null
+    })
+    .filter((p): p is { d: string; color: string } => p !== null)
 }
 
 async function goToNotebook() {
@@ -231,12 +232,12 @@ onUnmounted(() => {
     />
     <div v-show="!showIntro" class="student-home">
       <div ref="boardFrame" class="board-frame">
-        <img :src="corkboardImage" alt="Korktavle" class="corkboard-image" />
         <svg class="string-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <path
             v-for="(path, index) in stringPaths"
             :key="index"
-            :d="path"
+            :d="path.d"
+            :stroke="path.color"
             class="string-line"
           />
         </svg>
@@ -245,11 +246,11 @@ onUnmounted(() => {
           <BoardNote
             :rotation="-5"
             pin-color="#2f9e44"
-            width="clamp(7rem, 16cqw, 10rem)"
+            width="clamp(9rem, 22cqw, 14rem)"
             @click="goTo('/student-profile')"
           >
             <div class="profile-note">
-              <AvatarPreview :config="avatarCfg" :size="84" />
+              <AvatarPreview :config="avatarCfg" :size="104" />
               <p class="image-note-title">{{ studentName }}</p>
             </div>
           </BoardNote>
@@ -259,7 +260,7 @@ onUnmounted(() => {
           <BoardNote
             :rotation="4"
             pin-color="#1c7ed6"
-            width="clamp(4.5rem, 8cqw, 7rem)"
+            width="clamp(7rem, 14cqw, 12rem)"
             @click="toggleHelp"
           >
             <div class="image-note">
@@ -273,7 +274,7 @@ onUnmounted(() => {
           <BoardNote
             :rotation="-2"
             pin-color="#1c7ed6"
-            width="clamp(12rem, 17cqw, 20rem)"
+            width="clamp(16rem, 23cqw, 26rem)"
             @click="goTo('/game-map')"
           >
             <div class="image-note">
@@ -287,7 +288,7 @@ onUnmounted(() => {
           <BoardNote
             :rotation="5"
             pin-color="#f59f00"
-            width="clamp(5rem, 10cqw, 8.5rem)"
+            width="clamp(7rem, 14cqw, 12rem)"
             @click="goTo('/achievements')"
           >
             <div class="image-note">
@@ -301,7 +302,7 @@ onUnmounted(() => {
           <BoardNote
             :rotation="-4"
             pin-color="#7048e8"
-            width="clamp(5rem, 13cqw, 10rem)"
+            width="clamp(7rem, 17cqw, 14rem)"
             @click="goToNotebook"
           >
             <div class="image-note">
@@ -315,11 +316,11 @@ onUnmounted(() => {
           <BoardNote
             :rotation="3"
             pin-color="#f59f00"
-            width="clamp(5rem, 13cqw, 10rem)"
+            width="clamp(7rem, 17cqw, 14rem)"
             @click="goTo('/student-leaderboard')"
           >
             <div class="image-note">
-              <img :src="leaderboardImage" alt="Ledertavle" class="image-note-bg">
+              <img :src="leaderboardImage" alt="Ledertavle" class="image-note-bg leaderboard-image">
               <p class="image-note-title">Ledertavle</p>
             </div>
           </BoardNote>
@@ -329,7 +330,7 @@ onUnmounted(() => {
           <BoardNote
             :rotation="-1"
             pin-color="#e03131"
-            width="clamp(5rem, 10cqw, 7.85rem)"
+            width="clamp(7rem, 14cqw, 11rem)"
             @click="goToMystery"
           >
             <div class="image-note">
@@ -419,6 +420,7 @@ onUnmounted(() => {
       <Transition name="fade">
         <div v-if="showHelp" class="mobile-help-overlay" @click.self="closeHelp">
           <div class="mobile-help-content">
+            <span class="mobile-help-pin" aria-hidden="true" />
             <p class="mobile-help-title">Hjelp</p>
             <ul class="mobile-help-list">
               <li><strong>Spill</strong> — Utforsk kartet og finn detektivoppdrag</li>
@@ -492,14 +494,6 @@ onUnmounted(() => {
   width: 100%;
   max-width: 480px;
   padding: 1.4rem 1.2rem 1.4rem;
-  background-image: url('/corkboard.jpg');
-  background-size: cover;
-  background-position: center;
-  border: 0.45rem solid #5c3a1e;
-  box-shadow:
-    0 0 0 2px #3b2512 inset,
-    0 12px 32px rgba(0, 0, 0, 0.5),
-    0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .mobile-note-featured {
@@ -524,6 +518,7 @@ onUnmounted(() => {
   height: auto;
   margin: 0 auto;
   border-radius: 2px;
+  mix-blend-mode: multiply;
 }
 
 .mobile-nav-img {
@@ -532,6 +527,7 @@ onUnmounted(() => {
   height: 40px;
   object-fit: contain;
   margin: 0 auto;
+  mix-blend-mode: multiply;
 }
 
 .mobile-notebook-img {
@@ -542,7 +538,7 @@ onUnmounted(() => {
 .mobile-help-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -551,44 +547,97 @@ onUnmounted(() => {
 }
 
 .mobile-help-content {
-  background: linear-gradient(180deg, #fffce8 0%, #fbeaaa 100%);
-  border-radius: 8px;
-  padding: 1.5rem;
-  max-width: 360px;
+  position: relative;
+  /* Lined paper + red margin + paper texture — same palette as BoardNote */
+  background-image:
+    repeating-linear-gradient(
+      transparent,
+      transparent calc(1.65rem - 1px),
+      rgba(100, 149, 237, 0.2) calc(1.65rem - 1px),
+      rgba(100, 149, 237, 0.2) 1.65rem
+    ),
+    linear-gradient(
+      to right,
+      transparent 2.4rem,
+      rgba(211, 47, 47, 0.28) 2.4rem,
+      rgba(211, 47, 47, 0.28) calc(2.4rem + 1px),
+      transparent calc(2.4rem + 1px)
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, #fefcf5 0%, #faf5e4 60%, #f5ecce 100%);
+  background-size: auto, auto, 300px 300px, 100% 100%;
+  border-radius: 1px;
+  padding: 1.6rem 1.25rem 1.25rem 3rem;
+  max-width: 340px;
   width: 100%;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 2px 2px rgba(0, 0, 0, 0.12),
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    0 16px 28px -4px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset -1px 0 0 rgba(0, 0, 0, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.mobile-help-pin {
+  position: absolute;
+  top: -0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: #1c7ed6;
+  box-shadow:
+    inset -2px -2px 3px rgba(0, 0, 0, 0.35),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.45),
+    0 2px 3px rgba(0, 0, 0, 0.4);
 }
 
 .mobile-help-title {
-  margin: 0 0 1rem;
+  margin: 0 0 0.85rem;
   font-weight: 800;
-  font-size: 1.2rem;
-  color: #5d430d;
-  text-align: center;
+  font-size: 1.1rem;
+  color: #2f2418;
+  text-align: left;
+  border-bottom: 2px solid rgba(125, 92, 45, 0.2);
+  padding-bottom: 0.4rem;
 }
 
 .mobile-help-list {
-  margin: 0 0 1.25rem;
-  padding: 0 0 0 1.1rem;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: #5d430d;
-  line-height: 1.4;
+  gap: 0;
+  font-size: 0.88rem;
+  color: #2f2418;
+  line-height: 1.65rem;
+}
+
+.mobile-help-list li {
+  border-bottom: none;
+  padding: 0;
 }
 
 .mobile-help-close {
   display: block;
   width: 100%;
-  padding: 0.65rem;
-  background: #5d430d;
-  color: #fff;
-  border-radius: 6px;
+  padding: 0.55rem;
+  background: rgba(47, 36, 24, 0.08);
+  color: #2f2418;
+  border: 1px solid rgba(125, 92, 45, 0.3);
+  border-radius: 2px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.mobile-help-close:hover {
+  background: rgba(47, 36, 24, 0.14);
 }
 
 .image-note {
@@ -612,19 +661,13 @@ onUnmounted(() => {
 }
 
 .board-frame {
-  container-type: size;
+  container-type: inline-size;
   position: relative;
   width: min(100%, calc((100dvh - 8rem) * 16 / 9));
-  height: auto;
   aspect-ratio: 16 / 9;
   max-height: calc(100dvh - 8rem);
   margin: 0 auto;
   overflow: hidden;
-  border: 0.6rem solid #5c3a1e;
-  box-shadow:
-    0 0 0 2px #3b2512 inset,
-    0 24px 48px rgba(0, 0, 0, 0.45),
-    0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Soft directional light from upper-left, plus a corner vignette so the
@@ -661,8 +704,7 @@ onUnmounted(() => {
 
 .string-line {
   fill: none;
-  stroke: #9b1c1c;
-  stroke-width: 2.8;
+  stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -675,6 +717,24 @@ onUnmounted(() => {
   transform: translate(-50%, -50%);
   max-width: 28%;
   z-index: 4;
+}
+
+.note-slot :deep(.board-note) {
+  padding: 1rem 0.75rem 0.85rem;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E"),
+    linear-gradient(170deg, #fefdf8 0%, #f8f2e0 40%, #f2e8cc 75%, #ede0bc 100%);
+  background-size: 200px 200px, 100% 100%;
+}
+
+.note-profile :deep(.board-note) {
+  padding: 0.75rem 0.55rem 0.65rem;
+}
+
+.note-slot :deep(.board-note-pin) {
+  width: 1.2rem;
+  height: 1.2rem;
+  top: -0.55rem;
 }
 
 .note-title {
@@ -694,25 +754,32 @@ onUnmounted(() => {
   width: 100%;
   height: auto;
   border-radius: 2px;
+  mix-blend-mode: multiply;
+}
+
+.leaderboard-image {
+  width: 76%;
+  margin: 0 auto;
 }
 
 .achievements-image {
   display: block;
-  width: 100%;
+  width: 74%;
   aspect-ratio: 1 / 1;
   object-fit: contain;
   border-radius: 2px;
+  margin: 0 auto;
 }
 
 .image-note-title {
   margin: 0;
   width: fit-content;
-  min-height: clamp(2rem, 3.5cqw, 3.1rem);
+  min-height: clamp(2.2rem, 4cqw, 3.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.25rem 0.85rem 0.35rem;
-  font-size: clamp(0.75rem, 1.25cqw, 1.25rem);
+  font-size: clamp(0.9rem, 1.55cqw, 1.5rem);
   font-weight: 800;
   line-height: 1.15;
   text-align: center;
@@ -761,12 +828,12 @@ onUnmounted(() => {
 }
 
 .note-profile {
-  top: 20%;
-  left: 18%;
+  top: 17%;
+  left: 14%;
 }
 .note-help {
-  top: 46%;
-  left: 92%;
+  top: 52%;
+  left: 91%;
 }
 
 .help-note--overlay {
@@ -787,25 +854,25 @@ onUnmounted(() => {
 
 .note-map {
   top: 46%;
-  left: 50%;
+  left: 49%;
 }
 .note-achievements {
-  top: 20%;
-  left: 81%;
+  top: 19%;
+  left: 78%;
 }
 .note-notebook {
   top: 82%;
-  left: 79.5%;
+  left: 73%;
 }
 
 .note-leaderboard {
-  top: 75%;
-  left: 16%;
+  top: 61%;
+  left: 11%;
 }
 
 .note-mystery {
-  top: 86.5%;
-  left: 46.5%;
+  top: 84%;
+  left: 29%;
 }
 
 
