@@ -12,15 +12,26 @@ const { data: classroomsData, isLoading: classroomsLoading } = useQuery(getAllCl
 const institutionId = computed(() => classroomsData.value?.data?.[0]?.institutionId ?? null)
 
 const { data, isLoading: leaderboardLoading, isError } = useQuery(
-  computed(() =>
-    institutionId.value
-      ? getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
-      : ({ queryKey: ['leaderboard-disabled'], queryFn: () => null, enabled: false } as any),
-  ),
+  computed(() => {
+    if (!institutionId.value) {
+      return {
+        queryKey: ['-'] as const,
+        queryFn: () => Promise.resolve({ data: [] }),
+        enabled: false,
+        staleTime: Infinity,
+        refetchOnWindowFocus: false
+      }
+    }
+    const baseOpts = getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
+    return {
+      ...baseOpts,
+      enabled: true
+    } as any
+  })
 )
 
 const isLoading = computed(() => classroomsLoading.value || leaderboardLoading.value)
-const entries = computed(() => (data.value as any)?.data ?? [])
+const entries = computed(() => (data.value as { data?: Array<{ classroomId: string; rank: number; title: string; totalScore: number }> } | null)?.data ?? [])
 </script>
 
 <template>

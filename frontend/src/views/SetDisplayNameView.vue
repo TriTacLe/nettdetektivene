@@ -23,7 +23,7 @@ const update = useMutation({
     await authStore.fetchMe()
     router.push({ name: 'join-classroom' })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     fieldError.value = e.message ?? 'Kunne ikke lagre profilen'
   },
 })
@@ -73,7 +73,7 @@ function handleSubmit() {
             </div>
 
             <div class="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-              <AvatarPreview :config="avatarConfig" :size="200" />
+              <AvatarPreview :config="avatarConfig" :size="200" :lazy-load="false" />
             </div>
 
             <button

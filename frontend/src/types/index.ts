@@ -80,21 +80,21 @@ export interface TaskDTO {
   difficulty: number;
   isActive: boolean;
   stopLocation: string | null;
-  content: any;
+  content: NewsChallengeContent | PhotoChallengeContent | unknown;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface NewsChallengeContent {
   hint?: string;
-  articles?: any[];
+  articles?: NewsArticle[];
   question?: string;
 }
 
 export interface PhotoChallengeContent {
   description?: string;
   hint?: string;
-  alternatives?: any[];
+  alternatives?: PhotoAlternative[];
 }
 
 export interface NotebookEntryDTO {
@@ -253,7 +253,7 @@ export interface StopTaskDTO {
   title: string
   taskType: string
   isUnlocked: boolean
-  content?: any
+  content?: NewsChallengeContent | PhotoChallengeContent | unknown
 }
 
 export interface NewsAnswers {
@@ -322,4 +322,52 @@ export interface NotificationDTO {
   refId: string | null
   isRead: boolean
   createdAt: string
+}
+
+export type MysteryStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface MysterySubmissionRequestDTO {
+  classroomId: string
+  alternative1: string
+  alternative2: string
+  alternative3: string
+  correctIndex: number
+}
+
+/** Student-facing mystery view. Does NOT include correctIndex by design. */
+export interface MysteryPlayDTO {
+  id: string
+  classroomId: string
+  imagePath: string
+  alternatives: string[]
+  completed: boolean
+}
+
+/** Teacher-facing mystery view. Includes correctIndex so reviewers can verify. */
+export interface MysteryReviewDTO {
+  id: string
+  classroomId: string
+  submittedBy: string
+  submittedByName: string
+  imagePath: string
+  alternatives: string[]
+  correctIndex: number
+  mysStatus: MysteryStatus
+  reviewedBy: string | null
+  reviewedAt: string | null
+  submittedAt: string
+}
+
+export interface MysteryReviewActionDTO {
+  mysStatus: MysteryStatus
+}
+
+export interface MysteryCompletionRequestDTO {
+  selectedIndex: number
+}
+
+export interface MysteryCompletionResponseDTO {
+  correct: boolean
+  completed: boolean
+  alreadyCompleted: boolean
 }

@@ -1,20 +1,19 @@
-name: Sync to Orbit
+name: Mirror dev to OrbitNTNU
 
 on:
   push:
     branches:
-      - main
       - dev
 
 jobs:
-  sync:
+  mirror:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Push to orbit
+      - name: Push dev to orbit
         run: |
           git remote add orbit https://x-access-token:${{ secrets.ORBIT_PAT }}@github.com/OrbitNTNU/nettdetektivene.git
-          git push orbit ${{ github.ref_name }}
+          git push orbit dev:dev

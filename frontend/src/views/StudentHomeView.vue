@@ -12,7 +12,9 @@ import { parseAvatarConfig } from '@/utils/avatar'
 import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import type { DialogChoice } from '@/types/cutscene'
+import { useToast } from '@/composables/UseToast'
 
 const corkboardImage = '/corkboard.jpg'
 const mapImage = '/map.jpg'
@@ -23,16 +25,25 @@ const leaderboardImage = '/leaderboard.jpg'
 const mysteryImage = '/mystery-magnifier.png'
 
 const router = useRouter()
+const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
+const authStore = useAuthStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
+const classroomLoading = ref(true)
 const showHelp = ref(false)
+
+function markIntroSeen() {
+  const key = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  localStorage.setItem(key, '1')
+}
 
 function onIntroDone() {
   introRunner.advance()
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -41,6 +52,7 @@ function onIntroChoose(choice: DialogChoice) {
   introRunner.advance(choice)
   if (introRunner.isFinished.value) {
     showIntro.value = false
+    markIntroSeen()
     storyStore.advance(StoryStep.INTRODUCTION)
   }
 }
@@ -145,6 +157,15 @@ async function goToNotebook() {
   router.push({ name: 'notebook', query: { classroomId: classroomId.value } })
 }
 
+function goToMystery() {
+  if (classroomLoading.value) return
+  if (!classroomId.value) {
+    showToast('Du er ikke med i noen klasse ennå.', 'error')
+    return
+  }
+  router.push({ name: 'student-weekly-mystery', params: { classroomId: classroomId.value } })
+}
+
 function toggleHelp() {
   showHelp.value = !showHelp.value
 }
@@ -173,6 +194,8 @@ onMounted(async () => {
     classroomId.value = classrooms[0]?.id ?? null
   } catch {
     classroomId.value = null
+  } finally {
+    classroomLoading.value = false
   }
 
   if (boardFrame.value) {
@@ -181,7 +204,8 @@ onMounted(async () => {
   }
 
   if (!storyStore.loaded) await storyStore.load()
-  if (!storyStore.hasSeen(StoryStep.INTRODUCTION)) {
+  const introLocalKey = `nettdetektivene:introSeen:${authStore.user?.id ?? 'anon'}`
+  if (!storyStore.hasSeen(StoryStep.INTRODUCTION) && !localStorage.getItem(introLocalKey)) {
     showIntro.value = true
   }
 })
@@ -227,7 +251,7 @@ onUnmounted(() => {
             @click="goTo('/student-profile')"
           >
             <div class="profile-note">
-              <AvatarPreview :config="avatarCfg" :size="84" />
+              <AvatarPreview :config="avatarCfg" :size="84" :lazy-load="false" />
               <p class="image-note-title">{{ studentName }}</p>
             </div>
           </BoardNote>
@@ -308,7 +332,7 @@ onUnmounted(() => {
             :rotation="-1"
             pin-color="#e03131"
             width="clamp(6.35rem, 9vw, 7.85rem)"
-            @click="goTo('/mystery')"
+            @click="goToMystery"
           >
             <div class="image-note">
               <img :src="mysteryImage" alt="Ukens Mysterium" class="mystery-image image-note-bg" />

@@ -191,6 +191,33 @@ join_students() {
   done
 }
 
+# Teacher approves each student so they become full members (isAllowed=1).
+# Required before students can post mysteries / notebook entries.
+approve_students() {
+  local token; token=$(cat /tmp/factory_laerer_token)
+  local cid;   cid=$(cat /tmp/factory_classroom_id)
+  info "Approving pending students..."
+  for n in 1 2 3 4 5; do
+    local email="student${n}@test.no"
+    local stu_token; stu_token=$(feide_login "$email" "student" "Student ${n}")
+    local stu_id;    stu_id=$(user_id_from_token "$stu_token")
+    if [ -z "$stu_id" ] || [ "$stu_id" = "null" ]; then
+      fail "Could not resolve user id for $email"
+      continue
+    fi
+    local resp; resp=$(api POST "/api/v1/classrooms/${cid}/students/${stu_id}/approve" "" "$token")
+    local code; code=$(http_code "$resp")
+    local body; body=$(http_body "$resp")
+    if [[ "$code" =~ ^20[01]$ ]]; then
+      ok "Approved $email"
+    elif [ "$code" = "409" ] || echo "$body" | grep -qi "already"; then
+      skip "$email already approved"
+    else
+      fail "Approve $email failed ($code): $(echo "$body" | head -c 160)"
+    fi
+  done
+}
+
 create_task_if_missing() {
   local token=$1 title=$2 type=$3 stop=$4 difficulty=$5 content=$6
   shift 6
@@ -389,16 +416,73 @@ seed_achievements() {
   info "Seeding achievements..."
   mysql_exec "
     INSERT IGNORE INTO achievement (achievement_id, title, desc_ach, icon, trigger_type, trigger_ref) VALUES
-      (UUID(), 'Første Oppgave',     'Fullfør din første oppgave',                    NULL, 'task_completed',      'first_task'),
-      (UUID(), 'Nyhetsjeger',        'Fullfør alle oppgaver i Nyhetskvartalet',        NULL, 'location_completed',  'nyhetskvartalet'),
-      (UUID(), 'Fotoproff',          'Fullfør alle oppgaver hos Fotografen',            NULL, 'location_completed',  'fotografen'),
-      (UUID(), 'Datamester',         'Fullfør alle oppgaver i Datasenteret',            NULL, 'location_completed',  'datasenteret'),
-      (UUID(), 'Ukens Mysterium',    'Fullfør ukens mysterium',                         NULL, 'ukens_mysterium',     NULL),
-      (UUID(), 'Sikkerhetsmester',   'Fullfør alle oppgaver i et klasserom',            NULL, 'all_tasks_completed', 'classroom'),
-      (UUID(), 'Plettfri Detektiv',  'Fullfør alle oppgaver i et klasserom uten å feile', NULL, 'perfect_classroom',   'classroom'),
-      (UUID(), 'Aldri Gi Opp',       'Feil 10 oppgaveforsøk',                           NULL, 'tasks_failed',        '10');
+      (UUID(), 'Første Oppgave',          'Fullfør din første oppgave',                    NULL, 'task_completed',      'first_task'),
+      (UUID(), 'Nyhetsjeger',             'Fullfør alle oppgaver i Nyhetskvartalet',        NULL, 'location_completed',  'nyhetskvartalet'),
+      (UUID(), 'Fotoproff',               'Fullfør alle oppgaver hos Fotografen',           NULL, 'location_completed',  'fotografen'),
+      (UUID(), 'Datamester',              'Fullfør alle oppgaver i Datasenteret',           NULL, 'location_completed',  'datasenteret'),
+      (UUID(), 'Første mysterium løst',   'Løs ditt første ukens mysterium',                NULL, 'mystery_solved',      'first'),
+      (UUID(), 'Fem mysterier løst',      'Løs fem ukens mysterier',                        NULL, 'mystery_solved',      '5'),
+      (UUID(), 'Sikkerhetsmester',        'Fullfør alle oppgaver i et klasserom',            NULL, 'all_tasks_completed', 'classroom'),
+      (UUID(), 'Plettfri Detektiv',       'Fullfør alle oppgaver i et klasserom uten å feile', NULL, 'perfect_classroom',   'classroom'),
+      (UUID(), 'Aldri Gi Opp',            'Feil 10 oppgaveforsøk',                          NULL, 'tasks_failed',        '10');
   "
   ok "Achievements seeded"
+}
+
+seed_mysteries() {
+  local token; token=$(cat /tmp/factory_laerer_token)
+  local cid;   cid=$(cat /tmp/factory_classroom_id)
+  info "Seeding mystery submissions for classroom ${cid:0:8}..."
+
+  # Idempotent: skip if any submissions already exist in the classroom.
+  local existing; existing=$(http_body "$(api GET "/api/v1/mysteries/classroom/${cid}" "" "$token")")
+  local existing_count
+  existing_count=$(echo "$existing" | jq -r '.data | length // 0' 2>/dev/null || echo 0)
+  if [ "$existing_count" != "0" ] && [ -n "$existing_count" ]; then
+    skip "Mystery submissions already exist (${existing_count})"
+    return
+  fi
+
+  # {studentEmail | image | alt0 | alt1 | alt2 | correctIndex}
+  local specs=(
+    "student1@test.no|${NEWS_FAKE_1}|Artikkelen er ekte og publisert av en kjent avis|Artikkelen er en falsk nyhet med oppdiktede kilder|Artikkelen er satire og ikke ment alvorlig|1"
+    "student2@test.no|${NEWS_REAL_1}|Bildet er et AI-generert portrett|Bildet er manipulert i Photoshop|Bildet er et ekte pressefoto|2"
+    "student3@test.no|${PHOTO_FAKE_1}|Bildet er ekte og uredigert|Bildet er AI-generert|Bildet er en collage av flere bilder|1"
+  )
+
+  for spec in "${specs[@]}"; do
+    IFS='|' read -r email img alt0 alt1 alt2 correct <<<"$spec"
+    if [ ! -f "$img" ]; then
+      fail "Mystery image not found: $img"
+      continue
+    fi
+    local stu_token; stu_token=$(feide_login "$email" "student" "Student ${email%%@*}")
+
+    local submission_json
+    submission_json=$(jq -c -n \
+      --arg cid "$cid" \
+      --arg a0 "$alt0" --arg a1 "$alt1" --arg a2 "$alt2" \
+      --argjson ci "$correct" \
+      '{classroomId:$cid, alternative1:$a0, alternative2:$a1, alternative3:$a2, correctIndex:$ci}')
+
+    local body_file; body_file=$(mktemp -t factory_mystery.XXXXXX.json)
+    printf '%s' "$submission_json" > "$body_file"
+
+    local resp code body
+    resp=$(curl -s -w "\n%{http_code}" -X POST \
+      -H "Authorization: Bearer $stu_token" \
+      -F "submission=@${body_file};type=application/json" \
+      -F "image=@${img}" \
+      "${BASE_URL}/api/v1/mysteries")
+    rm -f "$body_file"
+
+    code=$(http_code "$resp"); body=$(http_body "$resp")
+    if [[ "$code" =~ ^20[01]$ ]]; then
+      ok "Mystery submitted by $email (PENDING)"
+    else
+      fail "Mystery submit for $email failed ($code): $(echo "$body" | head -c 200)"
+    fi
+  done
 }
 
 activate_all_tasks() {
@@ -434,9 +518,11 @@ main() {
   seed_users
   ensure_classroom
   join_students
+  approve_students
   seed_tasks
   activate_all_tasks
   seed_achievements
+  seed_mysteries
   summary
 }
 

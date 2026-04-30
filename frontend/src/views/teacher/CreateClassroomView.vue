@@ -73,7 +73,7 @@ const createMutation = useMutation({
   onSuccess: (res) => {
     router.push({ name: 'classroom-detail', params: { id: res.data?.id } })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     serverError.value = e.message ?? 'Kunne ikke opprette klasserom'
   },
 })
@@ -83,7 +83,7 @@ const updateMutation = useMutation({
   onSuccess: () => {
     router.push({ name: 'classroom-detail', params: { id: classroomId } })
   },
-  onError: (e: any) => {
+  onError: (e: Error) => {
     serverError.value = e.message ?? 'Kunne ikke oppdatere klasserom'
   },
 })
@@ -112,56 +112,48 @@ function submit() {
     :title="isEditMode ? 'Rediger klasserom' : 'Opprett klasserom'"
     background="/StartBackground.jpg"
     :previous="isEditMode ? `/classroom/${classroomId}` : '/teacher-home'"
+    dimOverlay
   >
-    <div class="min-h-screen flex flex-col items-center justify-center p-8">
-      <div class="bg-amber-50 rounded-2x1 shadow-xl p-8 w-full max-w-md">
-        <h1 class="text-2xl font-bold text-amber-900 mb-6">
-          {{ isEditMode ? 'Rediger klasserom' : 'Opprett klasserom' }}
-        </h1>
-
+    <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10 pt-4">
+      <h2 class="form-heading">{{ isEditMode ? 'Rediger Klasserom' : 'Lag Klasserom' }}</h2>
+      <div class="form-card">
         <div
           v-if="serverError"
-          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded mb-4 text-sm"
+          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
         >
           {{ serverError }}
         </div>
 
-        <form @submit.prevent="submit" class="flex flex-col gap-5">
+        <form @submit.prevent="submit" class="form-fields">
           <div>
-            <label class="block text-sm font-semibold text-amber-900 mb-1">
-              Navn på klasserom
-            </label>
+            <label class="field-label">Navn på klasserom</label>
             <input
               v-model="title"
               type="text"
               placeholder="f.eks 5A"
-              class="w-full border border-amber-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              class="field-input"
             />
-            <p v-if="fieldErrors.title" class="text-red-600 text-xs mt-1">
+            <p v-if="fieldErrors.title" class="field-error">
               {{ fieldErrors.title }}
             </p>
           </div>
 
           <div>
-            <label class="block text-sm font-semibold text-amber-900 mb-1">
-              Beskrivelse (valgfri)
-            </label>
+            <label class="field-label">Beskrivelse (valgfri)</label>
             <textarea
               v-model="classDesc"
               rows="3"
               placeholder="..."
-              class="w-full border border-amber-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+              class="field-input field-textarea"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-semibold text-amber-900 mb-1">
-              Institusjon
-            </label>
+            <label class="field-label">Institusjon</label>
             <select
               v-model="selectedInstitutionId"
               :disabled="isLoadingInstitutions"
-              class="w-full border border-amber-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+              class="field-input"
             >
               <option value="" disabled>Velg institusjon...</option>
               <option
@@ -172,20 +164,20 @@ function submit() {
                 {{ inst.instName }}
               </option>
             </select>
-            <p v-if="isLoadingInstitutions" class="text-amber-700 text-xs mt-1">
+            <p v-if="isLoadingInstitutions" class="text-amber-200 text-xs mt-1">
               Laster institusjoner...
             </p>
-            <p v-else-if="institutions.length === 0" class="text-red-600 text-xs mt-1">
+            <p v-else-if="institutions.length === 0" class="field-error">
               Ingen institusjoner funnet. Kontakt administrator.
             </p>
-            <p v-if="fieldErrors.institutionId" class="text-red-600 text-xs mt-1">
+            <p v-if="fieldErrors.institutionId" class="field-error">
               {{ fieldErrors.institutionId }}
             </p>
           </div>
 
           <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="isGameEnabled" type="checkbox" class="w-5 h-5 accent-amber-700" />
-            <span class="text-sm font-semibold text-amber-900">Aktiver spill for klassen</span>
+            <input v-model="isGameEnabled" type="checkbox" class="w-5 h-5 accent-amber-500" />
+            <span class="checkbox-label">Aktiver spill for klassen</span>
           </label>
 
           <button
@@ -204,3 +196,77 @@ function submit() {
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.form-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  paint-order: normal;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(4px);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.field-input {
+  width: 100%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111827;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--color-nd-glow);
+  box-shadow: 0 0 0 2px rgba(240, 192, 64, 0.3);
+}
+
+.field-textarea {
+  resize: none;
+}
+
+.field-error {
+  color: #fca5a5;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.checkbox-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+</style>

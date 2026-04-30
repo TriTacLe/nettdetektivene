@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import {
   getClassroomLeaderboardOptions,
@@ -9,7 +9,6 @@ import {
 import SceneComponent from '@/components/SceneComponent.vue'
 
 const route = useRoute()
-const router = useRouter()
 const classroomId = route.params.classroomId as string
 
 const { data: classroomData } = useQuery(getClassroomOptions({ path: { id: classroomId } }))

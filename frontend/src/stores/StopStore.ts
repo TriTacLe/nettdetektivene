@@ -53,7 +53,7 @@ export const useStopStore = defineStore('stop', () => {
         uuid: task.task.id,
         title: task.task.title,
         taskType: task.task.taskType,
-        isUnlocked: task.isUnlocked,
+        isUnlocked: true,
         content: parseTaskContent(task.task.content as string, task.task.taskType),
       }))
 

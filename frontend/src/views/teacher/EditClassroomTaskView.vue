@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import ClassroomService from '@/services/ClassroomService'
 import { updateTeacherTaskFull } from '@/services/TaskService'
-import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft } from '@/types'
+import { TaskType, type EditNewsTaskDraft, type EditPhotoTaskDraft, type EditTaskDraft, type NewsChallengeContent, type PhotoChallengeContent } from '@/types'
 import { parseTaskContent } from '@/services/TaskService'
 
 const route = useRoute()
@@ -34,10 +34,11 @@ watch(classroomTask, (task) => {
   initialized.value = true
   const t = task.task
 
-  const parsed = parseTaskContent(t.content, t.taskType)
+  const parsed = parseTaskContent(t.content as string, t.taskType)
 
   if (t.taskType === TaskType.NEWS) {
-    const content = (parsed as any)?.news ?? parsed as any
+    const wrapper = parsed as { news?: NewsChallengeContent } | null
+    const content = wrapper?.news ?? (parsed as NewsChallengeContent | null)
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
@@ -45,7 +46,7 @@ watch(classroomTask, (task) => {
       stopLocation: t.stopLocation ?? 'nyhetskvartalet',
       question: content?.question ?? '',
       hint: content?.hint ?? '',
-      articles: (content?.articles ?? []).map((a: any) => ({
+      articles: (content?.articles ?? []).map((a) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         isReal: a.isReal,
@@ -53,7 +54,8 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
-    const content = (parsed as any)?.photo ?? parsed as any
+    const wrapper = parsed as { photo?: PhotoChallengeContent } | null
+    const content = wrapper?.photo ?? (parsed as PhotoChallengeContent | null)
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
@@ -61,7 +63,7 @@ watch(classroomTask, (task) => {
       stopLocation: t.stopLocation ?? 'fotografen',
       description: content?.description ?? '',
       hint: content?.hint ?? '',
-      alternatives: (content?.alternatives ?? []).map((a: any) => ({
+      alternatives: (content?.alternatives ?? []).map((a) => ({
         existingImagePath: a.imagePath ?? null,
         image: null,
         correctType: a.correctType ?? 'ekte',
@@ -166,7 +168,7 @@ function submit() {
 <template>
   <SceneComponent
     :title="classroom?.title ? `Rediger oppgave: ${classroom.title}` : 'Rediger oppgave'"
-    :previous="`/classroom/${classroomId}/tasks`"
+    :previous="`/classroom/${classroomId}`"
     background="/corkboard.jpg"
   >
     <div class="task-create-page">
@@ -180,44 +182,28 @@ function submit() {
         <template v-if="draft.type === TaskType.NEWS">
           <div class="task-template task-template--news">
             <div class="task-template__hero">
-              <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
-                <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
-                  {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
-                </button>
-              </div>
-              <div class="task-template__headline">
-                <h3>Nyhetskvartalet-mal</h3>
-                <p>Rediger artikkelbilder og innhold. Elevene velger hvilken artikkel de tror er ekte.</p>
-              </div>
-              <div class="task-field-grid">
-                <label class="task-field">
-                  <span>Tittel</span>
-                  <input v-model="draft.title" type="text" />
-                </label>
-                <div class="task-field">
-                  <span class="task-field-label">Vanskelighetsgrad</span>
-                  <div class="diff-selector">
-                    <button v-for="n in 3" :key="n" type="button"
-                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
-                      @click="selectDifficulty(n)">
-                      <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
-                    </button>
-                    <button type="button"
-                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
-                      @click="selectDatasenteret()">
-                      Datasenteret
-                    </button>
-                  </div>
+              <div class="task-field">
+                <span class="task-field-label">Vanskelighetsgrad</span>
+                <div class="diff-selector">
+                  <button v-for="n in 3" :key="n" type="button"
+                    :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                    @click="selectDifficulty(n)">
+                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                  </button>
+                  <button type="button"
+                    :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                    @click="selectDatasenteret()">
+                    Datasenteret
+                  </button>
                 </div>
               </div>
               <label class="task-field">
-                <span>Spørsmål</span>
-                <textarea v-model="draft.question" rows="2" />
+                <span>Tittel</span>
+                <input v-model="draft.title" type="text" />
               </label>
               <label class="task-field">
-                <span>Hint</span>
-                <textarea v-model="draft.hint" rows="2" />
+                <span>Spørsmål</span>
+                <textarea v-model="draft.question" rows="2" />
               </label>
             </div>
 
@@ -228,9 +214,6 @@ function submit() {
                 class="task-upload-card task-upload-card--news"
                 :class="article.isReal ? 'task-upload-card--good' : 'task-upload-card--fake'"
               >
-                <span class="task-card-badge">
-                  {{ article.isReal ? '✓ God artikkel' : '✕ Falsk artikkel' }}
-                </span>
                 <div class="task-upload-box">
                   <img v-if="previewUrl(article.image) || article.existingImagePath"
                     :src="previewUrl(article.image) ?? article.existingImagePath!"
@@ -258,44 +241,28 @@ function submit() {
         <template v-else-if="draft.type === TaskType.PHOTO">
           <div class="task-template task-template--photo">
             <div class="task-template__hero">
-              <div class="task-template__actions">
-                <button type="button" class="task-template__back" @click="router.push({ name: 'classroom-detail', params: { id: classroomId } })">←</button>
-                <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
-                  {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
-                </button>
-              </div>
-              <div class="task-template__headline">
-                <h3>Fotografen-mal</h3>
-                <p>Rediger bilder og innhold. Elevene velger for hvert bilde: Ekte / KI-generert / Manipulert.</p>
-              </div>
-              <div class="task-field-grid">
-                <label class="task-field">
-                  <span>Tittel</span>
-                  <input v-model="draft.title" type="text" />
-                </label>
-                <div class="task-field">
-                  <span class="task-field-label">Vanskelighetsgrad</span>
-                  <div class="diff-selector">
-                    <button v-for="n in 3" :key="n" type="button"
-                      :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
-                      @click="selectDifficulty(n)">
-                      <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
-                    </button>
-                    <button type="button"
-                      :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
-                      @click="selectDatasenteret()">
-                      Datasenteret
-                    </button>
-                  </div>
+              <div class="task-field">
+                <span class="task-field-label">Vanskelighetsgrad</span>
+                <div class="diff-selector">
+                  <button v-for="n in 3" :key="n" type="button"
+                    :class="['btn-bare diff-btn', { 'diff-btn--active': draft.difficulty === n && draft.stopLocation !== 'datasenteret' }]"
+                    @click="selectDifficulty(n)">
+                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                  </button>
+                  <button type="button"
+                    :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': draft.stopLocation === 'datasenteret' }]"
+                    @click="selectDatasenteret()">
+                    Datasenteret
+                  </button>
                 </div>
               </div>
               <label class="task-field">
-                <span>Oppgavetekst</span>
-                <textarea v-model="draft.description" rows="2" />
+                <span>Tittel</span>
+                <input v-model="draft.title" type="text" />
               </label>
               <label class="task-field">
-                <span>Hint</span>
-                <textarea v-model="draft.hint" rows="2" />
+                <span>Oppgavetekst</span>
+                <textarea v-model="draft.description" rows="2" />
               </label>
             </div>
 
@@ -334,6 +301,12 @@ function submit() {
             </div>
           </div>
         </template>
+
+        <div class="task-template__actions task-template__actions--bottom">
+          <button type="submit" class="task-template__save" :disabled="saveMutation.isPending.value">
+            {{ saveMutation.isPending.value ? 'Lagrer...' : 'Lagre endringer' }}
+          </button>
+        </div>
       </form>
     </div>
   </SceneComponent>
@@ -361,15 +334,15 @@ function submit() {
 }
 
 .task-create-panel {
-  max-width: 1080px;
+  max-width: 980px;
   margin: 0 auto;
-  background: linear-gradient(180deg, rgba(255, 250, 240, 0.96), rgba(255, 255, 255, 0.94));
-  border: 2px solid rgba(154, 52, 18, 0.24);
-  border-radius: 1.5rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
-  padding: 1.5rem;
-  max-height: calc(100vh - 8rem);
-  overflow-y: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .task-create-panel--photo {
@@ -379,25 +352,30 @@ function submit() {
 .task-create-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .task-template {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
 }
 
 .task-template__hero {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .task-template__actions {
   display: flex;
   gap: 0.8rem;
   align-items: center;
+}
+
+.task-template__actions--bottom {
+  justify-content: flex-end;
+  padding-top: 0.5rem;
 }
 
 .task-template__back,
@@ -423,7 +401,6 @@ function submit() {
   width: 3rem;
   min-width: 3rem;
   padding-inline: 0;
-  border-radius: 999px;
 }
 
 .task-template__save {
@@ -432,23 +409,24 @@ function submit() {
 
 .task-template__headline {
   text-align: center;
-  margin: 0.2rem 0 0.5rem;
+  margin: 0;
 }
 
 .task-template__headline h3 {
   margin: 0;
   color: white;
-  font-size: clamp(1.6rem, 2.2vw, 2.35rem);
-  font-weight: 900;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
   -webkit-text-stroke: 0;
 }
 
 .task-template__headline p {
-  margin: 0.6rem 0 0;
-  color: rgba(49, 46, 129, 0.85);
-  font-size: 0.95rem;
-  font-weight: 700;
+  margin: 0.2rem 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .task-create-error {
@@ -456,20 +434,21 @@ function submit() {
   border: 1px solid #fca5a5;
   color: #991b1b;
   padding: 0.8rem 1rem;
-  border-radius: 0.9rem;
+  border-radius: 0;
   font-weight: 700;
 }
 
 .task-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .task-field-label {
-  color: #7c2d12;
+  color: white;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .diff-selector {
@@ -484,7 +463,7 @@ function submit() {
   gap: 1px;
   padding: 0.4rem 0.6rem;
   border: 2px solid #111111;
-  border-radius: 0.6rem;
+  border-radius: 0;
   background: white;
   cursor: pointer;
   font-size: 0.8rem;
@@ -530,13 +509,14 @@ function submit() {
 .task-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .task-field span {
-  color: #7c2d12;
+  color: white;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .task-field input,
@@ -544,17 +524,22 @@ function submit() {
 .task-field select {
   background: white;
   border: 2px solid #111111;
-  border-radius: 0.8rem;
-  padding: 0.85rem 1rem;
-  font-size: 1rem;
+  border-radius: 0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: #111827;
 }
 
+.task-field textarea {
+  min-height: 2.8rem;
+  resize: vertical;
+}
+
 .task-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.6rem;
 }
 
 .task-card-grid--news {
@@ -568,12 +553,12 @@ function submit() {
 
 .task-upload-card {
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid #fed7aa;
-  border-radius: 1rem;
-  padding: 1rem;
+  border: 2px solid #111;
+  border-radius: 0;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.6rem;
 }
 
 .task-upload-card--good {
@@ -605,9 +590,9 @@ function submit() {
 
 .task-upload-box {
   position: relative;
-  min-height: 110px;
+  min-height: 260px;
   border: 2px dashed #cbd5e1;
-  border-radius: 0.85rem;
+  border-radius: 0;
   background: linear-gradient(180deg, #fff, #f8fafc);
   display: flex;
   flex-direction: column;
@@ -617,21 +602,26 @@ function submit() {
   text-align: center;
   gap: 0.35rem;
   color: #64748b;
+  cursor: pointer;
   overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.task-upload-box:hover {
+  border-color: #92400e;
+  background: linear-gradient(180deg, #fff, #fef3c7);
 }
 
 .task-upload-box strong {
   color: #0f172a;
-  font-size: 0.95rem;
-  position: relative;
-  z-index: 1;
+  font-size: 0.85rem;
   position: relative;
   z-index: 1;
 }
 
 .task-upload-box p {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   position: relative;
   z-index: 1;
 }
@@ -645,25 +635,18 @@ function submit() {
 }
 
 .task-upload-box--compact {
-  min-height: 96px;
+  min-height: 220px;
 }
 
 .task-existing-preview {
   width: 100%;
-  max-height: 80px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  opacity: 0.85;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 0;
+  opacity: 0.95;
   position: relative;
   z-index: 1;
-}
-
-.task-existing-preview {
-  width: 100%;
-  max-height: 80px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  opacity: 0.7;
+  background: #f1f5f9;
 }
 
 .task-check {
@@ -700,6 +683,7 @@ function submit() {
   align-items: center;
   justify-content: center;
   border-style: dashed;
+  border-radius: 0;
   font-size: 2rem;
   background: rgba(255, 255, 255, 0.72);
 }

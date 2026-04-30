@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAudioStore } from '@/stores/AudioStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useStopStore } from '@/stores/StopStore'
-import Toast from '@/components/Toast.vue'
+import Toast from '@/components/ToastMessage.vue'
 import { useToast } from '@/composables/UseToast'
 
 const route = useRoute()
