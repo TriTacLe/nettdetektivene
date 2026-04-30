@@ -3,6 +3,7 @@
 export {}
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
       loginAsStudent(): Chainable<void>
@@ -14,8 +15,10 @@ declare global {
 Cypress.Commands.add('loginAsStudent', () => {
   cy.session('student', () => {
     cy.visit('/student-login')
-    cy.get('#student-email').clear().type('siljelund@nettdetektivene.no')
-    cy.get('#student-password').clear().type('password123')
+    cy.get('#student-email').clear()
+    cy.get('#student-email').type('anine@nettdetektivene.no')
+    cy.get('#student-password').clear()
+    cy.get('#student-password').type('password123')
     cy.contains('button', 'Logg inn').click()
     cy.url().should('include', '/student-home')
   })
@@ -24,8 +27,10 @@ Cypress.Commands.add('loginAsStudent', () => {
 Cypress.Commands.add('loginAsTeacher', () => {
   cy.session('teacher', () => {
     cy.visit('/teacher-login')
-    cy.get('#teacher-email').clear().type('nora@ntnu.no')
-    cy.get('#teacher-password').clear().type('password123')
+    cy.get('#teacher-email').clear()
+    cy.get('#teacher-email').type('laerer@ntnu.no')
+    cy.get('#teacher-password').clear()
+    cy.get('#teacher-password').type('password123')
     cy.contains('button', 'Logg inn').click()
     cy.url().should('include', '/teacher-home')
   })

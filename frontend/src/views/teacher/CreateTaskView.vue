@@ -25,6 +25,10 @@ const selectedType = computed<TaskType.NEWS | TaskType.PHOTO | null>(() => {
 
 const serverError = ref<string | null>(null)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/dev
 const newsDraft = ref<TeacherNewsTaskDraft>({
   type: TaskType.NEWS,
   title: '',

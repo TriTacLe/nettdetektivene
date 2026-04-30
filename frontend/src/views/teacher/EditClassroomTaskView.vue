@@ -39,15 +39,26 @@ watch(classroomTask, (task) => {
   if (!parsed) return
 
   if (t.taskType === TaskType.NEWS) {
+<<<<<<< HEAD
     const newsContent = (parsed as any)?.news ?? parsed as any
+=======
+    const wrapper = parsed as { news?: NewsChallengeContent } | null
+    const content = wrapper?.news ?? (parsed as NewsChallengeContent | null)
+>>>>>>> origin/dev
     const newsDraft: EditNewsTaskDraft = {
       type: TaskType.NEWS,
       title: t.title,
       difficulty: t.difficulty,
       stopLocation: t.stopLocation ?? 'nyhetskvartalet',
+<<<<<<< HEAD
       question: newsContent?.question ?? '',
       hint: newsContent?.hint ?? '',
       articles: (newsContent?.articles ?? []).map((a: { imagePath?: string; isReal: boolean }) => ({
+=======
+      question: content?.question ?? '',
+      hint: content?.hint ?? '',
+      articles: (content?.articles ?? []).map((a) => ({
+>>>>>>> origin/dev
         existingImagePath: a.imagePath ?? null,
         image: null,
         isReal: a.isReal,
@@ -55,15 +66,26 @@ watch(classroomTask, (task) => {
     }
     draft.value = newsDraft
   } else if (t.taskType === TaskType.PHOTO) {
+<<<<<<< HEAD
     const photoContent = (parsed as any)?.photo ?? parsed as any
+=======
+    const wrapper = parsed as { photo?: PhotoChallengeContent } | null
+    const content = wrapper?.photo ?? (parsed as PhotoChallengeContent | null)
+>>>>>>> origin/dev
     const photoDraft: EditPhotoTaskDraft = {
       type: TaskType.PHOTO,
       title: t.title,
       difficulty: t.difficulty,
       stopLocation: t.stopLocation ?? 'fotografen',
+<<<<<<< HEAD
       description: photoContent?.description ?? '',
       hint: photoContent?.hint ?? '',
       alternatives: (photoContent?.alternatives ?? []).map((a: { imagePath?: string; description?: string; correctType?: string; begrunnelser?: string[] }) => ({
+=======
+      description: content?.description ?? '',
+      hint: content?.hint ?? '',
+      alternatives: (content?.alternatives ?? []).map((a) => ({
+>>>>>>> origin/dev
         existingImagePath: a.imagePath ?? null,
         image: null,
         correctType: a.correctType ?? 'ekte',

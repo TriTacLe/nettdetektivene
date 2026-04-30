@@ -24,13 +24,20 @@ import java.util.*;
  * Run with:
  * mvn spring-boot:run -Dspring-boot.run.profiles=seed
  *
- * Creates institutions, teachers, classrooms, tasks (all 7 stops),
+ * Creates institutions, teachers, classrooms, tasks (3 valid stops),
  * students with varied progress, notebook entries, and achievements.
  * Task attempts go through sp_submit_attempt so the trg_attempt_sync
  * trigger awards XP and unlocks the next task automatically.
  *
+ * Only seeds tasks for the 3 stop locations that exist in the game map:
+ * - nyhetskvartalet (NEWS tasks)
+ * - fotografen (PHOTO tasks)
+ * - datasenteret (BOSS/FINAL tasks)
+ *
+ * Matches the structure of factory.sh script.
+ *
  * @author tri
- * @version 1.0
+ * @version 2.0
  * @since 0.1
  */
 @Slf4j
@@ -179,37 +186,22 @@ public class DemoDataSeeder implements CommandLineRunner {
   // -----------------------------------------------------------------------
 
   private void seedTasks() {
-    // {title, type, stop, difficulty, ownerKey} - kid-friendly tasks for 3-7
-    // graders
+    // {title, type, stop, difficulty, ownerKey} - matches factory.sh structure
     Object[][] taskDefs = {
-        // nyhetskvartalet
-        { "Hva er sant?", TaskType.NEWS, "nyhetskvartalet", 1, "nora" },
-        { "Sjekk kilden", TaskType.NEWS, "nyhetskvartalet", 1, "nora" },
-        { "Falske nyheter", TaskType.NEWS, "nyhetskvartalet", 2, "nora" },
-        // fotografen
-        { "Er bildet ekte?", TaskType.PHOTO, "fotografen", 1, "nora" },
-        { "Redigerte bilder", TaskType.PHOTO, "fotografen", 1, "nora" },
-        { "Hvem er på bildet?", TaskType.PHOTO, "fotografen", 2, "nora" },
-        // postkontoret
-        { "Er e-posten ekte?", TaskType.EMAIL, "postkontoret", 1, "nora" },
-        { "Utrygge e-poster", TaskType.EMAIL, "postkontoret", 1, "nora" },
-        { "Hvem sender e-posten?", TaskType.EMAIL, "postkontoret", 2, "nora" },
-        // passordbanken
-        { "Lag et bra passord", TaskType.PASSWORD, "passordbanken", 1, "nora" },
-        { "Sterke passord", TaskType.PASSWORD, "passordbanken", 1, "nora" },
-        { "Husk passordet ditt", TaskType.PASSWORD, "passordbanken", 2, "nora" },
-        // markedsplassen
-        { "Trygg handel", TaskType.MARKETPLACE, "markedsplassen", 1, "tri" },
-        { "Falske annonser", TaskType.MARKETPLACE, "markedsplassen", 1, "tri" },
-        { "Kjop trygt", TaskType.MARKETPLACE, "markedsplassen", 2, "tri" },
-        // sosialen
-        { "Personvern", TaskType.SOCIAL, "sosialen", 1, "anine" },
-        { "Vær snill på nett", TaskType.SOCIAL, "sosialen", 1, "anine" },
-        { "Del med omhu", TaskType.SOCIAL, "sosialen", 2, "anine" },
-        // datasenteret
-        { "Beskyt informasjon", TaskType.BOSS, "datasenteret", 2, "nora" },
-        { "Sikker backup", TaskType.BOSS, "datasenteret", 2, "anine" },
-        { "Datadetektiv-mester", TaskType.BOSS, "datasenteret", 3, "gustav" },
+        // nyhetskvartalet (NEWS) - 3 tasks levels 1-3
+        { "Ekte eller falsk nyhet (nivå 1)", TaskType.NEWS, "nyhetskvartalet", 1, "nora" },
+        { "Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS, "nyhetskvartalet", 2, "nora" },
+        { "Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS, "nyhetskvartalet", 3, "nora" },
+        // fotografen (PHOTO) - 3 tasks levels 1-3
+        { "Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora" },
+        { "Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora" },
+        { "Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora" },
+        // datasenteret (FINAL BOSS) - 5 mixed tasks, difficulty 4-5
+        { "Datatyven sin første løgn", TaskType.NEWS, "datasenteret", 4, "nora" },
+        { "Avslør den falske rapporten", TaskType.NEWS, "datasenteret", 5, "nora" },
+        { "Manipulert bevismateriale", TaskType.PHOTO, "datasenteret", 4, "nora" },
+        { "Sannhetens øyeblikk", TaskType.NEWS, "datasenteret", 5, "nora" },
+        { "Endelig konfrontasjon", TaskType.PHOTO, "datasenteret", 5, "nora" },
     };
 
     Classroom class1 = classrooms.get("class1");
@@ -492,31 +484,23 @@ public class DemoDataSeeder implements CommandLineRunner {
             generateAutoNotes("nyhetskvartalet") },
         { class1, "siljelund", "fotografen", "Det var lett aa endre bilder! Jeg skal vre mer kritisk fremover.",
             generateAutoNotes("fotografen") },
-        { class1, "segward", "postkontoret",
+        { class1, "segward", "nyhetskvartalet",
             "Noen e-poster ser veldig ekte ut. Jeg sjekker alltid avsenderadresse naa.",
-            generateAutoNotes("postkontoret") },
-        { class1, "segward", "passordbanken", "Passord maa vaere sterke! Jeg husker ikke mine bra passord lenger.",
-            generateAutoNotes("passordbanken") },
-        { class1, "segward", "markedsplassen", "Falske annonser er vanskelige aa se! Jeg sjekker alltid rating naa.",
-            generateAutoNotes("markedsplassen") },
-        { class1, "segward", "sosialen", "Alt jeg skriver paa internett blir der. Det er litt skummelt!",
-            generateAutoNotes("sosialen") },
+            generateAutoNotes("nyhetskvartalet") },
+        { class1, "segward", "fotografen", "Passord maa vaere sterke! Jeg husker ikke mine bra passord lenger.",
+            generateAutoNotes("fotografen") },
         { class1, "aninstan", "nyhetskvartalet", "Noen ting du leser paa nettet er ikke sanne!",
             generateAutoNotes("nyhetskvartalet") },
         { class1, "aninstan", "fotografen", "Bilder kan endres med apper.", generateAutoNotes("fotografen") },
-        { class1, "aninstan", "postkontoret", "Personlige e-poster kan stjele passord.",
-            generateAutoNotes("postkontoret") },
-        { class1, "aninstan", "passordbanken", "Bruk tall og bokstaver i passord.",
-            generateAutoNotes("passordbanken") },
         // class2 - 6B - Nettvett (real developers)
         { class2, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden.",
             generateAutoNotes("nyhetskvartalet") },
         { class2, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå.",
             generateAutoNotes("fotografen") },
-        { class2, "vetleni", "postkontoret", "Phishing er vanskeligere å oppdage enn jeg trodde.",
-            generateAutoNotes("postkontoret") },
-        { class2, "vetleni", "passordbanken", "Et sterkt passord er første forsvarslinje. Byttet alle passord!",
-            generateAutoNotes("passordbanken") },
+        { class2, "vetleni", "nyhetskvartalet", "Phishing er vanskeligere å oppdage enn jeg trodde.",
+            generateAutoNotes("nyhetskvartalet") },
+        { class2, "vetleni", "fotografen", "Et sterkt passord er første forsvarslinje. Byttet alle passord!",
+            generateAutoNotes("fotografen") },
         // class3 - 7C - Sikker paa nett (instructors as students)
         { class3, "tri-student", "nyhetskvartalet",
             "Falske nyheter sprer seg fort paa sosiale medier. Lærte teknikker for faktasjekk.",
@@ -524,8 +508,8 @@ public class DemoDataSeeder implements CommandLineRunner {
         { class3, "tri-student", "fotografen",
             "Bildeanalyse er viktigere enn jeg trodde. AI-genererte bilder er技 vanskelige!",
             generateAutoNotes("fotografen") },
-        { class3, "gustav-student", "postkontoret",
-            "Phishing-angrep blir stadig mer sofistikerte. Dobbeltsjekk alltid!", generateAutoNotes("postkontoret") },
+        { class3, "gustav-student", "nyhetskvartalet",
+            "Phishing-angrep blir stadig mer sofistikerte. Dobbeltsjekk alltid!", generateAutoNotes("nyhetskvartalet") },
     };
 
     for (Object[] row : entries) {
@@ -570,42 +554,6 @@ public class DemoDataSeeder implements CommandLineRunner {
               "time_spent": 380
             }
             """;
-      case "postkontoret" -> """
-          {
-            "cybersecurity": ["To-faktor-autentisering", "Sårbar passordpolitikk", "Phishing-angrep"],
-            "evidence_handling": ["Loggfinger skal sikres", "Rapportering av hendelser", "Innvarsjonshåndtering"],
-            "technical_skills": ["Nettverksanalyse", "Hendelseshåndtering", "Sårhetskopier"],
-            "hints_used": 3,
-            "time_spent": 525
-          }
-          """;
-      case "passordbanken" -> """
-          {
-            "password_tips": ["Bruk passordbehandler", "Aktiver 2FA", "Unngå gjenbruk"],
-            "security_measures": ["Enkel inlogging", "Biometrisk autentisering", "Regelmessig passordbytte"],
-            "risks": ["Credential stuffing", "Brute force", "Phishing"],
-            "hints_used": 1,
-            "time_spent": 320
-          }
-          """;
-      case "markedsplassen" -> """
-          {
-            "shopping_safety": ["Sjekk selgerens omdømme", "Bruk sikker betaling", "Les anmeldelser"],
-            "fraud_indicators": ["For gode priser", "Ugyldige betalingsløsninger", "Press til å handle raskt"],
-            "best_practices": ["Betal kun etter mottak", "Bruk angrerett", "Dokumenter alt"],
-            "hints_used": 2,
-            "time_spent": 415
-          }
-          """;
-      case "sosialen" -> """
-          {
-            "privacy_settings": ["Sjekk personverninnstillinger", "Begrens deling offentlig", "Vær kritisk til apper"],
-            "digital_footprint": ["Søk deg selv", "Slett gamle kontoer", "Vær bevisst på metadata"],
-            "social_engineering": ["Vær skeptisk til venn forespørsler", "Ikke del privat info", "Sjekk kilder"],
-            "hints_used": 2,
-            "time_spent": 480
-          }
-          """;
       case "datasenteret" -> """
           {
             "encryption": ["End-to-end kryptering", "Sikkerhetskopiering", "Databeskyttelse"],
@@ -795,8 +743,8 @@ public class DemoDataSeeder implements CommandLineRunner {
     log.info("========================================");
     log.info("Institutions : {}", institutions.size());
     log.info("Instructors  : 4 (Nora, Tri, Anine, Gustav)");
-    log.info("Classrooms   : {} classrooms with 18 tasks each", classrooms.size());
-    log.info("Tasks        : {} tasks (all stops)", allTasks.size());
+    log.info("Classrooms   : {} classrooms with 11 tasks each", classrooms.size());
+    log.info("Tasks        : {} tasks (3 stops: nyhetskvartalet, fotografen, datasenteret)", allTasks.size());
     long studentsCount = users.entrySet().stream()
         .filter(e -> !List.of("nora", "tri", "anine", "gustav").contains(e.getKey())).count();
     log.info("Students     : {} students across classrooms", studentsCount);

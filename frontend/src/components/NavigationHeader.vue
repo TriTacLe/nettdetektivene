@@ -27,7 +27,7 @@ const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PR
 const notificationOpts = getMyNotificationsOptions()
 const { data: notificationsData } = useQuery({
   ...notificationOpts,
-  queryKey: notificationOpts.queryKey as any,
+  queryKey: notificationOpts.queryKey as readonly unknown[],
   enabled: computed(() => authStore.isTeacher && !NO_SETTINGS_ROUTES.has(route.name as string)),
 })
 

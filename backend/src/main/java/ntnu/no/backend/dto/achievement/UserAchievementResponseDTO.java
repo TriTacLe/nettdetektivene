@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /**
  * Response DTO representing an achievement earned by a user.
- * Achievements are awarded automatically by the {@code trg_mystery_approved} trigger.
+ * Achievements are awarded automatically by database triggers.
  *
  * @param userId unique identifier of the user
  * @param achievementId unique identifier of the achievement
@@ -15,8 +15,8 @@ import java.util.UUID;
  * @param classroomId unique identifier of the classroom context, may be null
  * @param earnedAt timestamp of when the achievement was earned
  *
- * @author tri
- * @version 0.2
+ * @author tri, norakirknes
+ * @version 0.3
  * @since 0.1
  */
 @Schema(description = "Represents an achievement earned by a user")

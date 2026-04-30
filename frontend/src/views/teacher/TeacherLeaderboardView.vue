@@ -15,12 +15,12 @@ const { data, isLoading: leaderboardLoading, isError } = useQuery(
   computed(() =>
     institutionId.value
       ? getClassroomsLeaderboardByInstitutionOptions({ path: { institutionId: institutionId.value } })
-      : ({ queryKey: ['leaderboard-disabled'], queryFn: () => null, enabled: false } as any),
+      : { queryKey: ['leaderboard-disabled'] as const, queryFn: () => null, enabled: false },
   ),
 )
 
 const isLoading = computed(() => classroomsLoading.value || leaderboardLoading.value)
-const entries = computed(() => (data.value as any)?.data ?? [])
+const entries = computed(() => (data.value as { data?: unknown[] } | null)?.data ?? [])
 </script>
 
 <template>

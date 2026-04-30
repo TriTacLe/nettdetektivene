@@ -12,6 +12,10 @@ import {
   getAchievementsForStudentOptions,
   getAllAchievementsOptions,
 } from '@/generated-client/@tanstack/vue-query.gen.ts'
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/dev
 
 const route = useRoute()
 const classroomId = route.params.id as string
@@ -196,7 +200,7 @@ function formatDate(iso: string | undefined): string {
 <template>
   <SceneComponent
     title="Elev Progresjon"
-    :previous="`/classroom/${classroomId}/students`"
+    :previous="`/classroom/${classroomId}`"
     background="/StartBackground.jpg"
   >
     <div v-if="isLoading" class="text-center text-white py-12">Laster...</div>
