@@ -90,10 +90,10 @@ BEGIN
         SET
             xp = xp + v_xp_per_task,
             xp_level = CASE
-                WHEN xp + v_xp_per_task <  50  THEN 1
-                WHEN xp + v_xp_per_task <  150 THEN 2
-                WHEN xp + v_xp_per_task <  300 THEN 3
-                WHEN xp + v_xp_per_task <  500 THEN 4
+                WHEN xp + v_xp_per_task <  20  THEN 1
+                WHEN xp + v_xp_per_task <  40  THEN 2
+                WHEN xp + v_xp_per_task <  60  THEN 3
+                WHEN xp + v_xp_per_task < 120  THEN 4
                 ELSE 5
             END
         WHERE user_id = NEW.user_id;
@@ -157,6 +157,7 @@ FOR EACH ROW
 BEGIN
     DECLARE v_count INT DEFAULT 0;
     DECLARE v_classroom_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+    DECLARE v_xp_per_mystery INT DEFAULT 10;
 
     SELECT COUNT(*) INTO v_count
     FROM mystery_completion
@@ -165,6 +166,18 @@ BEGIN
     SELECT classroom_id INTO v_classroom_id
     FROM mystery_submission
     WHERE submission_id = NEW.submission_id;
+
+    UPDATE user_profile
+    SET
+        xp = xp + v_xp_per_mystery,
+        xp_level = CASE
+            WHEN xp + v_xp_per_mystery <  20  THEN 1
+            WHEN xp + v_xp_per_mystery <  40  THEN 2
+            WHEN xp + v_xp_per_mystery <  60  THEN 3
+            WHEN xp + v_xp_per_mystery <  70  THEN 4
+            ELSE 5
+        END
+    WHERE user_id = NEW.user_id;
 
     IF v_count = 1 THEN
         CALL sp_award_achievement(NEW.user_id, 'mystery_solved', 'first', v_classroom_id);
