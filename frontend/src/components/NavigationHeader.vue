@@ -70,18 +70,7 @@ function goTo(path?: string) {
     <h1 class="nav-title">{{ title }}</h1>
 
     <div class="nav-right">
-      <button
-        v-if="authStore.isTeacher && showSettings"
-        class="nav-bell btn-bare"
-        :aria-label="unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Ingen uleste varsler'"
-        @click="router.push({ name: 'teacher-notifications' })"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
-        <span v-if="unreadCount > 0" class="nav-bell-badge">{{ unreadCount }}</span>
-      </button>
+      
       <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
         {{ authStore.user.displayName }}
       </span>

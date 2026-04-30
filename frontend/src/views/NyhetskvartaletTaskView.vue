@@ -51,7 +51,7 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[NyhetskvartaletTaskView] Found task in store:', taskFromStore)
-        const content = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
+        const rawContent = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -59,10 +59,11 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'nyhetskvartalet',
-          content: content as { news?: NewsChallengeContent } | { photo?: PhotoChallengeContent } | unknown
+          content: rawContent
         }
         console.log('[NyhetskvartaletTaskView] Task from store content:', task.value?.content)
-        console.log('[NyhetskvartaletTaskView] Task from store content.news:', (task.value?.content as { news?: NewsChallengeContent })?.news)
+        const parsedNews = (rawContent as { news?: NewsChallengeContent })?.news ?? rawContent as NewsChallengeContent | null
+        console.log('[NyhetskvartaletTaskView] Task from store content.news:', parsedNews)
       } else {
         console.warn('[NyhetskvartaletTaskView] Task not found in store, fetching from API')
         task.value = await fetchTaskById(taskId)
@@ -83,13 +84,20 @@ onMounted(async () => {
 })
 
 const challenge = computed(() => {
-  const content = (task.value?.content as { news?: NewsChallengeContent })?.news
+  const rawContent = task.value?.content
+  const content = (rawContent as { news?: NewsChallengeContent })?.news ?? rawContent as NewsChallengeContent | null
   if (!content?.articles?.length) return null
   return { articles: content.articles as [NewsArticle, NewsArticle] }
 })
 
-const taskQuestion = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.question)
-const taskTip = computed(() => (task.value?.content as { news?: NewsChallengeContent })?.news?.hint)
+const taskQuestion = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { news?: NewsChallengeContent })?.news?.question ?? (rawContent as NewsChallengeContent)?.question
+})
+const taskTip = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { news?: NewsChallengeContent })?.news?.hint ?? (rawContent as NewsChallengeContent)?.hint
+})
 
 function isCorrectLocally(answers: NewsAnswers): boolean {
   const articles = (task.value?.content as { news?: NewsChallengeContent })?.news?.articles ?? []

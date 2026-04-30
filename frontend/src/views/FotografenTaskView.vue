@@ -51,7 +51,7 @@ onMounted(async () => {
       
       if (taskFromStore) {
         console.log('[FotografenTaskView] Found task in store:', taskFromStore)
-        const content = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
+        const rawContent = parseTaskContent(taskFromStore.content as string, taskFromStore.taskType)
         task.value = {
           id: taskFromStore.uuid,
           title: taskFromStore.title,
@@ -59,7 +59,7 @@ onMounted(async () => {
           difficulty: 1,
           isActive: true,
           stopLocation: 'fotografen',
-          content: content as PhotoChallengeContent | NewsChallengeContent | unknown
+          content: rawContent
         }
         console.log('[FotografenTaskView] Task from store content:', task.value?.content)
       } else {
@@ -81,29 +81,38 @@ onMounted(async () => {
 })
 
 const challenge = computed<FotografenChallenge | null>(() => {
-  const content = (task.value?.content as { photo?: PhotoChallengeContent })?.photo
+  const rawContent = task.value?.content
+  const content = (rawContent as { photo?: PhotoChallengeContent })?.photo ?? rawContent as PhotoChallengeContent | null
   if (!content?.alternatives?.length) return null
   return { alternatives: content.alternatives }
 })
 
-const taskQuestion = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.description)
-const taskTip = computed(() => (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.hint)
+const taskQuestion = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { photo?: PhotoChallengeContent })?.photo?.description ?? (rawContent as PhotoChallengeContent)?.description
+})
+const taskTip = computed(() => {
+  const rawContent = task.value?.content
+  return (rawContent as { photo?: PhotoChallengeContent })?.photo?.hint ?? (rawContent as PhotoChallengeContent)?.hint
+})
 
 function isCorrectLocally(answers: PhotoAnswers): boolean {
-  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
-  if (answers.selections.length !== alts.length) return false
-  return alts.every((alt: any, i: number) => answers.selections[i]?.type === alt.correctType)
+  const rawContent = task.value?.content
+  const alts = (rawContent as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? (rawContent as PhotoChallengeContent)?.alternatives ?? []
+  const sel = answers.selections
+  if (sel.length !== alts.length) return false
+  return alts.every((alt: any, i: number) => sel[i]?.type === alt.correctType)
 }
 
 function failureReason(answers: PhotoAnswers): string {
-  const alts = (task.value?.content as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? []
+  const rawContent = task.value?.content
+  const alts = (rawContent as { photo?: PhotoChallengeContent })?.photo?.alternatives ?? (rawContent as PhotoChallengeContent)?.alternatives ?? []
+  const sel = answers.selections
   const wrongIndexes = alts
-    .map((alt: any, i: number) => (answers.selections[i]?.type !== alt.correctType ? i + 1 : null))
-    .filter((i: number | null): i is number => i !== null)
-  const which = wrongIndexes.length === 1
-    ? `Bilde ${wrongIndexes[0]} ble klassifisert feil.`
-    : `Bildene ${wrongIndexes.join(', ')} ble klassifisert feil.`
-  return `${which} Se nøye etter detaljer som uskarpe kanter, unaturlig lys og urealistiske mønstre som avslører manipulasjon eller KI-generering.`
+    .map((alt: any, i: number) => (sel[i]?.type !== alt.correctType ? i + 1 : null))
+    .filter((i): i is number => i !== null)
+  if (wrongIndexes.length === 0) return ''
+  return `Feil identifiserte bilde ${wrongIndexes.join(', ')}. Sjekk lys, skygger, og detaljer nøye.`
 }
 
 async function onSubmit(answers: PhotoAnswers) {
