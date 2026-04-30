@@ -361,4 +361,3 @@ export interface MysteryTaskCreateRequestDTO {
   sortOrder?: number | null
   isActive?: boolean | null
 }
-

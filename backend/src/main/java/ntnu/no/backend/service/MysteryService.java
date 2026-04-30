@@ -244,7 +244,7 @@ public class MysteryService {
         .orElseThrow(() -> new EntityNotFoundException("Featured mystery submission not found for classroom: " + classroomId));
   }
 
-  @Transactional(readOnly = true)
+@Transactional(readOnly = true)
   public List<MysterySubmissionResponseDTO> getAllFeaturedSubmissions(UUID classroomId) {
     return mysterySubmissionRepository
         .findByClassroom_IdAndIsFeaturedTrueOrderByWeekYearDescWeekNumberDesc(classroomId)
@@ -256,7 +256,7 @@ public class MysteryService {
   private String resolveTaskContent(MysterySubmission submission, MysteryTaskCreateRequestDTO dto) {
     if (dto.getContent() != null && !dto.getContent().isBlank()) {
       return dto.getContent();
-    }
+}
 
     try {
       return objectMapper.writeValueAsString(Map.of(

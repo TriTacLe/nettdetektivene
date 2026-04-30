@@ -28,14 +28,14 @@ public interface MysterySubmissionRepository extends JpaRepository<MysterySubmis
    */
   List<MysterySubmission> findByClassroom_Id(UUID classroomId);
 
-  /**
-   * Finds submissions in a classroom made by a specific student.
-   *
-   *  classroomId the classroom id
-   *  userId the student id
-   *  matching submissions
-   */
-  List<MysterySubmission> findByClassroom_IdAndUserSubmittedBy_Id(UUID classroomId, UUID userId);
+/**
+    * Finds submissions in a classroom made by a specific student.
+    *
+    * @param classroomId the classroom id
+    * @param userId the student id
+    * @return matching submissions
+    */
+   List<MysterySubmission> findByClassroom_IdAndUserSubmittedBy_Id(UUID classroomId, UUID userId);
 
   /**
    * Finds all submissions in a classroom with a given status.

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen.ts'
+import { getClassroomOptions } from '@/generated-client/@tanstack/vue-query.gen'
 import SceneComponent from '@/components/SceneComponent.vue'
 
 const route = useRoute()
@@ -11,7 +11,7 @@ const router = useRouter()
 const classroomId = computed(() => String(route.params.classroomId))
 
 const { data: classroomData } = useQuery(
-  computed(() => getClassroomOptions({ path: { id: classroomId.value } })),
+  getClassroomOptions({ path: { id: classroomId.value } }),
 )
 
 const classroomTitle = computed(() => classroomData.value?.data?.title ?? 'Klasserom')
@@ -34,6 +34,7 @@ function goToSubmit() {
 <template>
   <SceneComponent
     :title="classroomTitle"
+    previous="/student-home"
     background="/StartBackground.jpg"
     @back="router.back()"
   >
@@ -47,7 +48,7 @@ function goToSubmit() {
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <button type="button" class="choice-card" @click="goToPlay">
+          <button type="button" class="btn-bare choice-card" @click="goToPlay">
             <div class="icon">🕵️</div>
             <h2>Spill ukens mysterium</h2>
             <p>
@@ -56,7 +57,7 @@ function goToSubmit() {
             <span>Start mysterium →</span>
           </button>
 
-          <button type="button" class="choice-card" @click="goToSubmit">
+          <button type="button" class="btn-bare choice-card" @click="goToSubmit">
             <div class="icon">📩</div>
             <h2>Send inn mysterium</h2>
             <p>

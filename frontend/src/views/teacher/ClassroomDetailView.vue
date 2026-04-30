@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import SidePanelMenu, { type SidePanelMenuItem } from '@/components/SidePanelMenu.vue'
 import ClassroomTasksPanel from '@/components/ClassroomTasksPanel.vue'
+import ClassroomMysteriesPanel from '@/components/ClassroomMysteriesPanel.vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { Bell, Settings, Gamepad2, X, Search } from 'lucide-vue-next'
 import {
@@ -209,13 +210,14 @@ function handleMenuItem(item: SidePanelMenuItem) {
   router.push({ name: item.key, params: { id: classroomId } })
 }
 
-type DetailTab = 'students' | 'tasks'
+type DetailTab = 'students' | 'tasks' | 'mysteries'
 const activeTab = ref<DetailTab>('students')
 const tabs: { key: DetailTab; label: string }[] = [
   { key: 'students', label: 'Elever' },
   { key: 'tasks', label: 'Oppgaver' },
+  { key: 'mysteries', label: 'Ukens mysterium' },
 ]
-const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null })
+const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null, mysteries: null })
 
 function setTabRef(key: DetailTab, el: Element | null) {
   tabRefs.value[key] = el as HTMLButtonElement | null
@@ -224,7 +226,7 @@ function setTabRef(key: DetailTab, el: Element | null) {
 function onTabKeydown(e: KeyboardEvent) {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
   e.preventDefault()
-  const order: DetailTab[] = ['students', 'tasks']
+  const order: DetailTab[] = ['students', 'tasks', 'mysteries']
   const i = order.indexOf(activeTab.value)
   const next = e.key === 'ArrowRight'
     ? order[(i + 1) % order.length]!
@@ -266,7 +268,7 @@ function onTabKeydown(e: KeyboardEvent) {
               @click="activeTab = tab.key"
             >
               <span class="tab-label">{{ tab.label }}</span>
-              <span class="tab-count">
+              <span v-if="tab.key !== 'mysteries'" class="tab-count">
                 {{ tab.key === 'students' ? allStudents.length : totalTasks }}
               </span>
             </button>
@@ -279,6 +281,15 @@ function onTabKeydown(e: KeyboardEvent) {
             aria-labelledby="tab-tasks"
           >
             <ClassroomTasksPanel :classroom-id="classroomId" />
+          </div>
+
+          <div
+            v-show="activeTab === 'mysteries'"
+            :id="`tab-panel-mysteries`"
+            role="tabpanel"
+            aria-labelledby="tab-mysteries"
+          >
+            <ClassroomMysteriesPanel :classroom-id="classroomId" />
           </div>
 
           <div
