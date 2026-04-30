@@ -8,7 +8,7 @@ const router = useRouter()
   const authStore = useAuthStore()
 
   // Test credentials for school project demo
-  const email = ref('laerer@ntnu.no')
+  const email = ref('nora@ntnu.no')
   const password = ref('password123')
   const serverError = ref('')
   const isLoading = ref(false)
