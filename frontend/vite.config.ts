@@ -68,7 +68,6 @@ export default defineConfig({
     },
     allowedHosts: [
       'nettdetektivene.orbitntnu.com',
-      '1394-2001-700-300-4013-6caa-319e-8bcf-e831.ngrok-free.app',
     ],
   },
 })
