@@ -28,9 +28,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
- * Demo data seeder activated with the "seed" Spring profile.
+ * Demo data seeder activated with the "dev" or "seed" Spring profile.
  *
- * Run with:
+ * Runs automatically with "dev" profile (make dev), or explicitly with:
  * mvn spring-boot:run -Dspring-boot.run.profiles=seed
  *
  * Creates institutions, teachers, classrooms, tasks (3 valid stops),
@@ -52,7 +52,7 @@ import java.util.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("seed")
+@Profile({"seed", "dev"})
 public class DemoDataSeeder implements CommandLineRunner {
 
   private final UserRepository userRepository;
