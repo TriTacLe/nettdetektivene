@@ -51,7 +51,15 @@ async function pickAlternative(selectedIndex: number) {
       router.push({ name: 'student-weekly-mystery-play', params: { classroomId: classroomId.value } })
     } else {
       wrongIndex.value = selectedIndex
-      toast.showError('Feil svar — prøv igjen')
+      toast.showError('Feil svar — du ryker ut av mysteriet')
+      // One wrong attempt ends the run for this mystery. Send the player
+      // back to Hansen's dialog at the choices (same destination as the
+      // back button) so they can pick another mystery or submit a tip.
+      router.push({
+        name: 'student-weekly-mystery',
+        params: { classroomId: classroomId.value },
+        query: { skip: '1' },
+      })
     }
   } catch (error) {
     errorMessage.value =
