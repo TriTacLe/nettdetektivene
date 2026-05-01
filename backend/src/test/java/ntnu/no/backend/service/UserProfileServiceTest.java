@@ -6,7 +6,9 @@ import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
+import ntnu.no.backend.model.Notification;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.NotificationRepository;
@@ -19,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -197,6 +200,58 @@ class UserProfileServiceTest {
     assertThatThrownBy(() -> userProfileService.update(user, dto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("upassende ord");
+  }
+
+  /**
+   * Verifies that instructors are notified when a student in a classroom uses a censored display name.
+   */
+  @Test
+  void update_notifiesInstructors_whenCensoredWordAndInClassroom() {
+    User user = createUser(UUID.randomUUID(), "Student");
+    UserProfile profile = createProfile(user);
+    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
+    ClassroomStudent membership = ClassroomStudent.builder()
+        .classroom(classroom)
+        .user(user)
+        .isAllowed(true)
+        .build();
+    User teacher = createUser(UUID.randomUUID(), "Teacher");
+    ClassroomInstructor instructor = ClassroomInstructor.builder()
+        .classroom(classroom)
+        .user(teacher)
+        .build();
+    UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
+        .displayName("helvete")
+        .build();
+
+    when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of(instructor));
+
+    assertThatThrownBy(() -> userProfileService.update(user, dto))
+        .isInstanceOf(IllegalArgumentException.class);
+
+    verify(notificationRepository).save(any(Notification.class));
+  }
+
+  /**
+   * Verifies that no notification is sent when a censored word is used but the user is not in a classroom.
+   */
+  @Test
+  void update_doesNotNotify_whenCensoredWordAndNotInClassroom() {
+    User user = createUser(UUID.randomUUID(), "Student");
+    UserProfile profile = createProfile(user);
+    UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
+        .displayName("helvete")
+        .build();
+
+    when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> userProfileService.update(user, dto))
+        .isInstanceOf(IllegalArgumentException.class);
+
+    verify(notificationRepository, never()).save(any());
   }
 
   /**
