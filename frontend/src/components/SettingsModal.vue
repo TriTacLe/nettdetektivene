@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useAudioStore } from '@/stores/AudioStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useFocusTrap } from '@/composables/UseFocusTrap'
 import { Volume2, VolumeX, Zap, X, LogOut } from 'lucide-vue-next'
 
 const emit = defineEmits<{ close: [] }>()
@@ -14,9 +15,7 @@ const sfxVolume = ref(Math.round(audio.sfxVolume * 100))
 const textSpeed = ref(audio.textSpeed)
 
 const closeBtn = ref<HTMLButtonElement | null>(null)
-const modalRef = ref<HTMLElement | null>(null)
 const previouslyFocused = ref<HTMLElement | null>(null)
-
 
 onMounted(() => {
   previouslyFocused.value = document.activeElement as HTMLElement | null
@@ -28,35 +27,7 @@ function close() {
   nextTick(() => previouslyFocused.value?.focus())
 }
 
-function getFocusable(): HTMLElement[] {
-  if (!modalRef.value) return []
-  return Array.from(
-    modalRef.value.querySelectorAll<HTMLElement>(
-      'button:not(:disabled), input:not(:disabled)'
-    )
-  )
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    close()
-    return
-  }
-  if (e.key !== 'Tab') return
-  e.preventDefault()
-  const elements = getFocusable()
-  if (elements.length === 0) return
-  const active = document.activeElement
-  const currentIdx = elements.indexOf(active as HTMLElement)
-
-  if (e.shiftKey) {
-    const prev = currentIdx <= 0 ? elements.length - 1 : currentIdx - 1
-    elements[prev].focus()
-  } else {
-    const next = currentIdx >= elements.length - 1 ? 0 : currentIdx + 1
-    elements[next].focus()
-  }
-}
+const { onKeydown } = useFocusTrap('settings-modal', close)
 
 function onMusicInput() {
   audio.setMusicVolume(musicVolume.value / 100)
@@ -82,9 +53,9 @@ function logout() {
     @click.self="close"
     @keydown="onKeydown"
   >
-    <div ref="modalRef" class="modal" role="dialog" aria-modal="true" aria-label="Innstillinger">
+    <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-label="Innstillinger">
       <div class="modal-header">
-        <h2 class="modal-title no-stroke">Innstillinger</h2>
+        <h2 class="modal-title text-plain">Innstillinger</h2>
         <button
           ref="closeBtn"
           class="close-button btn-bare"
@@ -137,7 +108,6 @@ function logout() {
           </div>
         </section>
 
-        <!-- SFX -->
         <section class="setting-section">
           <div class="setting-row">
             <div class="setting-label">
@@ -208,7 +178,6 @@ function logout() {
           </div>
         </section>
 
-        <!-- Auto-advance -->
         <section v-if="!auth.isTeacher" class="setting-section">
           <div class="setting-row">
             <div class="setting-label">
