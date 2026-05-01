@@ -8,10 +8,10 @@ const emit = defineEmits<{
   submit: [answers: PhotoAnswers]
 }>()
 
-const TYPES: { value: PhotoType; label: string }[] = [
-  { value: 'ekte', label: 'Ekte' },
-  { value: 'ai-generert', label: 'KI-generert' },
-  { value: 'manipulert', label: 'Manipulert' },
+const TYPES: { value: PhotoType; label: string; tone: 'success' | 'accent' | 'danger' }[] = [
+  { value: 'ekte', label: 'Ekte', tone: 'success' },
+  { value: 'ai-generert', label: 'KI-generert', tone: 'accent' },
+  { value: 'manipulert', label: 'Manipulert', tone: 'danger' },
 ]
 
 const selections = ref<(PhotoType | null)[]>(props.challenge.alternatives.map(() => null))
@@ -38,35 +38,34 @@ function submit() {
 
 <template>
   <div class="fotografen-wrapper">
-  <div class="header">
-    <h2 class="title">{{ question ?? 'Er bildene ekte, KI-generert eller manipulert?' }}</h2>
-    <GuidanceComponent :tip="tip" />
-    <p v-if="!tip" class="subtitle">Velg riktig alternativ for hvert bilde</p>
-  </div>
+    <div class="header">
+      <h2 class="title">{{ question ?? 'Er bildene ekte, KI-generert eller manipulert?' }}</h2>
+      <GuidanceComponent :tip="tip" />
+      <p v-if="!tip" class="subtitle">Velg riktig alternativ for hvert bilde</p>
+    </div>
 
-    <div class="cards" :style="{ '--count': challenge.alternatives.length }">
+    <div class="photos" :style="{ '--count': challenge.alternatives.length }">
       <div
         v-for="(alt, i) in challenge.alternatives"
         :key="i"
-        class="card"
+        class="photo-block"
       >
-        <img class="card-image" :src="alt.imagePath" alt="" />
+        <div class="photo-frame">
+          <img class="photo-image" :src="alt.imagePath" alt="" />
+        </div>
 
-        <div class="choices">
+        <div class="chips" role="radiogroup" :aria-label="`Klassifiser bilde ${i + 1}`">
           <button
             v-for="type in TYPES"
             :key="type.value"
             type="button"
-            class="choice-btn btn-bare"
-            :class="{ 'choice-btn--selected': selections[i] === type.value }"
+            class="chip"
+            :class="[`chip--${type.tone}`, { 'chip--selected': selections[i] === type.value }]"
             :disabled="submitted"
+            role="radio"
+            :aria-checked="selections[i] === type.value"
             @click="select(i, type.value)"
           >
-            <span class="checkbox" :class="{ 'checkbox--checked': selections[i] === type.value }">
-              <svg v-if="selections[i] === type.value" viewBox="0 0 12 10" fill="none" aria-hidden="true">
-                <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </span>
             {{ type.label }}
           </button>
         </div>
@@ -76,7 +75,7 @@ function submit() {
     <div class="lever-row">
       <button
         type="button"
-        class="lever-btn btn-bare"
+        class="lever-btn"
         :disabled="!allAnswered || submitted"
         @click="submit"
       >
@@ -90,8 +89,8 @@ function submit() {
 .fotografen-wrapper {
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 2rem 1.5rem;
-  gap: 1rem;
+  padding: 1.25rem 1rem 1.5rem;
+  gap: 1.25rem;
   overflow-y: auto;
   min-height: 0;
 }
@@ -99,14 +98,17 @@ function submit() {
 .header {
   text-align: center;
   flex-shrink: 0;
+  padding-top: 4rem;
+  margin-bottom: 6rem;
 }
 
 .title {
-  font-size: clamp(1.4rem, 3vw, 2.25rem);
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
   font-weight: 900;
+  letter-spacing: 0.01em;
   color: white;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-  margin: 0 0 0.35rem;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85);
+  margin: 0 0 0.85rem;
 }
 
 .subtitle {
@@ -117,141 +119,100 @@ function submit() {
   margin: 0;
 }
 
-.tip {
-  margin: 0.35rem 0 0;
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-style: italic;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-}
-
-.tip-label {
-  font-weight: 700;
-  font-style: normal;
-  color: #FFD700;
-}
-
-.cards {
+.photos {
   display: grid;
-  grid-template-columns: repeat(var(--count), minmax(0, 260px));
+  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
   justify-content: center;
-  gap: 1.25rem;
+  gap: 1.75rem;
+  width: 100%;
+  max-width: min(1800px, 100%);
+  margin: 0 auto;
 }
 
-.card {
-  background: #fdfaf4;
-  border-radius: 14px;
-  padding: 1.5rem;
+.photo-block {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border: 3px solid transparent;
-  transition: border-color 0.2s;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  gap: 0.9rem;
   align-self: start;
+  min-width: 0;
 }
 
-.card-image {
+.photo-frame {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #e9e5da;
-  flex-shrink: 0;
-}
-
-.choices {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  flex-shrink: 0;
-}
-
-.choice-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.75rem 0.9rem;
-  border: 2px solid #c8c0d4;
-  border-radius: 8px;
-  background: white;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  font-family: inherit;
-}
-
-.choice-btn--selected {
-  border-color: #1a1a1a;
-  background: #f5f0ff;
-}
-
-.choice-btn:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.checkbox {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #888;
-  border-radius: 4px;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  background: #0a0a14;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s, border-color 0.15s;
 }
 
-.checkbox--checked {
+.photo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.chips {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chip {
+  --chip-color: var(--color-nd-success);
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.chip--success { --chip-color: var(--color-nd-success); }
+.chip--accent  { --chip-color: var(--color-nd-accent); }
+.chip--danger  { --chip-color: var(--color-nd-danger); }
+
+.chip:not(.chip--selected)::after {
   background: #1a1a1a;
-  border-color: #1a1a1a;
-  color: white;
 }
 
-.checkbox svg {
-  width: 12px;
-  height: 12px;
+.chip:not(.chip--selected) {
+  color: #ffffff;
+}
+
+.chip--selected::before {
+  background: color-mix(in srgb, var(--chip-color) 60%, #000);
+}
+
+.chip--selected::after {
+  background: var(--chip-color);
+}
+
+.chip--selected {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .lever-row {
-  position: sticky;
-  bottom: 0;
   display: flex;
   justify-content: center;
   flex-shrink: 0;
-  padding-top: 0.5rem;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.32) 42%, rgba(0, 0, 0, 0.55));
+  padding-top: 0.75rem;
 }
 
 .lever-btn {
-  padding: 1rem 3rem;
-  background: white;
-  border: 2px solid #1a1a1a;
-  border-radius: 999px;
   font-size: 1.1rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.lever-btn:hover:not(:disabled) {
-  background: #1a1a1a;
-  color: white;
-}
-
-.lever-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
+  padding: 0.95rem 2.5rem;
 }
 
 @media (max-width: 1100px) {
-  .cards {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+  .photos {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
   }
 }
 
@@ -260,8 +221,13 @@ function submit() {
     padding: 1rem;
   }
 
-  .cards {
+  .photos {
     grid-template-columns: 1fr;
+  }
+
+  .chip {
+    font-size: 0.9rem;
+    padding: 0.55rem 0.6rem;
   }
 }
 </style>
