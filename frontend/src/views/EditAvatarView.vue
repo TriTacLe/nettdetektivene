@@ -75,7 +75,7 @@ function handleSave() {
 </script>
 
 <template>
-  <SceneComponent title="Rediger profil" background="/StartBackground.jpg">
+  <SceneComponent title="Rediger profil" previous="/student-profile" background="/StartBackground.jpg">
     <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
