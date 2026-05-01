@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.ts'
 import SettingsModal from './SettingsModal.vue'
 
@@ -12,28 +12,10 @@ defineProps<{
 
 const emit = defineEmits<{ back: [] }>()
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 const settingsOpen = ref(false)
 
 let nameRefreshInterval: ReturnType<typeof setInterval> | null = null
-
-const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login'])
-const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
-
-const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
-const showLogout = computed(
-  () =>
-    !!authStore.user &&
-    !authStore.isTeacher &&
-    PRE_CLASSROOM_ROUTES.has(route.name as string) &&
-    !showSettings.value,
-)
-
-function logout() {
-  authStore.logout()
-  router.push({ name: 'student-login' })
-}
 
 function goTo(path?: string) {
   if (path) {
@@ -82,12 +64,9 @@ onUnmounted(() => {
     <h1 class="nav-title">{{ title }}</h1>
 
     <div class="nav-right">
-      <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
+      <span v-if="!authStore.isTeacher && authStore.user" class="nav-user">
         {{ authStore.user.displayName }}
       </span>
-      <button v-if="showLogout" class="nav-button btn-bare logout-button" @click="logout">
-        Logg ut
-      </button>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
         <button class="nav-button btn-bare" aria-label="Go forward">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -104,7 +83,6 @@ onUnmounted(() => {
       </div>
       <div v-else class="nav-placeholder" />
       <button
-        v-if="showSettings"
         class="nav-button settings-button btn-bare"
         aria-label="Apne innstillinger"
         @click="settingsOpen = true"
@@ -220,21 +198,6 @@ onUnmounted(() => {
   paint-order: normal;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
   padding-top: 10px;
-}
-
-.logout-button {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: white;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 0.4rem;
-  padding: 0.25rem 0.6rem;
-  cursor: pointer;
-}
-
-.logout-button:hover {
-  background: rgba(0, 0, 0, 0.55);
 }
 
 @media (max-width: 500px) {
