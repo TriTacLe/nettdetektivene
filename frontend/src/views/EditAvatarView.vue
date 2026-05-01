@@ -123,14 +123,12 @@ function handleSave() {
 
             <div class="flex gap-3 w-full">
               <button
-                tabindex="0"
                 class="flex-1 bg-stone-300 hover:bg-stone-400 text-stone-800 font-bold py-3 rounded-xl border-2 border-stone-700 shadow-md transition"
                 @click="router.push({ name: 'student-profile' })"
               >
                 Avbryt
               </button>
               <button
-                tabindex="0"
                 :disabled="save.isPending.value"
                 class="flex-1 bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl border-2 border-stone-700 shadow-md transition"
                 @click="handleSave"
