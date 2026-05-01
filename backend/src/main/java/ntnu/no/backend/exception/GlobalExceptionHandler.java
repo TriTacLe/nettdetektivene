@@ -151,7 +151,10 @@ public class GlobalExceptionHandler {
    * @return 500 Internal Server Error with generic message
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception e) {
+  public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception e) throws Exception {
+    if (e instanceof org.springframework.security.access.AccessDeniedException || e instanceof org.springframework.web.bind.MissingServletRequestParameterException) {
+      throw e;
+    }
     logger.error("Unhandled exception", e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
       .body(ApiResponse.error("En uventet feil oppsto"));
