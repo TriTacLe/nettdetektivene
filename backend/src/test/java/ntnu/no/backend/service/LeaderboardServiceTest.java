@@ -9,7 +9,9 @@ import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.TaskBestScoreId;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +44,9 @@ class LeaderboardServiceTest {
 
   @Mock
   ClassroomRepository classroomRepository;
+
+  @Mock
+  ClassroomStudentRepository classroomStudentRepository;
 
   @Mock
   UserProfileRepository userProfileRepository;
@@ -69,17 +75,25 @@ class LeaderboardServiceTest {
   @Test
   void getClassroomLeaderboard_returnsRankedList() {
     UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder().id(classroomId).build();
 
     User user1 = User.builder().id(UUID.randomUUID()).displayName("Nora").build();
     User user2 = User.builder().id(UUID.randomUUID()).displayName("Tri").build();
     Task task = Task.builder().id(UUID.randomUUID()).title("Spot the phishing email").build();
-    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
 
     TaskBestScore score1 = buildScore(user1, task, classroom, 50);
     TaskBestScore score2 = buildScore(user2, task, classroom, 80);
 
+    ClassroomStudent enrollment1 = ClassroomStudent.builder()
+        .classroom(classroom).user(user1).displayName("Nora").isAllowed(true).build();
+    ClassroomStudent enrollment2 = ClassroomStudent.builder()
+        .classroom(classroom).user(user2).displayName("Tri").isAllowed(true).build();
+
     when(taskBestScoreRepository.findByClassroomId(classroomId))
         .thenReturn(List.of(score1, score2));
+    when(classroomRepository.findById(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomStudentRepository.findAllByClassroomAndIsAllowedIsTrue(classroom))
+        .thenReturn(List.of(enrollment1, enrollment2));
     when(userProfileRepository.findByUserIn(org.mockito.ArgumentMatchers.anyList()))
         .thenReturn(List.of());
 
@@ -99,7 +113,12 @@ class LeaderboardServiceTest {
   @Test
   void getClassroomLeaderboard_returnsEmpty_whenNoScores() {
     UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder().id(classroomId).build();
+
     when(taskBestScoreRepository.findByClassroomId(classroomId)).thenReturn(List.of());
+    when(classroomRepository.findById(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomStudentRepository.findAllByClassroomAndIsAllowedIsTrue(classroom))
+        .thenReturn(List.of());
     when(userProfileRepository.findByUserIn(org.mockito.ArgumentMatchers.anyList()))
         .thenReturn(List.of());
 
