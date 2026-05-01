@@ -25,7 +25,7 @@ export const endingDialogs: DialogGraph = {
     background: '/datasenteret.jpg',
     lines: [
       { text: 'Hallo, politiet? Vi har tatt datatyven på fersken her i datasenteret.', mood: 'neutral' },
-      { text: 'Send en patrulje. Jeg holder ham her til dere kommer.', mood: 'neutral' },
+      { text: 'Send en patrulje. Jeg holder han her til dere kommer.', mood: 'neutral' },
     ],
     next: 'hacker-broken',
   },
@@ -61,7 +61,7 @@ export const endingDialogs: DialogGraph = {
     lines: [
       { text: 'Politiet er på vei. De skal ta over herfra.', mood: 'neutral' },
       { text: 'Du er ikke detektiv-i-opplæring lenger. Du er en ekte nettdetektiv nå.', mood: 'happy' },
-      { text: 'Tusen takk for hjelpen. Internettbyen står i takk til deg.', mood: 'happy' },
+      { text: 'Tusen takk for hjelpen. Du reddet Internettbyen!', mood: 'happy' },
     ],
   },
 }

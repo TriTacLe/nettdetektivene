@@ -300,8 +300,8 @@ onUnmounted(() => {
             @click="goTo('/achievements')"
           >
             <div class="image-note">
-              <img :src="badgeImage" alt="Resultater" class="image-note-bg achievements-image">
-              <p class="image-note-title">Resultater</p>
+              <img :src="badgeImage" alt="Medaljer" class="image-note-bg achievements-image">
+              <p class="image-note-title">Medaljer</p>
             </div>
           </BoardNote>
         </div>
@@ -350,27 +350,27 @@ onUnmounted(() => {
 
         <Transition name="fade">
           <div v-if="showHelp" class="help-overlay" @click.self="closeHelp">
-            <div class="help-note help-note--overlay" style="top: 8%; left: 13%; transform: translate(-50%, 30%) rotate(-4deg)">
+            <div class="help-note help-note--overlay" style="top: 1%; left: 15%; transform: translate(-50%, 30%) rotate(-4deg)">
               <p class="help-note-title">Detektivprofil</p>
               <p class="help-note-text">Se profilen din, endre avatar og navn</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 52%; left: 50%; transform: translate(-50%, -130%) rotate(1.5deg)">
+            <div class="help-note help-note--overlay" style="top: 60%; left: 49%; transform: translate(-50%, -130%) rotate(1.5deg)">
               <p class="help-note-title">Kartet</p>
               <p class="help-note-text">Utforsk kartet og finn detektivoppdrag</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 5%; left: 86%; transform: translate(-50%, 30%) rotate(3deg)">
-              <p class="help-note-title">Resultater</p>
-              <p class="help-note-text">Se medaljer og resultater du har oppnådd</p>
+            <div class="help-note help-note--overlay" style="top: 1%; left: 77%; transform: translate(-50%, 30%) rotate(3deg)">
+              <p class="help-note-title">Medaljer</p>
+              <p class="help-note-text">Se medaljer du har oppnådd</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 88%; left: 84%; transform: translate(-50%, -130%) rotate(-2deg)">
+            <div class="help-note help-note--overlay" style="top: 97%; left: 73%; transform: translate(-50%, -130%) rotate(-2deg)">
               <p class="help-note-title">Notatblokk</p>
               <p class="help-note-text">Skriv og les egne notater fra oppdragene</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 85%; left: 14%; transform: translate(-50%, -130%) rotate(2.5deg)">
+            <div class="help-note help-note--overlay" style="top: 90%; left: 10%; transform: translate(-50%, -130%) rotate(2.5deg)">
               <p class="help-note-title">Ledertavle</p>
               <p class="help-note-text">Se hvilken klasse på skolen din som har flest poeng</p>
             </div>
-            <div class="help-note help-note--overlay" style="top: 92%; left: 50%; transform: translate(-50%, -130%) rotate(-1deg)">
+            <div class="help-note help-note--overlay" style="top: 97%; left: 29%; transform: translate(-50%, -130%) rotate(-1deg)">
               <p class="help-note-title">Ukens Mysterium</p>
               <p class="help-note-text">Send inn funn fra nettet og vinn en medalje</p>
             </div>
@@ -395,8 +395,8 @@ onUnmounted(() => {
         </BoardNote>
         <BoardNote :rotation="-2" pin-color="#f59f00" width="100%" @click="goTo('/achievements')">
           <div class="image-note">
-            <img :src="badgeImage" alt="Resultater" class="mobile-nav-img achievements-image" />
-            <p class="image-note-title">Resultater</p>
+            <img :src="badgeImage" alt="Medaljer" class="mobile-nav-img achievements-image" />
+            <p class="image-note-title">Medaljer</p>
           </div>
         </BoardNote>
         <BoardNote :rotation="1.5" pin-color="#f59f00" width="100%" @click="goTo('/student-leaderboard')">
@@ -433,7 +433,7 @@ onUnmounted(() => {
             <ul class="mobile-help-list">
               <li><strong>Spill</strong> — Utforsk kartet og finn detektivoppdrag</li>
               <li><strong>Detektivprofil</strong> — Se profilen din, endre avatar og navn</li>
-              <li><strong>Resultater</strong> — Se medaljer og resultater du har oppnådd</li>
+              <li><strong>Medaljer</strong> — Se medaljer du har oppnådd</li>
               <li><strong>Ledertavle</strong> — Se hvilken klasse som har flest poeng</li>
               <li><strong>Notatbok</strong> — Skriv og les egne notater fra oppdragene</li>
               <li><strong>Ukens Mysterium</strong> — Send inn funn fra nettet og vinn en medalje</li>
@@ -843,7 +843,7 @@ onUnmounted(() => {
     0 10px 18px rgba(0, 0, 0, 0.28),
     0 2px 5px rgba(0, 0, 0, 0.14);
   border-radius: 0;
-  width: 10.25rem;
+  width: 11.25rem;
   pointer-events: none;
   border: 1px solid rgba(167, 133, 28, 0.12);
 }
@@ -881,13 +881,13 @@ onUnmounted(() => {
 .help-note-title {
   margin: 0 0 0.25rem;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   color: #5d430d;
 }
 
 .help-note-text {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 1.5rem;
   color: #5d430d;
   line-height: 1.35;
 }

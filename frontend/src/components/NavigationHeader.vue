@@ -236,4 +236,20 @@ onUnmounted(() => {
 .logout-button:hover {
   background: rgba(0, 0, 0, 0.55);
 }
+
+@media (max-width: 500px) {
+  .nav-title {
+    font-size: 1.6rem;
+    margin: 0 8px 0 12px;
+    padding-top: 0;
+  }
+
+  .nav-user {
+    font-size: 0.75rem;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 </style>
