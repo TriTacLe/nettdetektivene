@@ -55,7 +55,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("seed,dev")
+@Profile({"seed", "dev"})
 public class DataSeeder implements CommandLineRunner {
 
   private final UserRepository userRepository;
@@ -66,6 +66,7 @@ public class DataSeeder implements CommandLineRunner {
   private final InstitutionRepository institutionRepository;
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
   private final TaskRepository taskRepository;
   private final NotebookEntryRepository notebookEntryRepository;
@@ -105,6 +106,7 @@ public class DataSeeder implements CommandLineRunner {
       seedNotebookEntries();
       seedMysterySubmissions();
       verifyTaskAssignments();
+      verifyInstructorAssignments();
       verifyEnrollments();
       printSummary();
       log.info("Demo data seeding complete.");
@@ -154,9 +156,9 @@ public class DataSeeder implements CommandLineRunner {
         { "lærer@flatåsen.no", "Nora", "nora", "flataasen" },
         { "lærer@byåsen.no", "Lars", "lars", "byaasen" },
     };
-    for (String[] row : data) {
-      User u = createUser(row[0], row[1], List.of(instructorRole));
-      users.put(row[2], u);
+    for (Object[] row : data) {
+      User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
+      users.put((String) row[2], u);
       log.info("Instructor: {} ({})", row[1], row[0]);
     }
   }
@@ -246,6 +248,7 @@ public class DataSeeder implements CommandLineRunner {
             .isActive(true)
             .build());
       });
+    }
 
     // ----- Nyhetskvartalet (NEWS) — 3 tasks ---------------------------------
     NewsTaskSpec[] newsSpecs = {
@@ -461,7 +464,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
-    for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester")) {
+    for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester",
+      "anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward")) {
       enroll(users.get(key), class1);
     }
   }
@@ -492,18 +496,14 @@ public class DataSeeder implements CommandLineRunner {
     UUID classroomId = class1.getId();
 
     // Star students: all tasks, score 95-100
-    for (String key : List.of("anine", "nora-student", "gustav")) {
+    for (String key : List.of("anine", "nora", "gustav")) {
       User u = users.get(key);
       if (hasAttempts(u.getId(), classroomId))
         continue;
-      // // Only the demo tester has task progress so student1..5 stay clean
-      // // for QA flows that need a fresh user.
-      // User tester = users.get("tester");
-      // if (!hasAttempts(tester.getId(), classroomId)) {
       for (int i = 0; i < allTasks.size(); i++) {
-        submitAttempt(tester.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
+        submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
       }
-      log.info("Task attempts seeded for tester@ntnu.no via sp_submit_attempt");
+      log.info("Task attempts seeded for {} via sp_submit_attempt", u.getUsername());
     }
 
     // Good students: first 6 tasks, score 80-92
@@ -553,17 +553,17 @@ public class DataSeeder implements CommandLineRunner {
             "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
         { class1, "anine", "fotografen",
             "Bildemanipulasjon er overraskende enkelt. Stoler ikke blindt på bilder lenger." },
-        { class1, "nora-student", "fotografen",
+        { class1, "nora", "fotografen",
             "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover." },
-        { class1, "nora-student", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
+        { class1, "nora", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
         { class1, "gustav", "datasenteret", "Kryptering beskytter dataene mine. Lærte mye om digital sikkerhet!" },
         { class1, "tri", "fotografen", "Metadata i bilder avslører mer enn jeg trodde. Alltid kritisk til bilder nå." },
         { class1, "silje", "nyhetskvartalet", "Falske nyheter ser ekte ut. Sjekker alltid kilden!" },
         // 6B
-        { class2, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
-        { class2, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
-        { class2, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
-        { class2, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
+        { class1, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
+        { class1, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
+        { class1, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
+        { class1, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
         // test
         { class1, "tester", "nyhetskvartalet",
             "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
@@ -843,10 +843,31 @@ public class DataSeeder implements CommandLineRunner {
     log.info("========================================");
   }
 
+  private void verifyInstructorAssignments() {
+    log.info("Verifying instructor classroom assignments...");
+    List<String> instructorKeys = List.of("nora", "lars");
+    for (String key : instructorKeys) {
+      User instructor = users.get(key);
+      List<ntnu.no.backend.model.classroom.ClassroomInstructor> assignments =
+          classroomInstructorRepository.findAllByUser(instructor);
+      if (assignments.isEmpty()) {
+        log.error("  ERROR: Instructor {} has NO classroom assignments!", instructor.getDisplayName());
+      } else {
+        log.info("  Instructor {} -> {} classroom(s): {}",
+            instructor.getDisplayName(), assignments.size(),
+            assignments.stream()
+                .map(ci -> ci.getClassroom().getTitle())
+                .toList());
+      }
+    }
+    log.info("Instructor assignment verification complete.");
+    log.info("");
+  }
+
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of("anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward",
+    List<String> studentKeys = List.of("anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward",
         "no-classroom");
     // List<String> studentKeys = List.of("student1", "student2", "student3",
     // "student4", "student5", "tester");
