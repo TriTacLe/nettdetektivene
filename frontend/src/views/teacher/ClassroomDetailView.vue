@@ -852,6 +852,7 @@ function onTabKeydown(e: KeyboardEvent) {
   font-size: 1rem;
   font-weight: 700;
   color: #111827;
+  -webkit-text-stroke: initial;
   margin: 0 0 0.5rem;
 }
 
@@ -896,7 +897,7 @@ function onTabKeydown(e: KeyboardEvent) {
 
 .dialog-btn--danger {
   background: #dc2626;
-  color: white;
+  color: #374151;
 }
 
 .dialog-btn--danger:hover {
