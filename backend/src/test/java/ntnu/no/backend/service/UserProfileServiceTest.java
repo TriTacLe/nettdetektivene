@@ -192,6 +192,7 @@ class UserProfileServiceTest {
         .build();
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
+    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> userProfileService.update(user, dto))
         .isInstanceOf(IllegalArgumentException.class)

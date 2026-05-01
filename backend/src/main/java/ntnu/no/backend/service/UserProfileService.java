@@ -113,6 +113,7 @@ import org.springframework.transaction.annotation.Transactional;
           .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));                             
         if (dto.getDisplayName() != null) {
           if (CensoredWords.containsBlockedWord(dto.getDisplayName())) {
+            notifyInstructorsOfInappropriateName(user, dto.getDisplayName());
             throw new IllegalArgumentException("Brukernavnet inneholder upassende ord");
           }
           ClassroomStudent membership = classroomStudentRepository.findByUser(user).orElse(null);
