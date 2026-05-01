@@ -307,8 +307,8 @@ function onTabKeydown(e: KeyboardEvent) {
               v-model="searchQuery"
               type="text"
               class="search-input"
-              placeholder="Sok elev..."
-              aria-label="Sok etter elev"
+              placeholder="Søk etter elev..."
+              aria-label="Søk etter elev"
             />
           </div>
 
