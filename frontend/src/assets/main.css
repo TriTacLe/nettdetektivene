@@ -219,7 +219,7 @@ button:not(.btn-bare):disabled,
   grid-template-columns: 1fr 20rem;
   gap: 2rem;
   width: 100%;
-  max-width: 72rem;
+  max-width: 65rem;
   align-items: start;
 }
 .scene-split-main {
