@@ -137,7 +137,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
     String errors = e.getBindingResult().getFieldErrors().stream()
-      .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+      .map(fe -> fe.getDefaultMessage())
       .collect(Collectors.joining(", "));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(errors));
   }
