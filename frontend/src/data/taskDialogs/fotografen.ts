@@ -14,7 +14,7 @@ export const fotografenOutro: DialogGraph = {
     character: '/detective.png',
     characterName: 'Detektiv Hansen',
     lines: [
-      { text: 'Nei, det var ikke helt. Bilder er trickier enn de ser ut. Prøv igjen.', mood: 'thinking' },
+      { text: 'Nei, det var ikke helt. Bilder er vanskeligere enn de ser ut. Prøv igjen.', mood: 'thinking' },
     ],
   },
 }
