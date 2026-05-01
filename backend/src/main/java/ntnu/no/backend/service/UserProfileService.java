@@ -111,13 +111,12 @@ import org.springframework.transaction.annotation.Transactional;
       public UserProfileResponseDTO update(User user, UserProfileUpdateRequestDTO dto) {                                             
         UserProfile profile = userProfileRepository.findByUser(user)                                                                 
           .orElseThrow(() -> new EntityNotFoundException("No profile found for user: " + user.getId()));                             
-        if (dto.getDisplayName() != null) {                                                                                          
-          ClassroomStudent membership = classroomStudentRepository.findByUser(user).orElse(null);                                    
-          if (membership != null) {                                                                                                  
-            if (CensoredWords.containsBlockedWord(dto.getDisplayName())) {                                                           
-              notifyInstructorsOfInappropriateName(user, dto.getDisplayName());                                                      
-              throw new IllegalArgumentException("Brukernavnet inneholder upassende ord");                                           
-            }                                                                                                                        
+        if (dto.getDisplayName() != null) {
+          if (CensoredWords.containsBlockedWord(dto.getDisplayName())) {
+            throw new IllegalArgumentException("Brukernavnet inneholder upassende ord");
+          }
+          ClassroomStudent membership = classroomStudentRepository.findByUser(user).orElse(null);
+          if (membership != null) {                                                                                                                        
             if (membership.getNameChangeStatus() != NameChangeStatus.PENDING) {
               jdbcTemplate.update("CALL sp_request_display_name_change(?, ?)",
                   user.getId().toString(), dto.getDisplayName());
