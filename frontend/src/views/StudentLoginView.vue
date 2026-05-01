@@ -10,10 +10,11 @@ const authStore = useAuthStore()
 const studentStore = useStudentStore()
 
 // Test credentials for project demo - not dangerous
-  const email = ref('student1@ntnu.no')
-  const password = ref('password123')
-  const serverError = ref('')
-  const isLoading = ref(false)
+const email = ref('silje@nettdetektivene.no')
+//  const email = ref('student1@ntnu.no')
+const password = ref('password123')
+const serverError = ref('')
+const isLoading = ref(false)
 const fieldErrors = ref({ email: '', password: '' })
 
 function validate(): boolean {
@@ -68,7 +69,9 @@ async function handleLogin(): Promise<void> {
       }
     }
 
-    const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, { headers })
+    const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, {
+      headers,
+    })
     if (statusRes.ok) {
       router.push({ name: 'awaiting-approval' })
     } else {
@@ -79,7 +82,6 @@ async function handleLogin(): Promise<void> {
   } finally {
     isLoading.value = false
   }
-
 }
 </script>
 

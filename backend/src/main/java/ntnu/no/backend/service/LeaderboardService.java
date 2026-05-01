@@ -82,21 +82,25 @@ public class LeaderboardService {
    */
   @Transactional(readOnly = true)
   public List<ClassroomLeaderboardEntryResponseDTO> getClassroomsLeaderboard(UUID institutionId){
-    Map<UUID, Integer> scoreByClassroom = taskBestScoreRepository.findAll().stream().filter(tbs -> tbs.getClassroom().getInstitution().getId().equals(institutionId))
+    Map<UUID, Integer> scoreByClassroom = taskBestScoreRepository.findAll().stream()
+        .filter(tbs -> tbs.getClassroom().getInstitution() != null
+            && tbs.getClassroom().getInstitution().getId().equals(institutionId))
         .collect(groupingBy(tbs -> tbs.getClassroom().getId(), summingInt(TaskBestScore::getBestScore)));
 
-    Map<UUID, String> titlesByClassroom = classroomRepository.findAllByDeletedAtIsNull().stream()
-        .collect(toMap(Classroom::getId, Classroom::getTitle));
+    List<Classroom> institutionClassrooms = classroomRepository.findAllByDeletedAtIsNull().stream()
+        .filter(c -> c.getInstitution() != null && c.getInstitution().getId().equals(institutionId))
+        .toList();
 
-    var ranked = scoreByClassroom.entrySet().stream()
-        .filter(e -> titlesByClassroom.containsKey(e.getKey()))
-        .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+    var ranked = institutionClassrooms.stream()
+        .map(c -> Map.entry(c, scoreByClassroom.getOrDefault(c.getId(), 0)))
+        .sorted(Map.Entry.<Classroom, Integer>comparingByValue().reversed())
         .toList();
 
     var result = new ArrayList<ClassroomLeaderboardEntryResponseDTO>();
     for (int i = 0; i < ranked.size(); i++) {
       var entry = ranked.get(i);
-      result.add(new ClassroomLeaderboardEntryResponseDTO(entry.getKey(), titlesByClassroom.get(entry.getKey()), entry.getValue(), i + 1));
+      result.add(new ClassroomLeaderboardEntryResponseDTO(
+          entry.getKey().getId(), entry.getKey().getTitle(), entry.getValue(), i + 1));
     }
     return result;
   }
