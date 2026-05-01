@@ -216,27 +216,15 @@ function submit() {
 }
 
 @media (max-width: 1100px) {
-  .photos {
-    grid-template-columns: 1fr;
-    max-width: min(38rem, 100%);
-  }
-}
-
-@media (max-width: 800px) {
   .fotografen-wrapper {
-    padding: 1rem;
     overflow-y: auto;
     justify-content: flex-start;
   }
 
   .photos {
     grid-template-columns: 1fr;
+    max-width: min(38rem, 100%);
     flex: none;
-  }
-
-  .chip {
-    font-size: 0.9rem;
-    padding: 0.55rem 0.6rem;
   }
 
   .lever-row {
@@ -247,6 +235,17 @@ function submit() {
   .lever-btn {
     width: 100%;
     max-width: 22rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .fotografen-wrapper {
+    padding: 1rem;
+  }
+
+  .chip {
+    font-size: 0.9rem;
+    padding: 0.55rem 0.6rem;
   }
 }
 </style>
