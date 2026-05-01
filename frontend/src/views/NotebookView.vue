@@ -29,7 +29,10 @@ const STOP_LOCATION_KEY: Partial<Record<TaskType, string>> = {
 }
 
 const BACKEND_TO_TASK_TYPE: Record<string, TaskType> = Object.fromEntries(
-  Object.entries(STOP_LOCATION_KEY).map(([taskType, backendKey]) => [backendKey, taskType as TaskType]),
+  Object.entries(STOP_LOCATION_KEY).map(([taskType, backendKey]) => [
+    backendKey,
+    taskType as TaskType,
+  ]),
 )
 
 const classroomId = computed(() => route.query.classroomId as string | undefined)
@@ -38,6 +41,7 @@ const reflections = ref<Record<string, string>>({})
 const savingStop = ref<string | null>(null)
 const savedStop = ref<string | null>(null)
 const saveError = ref<string | null>(null)
+const errorStop = ref<string | null>(null)
 const currentSpread = ref(0)
 
 const ALL_STOPS: TaskType[] = [TaskType.NEWS, TaskType.PHOTO, TaskType.BOSS]
@@ -63,11 +67,11 @@ const totalSpreads = computed(() =>
 )
 const leftEntry = computed(() =>
   isMobile.value
-    ? displayStops.value[currentSpread.value] ?? null
-    : displayStops.value[currentSpread.value * 2] ?? null,
+    ? (displayStops.value[currentSpread.value] ?? null)
+    : (displayStops.value[currentSpread.value * 2] ?? null),
 )
 const rightEntry = computed(() =>
-  isMobile.value ? null : displayStops.value[currentSpread.value * 2 + 1] ?? null,
+  isMobile.value ? null : (displayStops.value[currentSpread.value * 2 + 1] ?? null),
 )
 
 const { data, isLoading, error } = useQuery(
@@ -128,6 +132,7 @@ const saveMutation = useMutation({
   },
   onError: (e: Error) => {
     saveError.value = e?.message ?? 'Kunne ikke lagre'
+    errorStop.value = savingStop.value
     savingStop.value = null
   },
 })
@@ -166,6 +171,7 @@ function saveReflection(stopLocation: string): void {
   savingStop.value = stopLocation
   savedStop.value = null
   saveError.value = null
+  errorStop.value = null
   saveMutation.mutate({
     stopLocation: STOP_LOCATION_KEY[stopLocation as TaskType] ?? stopLocation,
     autoNotes: entriesByStop.value[stopLocation]?.autoNotes ?? undefined,
@@ -177,9 +183,10 @@ function saveReflection(stopLocation: string): void {
 <template>
   <SceneComponent title="Dine notater" previous="/student-home" previous-label="Hjem">
     <div class="notebook-wrapper">
-      <p v-if="isLoading" class="notebook-status" aria-live="polite">
-        Laster inn notatblokk...
-      </p>
+      <div aria-live="polite" aria-atomic="true" class="sr-only">
+        {{ savedStop ? `Lagret notat for ${STOP_LABELS[savedStop as TaskType]}` : '' }}
+      </div>
+      <p v-if="isLoading" class="notebook-status" aria-live="polite">Laster inn notatblokk...</p>
 
       <p v-else-if="displayError" class="notebook-error" role="alert">
         {{ displayError }}
@@ -208,10 +215,7 @@ function saveReflection(stopLocation: string): void {
 
             <div class="book">
               <template v-if="leftEntry">
-                <div
-                  v-if="leftEntry.locked"
-                  class="book-page book-page--left book-page--locked"
-                >
+                <div v-if="leftEntry.locked" class="book-page book-page--left book-page--locked">
                   <div class="card-header card-header--locked">
                     <h2 class="stop-title">{{ STOP_LABELS[leftEntry.type] }}</h2>
                   </div>
@@ -228,7 +232,10 @@ function saveReflection(stopLocation: string): void {
                     <p v-for="(note, i) in getAutoNotes(leftEntry.type)" :key="i" class="lined-row">
                       {{ note }}
                     </p>
-                    <p v-if="getAutoNotes(leftEntry.type).length === 0" class="lined-row lined-row--empty">
+                    <p
+                      v-if="getAutoNotes(leftEntry.type).length === 0"
+                      class="lined-row lined-row--empty"
+                    >
                       Ingen tips enda...
                     </p>
                     <div class="reflection-divider">Dine egne notater</div>
@@ -238,10 +245,19 @@ function saveReflection(stopLocation: string): void {
                       :value="getReflection(leftEntry.type)"
                       placeholder="Skriv her..."
                       :aria-label="`Refleksjon for ${STOP_LABELS[leftEntry.type]}`"
-                      @input="onReflectionInput(leftEntry.type, ($event.target as HTMLTextAreaElement).value)"
+                      @input="
+                        onReflectionInput(
+                          leftEntry.type,
+                          ($event.target as HTMLTextAreaElement).value,
+                        )
+                      "
                     />
                   </div>
-                  <p v-if="saveError && savingStop === null && savedStop !== leftEntry.type" class="save-error" role="alert">
+                  <p
+                    v-if="saveError && errorStop == leftEntry.type"
+                    class="save-error"
+                    role="alert"
+                  >
                     {{ saveError }}
                   </p>
                   <button
@@ -257,13 +273,10 @@ function saveReflection(stopLocation: string): void {
                 </div>
               </template>
 
-              <div v-if="!isMobile" class="book-spine" />
+              <div v-if="!isMobile" class="book-spine" aria-hidden="true" />
 
               <template v-if="rightEntry">
-                <div
-                  v-if="rightEntry.locked"
-                  class="book-page book-page--right book-page--locked"
-                >
+                <div v-if="rightEntry.locked" class="book-page book-page--right book-page--locked">
                   <div class="card-header card-header--locked">
                     <h2 class="stop-title">{{ STOP_LABELS[rightEntry.type] }}</h2>
                   </div>
@@ -277,10 +290,17 @@ function saveReflection(stopLocation: string): void {
                     <h2 class="stop-title">{{ STOP_LABELS[rightEntry.type] }}</h2>
                   </div>
                   <div class="lined-section">
-                    <p v-for="(note, i) in getAutoNotes(rightEntry.type)" :key="i" class="lined-row">
+                    <p
+                      v-for="(note, i) in getAutoNotes(rightEntry.type)"
+                      :key="i"
+                      class="lined-row"
+                    >
                       {{ note }}
                     </p>
-                    <p v-if="getAutoNotes(rightEntry.type).length === 0" class="lined-row lined-row--empty">
+                    <p
+                      v-if="getAutoNotes(rightEntry.type).length === 0"
+                      class="lined-row lined-row--empty"
+                    >
                       Ingen tips enda...
                     </p>
                     <div class="reflection-divider">Dine egne notater</div>
@@ -290,10 +310,19 @@ function saveReflection(stopLocation: string): void {
                       :value="getReflection(rightEntry.type)"
                       placeholder="Skriv her..."
                       :aria-label="`Refleksjon for ${STOP_LABELS[rightEntry.type]}`"
-                      @input="onReflectionInput(rightEntry.type, ($event.target as HTMLTextAreaElement).value)"
+                      @input="
+                        onReflectionInput(
+                          rightEntry.type,
+                          ($event.target as HTMLTextAreaElement).value,
+                        )
+                      "
                     />
                   </div>
-                  <p v-if="saveError && savingStop === null && savedStop !== rightEntry.type" class="save-error" role="alert">
+                  <p
+                    v-if="saveError && errorStop === rightEntry.type"
+                    class="save-error"
+                    role="alert"
+                  >
                     {{ saveError }}
                   </p>
                   <button
@@ -309,7 +338,11 @@ function saveReflection(stopLocation: string): void {
                 </div>
               </template>
 
-              <div v-else-if="!isMobile" class="book-page book-page--right book-page--blank" aria-hidden="true" />
+              <div
+                v-else-if="!isMobile"
+                class="book-page book-page--right book-page--blank"
+                aria-hidden="true"
+              />
             </div>
 
             <button
@@ -323,7 +356,9 @@ function saveReflection(stopLocation: string): void {
             </button>
           </div>
 
-          <span class="page-indicator page-indicator--desktop">Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span>
+          <span class="page-indicator page-indicator--desktop" aria-live="polite" aria-atomic="true"
+            >Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span
+          >
 
           <div class="book-mobile-nav">
             <button
@@ -335,7 +370,9 @@ function saveReflection(stopLocation: string): void {
               <ChevronLeft :size="24" />
               <span>Forrige</span>
             </button>
-            <span class="page-indicator">Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span>
+            <span class="page-indicator" aria-live="polite" aria-atomic="true"
+              >Side {{ currentSpread + 1 }} av {{ totalSpreads }}</span
+            >
             <button
               class="btn-bare mobile-nav-btn"
               :disabled="currentSpread === totalSpreads - 1"
@@ -411,7 +448,9 @@ function saveReflection(stopLocation: string): void {
   font-family: 'Nunito', 'Segoe UI', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .carousel-arrow:hover:not(:disabled) {
@@ -422,6 +461,11 @@ function saveReflection(stopLocation: string): void {
 .carousel-arrow:disabled {
   opacity: 0.2;
   cursor: not-allowed;
+}
+
+.carousel-arrow:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .page-indicator {
@@ -545,7 +589,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .stop-locked {
-  color: #8a8480;
+  color: #5a5450;
   font-size: 1.2rem;
   font-style: normal;
   font-weight: 600;
@@ -583,7 +627,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .lined-row--empty {
-  color: #7a7068;
+  color: #6a5e54;
   font-style: italic;
 }
 
@@ -623,7 +667,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .reflection-input:focus {
-  outline: 2px solid #a0a0a0;
+  outline: 2px solid #5a4a3a;
   outline-offset: 1px;
   border-radius: 4px;
 }
@@ -676,7 +720,6 @@ function saveReflection(stopLocation: string): void {
   .carousel-arrow {
     display: none;
   }
-
 }
 
 .book-mobile-nav {
@@ -707,7 +750,9 @@ function saveReflection(stopLocation: string): void {
   font-family: 'Nunito', 'Segoe UI', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .mobile-nav-btn:hover:not(:disabled) {
@@ -723,5 +768,17 @@ function saveReflection(stopLocation: string): void {
 .mobile-nav-btn:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>
