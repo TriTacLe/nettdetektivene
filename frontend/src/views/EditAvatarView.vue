@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watchEffect, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfileOptions, updateProfileMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
@@ -53,7 +53,7 @@ function handleSave() {
   saveWarning.value = ''
   if (!displayName.value.trim()) {
     saveError.value = 'Brukernavn kreves'
-    document.getElementById('display-name')?.focus()
+    nextTick(() => document.getElementById('display-name')?.focus())
     return
   }
 
