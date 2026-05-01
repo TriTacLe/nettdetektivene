@@ -42,6 +42,7 @@ function onTextSpeedInput() {
 }
 
 function logout() {
+  close()
   auth.logout()
 }
 </script>
