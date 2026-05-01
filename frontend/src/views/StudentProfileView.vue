@@ -61,7 +61,7 @@ watch(
               <AvatarPreview :config="avatarCfg" :size="avatarSize" :lazy-load="false" />
 
               <button
-                class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition"
+                class="text-sm font-semibold text-amber-800 underline hover:text-amber-900 transition focus-visible:outline-2 focus-visible:outline-amber-700 focus-visible:outline-offset-2 rounded"
                 @click="router.push({ name: 'edit-avatar' })"
               >
                 Rediger Detektiv
@@ -87,10 +87,16 @@ watch(
                 <div>
                   <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">XP</p>
                   <div class="flex items-center gap-3 mt-1">
-                    <div class="flex-1 bg-stone-300 rounded-full h-3">
+                    <div
+                      class="flex-1 bg-stone-300 rounded-full h-3"
+                      role="progressbar"
+                      :aria-valuenow="profile.xp ?? 0"
+                      :aria-valuemax="120"
+                      :aria-label="`${profile.xp ?? 0} av 120 XP`"
+                    >
                       <div
                         class="bg-amber-700 h-3 rounded-full transition-all"
-                        :style="{ width: `${Math.min((profile.xp ?? 0) % 100, 100)}%` }"
+                        :style="{ width: `${Math.min(((profile.xp ?? 0) / 120) * 100, 100)}%` }"
                       />
                     </div>
                     <span class="text-sm font-bold text-stone-800">{{ profile.xp ?? 0 }} XP</span>
