@@ -226,7 +226,7 @@ function onTabKeydown(e: KeyboardEvent) {
               :key="tab.key"
               :ref="(el) => setTabRef(tab.key, el as Element | null)"
               type="button"
-              class="tab-btn"
+              class="tab-btn btn-bare"
               :class="{ 'tab-btn--active': activeTab === tab.key }"
               role="tab"
               :aria-selected="activeTab === tab.key"
@@ -457,43 +457,59 @@ function onTabKeydown(e: KeyboardEvent) {
 .tab-bar {
   display: flex;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 2rem;
   margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 0;
 }
 
 .tab-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 0.6rem 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
 }
 
-.tab-btn:not(.tab-btn--active)::after {
-  background: #1a1a1a;
+.tab-btn:hover {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.tab-btn:not(.tab-btn--active) {
+.tab-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.tab-btn--active {
   color: #ffffff;
+  border-bottom-color: #ffffff;
+  font-weight: 700;
 }
 
 .tab-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  padding: 0 0.4rem;
+  min-width: 1.35rem;
+  padding: 0 0.35rem;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.tab-btn:not(.tab-btn--active) .tab-count {
-  background: rgba(255, 255, 255, 0.18);
+.tab-btn--active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .students-panel {
@@ -504,8 +520,28 @@ function onTabKeydown(e: KeyboardEvent) {
 
 .search-row {
   position: relative;
+  isolation: isolate;
   margin-bottom: 0.625rem;
   animation: slideUp 0.5s ease-out both;
+  clip-path: var(--notch-clip);
+}
+
+.search-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: -2;
+}
+
+.search-row::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: var(--notch-clip);
+  background: rgba(20, 15, 10, 0.75);
+  backdrop-filter: blur(2px);
+  z-index: -1;
 }
 
 .search-icon {
@@ -513,30 +549,31 @@ function onTabKeydown(e: KeyboardEvent) {
   left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.7);
   pointer-events: none;
+  z-index: 1;
 }
 
 .search-input {
+  position: relative;
   width: 100%;
-  padding: 0.625rem 0.875rem 0.625rem 2.25rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.625rem;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-  font-size: 0.8125rem;
+  padding: 0.75rem 0.875rem 0.75rem 2.75rem !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: white !important;
+  font-size: 1rem;
+  font-weight: 400 !important;
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
   box-sizing: border-box;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .search-input:focus {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.12);
+  outline: none;
 }
 
 .student-list {
