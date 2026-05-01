@@ -116,7 +116,7 @@ function submit() {
   >
     <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10 pt-4">
       <div class="form-card">
-        <h2 class="form-heading no-stroke">{{ isEditMode ? 'Rediger Klasserom' : 'Lag Klasserom' }}</h2>
+        <h2 class="form-heading text-plain">{{ isEditMode ? 'Rediger Klasserom' : 'Lag Klasserom' }}</h2>
 
         <div
           v-if="serverError"
@@ -184,7 +184,6 @@ function submit() {
               v-model="isGameEnabled"
               type="checkbox"
               class="checkbox-input"
-              tabindex="0"
               @keydown.enter.prevent="isGameEnabled = !isGameEnabled"
             />
             <span class="checkbox-label">Aktiver spill for klassen</span>
@@ -192,7 +191,6 @@ function submit() {
 
           <button
             type="submit"
-            tabindex="0"
             class="btn-bare form-submit"
             :disabled="createMutation.isPending.value || updateMutation.isPending.value"
           >
@@ -312,7 +310,7 @@ function submit() {
   cursor: pointer;
 }
 
-.checkbox-input:focus {
+.checkbox-input:focus-visible {
   outline: 3px solid #92400e;
   outline-offset: 2px;
 }
@@ -341,7 +339,7 @@ function submit() {
   background: #78350f;
 }
 
-.form-submit:focus {
+.form-submit:focus-visible {
   outline: 3px solid #92400e;
   outline-offset: 2px;
 }
