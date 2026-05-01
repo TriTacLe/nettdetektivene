@@ -15,15 +15,16 @@ const router = useRouter()
 const queryClient = useQueryClient()
 
 const { data: classroomsData, isLoading, error } = useQuery(getAllClassroomsOptions())
-const { data: notificationsData } = useQuery({ ...getMyNotificationsOptions(), refetchInterval: 5000 })
+const { data: notificationsData } = useQuery({
+  ...getMyNotificationsOptions(),
+  refetchInterval: 5000,
+})
 
 const classrooms = computed(() => classroomsData.value?.data ?? [])
 
 const studentQueries = useQueries({
   queries: computed(() =>
-    classrooms.value.map((c) =>
-      getApprovedStudentsOptions({ path: { classroomId: c.id! } })
-    )
+    classrooms.value.map((c) => getApprovedStudentsOptions({ path: { classroomId: c.id! } })),
   ),
 })
 
@@ -33,7 +34,7 @@ function studentCount(index: number) {
 
 function classroomNotifications(classroomId: string) {
   return (notificationsData.value?.data ?? []).filter(
-    (n) => !n.isRead && n.classroomId === classroomId
+    (n) => !n.isRead && n.classroomId === classroomId,
   ).length
 }
 
@@ -63,6 +64,16 @@ function deleteClassroom(id: string) {
       Du har ingen klasserom enda.
     </div>
 
+    <button
+      class="btn-bare create-row"
+      :style="{ animationDelay: `${classrooms.length * 0.05}s` }"
+      @click="router.push({ name: 'create-classroom' })"
+      aria-label="Opprett nytt klasserom"
+    >
+      <Plus :size="18" aria-hidden="true" />
+      <span>Nytt klasserom</span>
+    </button>
+
     <div class="row-list">
       <article
         v-for="(classroom, i) in classrooms"
@@ -82,7 +93,8 @@ function deleteClassroom(id: string) {
           v-if="classroomNotifications(classroom.id!)"
           class="row-badge"
           :aria-label="`${classroomNotifications(classroom.id!)} uleste varsler`"
-        >{{ classroomNotifications(classroom.id!) }}</span>
+          >{{ classroomNotifications(classroom.id!) }}</span
+        >
 
         <div class="row-actions">
           <button
@@ -100,16 +112,6 @@ function deleteClassroom(id: string) {
           </button>
         </div>
       </article>
-
-      <button
-        class="btn-bare create-row"
-        :style="{ animationDelay: `${classrooms.length * 0.05}s` }"
-        @click="router.push({ name: 'create-classroom' })"
-        aria-label="Opprett nytt klasserom"
-      >
-        <Plus :size="18" aria-hidden="true" />
-        <span>Nytt klasserom</span>
-      </button>
     </div>
   </div>
 </template>
@@ -337,7 +339,13 @@ function deleteClassroom(id: string) {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
