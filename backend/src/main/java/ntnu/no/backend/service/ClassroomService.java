@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -245,6 +246,12 @@ public class ClassroomService {
     // unlock for it through the normal attempt-completion chain.
     unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
+    // Force students who had already progressed past this point in the
+    // chain to come back and complete the new task before they can resume.
+    // The chain-walk in trg_attempt_sync re-extends the unlock past any
+    // already-passed tasks once they pass the new one.
+    lockTasksAfterNewInsertion(classroom, classroomTask);
+
     return ClassroomTaskMapper.toDTO(classroomTask);
   }
 
@@ -338,6 +345,39 @@ public class ClassroomService {
               .unlockedAt(LocalDateTime.now())
               .build()
       );
+    }
+  }
+
+  private void lockTasksAfterNewInsertion(Classroom classroom, ClassroomTask newTask) {
+    short cutoff = newTask.getSortOrder();
+
+    Set<UUID> laterTaskIds = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId())
+        .stream()
+        .filter(ct -> ct.getSortOrder() > cutoff)
+        .map(ct -> ct.getTask().getId())
+        .collect(java.util.stream.Collectors.toSet());
+    if (laterTaskIds.isEmpty()) return;
+
+    // Revoke every unlock past the cutoff — including for tasks the student
+    // has already passed. Stops with all-passed tasks would otherwise stay
+    // visually available on the map and let students bypass the new task.
+    // The chain walk in trg_attempt_sync rebuilds these unlocks via INSERT
+    // IGNORE once the student passes the newly inserted task, so completion
+    // credit (task_best_score.first_passed_at) is preserved.
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+      List<UserTaskUnlocked> unlocks = userTaskUnlockedRepository
+          .findByUser_IdAndClassroom_Id(userId, classroom.getId());
+
+      for (UserTaskUnlocked unlock : unlocks) {
+        if (laterTaskIds.contains(unlock.getTask().getId())) {
+          userTaskUnlockedRepository.delete(unlock);
+        }
+      }
     }
   }
 

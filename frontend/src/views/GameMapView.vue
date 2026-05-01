@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import { useSideQuestStore } from '@/stores/SideQuestStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
@@ -16,8 +16,10 @@ import {
 } from '@/generated-client/@tanstack/vue-query.gen'
 
 const router = useRouter()
+const route = useRoute()
 
 const stopStore = useStopStore()
+const removedTaskBanner = ref(false)
 
 const houses = [
   {
@@ -176,6 +178,12 @@ onMounted(async () => {
   isMobile.value = mql.matches
   mql.addEventListener('change', handleOrientationChange)
 
+  if (route.query.removed === '1') {
+    removedTaskBanner.value = true
+    router.replace({ query: {} })
+    setTimeout(() => { removedTaskBanner.value = false }, 5000)
+  }
+
   stopStore.clearSeenPickers()
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
@@ -276,6 +284,12 @@ const roadPath = computed(() => {
       class="map-header"
       @back="router.push('/student-home')"
     />
+
+    <Transition name="overlay-fade">
+      <div v-if="removedTaskBanner" class="removed-banner" role="status">
+        Oppgaven ble fjernet av læreren din. Velg en annen oppgave fra kartet.
+      </div>
+    </Transition>
 
     <svg class="path-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <defs>
@@ -412,6 +426,24 @@ const roadPath = computed(() => {
 .map-header {
   position: relative;
   z-index: 20;
+}
+
+.removed-banner {
+  position: fixed;
+  top: 5.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: rgba(20, 20, 28, 0.92);
+  color: #ffd9d1;
+  border: 1px solid rgba(255, 120, 100, 0.6);
+  border-radius: 0.6rem;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: min(28rem, 90vw);
+  text-align: center;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
 }
 
 .path-layer {
