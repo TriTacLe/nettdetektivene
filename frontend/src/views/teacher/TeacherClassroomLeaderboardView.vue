@@ -54,6 +54,7 @@ onUnmounted(() => {
     :title="classroomTitle"
     background="/StartBackground.jpg"
     previous="/teacher-leaderboard"
+    dimOverlay
   >
     <div class="lb-container">
       <div class="lb-card">
