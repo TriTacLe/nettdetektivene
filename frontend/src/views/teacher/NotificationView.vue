@@ -24,6 +24,11 @@ const classroomId = computed(() => route.query.classroomId as string | undefined
 const backRoute = computed(() =>
   classroomId.value ? `/classroom/${classroomId.value}` : '/teacher-home'
 )
+const pageTitle = computed(() => {
+  if (!classroomId.value) return 'Varsler'
+  const name = classroomNameMap.value.get(classroomId.value)
+  return name ? `Varsler - ${name}` : 'Varsler'
+})
 
 const REF_TYPE_MAP: Record<string, NotificationType> = {
   mystery_submission: NotificationType.MYSTERY_SUBMITTED,
@@ -176,6 +181,24 @@ function setPage(page: number) {
   currentPage.value = page
 }
 
+const ACTIONABLE_TYPES = new Set([NotificationType.JOIN_REQUEST, NotificationType.NAME_CHANGE])
+
+const hasNonActionable = computed(() => {
+  const f = activeTypeFilter.value
+  if (f && ACTIONABLE_TYPES.has(f as NotificationType)) return false
+  return allFiltered.value.some((n) => !ACTIONABLE_TYPES.has(n.type))
+})
+
+const dismissableUnread = computed(() =>
+  allFiltered.value.filter((n) => !n.isRead && !ACTIONABLE_TYPES.has(n.type))
+)
+
+function dismissAll() {
+  for (const n of dismissableUnread.value) {
+    markRead.mutate({ path: { id: n.id } })
+  }
+}
+
 interface NotificationStyle {
   icon: Component
   iconColor: string
@@ -273,7 +296,7 @@ function formatTime(iso: string): string {
 </script>
 
 <template>
-  <SceneComponent title="Varsler" background="/StartBackground.jpg" :previous="backRoute" dimOverlay>
+  <SceneComponent :title="pageTitle" background="/StartBackground.jpg" :previous="backRoute" dimOverlay>
     <transition name="toast">
       <div
         v-if="toastMsg"
@@ -285,11 +308,11 @@ function formatTime(iso: string): string {
 
     <div class="overflow-y-auto flex-1 px-3 sm:px-6 pb-10 w-full max-w-2xl mx-auto">
 
-      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-4 mt-2">
+      <div class="filter-bar">
         <select
           @change="setTypeFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value as any)"
           :value="activeTypeFilter ?? 'all'"
-          class="text-sm px-3 py-2 sm:py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm w-full sm:w-auto"
+          class="filter-select"
         >
           <option value="all" class="text-gray-900">Alle varsler</option>
           <option value="COMPLETED" class="text-gray-900">Fullført</option>
@@ -306,13 +329,22 @@ function formatTime(iso: string): string {
           v-if="!classroomId"
           @change="setClassroomFilter(($event.target as HTMLSelectElement).value === 'all' ? null : ($event.target as HTMLSelectElement).value)"
           :value="activeClassroomFilter ?? 'all'"
-          class="text-sm px-3 py-2 sm:py-1.5 rounded-xl border border-white/20 bg-white/10 text-white font-medium backdrop-blur-sm w-full sm:w-auto"
+          class="filter-select"
         >
           <option value="all" class="text-gray-900">Alle klasser</option>
           <option v-for="classroom in availableClassrooms" :key="classroom.id" :value="classroom.id" class="text-gray-900">
             {{ classroom.name }}
           </option>
         </select>
+
+        <button
+          v-if="hasNonActionable"
+          :disabled="dismissableUnread.length === 0"
+          class="btn-bare dismiss-btn"
+          @click="dismissAll"
+        >
+          Demp alle{{ dismissableUnread.length > 0 ? ` (${dismissableUnread.length})` : '' }}
+        </button>
       </div>
 
       <div v-if="isLoading" class="text-white text-center py-16 text-lg">
@@ -405,7 +437,7 @@ function formatTime(iso: string): string {
           </div>
 
           <span
-            v-if="!notification.isRead"
+            v-if="!notification.isRead && !ACTIONABLE_TYPES.has(notification.type)"
             role="button"
             tabindex="0"
             @click.stop="markRead.mutate({ path: { id: notification.id } })"
@@ -418,25 +450,27 @@ function formatTime(iso: string): string {
         </li>
       </ul>
 
-      <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 mt-6 bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 w-fit mx-auto">
+      <nav v-if="totalPages > 1" class="pagination" aria-label="Sidenavigasjon">
         <button
           :disabled="currentPage === 1"
-          class="btn-bare text-white font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed"
+          class="btn-bare pagination-btn"
+          aria-label="Forrige side"
           @click="setPage(currentPage - 1)"
         >
           &larr;
         </button>
-        <span class="text-white text-sm font-medium px-3">
+        <span class="pagination-label">
           Side {{ currentPage }} av {{ totalPages }}
         </span>
         <button
           :disabled="currentPage === totalPages"
-          class="btn-bare text-white font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed"
+          class="btn-bare pagination-btn"
+          aria-label="Neste side"
           @click="setPage(currentPage + 1)"
         >
           &rarr;
         </button>
-      </div>
+      </nav>
     </div>
   </SceneComponent>
 </template>
@@ -450,5 +484,100 @@ function formatTime(iso: string): string {
 .toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-8px);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.filter-select {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+}
+
+.dismiss-btn {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  padding: 0 1rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-left: auto;
+}
+
+.dismiss-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dismiss-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  width: fit-content;
+  margin-inline: auto;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0.75rem;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination-btn:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+.pagination-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  padding: 0 0.75rem;
 }
 </style>
