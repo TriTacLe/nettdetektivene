@@ -348,4 +348,42 @@ function deleteClassroom(id: string) {
     transform: translateY(0);
   }
 }
+
+@media (max-width: 950px) {
+  .row-list {
+    padding: 0.75rem;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    padding: 0.75rem 1.25rem;
+    clip-path: none;
+    border-radius: 0.5rem;
+  }
+
+  .row-title {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .row-stat {
+    font-size: 0.8125rem;
+  }
+
+  .row-actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+    clip-path: none;
+    border-radius: 0.375rem !important;
+  }
+}
 </style>

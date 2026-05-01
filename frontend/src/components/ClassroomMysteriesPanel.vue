@@ -46,7 +46,11 @@ async function reject(submission: MysteryReviewDTO) {
   await review(submission, 'REJECTED', 'Mysteriet er forkastet.')
 }
 
-async function review(submission: MysteryReviewDTO, status: 'APPROVED' | 'REJECTED', okMessage: string) {
+async function review(
+  submission: MysteryReviewDTO,
+  status: 'APPROVED' | 'REJECTED',
+  okMessage: string,
+) {
   errorMessage.value = ''
   successMessage.value = ''
   try {
@@ -79,9 +83,7 @@ function statusDotClass(submission: MysteryReviewDTO) {
 
     <div class="card-list">
       <p v-if="isLoading" class="empty-state">Laster innsendinger...</p>
-      <p v-else-if="sortedSubmissions.length === 0" class="empty-state">
-        Ingen innsendinger ennå.
-      </p>
+      <p v-else-if="sortedSubmissions.length === 0" class="empty-state">Ingen innsendinger ennå.</p>
 
       <div
         v-for="(submission, i) in sortedSubmissions"
@@ -129,7 +131,14 @@ function statusDotClass(submission: MysteryReviewDTO) {
     <Transition name="fade">
       <div v-if="previewSubmission" class="preview-overlay" @click.self="closePreview">
         <div class="preview-modal">
-          <button type="button" class="btn-bare preview-close" aria-label="Lukk forhåndsvisning" @click="closePreview">×</button>
+          <button
+            type="button"
+            class="btn-bare preview-close"
+            aria-label="Lukk forhåndsvisning"
+            @click="closePreview"
+          >
+            ×
+          </button>
           <img :src="previewSubmission.imagePath" alt="Forhåndsvisning" class="preview-image" />
           <ul class="preview-alternatives">
             <li
@@ -138,7 +147,9 @@ function statusDotClass(submission: MysteryReviewDTO) {
               class="preview-alternative"
               :class="{ 'preview-alternative--correct': index === previewSubmission.correctIndex }"
             >
-              <span class="preview-alternative-marker">{{ index === previewSubmission.correctIndex ? '✓' : '·' }}</span>
+              <span class="preview-alternative-marker">{{
+                index === previewSubmission.correctIndex ? '✓' : '·'
+              }}</span>
               <span class="preview-alternative-text">{{ text }}</span>
             </li>
           </ul>
@@ -232,9 +243,15 @@ function statusDotClass(submission: MysteryReviewDTO) {
   flex-shrink: 0;
 }
 
-.status-dot--amber { background: #d97706; }
-.status-dot--green { background: #16a34a; }
-.status-dot--red { background: #dc2626; }
+.status-dot--amber {
+  background: #d97706;
+}
+.status-dot--green {
+  background: #16a34a;
+}
+.status-dot--red {
+  background: #dc2626;
+}
 
 .row-actions {
   display: flex;
@@ -249,7 +266,10 @@ function statusDotClass(submission: MysteryReviewDTO) {
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
   min-height: 2.75rem;
   padding: 0.55rem 1.15rem;
@@ -331,8 +351,14 @@ function statusDotClass(submission: MysteryReviewDTO) {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .preview-overlay {
@@ -427,5 +453,41 @@ function statusDotClass(submission: MysteryReviewDTO) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 950px) {
+  .card-list {
+    padding: 0.75rem;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    clip-path: none;
+    border-radius: 0.5rem;
+  }
+
+  .row-name {
+    width: 100%;
+    white-space: normal;
+    min-width: 0;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+  }
+
+  .row-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .row-btn {
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.85rem;
+    min-height: 2.25rem;
+  }
 }
 </style>
