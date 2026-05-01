@@ -8,7 +8,9 @@ export function useFocusTrap(dialogId: string, onEscape: () => void) {
     e.preventDefault()
     const dialog = document.getElementById(dialogId)
     const focusable = Array.from(
-      dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') ?? [],
+      dialog?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), a[href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])',
+      ) ?? [],
     )
     if (focusable.length === 0) return
     const currentIdx = focusable.indexOf(document.activeElement as HTMLElement)
