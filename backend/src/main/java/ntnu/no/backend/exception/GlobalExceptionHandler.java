@@ -137,8 +137,26 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
     String errors = e.getBindingResult().getFieldErrors().stream()
-      .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+      .map(fe -> fe.getDefaultMessage())
       .collect(Collectors.joining(", "));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(errors));
+  }
+
+  /**
+   * Catch-all for any unhandled exception. Without this, unhandled exceptions
+   * fall through to Spring Boot's error endpoint, which is not in the public
+   * endpoint list and gets rejected as 401 by Spring Security.
+   *
+   * @param e the unhandled exception
+   * @return 500 Internal Server Error with generic message
+   */
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception e) throws Exception {
+    if (e instanceof org.springframework.security.access.AccessDeniedException || e instanceof org.springframework.web.bind.MissingServletRequestParameterException) {
+      throw e;
+    }
+    logger.error("Unhandled exception", e);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(ApiResponse.error("En uventet feil oppsto"));
   }
 }

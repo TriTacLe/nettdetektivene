@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useFocusTrap } from '@/composables/UseFocusTrap'
 import ClassroomService from '@/services/ClassroomService.ts'
 import SceneComponent from '@/components/SceneComponent.vue'
 
@@ -8,7 +9,6 @@ const route = useRoute()
 const router = useRouter()
 
 const classroomId = route.params.id as string
-const error = ref<string | null>(null)
 
 const instructorCount = ref<number | null>(null)
 
@@ -21,17 +21,37 @@ onMounted(async () => {
   }
 })
 
-const isLastInstructor = computed(() => instructorCount.value !== null && instructorCount.value <= 1)
+const showDeleteDialog = ref(false)
+const deletePending = ref(false)
+const deleteError = ref<string | null>(null)
 
-async function deleteClassroom() {
-  if (!confirm('Er du sikker på at du vil slette klasserommet? Dette kan ikke angres.')) return
+function openDeleteDialog() {
+  deleteError.value = null
+  showDeleteDialog.value = true
+  nextTick(() => {
+    const cancelBtn = document.querySelector<HTMLButtonElement>('#delete-dialog [data-action="cancel"]')
+    cancelBtn?.focus()
+  })
+}
+
+function closeDeleteDialog() {
+  showDeleteDialog.value = false
+}
+
+async function confirmDelete() {
+  deleteError.value = null
+  deletePending.value = true
   try {
     await ClassroomService.deleteClassroom(classroomId)
     router.push({ name: 'teacher-home' })
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Kunne ikke slette klasserommet'
+    deleteError.value = e instanceof Error ? e.message : 'Kunne ikke slette klasserommet'
+  } finally {
+    deletePending.value = false
   }
 }
+
+const { onKeydown: onDeleteDialogKeydown } = useFocusTrap('delete-dialog', closeDeleteDialog)
 
 const showLeaveDialog = ref(false)
 const leavePending = ref(false)
@@ -60,27 +80,14 @@ async function confirmLeave() {
     leaveError.value = 'Kan ikke forlate klasserommet. Du er den eneste læreren.'
   } finally {
     leavePending.value = false
+    nextTick(() => {
+      const cancelBtn = document.querySelector<HTMLButtonElement>('#leave-dialog [data-action="cancel"]')
+      cancelBtn?.focus()
+    })
   }
 }
 
-function onLeaveDialogKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') closeLeaveDialog()
-  if (e.key === 'Tab') {
-    const dialog = document.getElementById('leave-dialog')
-    const focusable = dialog?.querySelectorAll<HTMLElement>('button:not([disabled])')
-    if (!focusable || focusable.length === 0) return
-    const first = focusable[0] as HTMLElement | undefined
-    const last = focusable[focusable.length - 1] as HTMLElement | undefined
-    if (!first || !last) return
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
-}
+const { onKeydown: onLeaveDialogKeydown } = useFocusTrap('leave-dialog', closeLeaveDialog)
 
 const showInviteDialog = ref(false)
 const inviteEmail = ref('')
@@ -126,24 +133,7 @@ async function submitInvite() {
   }
 }
 
-function onInviteDialogKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') closeInviteDialog()
-  if (e.key === 'Tab') {
-    const dialog = document.getElementById('invite-dialog')
-    const focusable = dialog?.querySelectorAll<HTMLElement>('input:not([disabled]), button:not([disabled])')
-    if (!focusable || focusable.length === 0) return
-    const first = focusable[0] as HTMLElement | undefined
-    const last = focusable[focusable.length - 1] as HTMLElement | undefined
-    if (!first || !last) return
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
-}
+const { onKeydown: onInviteDialogKeydown } = useFocusTrap('invite-dialog', closeInviteDialog)
 
 const menuItems = computed(() => [
   {
@@ -154,7 +144,7 @@ const menuItems = computed(() => [
   {
     title: 'Slett Klasserom',
     subtitle: 'Slett klasserommet permanent',
-    action: deleteClassroom,
+    action: openDeleteDialog,
     danger: true,
   },
   {
@@ -164,12 +154,9 @@ const menuItems = computed(() => [
   },
   {
     title: 'Forlat Klasserom',
-    subtitle: isLastInstructor.value
-      ? 'Kan ikke forlate — du er eneste instruktør'
-      : 'Fjern deg selv som instruktør',
+    subtitle: 'Fjern deg selv som instruktør',
     action: openLeaveDialog,
     danger: true,
-    disabled: isLastInstructor.value,
   },
 ])
 </script>
@@ -183,13 +170,6 @@ const menuItems = computed(() => [
   >
     <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10 pt-4">
       <div class="menu-stack">
-        <div
-          v-if="error"
-          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
-        >
-          {{ error }}
-        </div>
-
         <button
           v-for="item in menuItems"
           :key="item.title"
@@ -207,7 +187,6 @@ const menuItems = computed(() => [
       </div>
     </div>
 
-    <!-- Invite dialog -->
     <Teleport to="body">
       <div
         v-if="showInviteDialog"
@@ -229,7 +208,7 @@ const menuItems = computed(() => [
             Skriv inn e-postadressen til læreren du vil legge til som medinstruktør.
           </p>
 
-          <form @submit.prevent="submitInvite">
+          <form class="dialog-form" @submit.prevent="submitInvite">
             <input
               id="invite-email-input"
               v-model="inviteEmail"
@@ -270,7 +249,50 @@ const menuItems = computed(() => [
       </div>
     </Teleport>
 
-    <!-- Leave classroom dialog -->
+    <Teleport to="body">
+      <div
+        v-if="showDeleteDialog"
+        class="dialog-backdrop"
+        @click.self="closeDeleteDialog"
+        @keydown="onDeleteDialogKeydown"
+      >
+        <div
+          id="delete-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          class="dialog-box"
+        >
+          <h3 id="delete-dialog-title" class="dialog-title">
+            Slett klasserommet?
+          </h3>
+          <p class="dialog-body">
+            Er du sikker på at du vil slette klasserommet? Dette kan ikke angres.
+          </p>
+
+          <div
+            v-if="deleteError"
+            class="dialog-feedback dialog-feedback--error"
+          >
+            {{ deleteError }}
+          </div>
+
+          <div class="dialog-actions">
+            <button
+              data-action="cancel"
+              class="btn-bare dialog-btn dialog-btn--cancel"
+              @click="closeDeleteDialog"
+            >Avbryt</button>
+            <button
+              class="btn-bare dialog-btn dialog-btn--danger"
+              :disabled="deletePending"
+              @click="confirmDelete"
+            >{{ deletePending ? 'Sletter...' : 'Slett' }}</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <Teleport to="body">
       <div
         v-if="showLeaveDialog"
@@ -317,142 +339,3 @@ const menuItems = computed(() => [
   </SceneComponent>
 </template>
 
-<style scoped>
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 1rem;
-}
-
-.dialog-box {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  max-width: 24rem;
-  width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-}
-
-.dialog-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 0.5rem;
-  -webkit-text-stroke: 0;
-  paint-order: normal;
-  text-shadow: none;
-}
-
-.dialog-body {
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
-}
-
-.dialog-input {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border: 1.5px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  color: #111827;
-  outline: none;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-  margin-bottom: 0.75rem;
-}
-
-.dialog-input:focus {
-  border-color: #2563eb;
-}
-
-.dialog-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.dialog-feedback {
-  font-size: 0.8125rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-}
-
-.dialog-feedback--error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-.dialog-feedback--success {
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.dialog-btn {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
-  transition: background 0.15s;
-}
-
-.dialog-btn:focus-visible {
-  outline: 2px solid #d97706;
-  outline-offset: 2px;
-}
-
-.dialog-btn--cancel {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.dialog-btn--cancel:hover {
-  background: #e5e7eb;
-}
-
-.dialog-btn--primary {
-  background: #2563eb;
-  color: white;
-}
-
-.dialog-btn--primary:hover {
-  background: #1d4ed8;
-}
-
-.dialog-btn--primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.dialog-btn--danger {
-  background: #dc2626;
-  color: white;
-}
-
-.dialog-btn--danger:hover {
-  background: #b91c1c;
-}
-
-.dialog-btn--danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-</style>

@@ -196,7 +196,7 @@ describe('AvatarEditor', () => {
       global: { plugins: [router] },
     })
     const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
-    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label')?.startsWith('Briller'))
     await roundBtn!.trigger('click')
     expect(wrapper.emitted('update:modelValue')).toBeFalsy()
   })
@@ -208,7 +208,7 @@ describe('AvatarEditor', () => {
       global: { plugins: [router] },
     })
     const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
-    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label')?.startsWith('Briller'))
     expect(roundBtn!.classes()).toContain('is-locked')
     expect(roundBtn!.attributes('aria-disabled')).toBe('true')
   })
@@ -220,9 +220,20 @@ describe('AvatarEditor', () => {
       global: { plugins: [router] },
     })
     const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
-    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label') === 'Briller')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label')?.startsWith('Briller'))
     expect(roundBtn!.find('.lock-overlay').exists()).toBe(true)
     expect(roundBtn!.find('.lock-level').text()).toBe('Nivå 2')
+  })
+
+  it('includes lock reason in aria-label for locked options', () => {
+    const locked = new Set(['round'])
+    const wrapper = mount(AvatarEditor, {
+      props: { modelValue: { ...DEFAULT_AVATAR_CONFIG }, lockedOptions: locked },
+      global: { plugins: [router] },
+    })
+    const propGroup = wrapper.findAll('[role="radiogroup"]').find((g) => g.attributes('aria-label') === 'Tilbehør')
+    const roundBtn = propGroup!.findAll('[role="radio"]').find((b) => b.attributes('aria-label')?.startsWith('Briller'))
+    expect(roundBtn!.attributes('aria-label')).toBe('Briller, låst, krever Nivå 2')
   })
 })
 

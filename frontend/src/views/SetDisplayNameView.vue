@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import CaseFile from '@/components/CaseFile.vue'
@@ -33,6 +33,7 @@ function handleSubmit() {
   fieldError.value = ''
   if (!displayName.value.trim()) {
     fieldError.value = 'Brukernavn kreves'
+    nextTick(() => document.getElementById('display-name')?.focus())
     return
   }
   update.mutate({
@@ -47,11 +48,11 @@ function handleSubmit() {
 <template>
   <SceneComponent title="Velkommen til Nettdetektivene!" background="/StartBackground.jpg">
     <div
-      class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden"
+      class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-8 pb-6 overflow-y-auto"
     >
       <CaseFile
         tab-label="LAG DIN DETEKTIV"
-        class="w-full max-w-[64rem] lg:max-h-[78vh] lg:min-h-0"
+        class="w-full max-w-[64rem]"
       >
         <template #left>
           <div class="flex flex-col items-center flex-1 p-3 lg:p-4 gap-2 min-h-0">
@@ -65,7 +66,7 @@ function handleSubmit() {
                 type="text"
                 placeholder="Skriv inn navn"
                 maxlength="30"
-                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700"
+                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:border-amber-700 focus-visible:outline-2 focus-visible:outline-amber-700 focus-visible:outline-offset-2"
                 @keyup.enter="handleSubmit"
               />
               <p v-if="fieldError" class="profile-save-error" role="alert">
@@ -73,8 +74,8 @@ function handleSubmit() {
               </p>
             </div>
 
-            <div class="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-              <AvatarPreview :config="avatarConfig" :size="200" :lazy-load="false" />
+            <div class="flex items-center justify-center py-6">
+              <AvatarPreview :config="avatarConfig" :size="280" :lazy-load="false" />
             </div>
 
             <button
@@ -96,17 +97,3 @@ function handleSubmit() {
   </SceneComponent>
 </template>
 
-<style scoped>
-.profile-save-error {
-  color: #991b1b;
-  background: #fef2f2;
-  border: 2px solid #dc2626;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin: 4px 0 0;
-  font-family: 'Nunito', 'Segoe UI', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  text-align: center;
-}
-</style>

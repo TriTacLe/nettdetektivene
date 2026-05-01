@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useFocusTrap } from '@/composables/UseFocusTrap'
 import SceneComponent from '@/components/SceneComponent.vue'
 import SidePanelMenu, { type SidePanelMenuItem } from '@/components/SidePanelMenu.vue'
 import ClassroomTasksPanel from '@/components/ClassroomTasksPanel.vue'
@@ -120,24 +121,7 @@ function cancelReset() {
   nextTick(() => resetTriggerRef.value?.focus())
 }
 
-function onResetDialogKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') cancelReset()
-  if (e.key === 'Tab') {
-    const dialog = document.getElementById('reset-dialog')
-    const focusable = dialog?.querySelectorAll<HTMLElement>('button:not([disabled])')
-    if (!focusable || focusable.length === 0) return
-    const first = focusable[0] as HTMLElement | undefined
-    const last = focusable[focusable.length - 1] as HTMLElement | undefined
-    if (!first || !last) return
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
-}
+const { onKeydown: onResetDialogKeydown } = useFocusTrap('reset-dialog', cancelReset)
 
 const confirmTarget = ref<{ userId: string; displayName: string } | null>(null)
 const confirmTriggerRef = ref<HTMLButtonElement | null>(null)
@@ -163,24 +147,7 @@ function cancelRemove() {
   nextTick(() => confirmTriggerRef.value?.focus())
 }
 
-function onDialogKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') cancelRemove()
-  if (e.key === 'Tab') {
-    const dialog = document.getElementById('remove-dialog')
-    const focusable = dialog?.querySelectorAll<HTMLElement>('button:not([disabled])')
-    if (!focusable || focusable.length === 0) return
-    const first = focusable[0] as HTMLElement | undefined
-    const last = focusable[focusable.length - 1] as HTMLElement | undefined
-    if (!first || !last) return
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
-}
+const { onKeydown: onDialogKeydown } = useFocusTrap('remove-dialog', cancelRemove)
 
 // --- Helpers ---
 function studentAriaLabel(s: { displayName?: string; userId?: string; isAllowed?: boolean }): string {
@@ -435,11 +402,11 @@ function onTabKeydown(e: KeyboardEvent) {
           <div class="dialog-actions">
             <button
               data-action="cancel"
-              class="dialog-btn dialog-btn--cancel"
+              class="btn-bare dialog-btn dialog-btn--cancel"
               @click="cancelRemove"
             >Avbryt</button>
             <button
-              class="dialog-btn dialog-btn--danger"
+              class="btn-bare dialog-btn dialog-btn--danger"
               :disabled="remove.isPending.value"
               @click="confirmRemove"
             >{{ remove.isPending.value ? 'Fjerner...' : 'Fjern' }}</button>
@@ -471,11 +438,11 @@ function onTabKeydown(e: KeyboardEvent) {
           <div class="dialog-actions">
             <button
               data-action="cancel"
-              class="dialog-btn dialog-btn--cancel"
+              class="btn-bare dialog-btn dialog-btn--cancel"
               @click="cancelReset"
             >Avbryt</button>
             <button
-              class="dialog-btn dialog-btn--danger"
+              class="btn-bare dialog-btn dialog-btn--danger"
               :disabled="resetName.isPending.value"
               @click="confirmReset"
             >{{ resetName.isPending.value ? 'Tilbakestiller...' : 'Fjern Brukernavn' }}</button>
@@ -826,87 +793,6 @@ function onTabKeydown(e: KeyboardEvent) {
   font-size: 0.8125rem;
   margin: 0.75rem 0;
   animation: slideUp 0.5s ease-out both;
-}
-
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1rem;
-}
-
-.dialog-box {
-  background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  max-width: 22rem;
-  width: 100%;
-  box-shadow: 0 8px 32px rgb(0 0 0 / 0.25);
-}
-
-.dialog-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  -webkit-text-stroke: initial;
-  margin: 0 0 0.5rem;
-}
-
-.dialog-body {
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.dialog-btn {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
-  transition: background 0.15s;
-}
-
-.dialog-btn:focus-visible {
-  outline: 2px solid #d97706;
-  outline-offset: 2px;
-}
-
-.dialog-btn--cancel {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.dialog-btn--cancel:hover {
-  background: #e5e7eb;
-}
-
-.dialog-btn--danger {
-  background: #dc2626;
-  color: #374151;
-}
-
-.dialog-btn--danger:hover {
-  background: #b91c1c;
-}
-
-.dialog-btn--danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 @media (max-width: 950px) {
