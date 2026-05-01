@@ -286,14 +286,15 @@ public class DataSeeder implements CommandLineRunner {
     // content (and stop/difficulty) in place so stale rows from older code
     // revisions get brought up to date without needing a DB wipe. Preserve
     // id, created_at, owner, and any FK relationships pointing at this row.
-    Task task = taskRepository.findByTitleAndDeletedAtIsNull(spec.title())
-        .map(existing -> {
-          existing.setTaskType(TaskType.NEWS);
-          existing.setStopLocation(spec.stop());
-          existing.setDifficulty(spec.difficulty());
-          existing.setContent(contentJson);
-          existing.setActive(true);
-          return taskRepository.save(existing);
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    Task task = existing
+        .map(e -> {
+          e.setTaskType(TaskType.NEWS);
+          e.setStopLocation(spec.stop());
+          e.setDifficulty(spec.difficulty());
+          e.setContent(contentJson);
+          e.setActive(true);
+          return taskRepository.save(e);
         })
         .orElseGet(() -> taskRepository.save(Task.builder()
             .title(spec.title())
@@ -305,8 +306,9 @@ public class DataSeeder implements CommandLineRunner {
             .isActive(true)
             .build()));
     allTasks.add(task);
-    log.info("Task: {} @ {} (NEWS) [fake={}, real={}]",
-        spec.title(), spec.stop(), spec.fakeImage(), spec.realImage());
+    log.info("Task {} @ {} (NEWS) [fake={}, real={}] -> {}",
+        existing.isPresent() ? "updated" : "created",
+        spec.stop(), spec.fakeImage(), spec.realImage(), spec.title());
     return task;
   }
 
@@ -326,14 +328,15 @@ public class DataSeeder implements CommandLineRunner {
         Map.of("imagePath", psUrl,   "correctType", "manipulert")), spec.title()));
     String contentJson = toJson(content);
 
-    Task task = taskRepository.findByTitleAndDeletedAtIsNull(spec.title())
-        .map(existing -> {
-          existing.setTaskType(TaskType.PHOTO);
-          existing.setStopLocation(spec.stop());
-          existing.setDifficulty(spec.difficulty());
-          existing.setContent(contentJson);
-          existing.setActive(true);
-          return taskRepository.save(existing);
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    Task task = existing
+        .map(e -> {
+          e.setTaskType(TaskType.PHOTO);
+          e.setStopLocation(spec.stop());
+          e.setDifficulty(spec.difficulty());
+          e.setContent(contentJson);
+          e.setActive(true);
+          return taskRepository.save(e);
         })
         .orElseGet(() -> taskRepository.save(Task.builder()
             .title(spec.title())
@@ -345,8 +348,9 @@ public class DataSeeder implements CommandLineRunner {
             .isActive(true)
             .build()));
     allTasks.add(task);
-    log.info("Task: {} @ {} (PHOTO) [real={}, ai={}, ps={}]",
-        spec.title(), spec.stop(), spec.realImage(), spec.aiImage(), spec.manipulatedImage());
+    log.info("Task {} @ {} (PHOTO) [real={}, ai={}, ps={}] -> {}",
+        existing.isPresent() ? "updated" : "created",
+        spec.stop(), spec.realImage(), spec.aiImage(), spec.manipulatedImage(), spec.title());
     return task;
   }
 
@@ -363,6 +367,7 @@ public class DataSeeder implements CommandLineRunner {
     } catch (IOException e) {
       throw new IllegalStateException("Failed to copy seed task image: " + classpathLocation, e);
     }
+    log.info("  Image: {} -> {}", classpathLocation, targetFile);
     return "/uploads/tasks/seed/" + filename;
   }
 
