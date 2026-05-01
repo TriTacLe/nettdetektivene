@@ -88,12 +88,14 @@ describe('StudentLoginView', () => {
     })
   })
 
-  it('navigates to set-display-name when displayName equals email prefix', async () => {
+  it('navigates to set-display-name when student has no avatar configured', async () => {
     vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
-    Object.defineProperty(authStore, 'user', {
-      get: () => ({ email: 'kari@skole.no', displayName: 'kari' }),
-      configurable: true
-    })
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { avatarConfig: null } }),
+      } as Response)
     await fillForm(wrapper, 'kari@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'set-display-name' })
@@ -101,13 +103,13 @@ describe('StudentLoginView', () => {
 
   it('navigates to join-classroom when student has no classroom', async () => {
     vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
-    Object.defineProperty(authStore, 'user', {
-      get: () => ({ email: 'kari@skole.no', displayName: 'Kari Nordmann' }),
-      configurable: true
-    })
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: false,
-    } as Response)
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { avatarConfig: 'some-config' } }),
+      } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
     await fillForm(wrapper, 'kari@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'join-classroom' })
