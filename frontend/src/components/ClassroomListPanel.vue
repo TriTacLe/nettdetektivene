@@ -319,7 +319,7 @@ function deleteClassroom(id: string) {
   position: absolute;
   inset: 2px;
   clip-path: var(--notch-clip);
-  background: rgba(40, 30, 20, 0.55);
+  background: rgba(20, 15, 10, 0.75);
   backdrop-filter: blur(2px);
   z-index: -1;
   transition: background 0.15s;
@@ -330,7 +330,7 @@ function deleteClassroom(id: string) {
 }
 
 .create-row:hover::after {
-  background: rgba(40, 30, 20, 0.35);
+  background: rgba(20, 15, 10, 0.6);
 }
 
 .create-row:focus-visible {
@@ -358,8 +358,6 @@ function deleteClassroom(id: string) {
     flex-wrap: wrap;
     gap: 0.4rem 0.75rem;
     padding: 0.75rem 1.25rem;
-    clip-path: none;
-    border-radius: 0.5rem;
   }
 
   .row-title {
@@ -382,8 +380,6 @@ function deleteClassroom(id: string) {
     font-size: 0.8125rem;
     padding: 0.45rem 0.85rem;
     min-height: 2.25rem;
-    clip-path: none;
-    border-radius: 0.375rem !important;
   }
 }
 </style>
