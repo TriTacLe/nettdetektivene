@@ -45,15 +45,9 @@ async function handleLogin(): Promise<void> {
       password: password.value,
     })
 
-    const emailPrefix = authStore.user?.email?.split('@')[0]
-    if (authStore.user?.displayName === emailPrefix) {
-      router.push({ name: 'set-display-name' })
-      return
-    }
-
     const headers = { Authorization: `Bearer ${authStore.token}` }
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, { headers })
 
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, { headers })
     if (res.ok) {
       const body = await res.json()
       const classroomId = body.data?.id
@@ -62,21 +56,30 @@ async function handleLogin(): Promise<void> {
         studentStore.setClassroom(classroomId, institutionId)
       }
       router.push({ name: 'student-home' })
-    } else {
-      const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, {
-        headers,
-      })
-      if (statusRes.ok) {
-        router.push({ name: 'awaiting-approval' })
-      } else {
-        router.push({ name: 'join-classroom' })
+      return
+    }
+
+    const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/profiles/me`, { headers })
+    if (profileRes.ok) {
+      const profileBody = await profileRes.json()
+      if (!profileBody.data?.avatarConfig) {
+        router.push({ name: 'set-display-name' })
+        return
       }
+    }
+
+    const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me/status`, { headers })
+    if (statusRes.ok) {
+      router.push({ name: 'awaiting-approval' })
+    } else {
+      router.push({ name: 'join-classroom' })
     }
   } catch (e) {
     serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
   } finally {
     isLoading.value = false
   }
+
 }
 </script>
 
