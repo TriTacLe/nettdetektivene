@@ -310,7 +310,7 @@ button.btn-vn-danger:not(.btn-bare)::after {
 }
 
 
-input {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
   background-color: #ffffff;
   color: #000000;
   border: 2px solid #000000;
@@ -370,7 +370,7 @@ html, body { scrollbar-gutter: stable; background: #000; }
   text-align: center;
 }
 
-.no-stroke {
+.text-plain {
   -webkit-text-stroke: 0 transparent;
   paint-order: normal;
   text-shadow: none;
