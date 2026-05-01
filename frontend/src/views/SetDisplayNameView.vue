@@ -79,7 +79,6 @@ function handleSubmit() {
             </div>
 
             <button
-              tabindex="0"
               :disabled="update.isPending.value"
               class="w-full bg-amber-800 hover:bg-amber-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl border-2 border-stone-700 shadow-md transition"
               @click="handleSubmit"
