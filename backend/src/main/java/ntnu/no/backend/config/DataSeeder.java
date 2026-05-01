@@ -55,7 +55,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile({"seed", "dev"})
+@Profile({ "seed", "dev" })
 public class DataSeeder implements CommandLineRunner {
 
   private final UserRepository userRepository;
@@ -153,7 +153,7 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedInstructors() {
     Object[][] data = {
-        { "laerer@flataasen.no", "Nora", "nora", "flataasen" },
+        { "laerer@flataasen.no", "Nora", "nora-t", "flataasen" },
         { "laerer@byaasen.no", "Lars", "lars", "byaasen" },
     };
     for (Object[] row : data) {
@@ -169,8 +169,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedClassrooms() {
     Object[][] data = {
-        { "5A", "Lær å være trygg på nettet!", "nora", "flataasen", "class1" },
-        { "6B", "Hvem kan du stole på på internett?", "nora", "flataasen", "class2" },
+        { "5A", "Lær å være trygg på nettet!", "nora-t", "flataasen", "class1" },
+        { "6B", "Hvem kan du stole på på internett?", "nora-t", "flataasen", "class2" },
         { "7A", "Bli en nettdetektiv og løs mysterier!", "lars", "byaasen", "class3" },
     };
     for (Object[] row : data) {
@@ -203,30 +203,32 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   private void seedTasks() {
-    // Copy seed images to the tasks upload folder once (same images factory.sh uses).
+    // Copy seed images to the tasks upload folder once (same images factory.sh
+    // uses).
     // These paths are used as fallback content; factory.sh will PATCH with its own
     // uploaded images if it runs after the seeder.
     String fakeArticle = copySeedImageForTasks("seed-images/news/fake-article-1.jpg");
-    String realArticle  = copySeedImageForTasks("seed-images/news/real-article-1.png");
-    String realPhoto    = copySeedImageForTasks("seed-images/photos/real-photo-1.jpeg");
-    String fakePhoto    = copySeedImageForTasks("seed-images/photos/fake-photo-1.jpg");
+    String realArticle = copySeedImageForTasks("seed-images/news/real-article-1.png");
+    String realPhoto = copySeedImageForTasks("seed-images/photos/real-photo-1.jpeg");
+    String fakePhoto = copySeedImageForTasks("seed-images/photos/fake-photo-1.jpg");
 
     // {title, type, stop, difficulty, ownerKey}
     Object[][] taskDefs = {
-        // nyhetskvartalet — titles match factory.sh so seeder skips if factory already ran
-        {"Ekte eller falsk nyhet (nivå 1)", TaskType.NEWS,  "nyhetskvartalet", 1, "nora"},
-        {"Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS,  "nyhetskvartalet", 2, "nora"},
-        {"Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS,  "nyhetskvartalet", 3, "nora"},
+        // nyhetskvartalet — titles match factory.sh so seeder skips if factory already
+        // ran
+        { "Ekte eller falsk nyhet (nivå 1)", TaskType.NEWS, "nyhetskvartalet", 1, "nora-t" },
+        { "Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS, "nyhetskvartalet", 2, "nora-t" },
+        { "Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS, "nyhetskvartalet", 3, "nora-t" },
         // fotografen
-        {"Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora"},
-        {"Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora"},
-        {"Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora"},
+        { "Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora-t" },
+        { "Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora-t" },
+        { "Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora-t" },
         // datasenteret — 5 tasks matching factory.sh (3 NEWS + 2 PHOTO)
-        {"Datatyven sin første løgn",   TaskType.NEWS,  "datasenteret", 4, "nora"},
-        {"Avslør den falske rapporten", TaskType.NEWS,  "datasenteret", 5, "nora"},
-        {"Manipulert bevismateriale",   TaskType.PHOTO, "datasenteret", 4, "nora"},
-        {"Sannhetens øyeblikk",         TaskType.NEWS,  "datasenteret", 5, "nora"},
-        {"Endelig konfrontasjon",       TaskType.PHOTO, "datasenteret", 5, "nora"},
+        { "Datatyven sin første løgn", TaskType.NEWS, "datasenteret", 4, "nora-t" },
+        { "Avslør den falske rapporten", TaskType.NEWS, "datasenteret", 5, "nora-t" },
+        { "Manipulert bevismateriale", TaskType.PHOTO, "datasenteret", 4, "nora-t" },
+        { "Sannhetens øyeblikk", TaskType.NEWS, "datasenteret", 5, "nora-t" },
+        { "Endelig konfrontasjon", TaskType.PHOTO, "datasenteret", 5, "nora-t" },
     };
 
     Classroom class1 = classrooms.get("class1");
@@ -235,7 +237,7 @@ public class DataSeeder implements CommandLineRunner {
     short order = 0;
     for (Object[] row : taskDefs) {
       TaskType type = (TaskType) row[1];
-      String stop   = (String) row[2];
+      String stop = (String) row[2];
       Task task = taskRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
         log.info("Task: {} @ {}", row[0], stop);
         return taskRepository.save(Task.builder()
@@ -308,7 +310,7 @@ public class DataSeeder implements CommandLineRunner {
     for (PhotoTaskSpec spec : bossPhotos) {
       Task t = upsertPhotoTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
-    }  
+    }
   }
 
   /** Builds + saves a NEWS task, copying its two seed images into uploads/. */
@@ -465,7 +467,7 @@ public class DataSeeder implements CommandLineRunner {
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
     for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester",
-      "anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward")) {
+        "anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward")) {
       enroll(users.get(key), class1);
     }
   }
@@ -845,11 +847,11 @@ public class DataSeeder implements CommandLineRunner {
 
   private void verifyInstructorAssignments() {
     log.info("Verifying instructor classroom assignments...");
-    List<String> instructorKeys = List.of("nora", "lars");
+    List<String> instructorKeys = List.of("nora-t", "lars");
     for (String key : instructorKeys) {
       User instructor = users.get(key);
-      List<ntnu.no.backend.model.classroom.ClassroomInstructor> assignments =
-          classroomInstructorRepository.findAllByUser(instructor);
+      List<ntnu.no.backend.model.classroom.ClassroomInstructor> assignments = classroomInstructorRepository
+          .findAllByUser(instructor);
       if (assignments.isEmpty()) {
         log.error("  ERROR: Instructor {} has NO classroom assignments!", instructor.getDisplayName());
       } else {
