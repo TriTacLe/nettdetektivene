@@ -153,8 +153,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedInstructors() {
     Object[][] data = {
-        { "lærer@flatåsen.no", "Nora", "nora", "flataasen" },
-        { "lærer@byåsen.no", "Lars", "lars", "byaasen" },
+        { "laerer@flataasen.no", "Nora", "nora", "flataasen" },
+        { "laerer@byaasen.no", "Lars", "lars", "byaasen" },
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -827,13 +827,13 @@ public class DataSeeder implements CommandLineRunner {
     log.info("SEED SUMMARY");
     log.info("========================================");
     log.info("Institutions : {}", institutions.size());
-    log.info("Instructors  : lærer@flatåsen.no, lærer@byåsen.no");
+    log.info("Instructors  : laerer@flataasen.no, laerer@byaasen.no");
     log.info("Classrooms   : {}", classrooms.size());
     log.info("Tasks        : {} (3 nyhetskvartalet + 3 fotografen + 5 datasenteret)", allTasks.size());
     log.info("Students     : 9 (1 without classroom: studentNoClassroomYet@flataasen.no)");
     log.info("");
     log.info("LOGIN (password: password123)");
-    log.info("  Teacher : lærer@flatåsen.no");
+    log.info("  Teacher : laerer@flataasen.no");
     log.info("  Student : anine@nettdetektivene.no  (star — all tasks done)");
     log.info("  Student : tri@nettdetektivene.no    (good — partial tasks done)");
     log.info("  Student : segward@nettdetektivene.no (no attempts)");
