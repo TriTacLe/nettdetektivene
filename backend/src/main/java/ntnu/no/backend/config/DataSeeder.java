@@ -315,11 +315,6 @@ public class DataSeeder implements CommandLineRunner {
 
   /** Builds + saves a NEWS task, copying its two seed images into uploads/. */
   private Task upsertNewsTask(NewsTaskSpec spec, String ownerKey) {
-    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
-    if (existing.isPresent()) {
-      allTasks.add(existing.get());
-      return existing.get();
-    }
     String fakeUrl = copyTaskSeedImage("seed-images/news/" + spec.fakeImage());
     String realUrl = copyTaskSeedImage("seed-images/news/" + spec.realImage());
     Map<String, Object> content = new LinkedHashMap<>();
@@ -331,27 +326,40 @@ public class DataSeeder implements CommandLineRunner {
     content.put("articles", shuffleStable(List.of(
         Map.of("imagePath", fakeUrl, "isReal", false),
         Map.of("imagePath", realUrl, "isReal", true)), spec.title()));
-    Task task = taskRepository.save(Task.builder()
-        .title(spec.title())
-        .taskType(TaskType.NEWS)
-        .stopLocation(spec.stop())
-        .difficulty(spec.difficulty())
-        .content(toJson(content))
-        .owner(users.get(ownerKey))
-        .isActive(true)
-        .build());
+    String contentJson = toJson(content);
+
+    // Real upsert: when a task with this title already exists, refresh its
+    // content (and stop/difficulty) in place so stale rows from older code
+    // revisions get brought up to date without needing a DB wipe. Preserve
+    // id, created_at, owner, and any FK relationships pointing at this row.
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    Task task = existing
+        .map(e -> {
+          e.setTaskType(TaskType.NEWS);
+          e.setStopLocation(spec.stop());
+          e.setDifficulty(spec.difficulty());
+          e.setContent(contentJson);
+          e.setActive(true);
+          return taskRepository.save(e);
+        })
+        .orElseGet(() -> taskRepository.save(Task.builder()
+            .title(spec.title())
+            .taskType(TaskType.NEWS)
+            .stopLocation(spec.stop())
+            .difficulty(spec.difficulty())
+            .content(contentJson)
+            .owner(users.get(ownerKey))
+            .isActive(true)
+            .build()));
     allTasks.add(task);
-    log.info("Task: {} @ {} (NEWS)", spec.title(), spec.stop());
+    log.info("Task {} @ {} (NEWS) [fake={}, real={}] -> {}",
+        existing.isPresent() ? "updated" : "created",
+        spec.stop(), spec.fakeImage(), spec.realImage(), spec.title());
     return task;
   }
 
   /** Builds + saves a PHOTO task with three alternatives. */
   private Task upsertPhotoTask(PhotoTaskSpec spec, String ownerKey) {
-    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
-    if (existing.isPresent()) {
-      allTasks.add(existing.get());
-      return existing.get();
-    }
     String realUrl = copyTaskSeedImage("seed-images/photos/" + spec.realImage());
     String aiUrl = copyTaskSeedImage("seed-images/photos/" + spec.aiImage());
     String psUrl = copyTaskSeedImage("seed-images/photos/" + spec.manipulatedImage());
@@ -362,19 +370,33 @@ public class DataSeeder implements CommandLineRunner {
     // order isn't fixed across tasks — players can't memorize the slot.
     content.put("alternatives", shuffleStable(List.of(
         Map.of("imagePath", realUrl, "correctType", "ekte"),
-        Map.of("imagePath", aiUrl, "correctType", "ai-generert"),
-        Map.of("imagePath", psUrl, "correctType", "manipulert")), spec.title()));
-    Task task = taskRepository.save(Task.builder()
-        .title(spec.title())
-        .taskType(TaskType.PHOTO)
-        .stopLocation(spec.stop())
-        .difficulty(spec.difficulty())
-        .content(toJson(content))
-        .owner(users.get(ownerKey))
-        .isActive(true)
-        .build());
+        Map.of("imagePath", aiUrl,   "correctType", "ai-generert"),
+        Map.of("imagePath", psUrl,   "correctType", "manipulert")), spec.title()));
+    String contentJson = toJson(content);
+
+    Optional<Task> existing = taskRepository.findByTitleAndDeletedAtIsNull(spec.title());
+    Task task = existing
+        .map(e -> {
+          e.setTaskType(TaskType.PHOTO);
+          e.setStopLocation(spec.stop());
+          e.setDifficulty(spec.difficulty());
+          e.setContent(contentJson);
+          e.setActive(true);
+          return taskRepository.save(e);
+        })
+        .orElseGet(() -> taskRepository.save(Task.builder()
+            .title(spec.title())
+            .taskType(TaskType.PHOTO)
+            .stopLocation(spec.stop())
+            .difficulty(spec.difficulty())
+            .content(contentJson)
+            .owner(users.get(ownerKey))
+            .isActive(true)
+            .build()));
     allTasks.add(task);
-    log.info("Task: {} @ {} (PHOTO)", spec.title(), spec.stop());
+    log.info("Task {} @ {} (PHOTO) [real={}, ai={}, ps={}] -> {}",
+        existing.isPresent() ? "updated" : "created",
+        spec.stop(), spec.realImage(), spec.aiImage(), spec.manipulatedImage(), spec.title());
     return task;
   }
 
@@ -393,6 +415,7 @@ public class DataSeeder implements CommandLineRunner {
     } catch (IOException e) {
       throw new IllegalStateException("Failed to copy seed task image: " + classpathLocation, e);
     }
+    log.info("  Image: {} -> {}", classpathLocation, targetFile);
     return "/uploads/tasks/seed/" + filename;
   }
 
