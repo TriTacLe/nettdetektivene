@@ -273,7 +273,7 @@ function formatTime(iso: string): string {
 </script>
 
 <template>
-  <SceneComponent title="Varsler" background="/StartBackground.jpg" :previous="backRoute">
+  <SceneComponent title="Varsler" background="/StartBackground.jpg" :previous="backRoute" dimOverlay>
     <transition name="toast">
       <div
         v-if="toastMsg"
