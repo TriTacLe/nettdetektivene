@@ -157,6 +157,13 @@ async function onSubmit(answers: TaskAnswers) {
     routeResult(result.passed, answers)
   } catch (err) {
     console.error('Failed to submit attempt:', err)
+    if ((err as { status?: number })?.status === 404) {
+      router.push({
+        name: 'game-map',
+        query: { removed: '1' },
+      })
+      return
+    }
     error.value = 'Kunne ikke lagre resultatet ditt. Prøv igjen.'
   } finally {
     submitting.value = false

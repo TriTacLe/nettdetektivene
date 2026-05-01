@@ -158,6 +158,47 @@ class NotebookControllerTest {
   }
 
   @Test
+  void createNotebook_returnsBadRequest_whenReflectionExceedsMaxLength() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    User principal = testUser(userId, "student");
+
+    NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .studentReflection("a".repeat(10_001))
+        .build();
+
+    mockMvc.perform(post("/api/v1/classrooms/{classroomId}/notebooks", classroomId)
+            .with(user(principal))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  void updateNotebook_returnsBadRequest_whenReflectionExceedsMaxLength() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID notebookId = UUID.randomUUID();
+    UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    User principal = testUser(userId, "student");
+
+    NotebookEntryRequestDTO dto = NotebookEntryRequestDTO.builder()
+        .stopLocation("stop_3")
+        .studentReflection("a".repeat(10_001))
+        .build();
+
+    mockMvc.perform(patch("/api/v1/classrooms/{classroomId}/notebooks/{notebookId}", classroomId, notebookId)
+            .with(user(principal))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
   void getAllNotebooks_unauthenticated_returnsUnauthorized() throws Exception {
     UUID classroomId = UUID.randomUUID();
 

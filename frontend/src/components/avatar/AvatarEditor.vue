@@ -155,7 +155,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
 </script>
 
 <template>
-  <div class="avatar-editor flex flex-col gap-0 w-full lg:grid lg:gap-0 lg:h-full lg:min-h-0 lg:overflow-hidden" :style="{ gridTemplateRows: gridRowStyle }">
+  <div class="avatar-editor flex flex-col gap-0 w-full lg:grid lg:gap-0 lg:min-h-0" :style="{ gridTemplateRows: gridRowStyle }">
     <div class="flex justify-between gap-4 pb-2">
       <div v-for="sc in swatchCategories" :key="sc.key" class="flex-1">
         <p class="section-label mb-1">{{ sc.label }}</p>
@@ -198,7 +198,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
       </div>
     </div>
 
-    <div v-for="cat in tileCategories" :key="cat.key" class="category-section lg:flex lg:flex-col lg:min-h-0 lg:overflow-hidden pt-2 pb-1">
+    <div v-for="cat in tileCategories" :key="cat.key" class="category-section lg:flex lg:flex-col lg:min-h-0 pt-2 pb-1">
       <p class="section-label mb-0.5">{{ cat.label }}</p>
       <div
         role="radiogroup"
@@ -211,7 +211,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
           :key="opt"
           role="radio"
           :aria-checked="modelValue[cat.key] === opt"
-          :aria-label="LABELS[opt] ?? opt"
+          :aria-label="isLocked(opt) ? `${LABELS[opt] ?? opt}, låst, krever ${unlockLabel(opt)}` : (LABELS[opt] ?? opt)"
           :aria-disabled="isLocked(opt)"
           :tabindex="modelValue[cat.key] === opt ? 0 : -1"
           class="paper-tile avatar-tile relative flex flex-col items-center"
@@ -223,7 +223,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
           @click="update({ [cat.key]: opt })"
         >
           <span class="tile-label pt-0.5">{{ LABELS[opt] ?? opt }}</span>
-          <AvatarPreview :config="previewConfig(cat.key, opt)" :size="60" />
+          <AvatarPreview :config="previewConfig(cat.key, opt)" :size="48" />
           <svg
             v-if="modelValue[cat.key] === opt"
             class="pin-icon"
@@ -258,6 +258,12 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
   border: none;
   border-radius: 0;
   padding: 0;
+  clip-path: none;
+}
+
+.avatar-editor :deep(button)::before,
+.avatar-editor :deep(button)::after {
+  display: none;
 }
 
 .paper-tile {
@@ -271,6 +277,12 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
 .paper-tile:hover {
   transform: translateY(-3px) !important;
   box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+  z-index: 4;
+}
+
+.paper-tile:focus {
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
   z-index: 4;
 }
 
@@ -300,7 +312,9 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
 
 .swatch-tile {
   font-size: 0.75rem;
-  padding: 0.375rem;
+  padding: 0.5rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
 }
 
 .avatar-tile {
@@ -337,7 +351,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
   pointer-events: none;
   z-index: 6;
   gap: 2px;
-  background: rgba(245, 242, 237, 0.85);
+  background: rgba(245, 242, 237, 0.92);
   border-radius: inherit;
 }
 
@@ -352,7 +366,7 @@ function handleKeydown(e: KeyboardEvent, options: readonly string[], key: keyof 
   font-family: 'Nunito', 'Segoe UI', sans-serif;
   font-size: 0.7rem;
   font-weight: 800;
-  color: #44403c;
+  color: #1c1917;
   letter-spacing: 0.03em;
 }
 </style>

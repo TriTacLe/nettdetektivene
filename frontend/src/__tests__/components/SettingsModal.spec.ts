@@ -52,7 +52,7 @@ describe('SettingsModal', () => {
 
   it('calls logout on logout button click', async () => {
     const wrapper = mount(SettingsModal)
-    await wrapper.find('.btn-vn-danger').trigger('click')
+    await wrapper.find('.logout-button').trigger('click')
     expect(mockLogout).toHaveBeenCalled()
   })
 

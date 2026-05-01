@@ -43,7 +43,9 @@ apiClient.interceptors.response.use((response) => response, async (error: AxiosE
   const isAuthRequest = typeof original?.url === 'string' && AUTH_ENDPOINT_PATTERN.test(original.url)
 
   if (error.response?.status !== 401 || original._retry || isAuthRequest) {
-    return Promise.reject(new Error(toUserMessage(error.response?.status)))
+    const wrapped = new Error(toUserMessage(error.response?.status)) as Error & { status?: number }
+    wrapped.status = error.response?.status
+    return Promise.reject(wrapped)
   }
 
   original._retry = true

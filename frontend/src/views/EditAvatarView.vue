@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watchEffect, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfileOptions, updateProfileMutation } from '@/generated-client/@tanstack/vue-query.gen.ts'
@@ -53,6 +53,7 @@ function handleSave() {
   saveWarning.value = ''
   if (!displayName.value.trim()) {
     saveError.value = 'Brukernavn kreves'
+    nextTick(() => document.getElementById('display-name')?.focus())
     return
   }
 
@@ -75,11 +76,11 @@ function handleSave() {
 </script>
 
 <template>
-  <SceneComponent title="Rediger profil" previous="/student-profile" background="/StartBackground.jpg">
-    <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden">
+  <SceneComponent title="Rediger profil" background="/StartBackground.jpg" previous="/student-profile">
+    <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
-      <CaseFile v-else tab-label="REDIGER PROFIL" class="w-full max-w-[64rem] lg:max-h-[78vh] lg:min-h-0">
+      <CaseFile v-else tab-label="REDIGER PROFIL" class="w-full max-w-[56rem] lg:max-h-[76vh] lg:min-h-0 lg:overflow-hidden">
         <template #left>
           <div class="flex flex-col items-center flex-1 p-3 lg:p-4 gap-2 min-h-0">
 
@@ -101,7 +102,7 @@ function handleSave() {
                 placeholder="Skriv inn navn"
                 maxlength="30"
                 :disabled="hasPendingNameChange"
-                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:border-amber-700 focus-visible:outline-2 focus-visible:outline-amber-700 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500 disabled:border-stone-300"
                 @keyup.enter="handleSave"
               />
               <p v-if="saveError" class="profile-save-error" role="alert">
@@ -138,7 +139,7 @@ function handleSave() {
           </div>
         </template>
         <template #right>
-          <div class="p-3 pt-9 min-h-0 overflow-visible lg:overflow-hidden">
+          <div class="flex-1 p-3 pt-9 min-h-0 overflow-y-auto">
             <AvatarEditor v-model="avatarConfig" :locked-options="lockedProps" />
           </div>
         </template>
@@ -147,17 +148,4 @@ function handleSave() {
   </SceneComponent>
 </template>
 
-<style scoped>
-.profile-save-error {
-  color: #991b1b;
-  background: #fef2f2;
-  border: 2px solid #dc2626;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin: 4px 0 0;
-  font-family: 'Nunito', 'Segoe UI', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  text-align: center;
-}
-</style>
+

@@ -11,6 +11,7 @@ import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.repository.TaskAttemptRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
+import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -42,6 +43,7 @@ public class TaskAttemptService {
 
   private final TaskAttemptRepository taskAttemptRepository;
   private final TaskBestScoreRepository taskBestScoreRepository;
+  private final TaskRepository taskRepository;
   private final JdbcTemplate jdbcTemplate;
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
@@ -61,6 +63,10 @@ public class TaskAttemptService {
    */
   @Transactional
   public TaskAttemptResponseDTO submitAttempt(User user, TaskAttemptRequestDTO dto) {
+    if (!taskRepository.existsByIdAndDeletedAtIsNull(dto.getTaskId())) {
+      throw new EntityNotFoundException("Task is no longer available: " + dto.getTaskId());
+    }
+
     UUID attemptId = UUID.randomUUID();
     String userId = user.getId().toString();
     String taskId = dto.getTaskId().toString();

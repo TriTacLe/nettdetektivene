@@ -11,6 +11,7 @@ import ntnu.no.backend.model.TaskAttempt;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.TaskAttemptRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
+import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
@@ -51,6 +52,9 @@ class TaskAttemptServiceTest {
 
   @Mock
   TaskBestScoreRepository taskBestScoreRepository;
+
+  @Mock
+  TaskRepository taskRepository;
 
   @Mock
   JdbcTemplate jdbcTemplate;
@@ -95,6 +99,7 @@ class TaskAttemptServiceTest {
         null, userId, taskId, classroomId, 85, true, attemptedAt
     );
 
+    when(taskRepository.existsByIdAndDeletedAtIsNull(taskId)).thenReturn(true);
     when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(true);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.of(persistedAttempt));
@@ -144,6 +149,7 @@ class TaskAttemptServiceTest {
         null, userId, taskId, classroomId, 0, false, attemptedAt
     );
 
+    when(taskRepository.existsByIdAndDeletedAtIsNull(taskId)).thenReturn(true);
     when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(false);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.of(persistedAttempt));
@@ -171,6 +177,7 @@ class TaskAttemptServiceTest {
     User user = userWithId(userId);
     TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, ANY_ANSWERS);
 
+    when(taskRepository.existsByIdAndDeletedAtIsNull(taskId)).thenReturn(true);
     when(taskAttemptVerifier.isCorrect(eq(taskId), any())).thenReturn(true);
     when(taskAttemptRepository.findById(org.mockito.ArgumentMatchers.any(UUID.class)))
         .thenReturn(Optional.empty());
@@ -188,6 +195,20 @@ class TaskAttemptServiceTest {
         eq(100),
         eq(1)
     );
+  }
+
+  @Test
+  void submitAttempt_throwsEntityNotFoundException_whenTaskIsDeleted() {
+    User user = userWithId(userId);
+    TaskAttemptRequestDTO dto = new TaskAttemptRequestDTO(taskId, classroomId, ANY_ANSWERS);
+
+    when(taskRepository.existsByIdAndDeletedAtIsNull(taskId)).thenReturn(false);
+
+    assertThatThrownBy(() -> taskAttemptService.submitAttempt(user, dto))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessageContaining("Task is no longer available");
+
+    org.mockito.Mockito.verifyNoInteractions(jdbcTemplate);
   }
 
   @Test
