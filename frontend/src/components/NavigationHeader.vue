@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.ts'
+import { Settings } from 'lucide-vue-next'
 import SettingsModal from './SettingsModal.vue'
 
 defineProps<{
