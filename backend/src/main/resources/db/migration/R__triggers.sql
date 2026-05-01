@@ -342,7 +342,8 @@ END$$
 
 -- -------------------------------------------------------------
 -- trg_notify_mystery_submitted
--- Notifies instructors when a student submits a mystery
+-- Notifies instructors when a student submits a mystery, and awards
+-- the "Bidragsyter" achievement on the student's first submission.
 -- -------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_notify_mystery_submitted$$
 CREATE TRIGGER trg_notify_mystery_submitted
@@ -350,6 +351,7 @@ AFTER INSERT ON mystery_submission
 FOR EACH ROW
 BEGIN
     DECLARE v_student_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_submission_count INT DEFAULT 0;
 
     -- Get student display name
     SELECT display_name
@@ -371,6 +373,15 @@ BEGIN
         NOW()
     FROM classroom_instructor ci
     WHERE ci.classroom_id = NEW.classroom_id;
+
+    -- Award "Bidragsyter" on the user's first ever submission.
+    SELECT COUNT(*) INTO v_submission_count
+    FROM mystery_submission
+    WHERE submitted_by = NEW.submitted_by;
+
+    IF v_submission_count = 1 THEN
+        CALL sp_award_achievement(NEW.submitted_by, 'mystery_submitted', 'first', NEW.classroom_id);
+    END IF;
 END$$
 
 -- -------------------------------------------------------------

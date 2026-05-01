@@ -22,6 +22,15 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const wrongIndex = ref<number | null>(null)
+const flashIndex = ref<number | null>(null)
+
+const LABELS = ['A', 'B', 'C', 'D']
+const TONE_VARS = [
+  'var(--color-nd-glow-cool)',
+  'var(--color-nd-accent)',
+  'var(--color-nd-glow)',
+  'var(--color-nd-success)',
+]
 
 onMounted(loadMystery)
 
@@ -42,6 +51,7 @@ async function pickAlternative(selectedIndex: number) {
   if (!mystery.value || isSubmitting.value || mystery.value.completed) return
   isSubmitting.value = true
   wrongIndex.value = null
+  flashIndex.value = selectedIndex
   try {
     const result = await MysteryService.completeMystery(submissionId.value, { selectedIndex })
     if (result.correct) {
@@ -62,6 +72,7 @@ async function pickAlternative(selectedIndex: number) {
       error instanceof Error ? error.message : 'Noe gikk galt.'
   } finally {
     isSubmitting.value = false
+    flashIndex.value = null
   }
 }
 
@@ -77,7 +88,7 @@ function goBack() {
     background="/CorridorBackground.jpeg"
     @back="goBack"
   >
-    <div class="news-task">
+    <div class="mystery-task">
       <div class="task-header">
         <h2 class="question">Hva er sant om dette?</h2>
       </div>
@@ -85,23 +96,27 @@ function goBack() {
       <p v-if="isLoading" class="state-msg">Laster mysterium...</p>
       <p v-else-if="errorMessage" class="state-msg state-msg--error">{{ errorMessage }}</p>
 
-      <article v-else-if="mystery" class="article-card">
-        <img class="article-image" :src="mystery.imagePath" alt="Mysterium" />
+      <div v-else-if="mystery" class="mystery-body">
+        <div class="photo-frame">
+          <img class="photo-image" :src="mystery.imagePath" alt="Mysterium" />
+        </div>
 
         <div class="alternatives">
           <button
             v-for="(text, index) in mystery.alternatives"
             :key="index"
             type="button"
-            class="article-choice btn-bare"
+            class="alt-btn"
             :class="{
-              'article-choice--wrong': wrongIndex === index,
-              'article-choice--solved': mystery.completed,
+              'alt-btn--wrong': wrongIndex === index,
+              'alt-btn--solved': mystery.completed,
+              'is-flashing': flashIndex === index,
             }"
+            :style="{ '--ring-color': TONE_VARS[index] ?? 'var(--color-nd-glow)' }"
             :disabled="isSubmitting || mystery.completed"
             @click="pickAlternative(index)"
           >
-            <span class="alt-tag">{{ ['A', 'B', 'C'][index] }}</span>
+            <span class="alt-tag">{{ LABELS[index] ?? index + 1 }}</span>
             <span class="alt-text">{{ text }}</span>
           </button>
         </div>
@@ -109,16 +124,15 @@ function goBack() {
         <p v-if="mystery.completed" class="solved-msg">
           Mysteriet er løst!
         </p>
-      </article>
+      </div>
     </div>
   </SceneComponent>
 </template>
 
 <style scoped>
-.news-task {
+.mystery-task {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding: 1rem 1.5rem 1.5rem;
   overflow-y: auto;
   min-height: 0;
@@ -127,107 +141,108 @@ function goBack() {
 .task-header {
   flex-shrink: 0;
   text-align: center;
+  padding-top: 2rem;
+  margin-bottom: 3rem;
 }
 
 .question {
   color: white;
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  font-weight: 800;
-  margin: 0;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.85rem;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85);
 }
 
-.article-card {
+.mystery-body {
   display: flex;
   flex-direction: column;
-  background: #fdfaf4;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  gap: 1rem;
-  border: 3px solid transparent;
-  width: min(640px, 100%);
+  gap: 1.5rem;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
   margin: 0 auto;
 }
 
-.article-image {
+.photo-frame {
   width: 100%;
-  max-height: min(48vh, 480px);
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  background: #0a0a14;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-image {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 6px;
-  background: #e9e5da;
+  display: block;
 }
 
 .alternatives {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.65rem;
+  width: 100%;
 }
 
-.article-choice {
+.alt-btn {
+  --ring-color: var(--color-nd-glow);
   display: flex;
   align-items: center;
   gap: 0.85rem;
   width: 100%;
-  padding: 0.85rem 1rem;
-  border: 2px solid #1a1a1a;
-  border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
-  font-family: system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+  padding: 0.85rem 1.1rem;
   text-align: left;
-  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.article-choice:hover:not(:disabled) {
-  background: #1a1a1a;
-  color: white;
+.alt-btn:not(:disabled):hover,
+.alt-btn:focus-visible {
+  transform: scale(1.02);
 }
 
-.article-choice:hover:not(:disabled) .alt-tag {
-  background: white;
-  color: #1a1a1a;
+.alt-btn.is-flashing::after {
+  background: var(--ring-color);
 }
 
-.article-choice:active:not(:disabled) { transform: scale(0.99); }
+.alt-btn--wrong::before { background: var(--color-nd-button-danger-edge); }
+.alt-btn--wrong::after { background: #fee2e2; }
+.alt-btn--wrong { color: #991b1b; animation: shake 0.32s; }
+.alt-btn--wrong .alt-tag { background: var(--color-nd-button-danger-edge); color: #ffffff; }
 
-.article-choice:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.article-choice--wrong {
-  border-color: #dc2626;
-  background: #fee2e2;
-  color: #991b1b;
-  animation: shake 0.32s;
-}
-
-.article-choice--solved {
-  border-color: #16a34a;
-  background: #f0fdf4;
-  color: #166534;
-}
+.alt-btn--solved::before { background: #166534; }
+.alt-btn--solved::after { background: #f0fdf4; }
+.alt-btn--solved { color: #166534; }
+.alt-btn--solved .alt-tag { background: #166534; color: #ffffff; }
 
 .alt-tag {
-  width: 1.85rem;
-  height: 1.85rem;
-  border-radius: 50%;
-  background: #1a1a1a;
-  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--ring-color);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 0.9rem;
+  font-weight: 900;
+  font-size: 0.95rem;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  -webkit-text-stroke: 2px #000000;
+  paint-order: stroke fill;
+  box-shadow: 0 0 0 2px #000000;
 }
 
-.alt-text { flex: 1; }
+.alt-text {
+  flex: 1;
+  min-width: 0;
+}
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -239,28 +254,28 @@ function goBack() {
 
 .state-msg {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: white;
   text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 .state-msg--error { color: #fca5a5; }
 
 .solved-msg {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #166534;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  padding: 0.55rem 0.75rem;
-  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: rgba(22, 101, 52, 0.85);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
   text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 1100px) {
-  .news-task { padding-inline: 1rem; }
+  .mystery-task { padding-inline: 1rem; }
 }
 </style>

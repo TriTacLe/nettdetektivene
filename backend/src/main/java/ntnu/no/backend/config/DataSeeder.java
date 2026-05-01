@@ -606,7 +606,7 @@ public class DataSeeder implements CommandLineRunner {
         {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
         {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
         {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},
-        {"Perfekt Score",      "Få 100 poeng på en oppgave",                     "💯", "perfect_score",       "100_points"},
+        {"Bidragsyter",        "Send inn ditt første ukens mysterium",            "✍️", "mystery_submitted",   "first"},
     };
 
     for (String[] row : data) {
