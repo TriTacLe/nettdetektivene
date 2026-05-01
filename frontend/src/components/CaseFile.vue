@@ -21,18 +21,6 @@ defineProps<{ tabLabel: string }>()
       </template>
     </div>
     <svg
-      class="decor-clip"
-      aria-hidden="true"
-      viewBox="0 0 20 60"
-      fill="none"
-    >
-      <path
-        stroke="#78716c"
-        stroke-width="1.5"
-        stroke-linecap="round"
-      />
-    </svg>
-    <svg
       class="decor-stamp"
       aria-hidden="true"
       viewBox="0 0 160 40"
@@ -129,18 +117,6 @@ defineProps<{ tabLabel: string }>()
     margin: 1.5rem 0;
     align-self: stretch;
   }
-}
-
-.decor-clip {
-  position: absolute;
-  top: -0.3rem;
-  left: -0.1rem;
-  width: 2rem;
-  height: 5rem;
-  transform: rotate(8deg);
-  z-index: 3;
-  pointer-events: none;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
 }
 
 .decor-stamp {
