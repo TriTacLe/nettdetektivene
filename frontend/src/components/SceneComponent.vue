@@ -14,6 +14,7 @@ const props = withDefaults(
     scanlines?: boolean
     dimOverlay?: boolean
     overlayOpacity?: number
+    lockViewport?: boolean
   }>(),
   {
     background: '/StartBackground.jpg',
@@ -53,7 +54,7 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="scene" :class="{ scanlines: resolvedScanlines }">
+  <div class="scene" :class="{ scanlines: resolvedScanlines, 'scene--locked': lockViewport }">
     <template v-if="backgroundMobile">
       <img
         class="scene-background scene-background--desktop"
@@ -75,9 +76,9 @@ function handleBack() {
       :style="overlayOpacity !== undefined ? { opacity: overlayOpacity } : {}"
     ></div>
     <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
-    <div class="scene-content">
+    <div class="scene-content" :class="{ 'scene-content--locked': lockViewport }">
       <NavigationHeader :title="title" :previous="previousForHeader" :next="next" @back="handleBack" />
-      <div class="scene-body">
+      <div class="scene-body" :class="{ 'scene-body--locked': lockViewport }">
         <slot />
       </div>
     </div>
@@ -141,10 +142,45 @@ function handleBack() {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .scene-background--mobile {
   display: none;
+}
+
+.scene--locked {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.scene-content--locked {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.scene-body--locked {
+  overflow: hidden;
+}
+
+@media (max-width: 800px) {
+  .scene--locked {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .scene-content--locked {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .scene-body--locked {
+    overflow: visible;
+  }
 }
 
 @media (max-aspect-ratio: 1/1) {

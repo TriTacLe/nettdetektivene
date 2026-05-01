@@ -137,23 +137,33 @@ function routeResult(passed: boolean) {
     :title="task?.title ?? 'Nyhetskvartalet'"
     :previous="previousRoute"
     background="/NyhetskvartaletBackground.jpg"
+    lock-viewport
   >
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
     <div v-else-if="!challenge" class="state-msg state-msg--error">Oppgaven mangler innhold.</div>
     <template v-else>
       <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
-      <NyhetskvartaletComponent
-        :challenge="challenge"
-        :question="taskQuestion"
-        :tip="taskTip"
-        @submit="onSubmit"
-      />
+      <div class="task-shell">
+        <NyhetskvartaletComponent
+          :challenge="challenge"
+          :question="taskQuestion"
+          :tip="taskTip"
+          @submit="onSubmit"
+        />
+      </div>
     </template>
   </SceneComponent>
 </template>
 
 <style scoped>
+.task-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+
 .state-msg {
   flex: 1;
   display: flex;
