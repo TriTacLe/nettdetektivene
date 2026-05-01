@@ -6,7 +6,7 @@ export async function fetchAllTasks(): Promise<TaskDTO[]> {
   const { data } = await apiClient.get<ApiResponse<TaskDTO[]>>('/tasks')
   return data.data.map(task => ({
     ...task,
-    content: parseTaskContent(task.content as string, task.taskType)
+    content: parseTaskContent(task.content as unknown as string, task.taskType) as Record<string, unknown>
   }))
 }
 
@@ -16,7 +16,7 @@ export async function fetchTasksByStopLocation(stopLocation: string): Promise<Ta
     .filter(task => task.stopLocation === stopLocation)
     .map(task => ({
       ...task,
-      content: parseTaskContent(task.content as string, task.taskType)
+      content: parseTaskContent(task.content as unknown as string, task.taskType) as Record<string, unknown>
     }))
 }
 
@@ -25,7 +25,7 @@ export async function fetchTaskById(id: string): Promise<TaskDTO> {
   const task = data.data
   return {
     ...task,
-    content: parseTaskContent(task.content as string, task.taskType)
+    content: parseTaskContent(task.content as unknown as string, task.taskType) as Record<string, unknown>
   }
 }
 
