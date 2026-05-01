@@ -229,11 +229,6 @@ create_task_if_missing() {
 
   local list; list=$(http_body "$(api GET /api/v1/tasks "" "$token")")
   local existing; existing=$(echo "$list" | jq -r --arg t "$title" '(.data // .) | (if type=="array" then . else (.[] // []) end) | .[]? | select(.title==$t) | .id' | head -n1)
-  if [ -n "$existing" ] && [ "$existing" != "null" ]; then
-    skip "Task '$title' exists"
-    echo "$existing"
-    return
-  fi
 
   local payload
   payload=$(jq -n \
@@ -241,9 +236,18 @@ create_task_if_missing() {
     --arg content "$content" --argjson difficulty "$difficulty" \
     '{title:$title, taskType:$type, difficulty:$difficulty, isActive:true, stopLocation:$stop, content:$content}')
 
-  local resp code body
+  local resp code body method endpoint
+  if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+    # Task exists — PATCH it so DataSeeder placeholder content gets replaced with real content.
+    method="PATCH"
+    endpoint="/api/v1/tasks/$existing"
+  else
+    method="POST"
+    endpoint="/api/v1/tasks"
+  fi
+
   if [ ${#image_paths[@]} -eq 0 ]; then
-    resp=$(api POST /api/v1/tasks "$payload" "$token")
+    resp=$(api "$method" "$endpoint" "$payload" "$token")
   else
     # Multipart upload: backend expects a "task" JSON part and one or
     # more "images" file parts whose original filenames match the
@@ -251,7 +255,7 @@ create_task_if_missing() {
     local task_json; task_json=$(mktemp -t factory_task.XXXXXX.json)
     printf '%s' "$payload" > "$task_json"
 
-    local curl_args=(-s -w "\n%{http_code}" -X POST
+    local curl_args=(-s -w "\n%{http_code}" -X "$method"
       -H "Authorization: Bearer $token"
       -F "task=@${task_json};type=application/json")
 
@@ -273,17 +277,21 @@ create_task_if_missing() {
       curl_args+=(-F "images=@${img}")
     done
 
-    resp=$(curl "${curl_args[@]}" "${BASE_URL}/api/v1/tasks")
+    resp=$(curl "${curl_args[@]}" "${BASE_URL}${endpoint}")
     rm -f "$task_json"
   fi
 
   code=$(http_code "$resp"); body=$(http_body "$resp")
   if [ "$code" != "200" ] && [ "$code" != "201" ]; then
-    fail "Task '$title' create failed ($code): $(echo "$body" | head -c 200)"
+    fail "Task '$title' ${method,,} failed ($code): $(echo "$body" | head -c 200)"
     return 1
   fi
   local id; id=$(echo "$body" | jq -r '.data.id // .id')
-  ok "Task created: $title (${id:0:8}...)"
+  if [ "$method" = "PATCH" ]; then
+    ok "Task updated: $title (${id:0:8}...)"
+  else
+    ok "Task created: $title (${id:0:8}...)"
+  fi
   echo "$id"
 }
 

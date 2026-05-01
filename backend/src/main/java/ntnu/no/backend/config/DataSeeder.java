@@ -122,8 +122,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedInstitutions() {
     String[][] data = {
-        {"NTNU Trondheim", "ntnu"},
-        {"OsloMet",        "oslomet"},
+        {"Flatåsen skole", "flataasen"},
+        {"Byåsen skole",   "byaasen"},
     };
     for (String[] row : data) {
       Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
@@ -140,8 +140,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedInstructors() {
     Object[][] data = {
-        {"laerer@ntnu.no",  "Lærer",  "nora",  "ntnu"},
-        {"lars@oslomet.no", "Lærer Lars", "lars", "oslomet"},
+        {"lærer@flatåsen.no", "Nora",  "nora", "flataasen"},
+        {"lærer@byåsen.no",  "Lars",  "lars", "byaasen"},
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -156,9 +156,9 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedClassrooms() {
     Object[][] data = {
-        {"5A - Digital Sikkerhet", "Introduksjon til digital sikkerhet", "nora", "ntnu", "class1"},
-        {"6B - Nettvett",          "Lær om nettvett og personvern",       "nora", "ntnu", "class2"},
-        {"7C - Cybersecurity",     "Grunnleggende cybersecurity",          "lars", "oslomet", "class3"},
+        {"5A", "Lær å være trygg på nettet!",         "nora", "flataasen", "class1"},
+        {"6B", "Hvem kan du stole på på internett?",  "nora", "flataasen", "class2"},
+        {"7A", "Bli en nettdetektiv og løs mysterier!", "lars", "byaasen", "class3"},
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -178,55 +178,51 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Tasks  (3 per stop, all 7 stops)
+  // Tasks  (3 per stop: nyhetskvartalet, fotografen, datasenteret)
   // -----------------------------------------------------------------------
 
   private void seedTasks() {
+    // Copy seed images to the tasks upload folder once (same images factory.sh uses).
+    // These paths are used as fallback content; factory.sh will PATCH with its own
+    // uploaded images if it runs after the seeder.
+    String fakeArticle = copySeedImageForTasks("seed-images/news/fake-article-1.jpg");
+    String realArticle  = copySeedImageForTasks("seed-images/news/real-article-1.png");
+    String realPhoto    = copySeedImageForTasks("seed-images/photos/real-photo-1.jpeg");
+    String fakePhoto    = copySeedImageForTasks("seed-images/photos/fake-photo-1.jpg");
+
     // {title, type, stop, difficulty, ownerKey}
     Object[][] taskDefs = {
-        // nyhetskvartalet
-        {"Gjenkjenn falske nyheter",       TaskType.NEWS,        "nyhetskvartalet", 1, "nora"},
-        {"Kildesjekk av nettsider",        TaskType.NEWS,        "nyhetskvartalet", 2, "nora"},
-        {"Kjennetegn på clickbait",        TaskType.NEWS,        "nyhetskvartalet", 2, "nora"},
+        // nyhetskvartalet — titles match factory.sh so seeder skips if factory already ran
+        {"Ekte eller falsk nyhet (nivå 1)", TaskType.NEWS,  "nyhetskvartalet", 1, "nora"},
+        {"Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS,  "nyhetskvartalet", 2, "nora"},
+        {"Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS,  "nyhetskvartalet", 3, "nora"},
         // fotografen
-        {"Spor bildemanipulasjon",         TaskType.PHOTO,       "fotografen",      2, "nora"},
-        {"Personvern i bilder",            TaskType.PHOTO,       "fotografen",      2, "nora"},
-        {"Metadata i foto",                TaskType.PHOTO,       "fotografen",      3, "nora"},
-        // postkontoret
-        {"Gjenkjenn phishing-e-post",      TaskType.EMAIL,       "postkontoret",    1, "nora"},
-        {"Farlig e-postvedlegg",           TaskType.EMAIL,       "postkontoret",    2, "nora"},
-        {"Spoofed avsenderadresse",        TaskType.EMAIL,       "postkontoret",    3, "nora"},
-        // passordbanken
-        {"Lag et sterkt passord",          TaskType.PASSWORD,    "passordbanken",   1, "nora"},
-        {"Passordgjenbruk og risiko",      TaskType.PASSWORD,    "passordbanken",   2, "nora"},
-        {"To-faktor autentisering",        TaskType.PASSWORD,    "passordbanken",   3, "nora"},
-        // markedsplassen
-        {"Trygg netthandel",               TaskType.MARKETPLACE, "markedsplassen",  1, "lars"},
-        {"Gjenkjenn falske annonser",      TaskType.MARKETPLACE, "markedsplassen",  2, "lars"},
-        {"Unngå svindel på finn.no",       TaskType.MARKETPLACE, "markedsplassen",  3, "lars"},
-        // sosialen
-        {"Personvern på sosiale medier",   TaskType.SOCIAL,      "sosialen",        1, "lars"},
-        {"Digitalt fotavtrykk",            TaskType.SOCIAL,      "sosialen",        2, "lars"},
-        {"Nettvett og digital mobbing",    TaskType.SOCIAL,      "sosialen",        3, "lars"},
-        // datasenteret
-        {"Kryptering og sikker lagring",   TaskType.BOSS,        "datasenteret",    4, "nora"},
-        {"Sikkerhetskopiering",            TaskType.BOSS,        "datasenteret",    4, "nora"},
-        {"Digital Sikkerhetsmester",       TaskType.BOSS,        "datasenteret",    5, "nora"},
+        {"Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora"},
+        {"Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora"},
+        {"Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora"},
+        // datasenteret — 5 tasks matching factory.sh (3 NEWS + 2 PHOTO)
+        {"Datatyven sin første løgn",   TaskType.NEWS,  "datasenteret", 4, "nora"},
+        {"Avslør den falske rapporten", TaskType.NEWS,  "datasenteret", 5, "nora"},
+        {"Manipulert bevismateriale",   TaskType.PHOTO, "datasenteret", 4, "nora"},
+        {"Sannhetens øyeblikk",         TaskType.NEWS,  "datasenteret", 5, "nora"},
+        {"Endelig konfrontasjon",       TaskType.PHOTO, "datasenteret", 5, "nora"},
     };
 
-Classroom class1 = classrooms.get("class1");
+    Classroom class1 = classrooms.get("class1");
     Classroom class2 = classrooms.get("class2");
     Classroom class3 = classrooms.get("class3");
     short order = 0;
     for (Object[] row : taskDefs) {
+      TaskType type = (TaskType) row[1];
+      String stop   = (String) row[2];
       Task task = taskRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
-        log.info("Task: {} @ {}", row[0], row[2]);
+        log.info("Task: {} @ {}", row[0], stop);
         return taskRepository.save(Task.builder()
             .title((String) row[0])
-            .taskType((TaskType) row[1])
-            .stopLocation((String) row[2])
+            .taskType(type)
+            .stopLocation(stop)
             .difficulty((Integer) row[3])
-            .content("{\"description\": \"" + row[0] + "\", \"difficulty\": " + row[3] + "}")
+            .content(buildTaskContent(type, stop, fakeArticle, realArticle, realPhoto, fakePhoto))
             .owner(users.get(row[4]))
             .isActive(true)
             .build());
@@ -260,14 +256,15 @@ Classroom class1 = classrooms.get("class1");
   private void seedStudents() {
     // {email, displayName, key}
     String[][] data = {
-        {"anine@nettdetektivene.no",   "Agent Anine",    "anine"},
-        {"nora-s@nettdetektivene.no",  "Detektiv Nora",  "nora-student"},
-        {"gustav@nettdetektivene.no",  "Guru Gustav",    "gustav"},
-        {"tri@nettdetektivene.no",     "Tri-Tech",       "tri"},
-        {"silje@nettdetektivene.no",   "Spion Silje",    "silje"},
-        {"vetle@nettdetektivene.no",   "Vekter Vetle",   "vetle"},
-        {"regine@nettdetektivene.no",  "Radar-Regine",   "regine"},
-        {"segward@nettdetektivene.no", "Sikker-Segward", "segward"},
+        {"anine@nettdetektivene.no",            "Agent Anine",    "anine"},
+        {"nora-s@nettdetektivene.no",           "Detektiv Nora",  "nora-student"},
+        {"gustav@nettdetektivene.no",           "Guru Gustav",    "gustav"},
+        {"tri@nettdetektivene.no",              "Tri-Tech",       "tri"},
+        {"silje@nettdetektivene.no",            "Spion Silje",    "silje"},
+        {"vetle@nettdetektivene.no",            "Vekter Vetle",   "vetle"},
+        {"regine@nettdetektivene.no",           "Radar-Regine",   "regine"},
+        {"segward@nettdetektivene.no",          "Sikker-Segward", "segward"},
+        {"studentNoClassroomYet@flataasen.no",  "Ny Elev",        "no-classroom"},
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -322,7 +319,7 @@ Classroom class1 = classrooms.get("class1");
     Classroom class1 = classrooms.get("class1");
     UUID classroomId = class1.getId();
 
-    // Star students: all 21 tasks, score 95-100
+    // Star students: all tasks, score 95-100
     for (String key : List.of("anine", "nora-student", "gustav")) {
       User u = users.get(key);
       if (hasAttempts(u.getId(), classroomId)) continue;
@@ -331,11 +328,11 @@ Classroom class1 = classrooms.get("class1");
       }
     }
 
-    // Good students: first 12 tasks, score 80-92
+    // Good students: first 6 tasks, score 80-92
     for (String key : List.of("tri", "silje")) {
       User u = users.get(key);
       if (hasAttempts(u.getId(), classroomId)) continue;
-      for (int i = 0; i < 12; i++) {
+      for (int i = 0; i < 6; i++) {
         submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 80 + (i % 13));
       }
     }
@@ -371,19 +368,19 @@ Classroom class1 = classrooms.get("class1");
     Classroom class2 = classrooms.get("class2");
 
     Object[][] entries = {
-        // 5A - Digital Sikkerhet
+        // 5A
         {class1, "anine",       "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
+        {class1, "anine",       "fotografen",      "Bildemanipulasjon er overraskende enkelt. Stoler ikke blindt på bilder lenger."},
         {class1, "nora-student","fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
-        {class1, "gustav",      "postkontoret",    "Phishing-e-poster ser veldig ekte ut. Sjekker alltid avsenderadressen."},
-        {class1, "tri",         "passordbanken",   "Passordgjenbruk er en stor risiko. Bruker passordbehandler nå."},
-        {class1, "silje",       "markedsplassen",  "Lærte å gjenkjenne falske annonser og unngå svindel på nettet."},
-        {class1, "anine",       "sosialen",        "Digitalt fotavtrykk er større enn jeg trodde. Tenker meg om nå."},
         {class1, "nora-student","datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
-        // 6B - Nettvett
+        {class1, "gustav",      "datasenteret",    "Kryptering beskytter dataene mine. Lærte mye om digital sikkerhet!"},
+        {class1, "tri",         "fotografen",      "Metadata i bilder avslører mer enn jeg trodde. Alltid kritisk til bilder nå."},
+        {class1, "silje",       "nyhetskvartalet", "Falske nyheter ser ekte ut. Sjekker alltid kilden!"},
+        // 6B
         {class2, "regine",      "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden."},
         {class2, "regine",      "fotografen",      "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå."},
-        {class2, "vetle",       "postkontoret",    "Phishing er vanskeligere å oppdage enn jeg trodde."},
-        {class2, "vetle",       "passordbanken",   "Et sterkt passord er første forsvarslinje. Byttet alle passord!"},
+        {class2, "vetle",       "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde."},
+        {class2, "vetle",       "datasenteret",    "Sikkerhetskopiering er viktig — aldri mer miste data!"},
     };
 
     for (Object[] row : entries) {
@@ -479,6 +476,57 @@ Classroom class1 = classrooms.get("class1");
     return "/uploads/mysteries/" + batchId + "/" + filename;
   }
 
+  private String copySeedImageForTasks(String classpathLocation) {
+    String filename = Paths.get(classpathLocation).getFileName().toString();
+    Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize().resolve("tasks").resolve("seed");
+    try {
+      Files.createDirectories(targetDir);
+      try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+        Files.copy(in, targetDir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to copy seed task image: " + classpathLocation, e);
+    }
+    return "/uploads/tasks/seed/" + filename;
+  }
+
+  private String buildTaskContent(TaskType type, String stop,
+      String fakeArticle, String realArticle, String realPhoto, String fakePhoto) {
+    boolean isBoss = "datasenteret".equals(stop);
+    if (type == TaskType.NEWS) {
+      String question = isBoss
+          ? "Datatyven har plantet en falsk nyhet. Hvilken er ekte?"
+          : "Hvilken av disse nyhetene er ekte?";
+      String hint = isBoss
+          ? "Sjekk kilden, forfatteren og datoen — de svakeste signalene avslører løgnen."
+          : "Se etter kildehenvisninger og datoer i artiklene.";
+      return "{\"question\":\"" + question + "\",\"hint\":\"" + hint + "\","
+          + "\"articles\":["
+          + "{\"imagePath\":\"" + fakeArticle + "\",\"isReal\":false},"
+          + "{\"imagePath\":\"" + realArticle  + "\",\"isReal\":true}"
+          + "]}";
+    } else {
+      String description = isBoss
+          ? "Datatyven har manipulert bevismateriale. Klassifiser hvert bilde riktig."
+          : "Hvilken type bilde er dette?";
+      String d1 = isBoss ? "Bilde fra et serverrom"  : "Bilde av en by ved solnedgang";
+      String d2 = isBoss ? "Portrett av en mistenkt" : "Portrett av en person utendørs";
+      String d3 = isBoss ? "Bilde fra et åsted"      : "Folkemengde på et torg";
+      String b2 = isBoss ? "Urealistiske detaljer"   : "Urealistiske detaljer i bakgrunnen";
+      return "{\"description\":\"" + description + "\",\"alternatives\":["
+          + "{\"imagePath\":\"" + realPhoto + "\",\"description\":\"" + d1 + "\","
+          +   "\"correctType\":\"ekte\","
+          +   "\"begrunnelser\":[\"Naturlig lysforhold\",\"Konsistente skygger\",\"Ingen synlige artefakter\"]},"
+          + "{\"imagePath\":\"" + fakePhoto + "\",\"description\":\"" + d2 + "\","
+          +   "\"correctType\":\"ai-generert\","
+          +   "\"begrunnelser\":[\"" + b2 + "\",\"Feil antall fingre\",\"Unaturlig tekstur på huden\"]},"
+          + "{\"imagePath\":\"" + fakePhoto + "\",\"description\":\"" + d3 + "\","
+          +   "\"correctType\":\"manipulert\","
+          +   "\"begrunnelser\":[\"Inkonsistente skygger\",\"Synlig kloning av personer\",\"Feil perspektiv\"]}"
+          + "]}";
+    }
+  }
+
   // -----------------------------------------------------------------------
   // Achievements
   // -----------------------------------------------------------------------
@@ -570,15 +618,15 @@ Classroom class1 = classrooms.get("class1");
     log.info("SEED SUMMARY");
     log.info("========================================");
     log.info("Institutions : {}", institutions.size());
-    log.info("Instructors  : laerer@ntnu.no, lars@oslomet.no");
+    log.info("Instructors  : lærer@flatåsen.no, lærer@byåsen.no");
     log.info("Classrooms   : {}", classrooms.size());
-    log.info("Tasks        : {} (3 per stop, 7 stops)", allTasks.size());
-    log.info("Students     : 8");
+    log.info("Tasks        : {} (3 nyhetskvartalet + 3 fotografen + 5 datasenteret)", allTasks.size());
+    log.info("Students     : 9 (1 without classroom: studentNoClassroomYet@flataasen.no)");
     log.info("");
     log.info("LOGIN (password: password123)");
-    log.info("  Teacher : laerer@ntnu.no");
+    log.info("  Teacher : lærer@flatåsen.no");
     log.info("  Student : anine@nettdetektivene.no  (star — all tasks done)");
-    log.info("  Student : tri@nettdetektivene.no    (good — 12/21 tasks done)");
+    log.info("  Student : tri@nettdetektivene.no    (good — partial tasks done)");
     log.info("  Student : segward@nettdetektivene.no (no attempts)");
     log.info("");
     log.info("CLASSROOM JOIN CODES:");
@@ -589,12 +637,16 @@ Classroom class1 = classrooms.get("class1");
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of("anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward");
+    List<String> studentKeys = List.of("anine", "nora-student", "gustav", "tri", "silje", "vetle", "regine", "segward", "no-classroom");
     for (String key : studentKeys) {
       User student = users.get(key);
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
       if (membership == null) {
-        log.error("  ERROR: Student {} has no classroom membership!", key);
+        if ("no-classroom".equals(key)) {
+          log.info("  Student {} -> no classroom (intentional)", student.getDisplayName());
+        } else {
+          log.error("  ERROR: Student {} has no classroom membership!", key);
+        }
       } else {
         log.info("  Student {} -> Classroom: {}, isAllowed: {}, DisplayName: {}",
                  student.getDisplayName(),
