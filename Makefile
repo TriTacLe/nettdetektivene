@@ -95,13 +95,16 @@ down:
 	docker compose down
 
 clean:
-	@echo "Removing containers, volumes, orphans, networks, and locally-built images..."
-	docker compose down -v --remove-orphans --rmi local
-	@echo "Sweeping any leftover volumes from the alternate backend/ compose project..."
-	-docker compose -f backend/compose.yaml down -v --remove-orphans --rmi local 2>/dev/null
+	@echo "Stopping main compose project (containers, volumes, orphans, networks)..."
+	docker compose down -v --remove-orphans
+	@echo "Stopping alternate backend/ compose project, if any..."
+	-docker compose -f backend/compose.yaml down -v --remove-orphans 2>/dev/null
+	@echo "Removing locally-built images for this project..."
+	-docker image rm -f backend:latest frontend:latest 2>/dev/null
+	-docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^(idatt2106-v26-05|backend|nettdetektivene)[-_/].*:' | xargs -r docker image rm -f
 	@echo "Removing any stray named volumes for this project (in case of project-name drift)..."
 	-docker volume rm -f nettdetektivene_mysql_data nettdetektivene_uploads 2>/dev/null
-	-docker volume ls --format '{{.Name}}' | grep -E '(nettdetektivene_(mysql_data|uploads))$$' | xargs -r docker volume rm -f
+	-docker volume ls --format '{{.Name}}' | grep -E 'nettdetektivene_(mysql_data|uploads)$$' | xargs -r docker volume rm -f
 	@echo "Done."
 
 logs:
