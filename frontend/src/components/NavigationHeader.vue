@@ -84,6 +84,7 @@ onUnmounted(() => {
       </div>
       <div v-else class="nav-placeholder" />
       <button
+        v-if="authStore.isAuthenticated"
         class="nav-button settings-button btn-bare"
         aria-label="Åpne innstillinger"
         @click="settingsOpen = true">
