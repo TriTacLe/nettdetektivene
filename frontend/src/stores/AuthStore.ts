@@ -7,6 +7,7 @@ import { UserRole } from '@/types'
 import { useToast } from '@/composables/UseToast'
 import { useStopStore } from '@/stores/StopStore'
 import { useStoryProgressStore } from '@/stores/StoryProgressStore'
+import { useSideQuestStore } from '@/stores/SideQuestStore'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -32,6 +33,7 @@ export const useAuthStore = defineStore(
       stop.clearCompleted()
       stop.clearTasks()
       useStoryProgressStore().clear()
+      useSideQuestStore().clear()
     }
 
     async function login(credentials: { email: string; password: string }): Promise<void> {
@@ -43,6 +45,7 @@ export const useAuthStore = defineStore(
       await fetchMe()
       await useStopStore().loadCompleted()
       await useStoryProgressStore().load()
+      await useSideQuestStore().load()
     }
 
     async function feideLogin(credentials: FeideLoginRequest): Promise<void> {
@@ -54,6 +57,7 @@ export const useAuthStore = defineStore(
       await fetchMe()
       await useStopStore().loadCompleted()
       await useStoryProgressStore().load()
+      await useSideQuestStore().load()
     }
 
     async function fetchMe(): Promise<void> {

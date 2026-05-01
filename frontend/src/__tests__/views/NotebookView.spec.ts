@@ -152,8 +152,8 @@ describe('NotebookView', () => {
   it('next button advances the spread', async () => {
     const wrapper = setup([mockEntry, secondMockEntry, thirdMockEntry])
     const indicator = wrapper.find('.page-indicator')
-    expect(indicator.text()).toContain('Side 1 av 4')
+    expect(indicator.text()).toContain('Side 1 av 2')
     await wrapper.find('[aria-label="Neste side"]').trigger('click')
-    expect(indicator.text()).toContain('Side 2 av 4')
+    expect(indicator.text()).toContain('Side 2 av 2')
   })
 })

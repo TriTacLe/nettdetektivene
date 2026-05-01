@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.ts'
 import SettingsModal from './SettingsModal.vue'
-import { Settings } from 'lucide-vue-next'
 
 defineProps<{
   previous?: string
@@ -17,11 +16,19 @@ const route = useRoute()
 const authStore = useAuthStore()
 const settingsOpen = ref(false)
 
+let nameRefreshInterval: ReturnType<typeof setInterval> | null = null
+
 const NO_SETTINGS_ROUTES = new Set(['start', 'student-login', 'teacher-login'])
 const showSettings = computed(() => !NO_SETTINGS_ROUTES.has(route.name as string))
 
 const PRE_CLASSROOM_ROUTES = new Set(['join-classroom', 'set-display-name', 'awaiting-approval'])
-const showLogout = computed(() => !!authStore.user && !authStore.isTeacher && PRE_CLASSROOM_ROUTES.has(route.name as string) && !showSettings.value)
+const showLogout = computed(
+  () =>
+    !!authStore.user &&
+    !authStore.isTeacher &&
+    PRE_CLASSROOM_ROUTES.has(route.name as string) &&
+    !showSettings.value,
+)
 
 function logout() {
   authStore.logout()
@@ -35,6 +42,23 @@ function goTo(path?: string) {
     emit('back')
   }
 }
+
+onMounted(() => {
+  if (!authStore.isTeacher && authStore.user) {
+    nameRefreshInterval = setInterval(() => {
+      if (!authStore.isTeacher && authStore.user) {
+        authStore.fetchMe().catch(() => {})
+      }
+    }, 15000)
+  }
+})
+
+onUnmounted(() => {
+  if (nameRefreshInterval !== null) {
+    clearInterval(nameRefreshInterval)
+    nameRefreshInterval = null
+  }
+})
 </script>
 
 <template>
@@ -61,11 +85,7 @@ function goTo(path?: string) {
       <span v-if="!authStore.isTeacher && authStore.user && showSettings" class="nav-user">
         {{ authStore.user.displayName }}
       </span>
-      <button
-        v-if="showLogout"
-        class="nav-button btn-bare logout-button"
-        @click="logout"
-      >
+      <button v-if="showLogout" class="nav-button btn-bare logout-button" @click="logout">
         Logg ut
       </button>
       <div v-if="next" class="nav-next" @click="goTo(next!)">
@@ -83,7 +103,11 @@ function goTo(path?: string) {
         </button>
       </div>
       <div v-else class="nav-placeholder" />
-      <button v-if="showSettings" class="nav-button settings-button btn-bare" aria-label="Apne innstillinger" @click="settingsOpen = true">
+      <button
+        v-if="showSettings"
+        class="nav-button settings-button btn-bare"
+        aria-label="Åpne innstillinger"
+        @click="settingsOpen = true">
         <Settings :size="34" color="white" />
         <span class="settings-label">Innstillinger</span>
       </button>
@@ -144,7 +168,7 @@ function goTo(path?: string) {
 }
 
 .nav-user {
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: white;
 }
@@ -204,5 +228,21 @@ function goTo(path?: string) {
 
 .logout-button:hover {
   background: rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 500px) {
+  .nav-title {
+    font-size: 1.6rem;
+    margin: 0 8px 0 12px;
+    padding-top: 0;
+  }
+
+  .nav-user {
+    font-size: 0.75rem;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

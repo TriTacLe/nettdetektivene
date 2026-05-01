@@ -4,6 +4,7 @@ import ntnu.no.backend.model.Achievement;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -24,4 +25,6 @@ public interface AchievementRepository extends JpaRepository<Achievement, UUID> 
    */
   List<Achievement> findByTriggerType(String triggerType);
   boolean existsByTitle(String title);
+
+  Optional<Achievement> findByTriggerTypeAndTriggerRef(String triggerType, String triggerRef);
 }

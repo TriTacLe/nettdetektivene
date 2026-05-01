@@ -16,23 +16,15 @@ import { TaskType } from '@/types'
 const route = useRoute()
 const queryClient = useQueryClient()
 
-const STOP_LABELS: Record<TaskType, string> = {
+const STOP_LABELS: Partial<Record<TaskType, string>> = {
   [TaskType.NEWS]: 'Nyhetskvartalet',
   [TaskType.PHOTO]: 'Fotografen',
-  [TaskType.EMAIL]: 'Postkontoret',
-  [TaskType.PASSWORD]: 'Passordbanken',
-  [TaskType.MARKETPLACE]: 'Markedsplassen',
-  [TaskType.SOCIAL]: 'Sosiale møteplassen',
   [TaskType.BOSS]: 'Datasenteret',
 }
 
-const STOP_LOCATION_KEY: Record<TaskType, string> = {
+const STOP_LOCATION_KEY: Partial<Record<TaskType, string>> = {
   [TaskType.NEWS]: 'nyhetskvartalet',
   [TaskType.PHOTO]: 'fotografen',
-  [TaskType.EMAIL]: 'postkontoret',
-  [TaskType.PASSWORD]: 'passordbanken',
-  [TaskType.MARKETPLACE]: 'markedsplassen',
-  [TaskType.SOCIAL]: 'sosiale',
   [TaskType.BOSS]: 'datasenteret',
 }
 
@@ -48,7 +40,7 @@ const savedStop = ref<string | null>(null)
 const saveError = ref<string | null>(null)
 const currentSpread = ref(0)
 
-const ALL_STOPS = Object.values(TaskType)
+const ALL_STOPS: TaskType[] = [TaskType.NEWS, TaskType.PHOTO, TaskType.BOSS]
 
 const isMobile = ref(window.innerWidth <= 1000)
 

@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
+import { useSideQuestStore } from '@/stores/SideQuestStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
+import { useDialogRunner, type DialogRunner } from '@/composables/UseDialogRunner'
+import { SIDE_QUESTS, type SideQuestDef, type SideQuestOutcome } from '@/data/sideQuests'
+import AchievementService from '@/services/AchievementService'
+import type { DialogChoice } from '@/types/cutscene'
+import { useQueryClient } from '@tanstack/vue-query'
+import {
+  getMyAchievementsQueryKey,
+  getProfileQueryKey,
+} from '@/generated-client/@tanstack/vue-query.gen'
 
 const router = useRouter()
 
@@ -60,21 +71,123 @@ const houses = [
 ]
 
 const lockedPopup = ref<string | null>(null)
+const SIDE_QUEST_TRIGGER_CHANCE = 0.1
 let mql: MediaQueryList | null = null
 const isMobile = ref(false)
+
+const sideQuestStore = useSideQuestStore()
+const queryClient = useQueryClient()
+const activeQuest = shallowRef<{ def: SideQuestDef; stage: number; runner: DialogRunner } | null>(null)
+const activeScene = computed(() => activeQuest.value?.runner.currentScene.value ?? null)
+
+/**
+ * Picks at most one quest to play this visit:
+ *   1. Continue the user's currently ACTIVE quest, if any.
+ *   2. Otherwise, randomly pick a quest with no record yet.
+ *   3. Quests with status COMPLETED or ABANDONED are out forever.
+ *
+ * Returns the (def, stage) pair to start, or null if nothing eligible.
+ */
+function pickSideQuest(): { def: SideQuestDef; stage: number } | null {
+  const active = SIDE_QUESTS.find((q) => sideQuestStore.isActive(q.key))
+  if (active) {
+    const stage = sideQuestStore.getStage(active.key)
+    if (active.stages[stage]) return { def: active, stage }
+  }
+  const fresh = SIDE_QUESTS.filter((q) => sideQuestStore.getStatus(q.key) === null && q.stages[0])
+  if (fresh.length === 0) return null
+  const idx = Math.floor(Math.random() * fresh.length)
+  const def = fresh[idx]
+  if (!def) return null
+  return { def, stage: 0 }
+}
+
+function startSideQuest(def: SideQuestDef, stage: number): void {
+  const stageDef = def.stages[stage]
+  if (!stageDef) return
+  const runner = useDialogRunner(stageDef.graph, stageDef.startId)
+  activeQuest.value = { def, stage, runner }
+}
+
+async function applyOutcome(outcome: SideQuestOutcome): Promise<void> {
+  const current = activeQuest.value
+  if (!current) return
+  const { def, stage } = current
+  activeQuest.value = null
+  switch (outcome.kind) {
+    case 'advance':
+      await sideQuestStore.advance(def.key, outcome.nextStage)
+      break
+    case 'complete':
+      await sideQuestStore.complete(def.key, stage)
+      if (outcome.achievementRef) {
+        try {
+          await AchievementService.awardSecret(outcome.achievementRef)
+          // Refresh badge list + profile XP so the user sees the new medal
+          // and the bumped level next time they look.
+          await queryClient.invalidateQueries({ queryKey: getMyAchievementsQueryKey() })
+          await queryClient.invalidateQueries({ queryKey: getProfileQueryKey() })
+        } catch {
+          // Easter-egg medal is best-effort; quest completion is what matters.
+        }
+      }
+      break
+    case 'abandon':
+      await sideQuestStore.abandon(def.key, stage)
+      break
+    case 'noop':
+      break
+  }
+}
+
+function onSideQuestChoose(choice: DialogChoice): void {
+  const current = activeQuest.value
+  if (!current) return
+  const stageDef = current.def.stages[current.stage]
+  current.runner.advance(choice)
+  const outcome = stageDef?.onChoose?.(choice, current.runner.flags.value) ?? null
+  if (outcome) {
+    void applyOutcome(outcome)
+    return
+  }
+  if (current.runner.isFinished.value) {
+    const fallback = stageDef?.onDone?.(current.runner.flags.value) ?? { kind: 'noop' as const }
+    void applyOutcome(fallback)
+  }
+}
+
+function onSideQuestDone(): void {
+  const current = activeQuest.value
+  if (!current) return
+  const stageDef = current.def.stages[current.stage]
+  current.runner.advance()
+  if (current.runner.isFinished.value) {
+    const outcome = stageDef?.onDone?.(current.runner.flags.value) ?? { kind: 'noop' as const }
+    void applyOutcome(outcome)
+  }
+}
 
 function handleOrientationChange(e: MediaQueryListEvent) {
   isMobile.value = e.matches
 }
 
-onMounted(() => {
+onMounted(async () => {
   mql = window.matchMedia('(max-aspect-ratio: 1/1)')
   isMobile.value = mql.matches
   mql.addEventListener('change', handleOrientationChange)
 
+  stopStore.clearSeenPickers()
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
   stopStore.loadTasks('datasenteret', true)
+
+  // load() swallows network errors internally and just leaves loaded=true,
+  // so we don't need our own try/catch here.
+  if (!sideQuestStore.loaded) await sideQuestStore.load()
+  if (Math.random() >= SIDE_QUEST_TRIGGER_CHANCE) return
+  const pick = pickSideQuest()
+  if (!pick) return
+  startSideQuest(pick.def, pick.stage)
 })
 
 onUnmounted(() => {
@@ -148,6 +261,14 @@ const roadPath = computed(() => {
       <source media="(max-aspect-ratio: 1/1)" srcset="/bybakgrunn-mobil.svg" />
       <img class="map-bg" src="/bybakgrunn.svg" alt="" aria-hidden="true" />
     </picture>
+
+    <CutsceneDialog
+      v-if="activeScene"
+      :key="activeScene.id"
+      :scene="activeScene"
+      @done="onSideQuestDone"
+      @choose="onSideQuestChoose"
+    />
 
     <NavigationHeader
       title="Utendørs"
