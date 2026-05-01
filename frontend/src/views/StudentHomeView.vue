@@ -300,8 +300,8 @@ onUnmounted(() => {
             @click="goTo('/achievements')"
           >
             <div class="image-note">
-              <img :src="badgeImage" alt="Resultater" class="image-note-bg achievements-image">
-              <p class="image-note-title">Resultater</p>
+              <img :src="badgeImage" alt="Medaljer" class="image-note-bg achievements-image">
+              <p class="image-note-title">Medaljer</p>
             </div>
           </BoardNote>
         </div>
@@ -359,8 +359,8 @@ onUnmounted(() => {
               <p class="help-note-text">Utforsk kartet og finn detektivoppdrag</p>
             </div>
             <div class="help-note help-note--overlay" style="top: 1%; left: 77%; transform: translate(-50%, 30%) rotate(3deg)">
-              <p class="help-note-title">Resultater</p>
-              <p class="help-note-text">Se medaljer og resultater du har oppnådd</p>
+              <p class="help-note-title">Medaljer</p>
+              <p class="help-note-text">Se medaljer du har oppnådd</p>
             </div>
             <div class="help-note help-note--overlay" style="top: 97%; left: 73%; transform: translate(-50%, -130%) rotate(-2deg)">
               <p class="help-note-title">Notatblokk</p>
@@ -395,8 +395,8 @@ onUnmounted(() => {
         </BoardNote>
         <BoardNote :rotation="-2" pin-color="#f59f00" width="100%" @click="goTo('/achievements')">
           <div class="image-note">
-            <img :src="badgeImage" alt="Resultater" class="mobile-nav-img achievements-image" />
-            <p class="image-note-title">Resultater</p>
+            <img :src="badgeImage" alt="Medaljer" class="mobile-nav-img achievements-image" />
+            <p class="image-note-title">Medaljer</p>
           </div>
         </BoardNote>
         <BoardNote :rotation="1.5" pin-color="#f59f00" width="100%" @click="goTo('/student-leaderboard')">
@@ -433,7 +433,7 @@ onUnmounted(() => {
             <ul class="mobile-help-list">
               <li><strong>Spill</strong> — Utforsk kartet og finn detektivoppdrag</li>
               <li><strong>Detektivprofil</strong> — Se profilen din, endre avatar og navn</li>
-              <li><strong>Resultater</strong> — Se medaljer og resultater du har oppnådd</li>
+              <li><strong>Medaljer</strong> — Se medaljer du har oppnådd</li>
               <li><strong>Ledertavle</strong> — Se hvilken klasse som har flest poeng</li>
               <li><strong>Notatbok</strong> — Skriv og les egne notater fra oppdragene</li>
               <li><strong>Ukens Mysterium</strong> — Send inn funn fra nettet og vinn en medalje</li>
