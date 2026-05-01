@@ -9,13 +9,16 @@ import ntnu.no.backend.mapper.TaskBestScoreMapper;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.TaskBestScore;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomRepository;
+import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,6 +42,7 @@ import static java.util.stream.Collectors.toMap;
 public class LeaderboardService {
   private final TaskBestScoreRepository taskBestScoreRepository;
   private final ClassroomRepository classroomRepository;
+  private final ClassroomStudentRepository classroomStudentRepository;
   private final UserProfileRepository userProfileRepository;
 
   /**
@@ -50,28 +54,37 @@ public class LeaderboardService {
    */
   @Transactional(readOnly = true)
   public List<LeaderboardEntryResponseDTO> getClassroomLeaderboard(UUID classroomId){
-    List<TaskBestScore> scores = taskBestScoreRepository.findByClassroomId(classroomId);
+    // sum best scores per user
+    Map<UUID, Integer> scoreByUserId = taskBestScoreRepository.findByClassroomId(classroomId).stream()
+        .collect(Collectors.groupingBy(tbs -> tbs.getUser().getId(), Collectors.summingInt(TaskBestScore::getBestScore)));
 
-    // group by user, sum their best score across all tasks
-    Map<User, Integer> totalByUser = scores.stream().collect(Collectors.groupingBy(TaskBestScore::getUser, Collectors.summingInt(TaskBestScore::getBestScore)));
+    // base list on all approved enrollments so 0-score students appear
+    Classroom classroom = classroomRepository.findById(classroomId)
+        .orElseThrow(() -> new IllegalArgumentException("Classroom not found: " + classroomId));
+    List<ClassroomStudent> enrollments = classroomStudentRepository.findAllByClassroomAndIsAllowedIsTrue(classroom);
 
-    // fetch xpLevel for all users in one query
-    List<User> users = new ArrayList<>(totalByUser.keySet());
+    // fetch profiles for XP data
     record ProfileData(int xpLevel, int xp) {}
+    List<User> users = enrollments.stream().map(ClassroomStudent::getUser).toList();
     Map<UUID, ProfileData> profileByUserId = userProfileRepository.findByUserIn(users).stream()
         .collect(Collectors.toMap(p -> p.getUser().getId(), p -> new ProfileData(p.getXpLevel(), p.getXp())));
 
-    // sort desc
-    List<Map.Entry<User, Integer>> sorted = totalByUser.entrySet().stream().sorted(Map.Entry.<User, Integer>comparingByValue().reversed()).toList();
+    // sort desc by total score, assign rank
+    List<ClassroomStudent> sorted = enrollments.stream()
+        .sorted(Comparator.comparingInt((ClassroomStudent cs) ->
+            scoreByUserId.getOrDefault(cs.getUser().getId(), 0)).reversed())
+        .toList();
 
-    // assign rank
     List<LeaderboardEntryResponseDTO> result = new ArrayList<>();
-    for (int i=0; i<sorted.size();i++){
-      User user = sorted.get(i).getKey();
-      var profile = profileByUserId.getOrDefault(user.getId(), new ProfileData(1, 0));
-      result.add(new LeaderboardEntryResponseDTO(user.getId(), user.getDisplayName(), sorted.get(i).getValue(), i+1, profile.xpLevel(), profile.xp()));
+    for (int i = 0; i < sorted.size(); i++) {
+      ClassroomStudent cs = sorted.get(i);
+      UUID userId = cs.getUser().getId();
+      var profile = profileByUserId.getOrDefault(userId, new ProfileData(1, 0));
+      result.add(new LeaderboardEntryResponseDTO(
+          userId, cs.getDisplayName(),
+          scoreByUserId.getOrDefault(userId, 0),
+          i + 1, profile.xpLevel(), profile.xp()));
     }
-
     return result;
   }
 

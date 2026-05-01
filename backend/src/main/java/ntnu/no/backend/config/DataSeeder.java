@@ -490,8 +490,12 @@ public class DataSeeder implements CommandLineRunner {
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
     for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester",
-        "anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward")) {
+        "anine", "nora", "gustav", "tri", "silje", "segward")) {
       enroll(users.get(key), class1);
+    }
+    Classroom class2 = classrooms.get("class2");
+    for (String key : List.of("regine", "vetle")) {
+      enroll(users.get(key), class2);
     }
   }
 
@@ -569,6 +573,7 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedNotebookEntries() {
     Classroom class1 = classrooms.get("class1");
+    Classroom class2 = classrooms.get("class2");
 
     // Notebook reflections live alongside task progress, so they all
     // belong to the demo tester. student1..5 stay empty.
@@ -585,10 +590,10 @@ public class DataSeeder implements CommandLineRunner {
         { class1, "tri", "fotografen", "Metadata i bilder avslører mer enn jeg trodde. Alltid kritisk til bilder nå." },
         { class1, "silje", "nyhetskvartalet", "Falske nyheter ser ekte ut. Sjekker alltid kilden!" },
         // 6B
-        { class1, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
-        { class1, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
-        { class1, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
-        { class1, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
+        { class2, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
+        { class2, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
+        { class2, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
+        { class2, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
         // test
         { class1, "tester", "nyhetskvartalet",
             "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
