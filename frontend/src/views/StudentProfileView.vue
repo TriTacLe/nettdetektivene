@@ -84,24 +84,6 @@ watch(
                   <p class="profile-value font-bold text-amber-800">Niva {{ profile.xpLevel ?? 1 }}</p>
                 </div>
 
-                <div>
-                  <p class="text-xs text-stone-600 font-semibold uppercase tracking-wide">XP</p>
-                  <div class="flex items-center gap-3 mt-1">
-                    <div
-                      class="flex-1 bg-stone-300 rounded-full h-3"
-                      role="progressbar"
-                      :aria-valuenow="profile.xp ?? 0"
-                      :aria-valuemax="120"
-                      :aria-label="`${profile.xp ?? 0} av 120 XP`"
-                    >
-                      <div
-                        class="bg-amber-700 h-3 rounded-full transition-all"
-                        :style="{ width: `${Math.min(((profile.xp ?? 0) / 120) * 100, 100)}%` }"
-                      />
-                    </div>
-                    <span class="text-sm font-bold text-stone-800">{{ profile.xp ?? 0 }} XP</span>
-                  </div>
-                </div>
               </div>
 
             </div>
