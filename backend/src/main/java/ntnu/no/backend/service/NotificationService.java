@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import ntnu.no.backend.dto.notification.NotificationResponseDTO;
 import ntnu.no.backend.mapper.NotificationMapper;
+import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Notification;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.NotificationRepository;
@@ -16,11 +17,11 @@ import java.util.UUID;
 /**
  * Service for reading and managing notifications.
  *
- * <p>Notifications are created automatically by the {@code trg_mystery_approved} trigger.
- * This service only reads and marks them as read — never creates them.</p>
+ * <p>Notifications are created automatically by the {@code trg_mystery_approved} trigger,
+ * and programmatically for certain actions, for example adding a teacher to a classroom..</p>
  *
- * @author tri
- * @version 0.1
+ * @author tri, norakirknes
+ * @version 0.2
  * @since 0.1
  */
 @Service
@@ -62,5 +63,23 @@ public class NotificationService {
 
     notification.setRead(true);
     return NotificationMapper.toDTO(notification);
+  }
+
+  /**
+   * Creates a notification for a teacher who was added to a classroom.
+   *
+   * @param recipient the teacher who was added
+   * @param classroom the classroom they were added to
+   */
+  @Transactional
+  public void createTeacherAddedNotification(User recipient, Classroom classroom) {
+    Notification notification = Notification.builder()
+        .user(recipient)
+        .classroom(classroom)
+        .msg("Du ble lagt til som lærer i " + classroom.getTitle())
+        .refType("CLASSROOM_INSTRUCTOR")
+        .refId(classroom.getId())
+        .build();
+    notificationRepository.save(notification);
   }
 }

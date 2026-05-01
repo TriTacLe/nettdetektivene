@@ -8,7 +8,7 @@ import CaseFile from '@/components/CaseFile.vue'
 import AvatarPreview from '@/components/avatar/AvatarPreview.vue'
 import AvatarEditor from '@/components/avatar/AvatarEditor.vue'
 import { parseAvatarConfig, serializeAvatarConfig } from '@/utils/avatar'
-import { DEFAULT_AVATAR_CONFIG, type AvatarConfig } from '@/types/avatar'
+import { DEFAULT_AVATAR_CONFIG, PROP_UNLOCK_LEVELS, PROP_OPTIONS, type AvatarConfig } from '@/types/avatar'
 
 const router = useRouter()
 
@@ -29,18 +29,28 @@ watchEffect(() => {
   }
 })
 
+const lockedProps = computed(() => {
+  const level = data.value?.data?.xpLevel ?? 1
+  return new Set(
+    PROP_OPTIONS.filter((opt) => (PROP_UNLOCK_LEVELS[opt] ?? 0) > level),
+  )
+})
+
 const saveError = ref('')
+const saveWarning = ref('')
 
 const save = useMutation({
   ...updateProfileMutation(),
   onSuccess: () => router.push({ name: 'student-profile' }),
-  onError: (e: Error) => {
-    saveError.value = e.message ?? 'Kunne ikke lagre profilen'
+  onError: (e: unknown) => {
+    const msg = (e as { message?: string })?.message
+    saveError.value = msg && !(e instanceof TypeError) ? msg : 'Kunne ikke lagre profilen. Prøv igjen.'
   },
 })
 
 function handleSave() {
   saveError.value = ''
+  saveWarning.value = ''
   if (!displayName.value.trim()) {
     saveError.value = 'Brukernavn kreves'
     return
@@ -48,7 +58,7 @@ function handleSave() {
 
   const trimmed = displayName.value.trim()
   if (trimmed !== originalDisplayName.value && hasPendingNameChange.value) {
-    saveError.value = 'Du har allerede en navneendring til godkjenning. Vennligst vent på svar fra læreren din.'
+    saveWarning.value = 'Du har allerede en navneendring til godkjenning. Vennligst vent på svar fra læreren din.'
     return
   }
 
@@ -65,7 +75,7 @@ function handleSave() {
 </script>
 
 <template>
-  <SceneComponent title="Rediger profil" background="/StartBackground.jpg">
+  <SceneComponent title="Rediger profil" previous="/student-profile" background="/StartBackground.jpg">
     <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto lg:overflow-hidden">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
@@ -94,9 +104,16 @@ function handleSave() {
                 class="w-full rounded-xl px-3 py-2 text-base text-stone-900 bg-amber-50 border-2 border-stone-400 focus:outline-none focus:border-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 @keyup.enter="handleSave"
               />
-              <span v-if="saveError" class="text-red-600 text-xs font-semibold">
+              <p v-if="saveError" class="profile-save-error" role="alert">
                 {{ saveError }}
-              </span>
+              </p>
+              <div
+                v-if="saveWarning"
+                class="w-full px-4 py-3 rounded-xl bg-amber-100 border-2 border-amber-400 text-amber-900 text-sm font-semibold text-center mt-1"
+                role="status"
+              >
+                {{ saveWarning }}
+              </div>
             </div>
 
             <div class="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
@@ -122,10 +139,25 @@ function handleSave() {
         </template>
         <template #right>
           <div class="p-3 pt-9 min-h-0 overflow-visible lg:overflow-hidden">
-            <AvatarEditor v-model="avatarConfig" />
+            <AvatarEditor v-model="avatarConfig" :locked-options="lockedProps" />
           </div>
         </template>
       </CaseFile>
     </div>
   </SceneComponent>
 </template>
+
+<style scoped>
+.profile-save-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 4px 0 0;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+</style>

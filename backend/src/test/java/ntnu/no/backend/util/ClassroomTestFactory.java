@@ -1,5 +1,7 @@
 package ntnu.no.backend.util;
 
+import ntnu.no.backend.dto.classroom.AddInstructorRequestDTO;
+import ntnu.no.backend.dto.classroom.ClassroomInstructorResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomRequestDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomStudentResponseDTO;
@@ -7,10 +9,16 @@ import ntnu.no.backend.dto.task.ClassroomTaskCreateRequestDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Institution;
+import ntnu.no.backend.model.auth.Role;
 import ntnu.no.backend.model.auth.User;
+
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.enums.NameChangeStatus;
 
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class ClassroomTestFactory {
@@ -84,6 +92,51 @@ public class ClassroomTestFactory {
       isUnlocked,
       TaskTestFactory.responseDTO(taskId)
     );
+  }
+
+  public static Role instructorRole() {
+    return Role.builder()
+      .roleName("instructor")
+      .build();
+  }
+
+  public static Role studentRole() {
+    return Role.builder()
+      .roleName("student")
+      .build();
+  }
+
+  public static User teacher(String displayName, String email) {
+    return User.builder()
+      .displayName(displayName)
+      .email(email)
+      .roles(List.of(instructorRole()))
+      .build();
+  }
+
+  public static User student(String displayName, String email) {
+    return User.builder()
+      .displayName(displayName)
+      .email(email)
+      .roles(List.of(studentRole()))
+      .build();
+  }
+
+  public static AddInstructorRequestDTO addInstructorRequestDTO(String email) {
+    return new AddInstructorRequestDTO(email);
+  }
+
+  public static ClassroomInstructorResponseDTO instructorResponseDTO(UUID classroomId, UUID userId) {
+    return new ClassroomInstructorResponseDTO(classroomId, userId, LocalDateTime.now());
+  }
+
+  public static ClassroomInstructor classroomInstructor(Classroom classroom, User user) {
+    return ClassroomInstructor.builder()
+      .id(new ClassroomInstructorId(classroom.getId(), user.getId()))
+      .classroom(classroom)
+      .user(user)
+      .assignedAt(LocalDateTime.now())
+      .build();
   }
 
   public static ClassroomStudentResponseDTO classroomStudentResponseDTO(UUID classroomId, UUID userId) {

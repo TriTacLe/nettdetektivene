@@ -122,6 +122,18 @@ public class GlobalExceptionHandler {
    * @param e the exception containing field validation errors
    * @return 400 Bad Request with separated field errors
    */
+  /**
+   * Handles conflict errors such as duplicate instructor assignments
+   *
+   * @param e the exception thrown on a state conflict
+   * @return 409 Conflict with error message
+   */
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConflict(ConflictException e) {
+    logger.warn(e.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
     String errors = e.getBindingResult().getFieldErrors().stream()

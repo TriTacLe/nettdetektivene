@@ -1,6 +1,7 @@
 package ntnu.no.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ntnu.no.backend.exception.ConflictException;
 import ntnu.no.backend.security.JWTUtil;
 import ntnu.no.backend.service.ClassroomService;
 import ntnu.no.backend.util.ClassroomTestFactory;
@@ -10,17 +11,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -192,5 +196,153 @@ class ClassroomControllerTest {
     mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/tasks?testMode=true"))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.message").value("Access denied"));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void addInstructor_returnsCreated() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    when(classroomService.addInstructor(eq(classroomId), eq("anine@ntnu.no"), any()))
+      .thenReturn(ClassroomTestFactory.instructorResponseDTO(classroomId, userId));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("anine@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isCreated())
+      .andExpect(jsonPath("$.success").value(true))
+      .andExpect(jsonPath("$.data.classroomId").value(classroomId.toString()));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void addInstructor_returnsForbidden_whenCallerNotInstructor() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    when(classroomService.addInstructor(eq(classroomId), eq("anine@ntnu.no"), any()))
+      .thenThrow(new AccessDeniedException("You are not an instructor of this classroom"));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("anine@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void addInstructor_returnsNotFound_whenTargetNotFound() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    when(classroomService.addInstructor(eq(classroomId), eq("unknown@ntnu.no"), any()))
+      .thenThrow(new EntityNotFoundException("User not found"));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("unknown@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void addInstructor_returnsBadRequest_whenTargetNotTeacher() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    when(classroomService.addInstructor(eq(classroomId), eq("student@ntnu.no"), any()))
+      .thenThrow(new IllegalArgumentException("User is not a teacher"));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("student@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void addInstructor_returnsConflict_whenAlreadyInstructor() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    when(classroomService.addInstructor(eq(classroomId), eq("anine@ntnu.no"), any()))
+      .thenThrow(new ConflictException("User is already an instructor of this classroom"));
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("anine@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isConflict())
+      .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  @WithMockUser(authorities = "student")
+  void addInstructor_asStudent_returnsForbidden() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+
+    mockMvc.perform(post("/api/v1/classrooms/" + classroomId + "/instructors")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ClassroomTestFactory.addInstructorRequestDTO("anine@ntnu.no")))
+        .with(csrf()))
+      .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void leaveClassroom_returnsNoContent() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    doNothing().when(classroomService).leaveClassroom(eq(classroomId), any());
+
+    mockMvc.perform(delete("/api/v1/classrooms/" + classroomId + "/instructors/me")
+        .with(csrf()))
+      .andExpect(status().isNoContent());
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void leaveClassroom_returnsConflict_whenLastInstructor() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    doThrow(new ConflictException("Cannot leave classroom: at least one teacher required"))
+      .when(classroomService).leaveClassroom(eq(classroomId), any());
+
+    mockMvc.perform(delete("/api/v1/classrooms/" + classroomId + "/instructors/me")
+        .with(csrf()))
+      .andExpect(status().isConflict())
+      .andExpect(jsonPath("$.success").value(false))
+      .andExpect(jsonPath("$.message").value("Cannot leave classroom: at least one teacher required"));
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void leaveClassroom_returnsForbidden_whenNotInstructor() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    doThrow(new AccessDeniedException("You are not an instructor of this classroom"))
+      .when(classroomService).leaveClassroom(eq(classroomId), any());
+
+    mockMvc.perform(delete("/api/v1/classrooms/" + classroomId + "/instructors/me")
+        .with(csrf()))
+      .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(authorities = "instructor")
+  void getInstructors_returnsOk() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    when(classroomService.getInstructors(classroomId))
+      .thenReturn(List.of(ClassroomTestFactory.instructorResponseDTO(classroomId, userId)));
+
+    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/instructors"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.success").value(true))
+      .andExpect(jsonPath("$.data[0].classroomId").value(classroomId.toString()));
+  }
+
+  @Test
+  @WithMockUser(authorities = "student")
+  void getInstructors_asStudent_returnsForbidden() throws Exception {
+    UUID classroomId = UUID.randomUUID();
+
+    mockMvc.perform(get("/api/v1/classrooms/" + classroomId + "/instructors"))
+      .andExpect(status().isForbidden());
   }
 }

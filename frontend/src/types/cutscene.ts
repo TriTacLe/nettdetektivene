@@ -9,6 +9,9 @@ export interface DialogChoice {
   label: string
   next: string
   flag?: string
+  disabled?: boolean
+  done?: boolean
+  hint?: string
 }
 
 export interface DialogScene {

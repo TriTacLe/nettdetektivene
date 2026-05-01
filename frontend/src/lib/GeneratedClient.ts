@@ -3,7 +3,10 @@ import { AUTH_ENDPOINT_PATTERN, readSession, refreshAccessToken } from '@/lib/To
 
 client.setConfig({ baseUrl: '' })
 
+let pendingRetryClone: Request | null = null
+
 client.interceptors.request.use((request) => {
+  pendingRetryClone = request.clone()
   const { token } = readSession()
   if (token) request.headers.set('Authorization', `Bearer ${token}`)
   return request
@@ -16,9 +19,7 @@ client.interceptors.response.use(async (response, request) => {
 
   const newToken = await refreshAccessToken()
 
-  const retryRequest = new Request(request, {
-    headers: new Headers(request.headers),
-  })
+  const retryRequest = pendingRetryClone!.clone()
   retryRequest.headers.set('Authorization', `Bearer ${newToken}`)
   return fetch(retryRequest)
 })

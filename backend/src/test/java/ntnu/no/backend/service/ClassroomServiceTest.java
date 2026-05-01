@@ -1,21 +1,27 @@
 package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import ntnu.no.backend.dto.classroom.ClassroomInstructorResponseDTO;
 import ntnu.no.backend.dto.classroom.ClassroomResponseDTO;
 import ntnu.no.backend.dto.task.ClassroomTaskResponseDTO;
+import ntnu.no.backend.exception.ConflictException;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.ClassroomTask;
 import ntnu.no.backend.model.Task;
 import ntnu.no.backend.model.auth.User;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
 import ntnu.no.backend.repository.ClassroomTaskRepository;
 import ntnu.no.backend.repository.InstitutionRepository;
+import ntnu.no.backend.repository.TaskBestScoreRepository;
 import ntnu.no.backend.repository.TaskRepository;
 import ntnu.no.backend.repository.UserRepository;
 import ntnu.no.backend.repository.UserTaskUnlockedRepository;
 import ntnu.no.backend.util.ClassroomTestFactory;
 import ntnu.no.backend.util.TaskTestFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,6 +69,15 @@ class ClassroomServiceTest {
 
   @Mock
   private ClassroomStudentRepository classroomStudentRepository;
+
+  @Mock
+  private ClassroomInstructorRepository classroomInstructorRepository;
+
+  @Mock
+  private TaskBestScoreRepository taskBestScoreRepository;
+
+  @Mock
+  private NotificationService notificationService;
 
   @InjectMocks
   private ClassroomService classroomService;
@@ -224,5 +239,154 @@ class ClassroomServiceTest {
     ))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("already assigned");
+  }
+
+  @Test
+  void addInstructor_savesAndReturnsDTO() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+    User target = ClassroomTestFactory.teacher("Anine", "anine@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(userRepository.findByEmail("anine@ntnu.no")).thenReturn(Optional.of(target));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, target)).thenReturn(false);
+    when(classroomInstructorRepository.save(any(ClassroomInstructor.class))).thenAnswer(i -> i.getArgument(0));
+
+    ClassroomInstructorResponseDTO result = classroomService.addInstructor(classroomId, "anine@ntnu.no", caller);
+
+    assertThat(result.classroomId()).isEqualTo(classroomId);
+    verify(classroomInstructorRepository).save(any(ClassroomInstructor.class));
+    verify(notificationService).createTeacherAddedNotification(target, classroom);
+  }
+
+  @Test
+  void addInstructor_throwsAccessDenied_whenCallerNotInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Tri", "tri@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(false);
+
+    assertThatThrownBy(() -> classroomService.addInstructor(classroomId, "anine@ntnu.no", caller))
+      .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void addInstructor_throwsEntityNotFound_whenTargetNotFound() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(userRepository.findByEmail("unknown@ntnu.no")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> classroomService.addInstructor(classroomId, "unknown@ntnu.no", caller))
+      .isInstanceOf(EntityNotFoundException.class);
+  }
+
+  @Test
+  void addInstructor_throwsIllegalArgument_whenTargetNotTeacher() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+    User target = ClassroomTestFactory.student("Tri", "tri@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(userRepository.findByEmail("tri@ntnu.no")).thenReturn(Optional.of(target));
+
+    assertThatThrownBy(() -> classroomService.addInstructor(classroomId, "tri@ntnu.no", caller))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("not a teacher");
+  }
+
+  @Test
+  void addInstructor_throwsConflict_whenAlreadyInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+    User target = ClassroomTestFactory.teacher("Anine", "anine@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(userRepository.findByEmail("anine@ntnu.no")).thenReturn(Optional.of(target));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, target)).thenReturn(true);
+
+    assertThatThrownBy(() -> classroomService.addInstructor(classroomId, "anine@ntnu.no", caller))
+      .isInstanceOf(ConflictException.class);
+  }
+
+  @Test
+  void leaveClassroom_deletesInstructorRow() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(classroomInstructorRepository.countByClassroom(classroom)).thenReturn(2L);
+
+    classroomService.leaveClassroom(classroomId, caller);
+
+    verify(classroomInstructorRepository).deleteByClassroomAndUser(classroom, caller);
+  }
+
+  @Test
+  void leaveClassroom_throwsConflict_whenLastInstructor() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User caller = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.existsByClassroomAndUser(classroom, caller)).thenReturn(true);
+    when(classroomInstructorRepository.countByClassroom(classroom)).thenReturn(1L);
+
+    assertThatThrownBy(() -> classroomService.leaveClassroom(classroomId, caller))
+      .isInstanceOf(ConflictException.class)
+      .hasMessageContaining("at least one teacher required");
+  }
+
+  @Test
+  void getInstructors_returnsMappedDTOs() {
+    UUID classroomId = UUID.randomUUID();
+    Classroom classroom = Classroom.builder()
+      .id(classroomId).title("Cybersecurity 101").joinCode("ABC12")
+      .institution(ClassroomTestFactory.institution()).createdBy(ClassroomTestFactory.user())
+      .build();
+    User instructor = ClassroomTestFactory.teacher("Nora", "nora@ntnu.no");
+    ClassroomInstructor ci = ClassroomTestFactory.classroomInstructor(classroom, instructor);
+
+    when(classroomRepository.findByIdAndDeletedAtIsNull(classroomId)).thenReturn(Optional.of(classroom));
+    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of(ci));
+
+    List<ClassroomInstructorResponseDTO> result = classroomService.getInstructors(classroomId);
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).classroomId()).isEqualTo(classroomId);
   }
 }

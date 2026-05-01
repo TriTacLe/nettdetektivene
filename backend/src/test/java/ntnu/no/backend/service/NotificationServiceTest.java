@@ -2,9 +2,11 @@ package ntnu.no.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import ntnu.no.backend.dto.notification.NotificationResponseDTO;
+import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.Notification;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.repository.NotificationRepository;
+import ntnu.no.backend.util.ClassroomTestFactory;
 import ntnu.no.backend.util.NotificationTestFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -98,5 +102,18 @@ class NotificationServiceTest {
 
     assertThatThrownBy(() -> notificationService.markAsRead(notificationId, otherUser))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void createTeacherAddedNotification_savesNotification() {
+    UUID userId = UUID.randomUUID();
+    User recipient = NotificationTestFactory.user(userId);
+    Classroom classroom = ClassroomTestFactory.classroom();
+
+    when(notificationRepository.save(any(Notification.class))).thenAnswer(i -> i.getArgument(0));
+
+    notificationService.createTeacherAddedNotification(recipient, classroom);
+
+    verify(notificationRepository).save(any(Notification.class));
   }
 }

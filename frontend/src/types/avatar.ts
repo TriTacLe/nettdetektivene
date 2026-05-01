@@ -14,6 +14,13 @@ export const HAT_OPTIONS = ['none', 'hat', 'hijab', 'winterHat03'] as const
 export const CLOTHING_OPTIONS = ['hoodie', 'shirtCrewNeck', 'blazerAndShirt', 'collarAndSweater'] as const
 export const PROP_OPTIONS = ['none', 'round', 'sunglasses', 'eyepatch'] as const
 
+export const PROP_UNLOCK_LEVELS: Record<string, number> = {
+  none: 0,
+  round: 2,
+  sunglasses: 3,
+  eyepatch: 4,
+}
+
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   skinColor: SKIN_COLOR_OPTIONS[0],
   hair: HAIR_OPTIONS[0],

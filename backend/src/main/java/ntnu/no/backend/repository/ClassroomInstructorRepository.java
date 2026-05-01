@@ -13,7 +13,7 @@ import java.util.List;
  * Repository for {@link ClassroomInstructor} entities.
  *
  * @author norakirknes
- * @version 0.1
+ * @version 0.2
  * @since 0.1
  * @see ClassroomInstructor
  */
@@ -44,4 +44,20 @@ public interface ClassroomInstructorRepository extends JpaRepository<ClassroomIn
    * @return {@code true} if the instructor is assigned to the classroom
    */
   boolean existsByClassroomAndUser(Classroom classroom, User user);
+
+  /**
+   * Counts the number of instructors assigned to a classroom.
+   *
+   * @param classroom the classroom
+   * @return the number of instructors
+   */
+  long countByClassroom(Classroom classroom);
+
+  /**
+   * Deletes the instructor assignment for a given classroom and user.
+   *
+   * @param classroom the classroom
+   * @param user the instructor user
+   */
+  void deleteByClassroomAndUser(Classroom classroom, User user);
 }
