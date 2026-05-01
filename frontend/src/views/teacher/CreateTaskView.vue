@@ -201,7 +201,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                   <button v-for="n in 3" :key="n" type="button"
                     :class="['btn-bare diff-btn', { 'diff-btn--active': newsDraft.difficulty === n && newsDraft.stopLocation !== 'datasenteret' }]"
                     @click="selectDifficulty(n)">
-                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                    <span v-for="i in n" :key="i" class="diff-star">★</span>
                   </button>
                   <button type="button"
                     :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': newsDraft.stopLocation === 'datasenteret' }]"
@@ -257,7 +257,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                   <button v-for="n in 3" :key="n" type="button"
                     :class="['btn-bare diff-btn', { 'diff-btn--active': photoDraft.difficulty === n && photoDraft.stopLocation !== 'datasenteret' }]"
                     @click="selectDifficulty(n)">
-                    <span v-for="i in 3" :key="i" :class="['diff-star', { 'diff-star--on': i <= n }]">★</span>
+                    <span v-for="i in n" :key="i" class="diff-star">★</span>
                   </button>
                   <button type="button"
                     :class="['btn-bare diff-btn diff-btn--ds', { 'diff-btn--active': photoDraft.stopLocation === 'datasenteret' }]"
@@ -577,16 +577,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .diff-star {
-  color: #d1d5db;
+  color: #f59e0b;
   font-size: 0.9rem;
   line-height: 1;
 }
 
-.diff-star--on {
-  color: #f59e0b;
-}
-
-.diff-btn--active .diff-star--on {
+.diff-btn--active .diff-star {
   color: white;
 }
 
