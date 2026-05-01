@@ -8,6 +8,7 @@ import { useToast } from '@/composables/UseToast'
 import { useStopStore } from '@/stores/StopStore'
 import { useStoryProgressStore } from '@/stores/StoryProgressStore'
 import { useSideQuestStore } from '@/stores/SideQuestStore'
+import { useAudioStore } from '@/stores/AudioStore'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -34,6 +35,7 @@ export const useAuthStore = defineStore(
       stop.clearTasks()
       useStoryProgressStore().clear()
       useSideQuestStore().clear()
+      useAudioStore().reset()
     }
 
     async function login(credentials: { email: string; password: string }): Promise<void> {
