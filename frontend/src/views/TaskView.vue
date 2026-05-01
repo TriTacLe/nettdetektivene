@@ -188,6 +188,7 @@ function routeResult(passed: boolean, answers: TaskAnswers) {
     :title="task?.title ?? 'Datasenteret'"
     :previous="previousRoute"
     background="/datasenteret.jpg"
+    lock-viewport
   >
     <div v-if="isLoading" class="state-msg">Laster oppgave...</div>
     <div v-else-if="error" class="state-msg state-msg--error">{{ error }}</div>
@@ -198,25 +199,34 @@ function routeResult(passed: boolean, answers: TaskAnswers) {
     <template v-else>
       <div v-if="submitting" class="submit-overlay">Lagrer resultat...</div>
 
-      <NyhetskvartaletComponent
-        v-if="isNews && newsChallenge"
-        :challenge="newsChallenge"
-        :question="newsQuestion"
-        :tip="newsTip"
-        @submit="onSubmit"
-      />
-      <FotografenComponent
-        v-else-if="isPhoto && photoChallenge"
-        :challenge="photoChallenge"
-        :question="photoQuestion"
-        :tip="photoTip"
-        @submit="onSubmit"
-      />
+      <div class="task-shell">
+        <NyhetskvartaletComponent
+          v-if="isNews && newsChallenge"
+          :challenge="newsChallenge"
+          :question="newsQuestion"
+          :tip="newsTip"
+          @submit="onSubmit"
+        />
+        <FotografenComponent
+          v-else-if="isPhoto && photoChallenge"
+          :challenge="photoChallenge"
+          :question="photoQuestion"
+          :tip="photoTip"
+          @submit="onSubmit"
+        />
+      </div>
     </template>
   </SceneComponent>
 </template>
 
 <style scoped>
+.task-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+
 .state-msg {
   flex: 1;
   display: flex;

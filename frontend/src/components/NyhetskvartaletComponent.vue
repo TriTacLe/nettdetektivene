@@ -58,17 +58,19 @@ function choose(index: number) {
 .news-task {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  overflow-y: auto;
+  flex: 1;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 1.5rem 1rem;
+  overflow: hidden;
   min-height: 0;
 }
 
 .task-header {
   flex-shrink: 0;
   text-align: center;
-  padding-top: 2rem;
-  margin-bottom: 3rem;
+  padding-top: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .question {
@@ -87,6 +89,8 @@ function choose(index: number) {
   gap: 2.5rem;
   padding: 0 1%;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .article-tile {
@@ -134,7 +138,7 @@ function choose(index: number) {
 
 .article-image {
   width: 100%;
-  max-height: min(56vh, 600px);
+  max-height: min(46vh, 560px);
   object-fit: contain;
   border-radius: 12px;
   background: #0a0a14;
@@ -180,8 +184,14 @@ function choose(index: number) {
 }
 
 @media (max-width: 800px) {
+  .news-task {
+    justify-content: flex-start;
+    overflow-y: auto;
+  }
+
   .articles {
     grid-template-columns: 1fr;
+    flex: none;
   }
 
   .tile-badge {

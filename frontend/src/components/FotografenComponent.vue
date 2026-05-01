@@ -89,17 +89,18 @@ function submit() {
 .fotografen-wrapper {
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 1rem 1.5rem;
-  gap: 1.25rem;
-  overflow-y: auto;
+  flex: 1;
+  padding: 0.25rem 1rem 1rem;
+  gap: 0.9rem;
+  overflow: hidden;
   min-height: 0;
 }
 
 .header {
   text-align: center;
   flex-shrink: 0;
-  padding-top: 4rem;
-  margin-bottom: 6rem;
+  padding-top: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .title {
@@ -127,6 +128,9 @@ function submit() {
   width: 100%;
   max-width: min(1800px, 100%);
   margin: 0 auto;
+  flex: 1;
+  align-items: start;
+  min-height: 0;
 }
 
 .photo-block {
@@ -140,6 +144,7 @@ function submit() {
 .photo-frame {
   width: 100%;
   aspect-ratio: 4 / 3;
+  max-height: min(40vh, 430px);
   border-radius: 12px;
   background: #0a0a14;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
@@ -202,7 +207,7 @@ function submit() {
   display: flex;
   justify-content: center;
   flex-shrink: 0;
-  padding-top: 0.75rem;
+  padding-top: 0.25rem;
 }
 
 .lever-btn {
@@ -212,22 +217,36 @@ function submit() {
 
 @media (max-width: 1100px) {
   .photos {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+    grid-template-columns: 1fr;
+    max-width: min(38rem, 100%);
   }
 }
 
 @media (max-width: 800px) {
   .fotografen-wrapper {
     padding: 1rem;
+    overflow-y: auto;
+    justify-content: flex-start;
   }
 
   .photos {
     grid-template-columns: 1fr;
+    flex: none;
   }
 
   .chip {
     font-size: 0.9rem;
     padding: 0.55rem 0.6rem;
+  }
+
+  .lever-row {
+    padding-top: 0.75rem;
+    margin-top: 0;
+  }
+
+  .lever-btn {
+    width: 100%;
+    max-width: 22rem;
   }
 }
 </style>
