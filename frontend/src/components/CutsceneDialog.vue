@@ -136,6 +136,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :alt="scene.characterName"
     />
 
+    <div v-if="scene.featureImage" class="cutscene-feature" aria-hidden="true">
+      <img class="cutscene-feature-img" :src="scene.featureImage" alt="" />
+      <p v-if="scene.featureLabel" class="cutscene-feature-label">{{ scene.featureLabel }}</p>
+    </div>
+
     <div class="cutscene-text">
       <div class="dialog-name">{{ scene.characterName }}</div>
       <div class="dialog-text">
@@ -291,9 +296,65 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   gap: 0.65rem;
 }
 
+.cutscene-feature {
+  position: absolute;
+  top: 24vh;
+  left: 18vw;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 0.85rem 1rem;
+  width: clamp(11rem, 18vw, 17rem);
+  background:
+    linear-gradient(170deg, #fefdf8 0%, #f8f2e0 40%, #f2e8cc 75%, #ede0bc 100%);
+  box-shadow:
+    0 14px 24px rgba(0, 0, 0, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: rotate(-4deg);
+  pointer-events: none;
+  animation: feature-idle 5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.cutscene-feature-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 2px;
+  mix-blend-mode: multiply;
+}
+
+.cutscene-feature-label {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(0.95rem, 1.1vw, 1.2rem);
+  color: #2f2418;
+  text-align: center;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+@keyframes feature-idle {
+  0%, 100% { transform: rotate(-4deg) translateY(0); }
+  50%      { transform: rotate(-4deg) translateY(-4px); }
+}
+
 @media (max-width: 640px) {
   .cutscene-character { height: 70vh; right: 0; }
   .cutscene-text { width: calc(100% - 2.5rem); bottom: 6rem; }
+  .cutscene-feature {
+    bottom: auto;
+    top: 1.2rem;
+    left: 1.2rem;
+    width: clamp(5rem, 22vw, 7.5rem);
+    padding: 0.4rem 0.4rem 0.5rem;
+    gap: 0.3rem;
+  }
+  .cutscene-feature-label { font-size: 0.7rem; }
 }
 
 .dialog-name {

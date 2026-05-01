@@ -18,24 +18,15 @@ const route = useRoute()
 const classroomId = route.params.id as string
 const userId = route.params.userId as string
 
-// Canonical stop order and display labels from vision doc
 const STOP_ORDER = [
   'nyhetskvartalet',
   'fotografen',
-  'postkontoret',
-  'passordbanken',
-  'markedsplassen',
-  'sosialen',
   'datasenteret',
 ]
 
 const STOP_LABELS: Record<string, string> = {
   nyhetskvartalet: 'Nyhetskvartalet',
   fotografen: 'Fotografen',
-  postkontoret: 'Postkontoret',
-  passordbanken: 'Passordbanken',
-  markedsplassen: 'Markedsplassen',
-  sosialen: 'Den sosiale møteplassen',
   datasenteret: 'Datasenteret',
 }
 

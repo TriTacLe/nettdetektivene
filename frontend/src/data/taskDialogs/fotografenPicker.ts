@@ -7,7 +7,7 @@ export const fotografenPicker: DialogScene = {
   background: '/FotografenBackground.png',
   lines: [
     { text: 'Fotografens studio. Her ser ingenting helt ut som det utgir seg for å være.', mood: 'sus' },
-    { text: 'Manipulerte bilder, KI-genererte ansikter, retusjerte spor — øyet ditt må være skarpt.', mood: 'thinking' },
+    { text: 'Manipulerte bilder og KI-genererte bilder gjemmer seg blandt oppgavene — øyet ditt må være skarpt.', mood: 'thinking' },
     { text: 'Hva vil du undersøke?', mood: 'neutral' },
   ],
 }

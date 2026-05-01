@@ -41,9 +41,9 @@ import java.util.UUID;
  * Demo data seeder activated with the "seed" Spring profile.
  *
  * Run with:
- *   mvn spring-boot:run -Dspring-boot.run.profiles=seed
+ * mvn spring-boot:run -Dspring-boot.run.profiles=seed
  *
- * Creates institutions, teachers, classrooms, tasks (all 7 stops),
+ * Creates institutions, teachers, classrooms, tasks
  * students with varied progress, notebook entries, and achievements.
  * Task attempts go through sp_submit_attempt so the trg_attempt_sync
  * trigger awards XP and unlocks the next task automatically.
@@ -55,7 +55,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("seed")
+@Profile({"seed", "dev"})
 public class DataSeeder implements CommandLineRunner {
 
   private final UserRepository userRepository;
@@ -66,6 +66,7 @@ public class DataSeeder implements CommandLineRunner {
   private final InstitutionRepository institutionRepository;
   private final ClassroomRepository classroomRepository;
   private final ClassroomStudentRepository classroomStudentRepository;
+  private final ClassroomInstructorRepository classroomInstructorRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
   private final TaskRepository taskRepository;
   private final NotebookEntryRepository notebookEntryRepository;
@@ -100,11 +101,12 @@ public class DataSeeder implements CommandLineRunner {
       seedTasks();
       seedStudents();
       seedEnrollments();
+      seedAchievementsIfMissing();
       seedTaskAttempts();
       seedNotebookEntries();
       seedMysterySubmissions();
-      seedAchievementsIfMissing();
       verifyTaskAssignments();
+      verifyInstructorAssignments();
       verifyEnrollments();
       printSummary();
       log.info("Demo data seeding complete.");
@@ -133,7 +135,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedInstitutions() {
     String[][] data = {
-        {"NTNU Trondheim", "ntnu"},
+        { "Flatåsen skole", "flataasen" },
+        { "Byåsen skole", "byaasen" },
     };
     for (String[] row : data) {
       Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
@@ -149,15 +152,13 @@ public class DataSeeder implements CommandLineRunner {
   // -----------------------------------------------------------------------
 
   private void seedInstructors() {
-    // {email, displayName, key}
-    String[][] data = {
-        {"laerer@ntnu.no",     "Lærer Lærersen",  "laerer"},
-        {"instructor@test.no", "Test Instructor", "test-instr"},
-        {"admin@test.no",      "Test Admin",      "test-admin"},
+    Object[][] data = {
+        { "lærer@flatåsen.no", "Nora", "nora", "flataasen" },
+        { "lærer@byåsen.no", "Lars", "lars", "byaasen" },
     };
-    for (String[] row : data) {
-      User u = createUser(row[0], row[1], List.of(instructorRole));
-      users.put(row[2], u);
+    for (Object[] row : data) {
+      User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
+      users.put((String) row[2], u);
       log.info("Instructor: {} ({})", row[1], row[0]);
     }
   }
@@ -168,7 +169,9 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedClassrooms() {
     Object[][] data = {
-        {"5A - Digital Sikkerhet", "Introduksjon til digital sikkerhet", "laerer", "ntnu", "class1"},
+        { "5A", "Lær å være trygg på nettet!", "nora", "flataasen", "class1" },
+        { "6B", "Hvem kan du stole på på internett?", "nora", "flataasen", "class2" },
+        { "7A", "Bli en nettdetektiv og løs mysterier!", "lars", "byaasen", "class3" },
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -187,24 +190,65 @@ public class DataSeeder implements CommandLineRunner {
     }
   }
 
-  // -----------------------------------------------------------------------
-  // Tasks
-  // Rich NEWS / PHOTO / BOSS tasks built from real seed images under
-  // /seed-images/. Plus simple text-only tasks for the other four stops.
-  // -----------------------------------------------------------------------
-
   /** Spec for one NEWS task — a fake/real article pair. */
   private record NewsTaskSpec(
       String title, String stop, int difficulty, String hint,
-      String fakeImage, String realImage) {}
+      String fakeImage, String realImage) {
+  }
 
   /** Spec for one PHOTO task — three alternatives keyed by their kind. */
   private record PhotoTaskSpec(
       String title, String stop, int difficulty, String hint,
-      String realImage, String aiImage, String manipulatedImage) {}
+      String realImage, String aiImage, String manipulatedImage) {
+  }
 
   private void seedTasks() {
+    // Copy seed images to the tasks upload folder once (same images factory.sh uses).
+    // These paths are used as fallback content; factory.sh will PATCH with its own
+    // uploaded images if it runs after the seeder.
+    String fakeArticle = copySeedImageForTasks("seed-images/news/fake-article-1.jpg");
+    String realArticle  = copySeedImageForTasks("seed-images/news/real-article-1.png");
+    String realPhoto    = copySeedImageForTasks("seed-images/photos/real-photo-1.jpeg");
+    String fakePhoto    = copySeedImageForTasks("seed-images/photos/fake-photo-1.jpg");
+
+    // {title, type, stop, difficulty, ownerKey}
+    Object[][] taskDefs = {
+        // nyhetskvartalet — titles match factory.sh so seeder skips if factory already ran
+        {"Ekte eller falsk nyhet (nivå 1)", TaskType.NEWS,  "nyhetskvartalet", 1, "nora"},
+        {"Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS,  "nyhetskvartalet", 2, "nora"},
+        {"Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS,  "nyhetskvartalet", 3, "nora"},
+        // fotografen
+        {"Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora"},
+        {"Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora"},
+        {"Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora"},
+        // datasenteret — 5 tasks matching factory.sh (3 NEWS + 2 PHOTO)
+        {"Datatyven sin første løgn",   TaskType.NEWS,  "datasenteret", 4, "nora"},
+        {"Avslør den falske rapporten", TaskType.NEWS,  "datasenteret", 5, "nora"},
+        {"Manipulert bevismateriale",   TaskType.PHOTO, "datasenteret", 4, "nora"},
+        {"Sannhetens øyeblikk",         TaskType.NEWS,  "datasenteret", 5, "nora"},
+        {"Endelig konfrontasjon",       TaskType.PHOTO, "datasenteret", 5, "nora"},
+    };
+
+    Classroom class1 = classrooms.get("class1");
+    Classroom class2 = classrooms.get("class2");
+    Classroom class3 = classrooms.get("class3");
     short order = 0;
+    for (Object[] row : taskDefs) {
+      TaskType type = (TaskType) row[1];
+      String stop   = (String) row[2];
+      Task task = taskRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
+        log.info("Task: {} @ {}", row[0], stop);
+        return taskRepository.save(Task.builder()
+            .title((String) row[0])
+            .taskType(type)
+            .stopLocation(stop)
+            .difficulty((Integer) row[3])
+            .content(buildTaskContent(type, stop, fakeArticle, realArticle, realPhoto, fakePhoto))
+            .owner(users.get(row[4]))
+            .isActive(true)
+            .build());
+      });
+    }
 
     // ----- Nyhetskvartalet (NEWS) — 3 tasks ---------------------------------
     NewsTaskSpec[] newsSpecs = {
@@ -264,7 +308,7 @@ public class DataSeeder implements CommandLineRunner {
     for (PhotoTaskSpec spec : bossPhotos) {
       Task t = upsertPhotoTask(spec, "laerer");
       attachToAllClassrooms(t, order++);
-    }
+    }  
   }
 
   /** Builds + saves a NEWS task, copying its two seed images into uploads/. */
@@ -316,8 +360,8 @@ public class DataSeeder implements CommandLineRunner {
     // order isn't fixed across tasks — players can't memorize the slot.
     content.put("alternatives", shuffleStable(List.of(
         Map.of("imagePath", realUrl, "correctType", "ekte"),
-        Map.of("imagePath", aiUrl,   "correctType", "ai-generert"),
-        Map.of("imagePath", psUrl,   "correctType", "manipulert")), spec.title()));
+        Map.of("imagePath", aiUrl, "correctType", "ai-generert"),
+        Map.of("imagePath", psUrl, "correctType", "manipulert")), spec.title()));
     Task task = taskRepository.save(Task.builder()
         .title(spec.title())
         .taskType(TaskType.PHOTO)
@@ -332,7 +376,9 @@ public class DataSeeder implements CommandLineRunner {
     return task;
   }
 
-  /** Copies a classpath seed image to the uploads dir and returns its public URL. */
+  /**
+   * Copies a classpath seed image to the uploads dir and returns its public URL.
+   */
   private String copyTaskSeedImage(String classpathLocation) {
     String filename = Paths.get(classpathLocation).getFileName().toString();
     Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize().resolve("tasks").resolve("seed");
@@ -370,14 +416,15 @@ public class DataSeeder implements CommandLineRunner {
   private void attachToAllClassrooms(Task task, short order) {
     for (Classroom classroom : classrooms.values()) {
       ClassroomTaskId id = new ClassroomTaskId(classroom.getId(), task.getId());
-      if (classroomTaskRepository.existsById(id)) continue;
+      if (classroomTaskRepository.existsById(id))
+        continue;
       classroomTaskRepository.save(ClassroomTask.builder()
           .id(id).classroom(classroom).task(task).sortOrder(order).isActive(true).build());
     }
   }
 
   // -----------------------------------------------------------------------
-  // Students  (one classroom each — unique constraint enforced by DB)
+  // Students (one classroom each — unique constraint enforced by DB)
   // -----------------------------------------------------------------------
 
   private void seedStudents() {
@@ -387,12 +434,22 @@ public class DataSeeder implements CommandLineRunner {
     // counterpart — all tasks completed — used to verify teacher
     // dashboards / leaderboards / level progression.
     String[][] data = {
-        {"student1@ntnu.no", "Student 1",   "student1"},
-        {"student2@ntnu.no", "Student 2",   "student2"},
-        {"student3@ntnu.no", "Student 3",   "student3"},
-        {"student4@ntnu.no", "Student 4",   "student4"},
-        {"student5@ntnu.no", "Student 5",   "student5"},
-        {"tester@ntnu.no",   "Demo Tester", "tester"},
+        { "anine@nettdetektivene.no", "Agent Anine", "anine" },
+        { "nora-s@nettdetektivene.no", "Detektiv Nora", "nora" },
+        { "gustav@nettdetektivene.no", "Guru Gustav", "gustav" },
+        { "tri@nettdetektivene.no", "Tri-Tech", "tri" },
+        { "silje@nettdetektivene.no", "Spion Silje", "silje" },
+        { "vetle@nettdetektivene.no", "Vekter Vetle", "vetle" },
+        { "regine@nettdetektivene.no", "Radar-Regine", "regine" },
+        { "segward@nettdetektivene.no", "Sikker-Segward", "segward" },
+        { "studentNoClassroomYet@flataasen.no", "Ny Elev", "no-classroom" },
+        // Old seeding hasnt removd bnecasue it wouldt hurt to have
+        { "student1@ntnu.no", "Student 1", "student1" },
+        { "student2@ntnu.no", "Student 2", "student2" },
+        { "student3@ntnu.no", "Student 3", "student3" },
+        { "student4@ntnu.no", "Student 4", "student4" },
+        { "student5@ntnu.no", "Student 5", "student5" },
+        { "tester@ntnu.no", "Demo Tester", "tester" },
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -407,7 +464,8 @@ public class DataSeeder implements CommandLineRunner {
 
   private void seedEnrollments() {
     Classroom class1 = classrooms.get("class1");
-    for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester")) {
+    for (String key : List.of("student1", "student2", "student3", "student4", "student5", "tester",
+      "anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward")) {
       enroll(users.get(key), class1);
     }
   }
@@ -437,15 +495,28 @@ public class DataSeeder implements CommandLineRunner {
     Classroom class1 = classrooms.get("class1");
     UUID classroomId = class1.getId();
 
-    // Only the demo tester has task progress so student1..5 stay clean
-    // for QA flows that need a fresh user.
-    User tester = users.get("tester");
-    if (!hasAttempts(tester.getId(), classroomId)) {
+    // Star students: all tasks, score 95-100
+    for (String key : List.of("anine", "nora", "gustav")) {
+      User u = users.get(key);
+      if (hasAttempts(u.getId(), classroomId))
+        continue;
       for (int i = 0; i < allTasks.size(); i++) {
-        submitAttempt(tester.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
+        submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 95 + (i % 5));
       }
-      log.info("Task attempts seeded for tester@ntnu.no via sp_submit_attempt");
+      log.info("Task attempts seeded for {} via sp_submit_attempt", u.getUsername());
     }
+
+    // Good students: first 6 tasks, score 80-92
+    for (String key : List.of("tri", "silje")) {
+      User u = users.get(key);
+      if (hasAttempts(u.getId(), classroomId))
+        continue;
+      for (int i = 0; i < 6; i++) {
+        submitAttempt(u.getId(), allTasks.get(i).getId(), classroomId, 80 + (i % 13));
+      }
+    }
+
+    log.info("Task attempts seeded via sp_submit_attempt");
   }
 
   private boolean hasAttempts(UUID userId, UUID classroomId) {
@@ -477,9 +548,27 @@ public class DataSeeder implements CommandLineRunner {
     // Notebook reflections live alongside task progress, so they all
     // belong to the demo tester. student1..5 stay empty.
     Object[][] entries = {
-        {class1, "tester", "nyhetskvartalet", "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!"},
-        {class1, "tester", "fotografen",      "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover."},
-        {class1, "tester", "datasenteret",    "Kryptering er viktig for å beskytte data. Imponerende teknologi!"},
+        // 5A
+        { class1, "anine", "nyhetskvartalet",
+            "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
+        { class1, "anine", "fotografen",
+            "Bildemanipulasjon er overraskende enkelt. Stoler ikke blindt på bilder lenger." },
+        { class1, "nora", "fotografen",
+            "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover." },
+        { class1, "nora", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
+        { class1, "gustav", "datasenteret", "Kryptering beskytter dataene mine. Lærte mye om digital sikkerhet!" },
+        { class1, "tri", "fotografen", "Metadata i bilder avslører mer enn jeg trodde. Alltid kritisk til bilder nå." },
+        { class1, "silje", "nyhetskvartalet", "Falske nyheter ser ekte ut. Sjekker alltid kilden!" },
+        // 6B
+        { class1, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
+        { class1, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
+        { class1, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
+        { class1, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
+        // test
+        { class1, "tester", "nyhetskvartalet",
+            "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
+        { class1, "tester", "fotografen", "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover." },
+        { class1, "tester", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
     };
 
     for (Object[] row : entries) {
@@ -489,7 +578,8 @@ public class DataSeeder implements CommandLineRunner {
       boolean exists = notebookEntryRepository
           .findByClassroom_IdAndUser_Id(classroom.getId(), student.getId())
           .stream().anyMatch(e -> stopLocation.equals(e.getStopLocation()));
-      if (exists) continue;
+      if (exists)
+        continue;
       notebookEntryRepository.save(NotebookEntry.builder()
           .user(student)
           .classroom(classroom)
@@ -574,7 +664,10 @@ public class DataSeeder implements CommandLineRunner {
     }
   }
 
-  /** Copies a classpath seed image into the uploads folder and returns its public URL. */
+  /**
+   * Copies a classpath seed image into the uploads folder and returns its public
+   * URL.
+   */
   private String copySeedImageToUploads(String classpathLocation) {
     String filename = Paths.get(classpathLocation).getFileName().toString();
     String batchId = "seed";
@@ -591,6 +684,57 @@ public class DataSeeder implements CommandLineRunner {
     return "/uploads/mysteries/" + batchId + "/" + filename;
   }
 
+  private String copySeedImageForTasks(String classpathLocation) {
+    String filename = Paths.get(classpathLocation).getFileName().toString();
+    Path targetDir = Paths.get(uploadsRoot).toAbsolutePath().normalize().resolve("tasks").resolve("seed");
+    try {
+      Files.createDirectories(targetDir);
+      try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+        Files.copy(in, targetDir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to copy seed task image: " + classpathLocation, e);
+    }
+    return "/uploads/tasks/seed/" + filename;
+  }
+
+  private String buildTaskContent(TaskType type, String stop,
+      String fakeArticle, String realArticle, String realPhoto, String fakePhoto) {
+    boolean isBoss = "datasenteret".equals(stop);
+    if (type == TaskType.NEWS) {
+      String question = isBoss
+          ? "Datatyven har plantet en falsk nyhet. Hvilken er ekte?"
+          : "Hvilken av disse nyhetene er ekte?";
+      String hint = isBoss
+          ? "Sjekk kilden, forfatteren og datoen — de svakeste signalene avslører løgnen."
+          : "Se etter kildehenvisninger og datoer i artiklene.";
+      return "{\"question\":\"" + question + "\",\"hint\":\"" + hint + "\","
+          + "\"articles\":["
+          + "{\"imagePath\":\"" + fakeArticle + "\",\"isReal\":false},"
+          + "{\"imagePath\":\"" + realArticle + "\",\"isReal\":true}"
+          + "]}";
+    } else {
+      String description = isBoss
+          ? "Datatyven har manipulert bevismateriale. Klassifiser hvert bilde riktig."
+          : "Hvilken type bilde er dette?";
+      String d1 = isBoss ? "Bilde fra et serverrom" : "Bilde av en by ved solnedgang";
+      String d2 = isBoss ? "Portrett av en mistenkt" : "Portrett av en person utendørs";
+      String d3 = isBoss ? "Bilde fra et åsted" : "Folkemengde på et torg";
+      String b2 = isBoss ? "Urealistiske detaljer" : "Urealistiske detaljer i bakgrunnen";
+      return "{\"description\":\"" + description + "\",\"alternatives\":["
+          + "{\"imagePath\":\"" + realPhoto + "\",\"description\":\"" + d1 + "\","
+          + "\"correctType\":\"ekte\","
+          + "\"begrunnelser\":[\"Naturlig lysforhold\",\"Konsistente skygger\",\"Ingen synlige artefakter\"]},"
+          + "{\"imagePath\":\"" + fakePhoto + "\",\"description\":\"" + d2 + "\","
+          + "\"correctType\":\"ai-generert\","
+          + "\"begrunnelser\":[\"" + b2 + "\",\"Feil antall fingre\",\"Unaturlig tekstur på huden\"]},"
+          + "{\"imagePath\":\"" + fakePhoto + "\",\"description\":\"" + d3 + "\","
+          + "\"correctType\":\"manipulert\","
+          + "\"begrunnelser\":[\"Inkonsistente skygger\",\"Synlig kloning av personer\",\"Feil perspektiv\"]}"
+          + "]}";
+    }
+  }
+
   // -----------------------------------------------------------------------
   // Achievements
   // -----------------------------------------------------------------------
@@ -598,19 +742,21 @@ public class DataSeeder implements CommandLineRunner {
   private void seedAchievements() {
     // {title, description, icon, triggerType, triggerRef}
     String[][] data = {
-        {"Første Oppgave",     "Fullfør din første oppgave",                    "🎯", "task_completed",      "first_task"},
-        {"Nyhetsjeger",        "Fullfør alle oppgaver i Nyhetskvartalet",        "📰", "location_completed",  "nyhetskvartalet"},
-        {"Fotoproff",          "Fullfør alle oppgaver hos Fotografen",            "📸", "location_completed",  "fotografen"},
-        {"Datamester",         "Fullfør alle oppgaver i Datasenteret",            "💻", "location_completed",  "datasenteret"},
-        {"Første mysterium løst", "Løs ditt første ukens mysterium",              "🔍", "mystery_solved",      "first"},
-        {"Sikkerhetsmester",   "Fullfør alle oppgaver i et klasserom",            "🏆", "all_tasks_completed", "classroom"},
-        {"Plettfri Detektiv",  "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",   "classroom"},
-        {"Aldri Gi Opp",       "Feil 10 oppgaveforsøk",                           "💪", "tasks_failed",        "10"},
-        {"Bidragsyter",        "Send inn ditt første ukens mysterium",            "✍️", "mystery_submitted",   "first"},
+        { "Første Oppgave", "Fullfør din første oppgave", "🎯", "task_completed", "first_task" },
+        { "Nyhetsjeger", "Fullfør alle oppgaver i Nyhetskvartalet", "📰", "location_completed", "nyhetskvartalet" },
+        { "Fotoproff", "Fullfør alle oppgaver hos Fotografen", "📸", "location_completed", "fotografen" },
+        { "Datamester", "Fullfør alle oppgaver i Datasenteret", "💻", "location_completed", "datasenteret" },
+        { "Første mysterium løst", "Løs ditt første ukens mysterium", "🔍", "mystery_solved", "first" },
+        { "Sikkerhetsmester", "Fullfør alle oppgaver i et klasserom", "🏆", "all_tasks_completed", "classroom" },
+        { "Plettfri Detektiv", "Fullfør alle oppgaver i et klasserom uten å feile", "🛡️", "perfect_classroom",
+            "classroom" },
+        { "Aldri Gi Opp", "Feil 10 oppgaveforsøk", "💪", "tasks_failed", "10" },
+        { "Bidragsyter", "Send inn ditt første ukens mysterium", "✍️", "mystery_submitted", "first" },
     };
 
     for (String[] row : data) {
-      if (achievementRepository.existsByTitle(row[0])) continue;
+      if (achievementRepository.existsByTitle(row[0]))
+        continue;
       achievementRepository.save(Achievement.builder()
           .title(row[0])
           .descAch(row[1])
@@ -681,37 +827,65 @@ public class DataSeeder implements CommandLineRunner {
     log.info("SEED SUMMARY");
     log.info("========================================");
     log.info("Institutions : {}", institutions.size());
-    log.info("Instructors  : laerer@ntnu.no, instructor@test.no, admin@test.no");
+    log.info("Instructors  : lærer@flatåsen.no, lærer@byåsen.no");
     log.info("Classrooms   : {}", classrooms.size());
-    log.info("Tasks        : {} (3 NEWS, 3 PHOTO, 5 datasenteret)", allTasks.size());
-    log.info("Students     : 5 clean (student1..5@ntnu.no) + 1 demo (tester@ntnu.no)");
-    log.info("Mysteries    : 5 PENDING submissions (one per student)");
+    log.info("Tasks        : {} (3 nyhetskvartalet + 3 fotografen + 5 datasenteret)", allTasks.size());
+    log.info("Students     : 9 (1 without classroom: studentNoClassroomYet@flataasen.no)");
     log.info("");
     log.info("LOGIN (password: password123)");
-    log.info("  Teacher : laerer@ntnu.no");
-    log.info("  Student : student1@ntnu.no  (clean — no progress)");
-    log.info("  Student : tester@ntnu.no    (demo — all tasks completed)");
+    log.info("  Teacher : lærer@flatåsen.no");
+    log.info("  Student : anine@nettdetektivene.no  (star — all tasks done)");
+    log.info("  Student : tri@nettdetektivene.no    (good — partial tasks done)");
+    log.info("  Student : segward@nettdetektivene.no (no attempts)");
     log.info("");
     log.info("CLASSROOM JOIN CODES:");
     classrooms.forEach((key, c) -> log.info("  {} : {}", c.getTitle(), c.getJoinCode()));
     log.info("========================================");
   }
 
+  private void verifyInstructorAssignments() {
+    log.info("Verifying instructor classroom assignments...");
+    List<String> instructorKeys = List.of("nora", "lars");
+    for (String key : instructorKeys) {
+      User instructor = users.get(key);
+      List<ntnu.no.backend.model.classroom.ClassroomInstructor> assignments =
+          classroomInstructorRepository.findAllByUser(instructor);
+      if (assignments.isEmpty()) {
+        log.error("  ERROR: Instructor {} has NO classroom assignments!", instructor.getDisplayName());
+      } else {
+        log.info("  Instructor {} -> {} classroom(s): {}",
+            instructor.getDisplayName(), assignments.size(),
+            assignments.stream()
+                .map(ci -> ci.getClassroom().getTitle())
+                .toList());
+      }
+    }
+    log.info("Instructor assignment verification complete.");
+    log.info("");
+  }
+
   private void verifyEnrollments() {
     log.info("");
     log.info("Verifying student enrollments...");
-    List<String> studentKeys = List.of("student1", "student2", "student3", "student4", "student5", "tester");
+    List<String> studentKeys = List.of("anine", "nora", "gustav", "tri", "silje", "vetle", "regine", "segward",
+        "no-classroom");
+    // List<String> studentKeys = List.of("student1", "student2", "student3",
+    // "student4", "student5", "tester");
     for (String key : studentKeys) {
       User student = users.get(key);
       ClassroomStudent membership = classroomStudentRepository.findByUser(student).orElse(null);
       if (membership == null) {
-        log.error("  ERROR: Student {} has no classroom membership!", key);
+        if ("no-classroom".equals(key)) {
+          log.info("  Student {} -> no classroom (intentional)", student.getDisplayName());
+        } else {
+          log.error("  ERROR: Student {} has no classroom membership!", key);
+        }
       } else {
         log.info("  Student {} -> Classroom: {}, isAllowed: {}, DisplayName: {}",
-                 student.getDisplayName(),
-                 membership.getClassroom().getTitle(),
-                 membership.isAllowed(),
-                 membership.getDisplayName());
+            student.getDisplayName(),
+            membership.getClassroom().getTitle(),
+            membership.isAllowed(),
+            membership.getDisplayName());
       }
     }
     log.info("Enrollment verification complete.");
@@ -722,7 +896,8 @@ public class DataSeeder implements CommandLineRunner {
     log.info("");
     log.info("Verifying task assignments...");
     classrooms.forEach((key, classroom) -> {
-      List<ClassroomTask> tasks = classroomTaskRepository.findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
+      List<ClassroomTask> tasks = classroomTaskRepository
+          .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId());
       log.info("  Classroom '{}' ({}): {} active tasks assigned", classroom.getTitle(), key, tasks.size());
       if (tasks.isEmpty()) {
         log.warn("    WARNING: No tasks assigned to classroom {}!", classroom.getTitle());

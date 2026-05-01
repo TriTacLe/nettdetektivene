@@ -20,6 +20,8 @@ export interface DialogScene {
   characterName: string
   background?: string
   music?: string
+  featureImage?: string
+  featureLabel?: string
   lines: DialogLine[]
   choices?: DialogChoice[]
   next?: string
