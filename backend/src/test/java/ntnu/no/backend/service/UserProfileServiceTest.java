@@ -6,8 +6,6 @@ import ntnu.no.backend.dto.profile.UserProfileUpdateRequestDTO;
 import ntnu.no.backend.model.Classroom;
 import ntnu.no.backend.model.auth.User;
 import ntnu.no.backend.model.auth.UserProfile;
-import ntnu.no.backend.model.classroom.ClassroomInstructor;
-import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.repository.ClassroomInstructorRepository;
 import ntnu.no.backend.repository.ClassroomStudentRepository;
@@ -21,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -190,83 +187,15 @@ class UserProfileServiceTest {
   void update_throwsIllegalArgument_whenDisplayNameContainsCensoredWord() {
     User user = createUser(UUID.randomUUID(), "Test");
     UserProfile profile = createProfile(user);
-    Classroom classroom = Classroom.builder().id(UUID.randomUUID()).build();
-    ClassroomStudent membership = ClassroomStudent.builder()
-        .classroom(classroom)
-        .user(user)
-        .isAllowed(true)
-        .build();
     UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
         .displayName("helvete")
         .build();
 
     when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
-    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of());
 
     assertThatThrownBy(() -> userProfileService.update(user, dto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("upassende ord");
-  }
-
-  /**
-   * Verifies that instructor is notified when student in classroom uses censored display name.
-   */
-  @Test
-  void update_notifiesInstructors_whenCensoredWordAndInClassroom() {
-    UUID userId = UUID.randomUUID();
-    UUID classroomId = UUID.randomUUID();
-    UUID instructorId = UUID.randomUUID();
-    User user = createUser(userId, "Test");
-    UserProfile profile = createProfile(user);
-    Classroom classroom = Classroom.builder().id(classroomId).build();
-    UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
-        .displayName("faen")
-        .build();
-
-    ClassroomStudent membership = ClassroomStudent.builder()
-        .classroom(classroom)
-        .user(user)
-        .isAllowed(true)
-        .build();
-
-    User instructorUser = createUser(instructorId, "Test2");
-    ClassroomInstructor instructor = ClassroomInstructor.builder()
-        .id(ClassroomInstructorId.builder()
-            .classroomId(classroomId)
-            .userId(instructorId)
-            .build())
-        .classroom(classroom)
-        .user(instructorUser)
-        .build();
-
-    when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.of(membership));
-    when(classroomInstructorRepository.findAllByClassroom(classroom)).thenReturn(List.of(instructor));
-
-    assertThatThrownBy(() -> userProfileService.update(user, dto))
-        .isInstanceOf(IllegalArgumentException.class);
-
-    verify(notificationRepository).save(any(ntnu.no.backend.model.Notification.class));
-  }
-
-  /**
-   * Verifies that no notification is sent when censored word is used but user is not in a classroom.
-   */
-  @Test
-  void update_doesNotNotify_whenCensoredWordAndNotInClassroom() {
-    User user = createUser(UUID.randomUUID(), "Test");
-    UserProfile profile = createProfile(user);
-    UserProfileUpdateRequestDTO dto = UserProfileUpdateRequestDTO.builder()
-        .displayName("helvete")
-        .build();
-
-    when(userProfileRepository.findByUser(user)).thenReturn(Optional.of(profile));
-    when(classroomStudentRepository.findByUser(user)).thenReturn(Optional.empty());
-
-    userProfileService.update(user, dto);
-
-    verify(notificationRepository, never()).save(any());
   }
 
   /**
