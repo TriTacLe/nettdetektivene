@@ -29,7 +29,7 @@ public class NotebookEntryRequestDTO {
   @Schema(description = "Auto-generated notes in JSON format")
   private String autoNotes;
 
-  @Size(max = 10000, message = "Reflection cannot exceed 10 000 characters")
+  @Size(max = 10000, message = "Refleksjonen kan ikke overstige 10 000 tegn")
   @Schema(description = "Student's personal reflection on the stop")
   private String studentReflection;
 }
