@@ -27,6 +27,7 @@ const router = createRouter({
       path: '/game-map',
       name: 'game-map',
       component: () => import('../views/GameMapView.vue'),
+      meta: { music: 'outdoors' },
     },
     {
       path: '/stops/nyhetskvartalet/:taskId',
