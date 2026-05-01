@@ -21,8 +21,6 @@ onMounted(async () => {
   }
 })
 
-const isLastInstructor = computed(() => instructorCount.value !== null && instructorCount.value <= 1)
-
 const showDeleteDialog = ref(false)
 const deletePending = ref(false)
 const deleteError = ref<string | null>(null)
@@ -156,12 +154,9 @@ const menuItems = computed(() => [
   },
   {
     title: 'Forlat Klasserom',
-    subtitle: isLastInstructor.value
-      ? 'Kan ikke forlate — du er eneste instruktør'
-      : 'Fjern deg selv som instruktør',
+    subtitle: 'Fjern deg selv som instruktør',
     action: openLeaveDialog,
     danger: true,
-    disabled: isLastInstructor.value,
   },
 ])
 </script>
@@ -192,7 +187,6 @@ const menuItems = computed(() => [
       </div>
     </div>
 
-    <!-- Invite dialog -->
     <Teleport to="body">
       <div
         v-if="showInviteDialog"
@@ -255,7 +249,6 @@ const menuItems = computed(() => [
       </div>
     </Teleport>
 
-    <!-- Delete classroom dialog -->
     <Teleport to="body">
       <div
         v-if="showDeleteDialog"
@@ -300,7 +293,6 @@ const menuItems = computed(() => [
       </div>
     </Teleport>
 
-    <!-- Leave classroom dialog -->
     <Teleport to="body">
       <div
         v-if="showLeaveDialog"
