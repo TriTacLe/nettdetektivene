@@ -245,6 +245,12 @@ public class ClassroomService {
     // unlock for it through the normal attempt-completion chain.
     unlockNewTaskForEligibleStudents(classroom, classroomTask);
 
+    // Force students who had already progressed past this point in the
+    // chain to come back and complete the new task before they can resume.
+    // The chain-walk in trg_attempt_sync re-extends the unlock past any
+    // already-passed tasks once they pass the new one.
+    lockUnpassedTasksAfterNewInsertion(classroom, classroomTask);
+
     return ClassroomTaskMapper.toDTO(classroomTask);
   }
 
@@ -338,6 +344,38 @@ public class ClassroomService {
               .unlockedAt(LocalDateTime.now())
               .build()
       );
+    }
+  }
+
+  private void lockUnpassedTasksAfterNewInsertion(Classroom classroom, ClassroomTask newTask) {
+    short cutoff = newTask.getSortOrder();
+
+    List<UUID> laterTaskIds = classroomTaskRepository
+        .findAllByClassroom_IdAndIsActiveTrueOrderBySortOrderAsc(classroom.getId())
+        .stream()
+        .filter(ct -> ct.getSortOrder() > cutoff)
+        .map(ct -> ct.getTask().getId())
+        .toList();
+    if (laterTaskIds.isEmpty()) return;
+
+    List<ClassroomStudent> approvedStudents = classroomStudentRepository
+        .findAllByClassroomAndIsAllowedIsTrue(classroom);
+
+    for (ClassroomStudent student : approvedStudents) {
+      UUID userId = student.getUser().getId();
+      List<UserTaskUnlocked> unlocks = userTaskUnlockedRepository
+          .findByUser_IdAndClassroom_Id(userId, classroom.getId());
+
+      for (UserTaskUnlocked unlock : unlocks) {
+        UUID taskId = unlock.getTask().getId();
+        if (!laterTaskIds.contains(taskId)) continue;
+        boolean alreadyPassed = taskBestScoreRepository
+            .existsByUserIdAndTaskIdAndClassroomIdAndFirstPassedAtIsNotNull(
+                userId, taskId, classroom.getId());
+        if (!alreadyPassed) {
+          userTaskUnlockedRepository.delete(unlock);
+        }
+      }
     }
   }
 

@@ -61,6 +61,9 @@ BEGIN
     DECLARE v_xp_per_task INT DEFAULT 10;
     DECLARE v_current_sort_order SMALLINT;
     DECLARE v_next_task_id CHAR(36) DEFAULT NULL;
+    DECLARE v_next_sort_order SMALLINT DEFAULT NULL;
+    DECLARE v_next_passed TINYINT DEFAULT 0;
+    DECLARE v_safety INT DEFAULT 0;
 
     SELECT first_passed_at
     INTO v_existing_first_passed_at
@@ -105,21 +108,52 @@ BEGIN
           AND task_id = NEW.task_id
         LIMIT 1;
 
-        SELECT task_id
-        INTO v_next_task_id
-        FROM classroom_task
-        WHERE classroom_id = NEW.classroom_id
-          AND sort_order > v_current_sort_order
-          AND is_active = 1
-        ORDER BY sort_order ASC
-        LIMIT 1;
+        -- Walk forward through the chain, unlocking each task encountered.
+        -- Stop at the first not-yet-passed task or the end of the chain.
+        -- This handles the case where a teacher inserts a new task earlier
+        -- in the chain after a student has already progressed past that
+        -- point: when the student passes the new task, we still need to
+        -- re-unlock the next not-yet-completed task even if there are
+        -- already-passed tasks between them. The safety counter prevents
+        -- pathological loops in case of malformed chain data.
+        chain_walk: WHILE v_safety < 1000 DO
+            SET v_safety = v_safety + 1;
+            SET v_next_task_id = NULL;
+            SET v_next_sort_order = NULL;
 
-        IF v_next_task_id IS NOT NULL THEN
+            SELECT task_id, sort_order
+            INTO v_next_task_id, v_next_sort_order
+            FROM classroom_task
+            WHERE classroom_id = NEW.classroom_id
+              AND sort_order > v_current_sort_order
+              AND is_active = 1
+            ORDER BY sort_order ASC
+            LIMIT 1;
+
+            IF v_next_task_id IS NULL THEN
+                LEAVE chain_walk;
+            END IF;
+
             INSERT IGNORE INTO user_task_unlocked
                 (user_id, classroom_id, task_id, unlocked_at)
             VALUES
                 (NEW.user_id, NEW.classroom_id, v_next_task_id, NOW());
-        END IF;
+
+            SELECT EXISTS(
+                SELECT 1
+                FROM task_best_score
+                WHERE user_id = NEW.user_id
+                  AND task_id = v_next_task_id
+                  AND classroom_id = NEW.classroom_id
+                  AND first_passed_at IS NOT NULL
+            ) INTO v_next_passed;
+
+            IF v_next_passed = 1 THEN
+                SET v_current_sort_order = v_next_sort_order;
+            ELSE
+                LEAVE chain_walk;
+            END IF;
+        END WHILE chain_walk;
     END IF;
 END$$
 
