@@ -115,32 +115,35 @@ function submit() {
     dimOverlay
   >
     <div class="flex flex-col items-center justify-center flex-1 w-full px-6 pb-10 pt-4">
-      <h2 class="form-heading">{{ isEditMode ? 'Rediger Klasserom' : 'Lag Klasserom' }}</h2>
       <div class="form-card">
+        <h2 class="form-heading no-stroke">{{ isEditMode ? 'Rediger Klasserom' : 'Lag Klasserom' }}</h2>
+
         <div
           v-if="serverError"
-          class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded text-sm"
+          class="form-feedback form-feedback--error"
         >
           {{ serverError }}
         </div>
 
         <form @submit.prevent="submit" class="form-fields">
           <div>
-            <label class="field-label">Navn på klasserom</label>
+            <label class="field-label" for="classroom-title">Navn på klasserom</label>
             <input
+              id="classroom-title"
               v-model="title"
               type="text"
               placeholder="f.eks 5A"
               class="field-input"
             />
-            <p v-if="fieldErrors.title" class="field-error">
+            <p v-if="fieldErrors.title" class="field-error" role="alert">
               {{ fieldErrors.title }}
             </p>
           </div>
 
           <div>
-            <label class="field-label">Beskrivelse (valgfri)</label>
+            <label class="field-label" for="classroom-desc">Beskrivelse (valgfri)</label>
             <textarea
+              id="classroom-desc"
               v-model="classDesc"
               rows="3"
               placeholder="..."
@@ -149,8 +152,9 @@ function submit() {
           </div>
 
           <div>
-            <label class="field-label">Institusjon</label>
+            <label class="field-label" for="classroom-institution">Institusjon</label>
             <select
+              id="classroom-institution"
               v-model="selectedInstitutionId"
               :disabled="isLoadingInstitutions"
               class="field-input"
@@ -164,25 +168,32 @@ function submit() {
                 {{ inst.instName }}
               </option>
             </select>
-            <p v-if="isLoadingInstitutions" class="text-amber-200 text-xs mt-1">
+            <p v-if="isLoadingInstitutions" class="field-hint">
               Laster institusjoner...
             </p>
-            <p v-else-if="institutions.length === 0" class="field-error">
+            <p v-else-if="institutions.length === 0" class="field-error" role="alert">
               Ingen institusjoner funnet. Kontakt administrator.
             </p>
-            <p v-if="fieldErrors.institutionId" class="field-error">
+            <p v-if="fieldErrors.institutionId" class="field-error" role="alert">
               {{ fieldErrors.institutionId }}
             </p>
           </div>
 
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="isGameEnabled" type="checkbox" class="w-5 h-5 accent-amber-500" />
+          <label class="checkbox-row">
+            <input
+              v-model="isGameEnabled"
+              type="checkbox"
+              class="checkbox-input"
+              tabindex="0"
+              @keydown.enter.prevent="isGameEnabled = !isGameEnabled"
+            />
             <span class="checkbox-label">Aktiver spill for klassen</span>
           </label>
 
           <button
             type="submit"
-            class="btn-vn"
+            tabindex="0"
+            class="btn-bare form-submit"
             :disabled="createMutation.isPending.value || updateMutation.isPending.value"
           >
             {{
@@ -198,28 +209,39 @@ function submit() {
 </template>
 
 <style scoped>
-.form-heading {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  text-align: center;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  -webkit-text-stroke: 0;
-  text-shadow: none;
-  paint-order: normal;
-}
-
 .form-card {
   width: 100%;
   max-width: 28rem;
   margin: 0 auto;
-  padding: 2rem;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.875rem;
-  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+  background: #faf7f2;
+  border: 1px solid #d6d3d1;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-heading {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #44403c;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.form-feedback--error {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 
 .form-fields {
@@ -230,28 +252,30 @@ function submit() {
 
 .field-label {
   display: block;
-  font-size: 0.875rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  color: #1c1917;
   margin-bottom: 0.35rem;
-  letter-spacing: 0.02em;
 }
 
 .field-input {
   width: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid #a8a29e;
   border-radius: 0.5rem;
-  padding: 0.65rem 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.95);
-  color: #111827;
+  padding: 0.625rem 0.875rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: white;
+  color: #1c1917;
+  box-sizing: border-box;
 }
 
 .field-input:focus {
-  outline: none;
-  border-color: var(--color-nd-glow);
-  box-shadow: 0 0 0 2px rgba(240, 192, 64, 0.3);
+  outline: 3px solid #92400e;
+  outline-offset: 2px;
+  border-color: #92400e;
 }
 
 .field-textarea {
@@ -259,14 +283,71 @@ function submit() {
 }
 
 .field-error {
-  color: #fca5a5;
-  font-size: 0.75rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 600;
   margin-top: 0.25rem;
 }
 
+.field-hint {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  color: #78716c;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.checkbox-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #92400e;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.checkbox-input:focus {
+  outline: 3px solid #92400e;
+  outline-offset: 2px;
+}
+
 .checkbox-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #44403c;
+}
+
+.form-submit {
+  width: 100%;
+  padding: 0.75rem;
+  background: #92400e;
+  color: white;
+  border: 2px solid #78350f;
+  border-radius: 0.75rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form-submit:hover {
+  background: #78350f;
+}
+
+.form-submit:focus {
+  outline: 3px solid #92400e;
+  outline-offset: 2px;
+}
+
+.form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
