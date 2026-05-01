@@ -141,4 +141,19 @@ public class GlobalExceptionHandler {
       .collect(Collectors.joining(", "));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(errors));
   }
+
+  /**
+   * Catch-all for any unhandled exception. Without this, unhandled exceptions
+   * fall through to Spring Boot's error endpoint, which is not in the public
+   * endpoint list and gets rejected as 401 by Spring Security.
+   *
+   * @param e the unhandled exception
+   * @return 500 Internal Server Error with generic message
+   */
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception e) {
+    logger.error("Unhandled exception", e);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(ApiResponse.error("En uventet feil oppsto"));
+  }
 }
