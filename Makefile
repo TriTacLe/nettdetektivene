@@ -95,8 +95,14 @@ down:
 	docker compose down
 
 clean:
-	@echo "Removing containers + volumes..."
-	docker compose down -v
+	@echo "Removing containers, volumes, orphans, networks, and locally-built images..."
+	docker compose down -v --remove-orphans --rmi local
+	@echo "Sweeping any leftover volumes from the alternate backend/ compose project..."
+	-docker compose -f backend/compose.yaml down -v --remove-orphans --rmi local 2>/dev/null
+	@echo "Removing any stray named volumes for this project (in case of project-name drift)..."
+	-docker volume rm -f nettdetektivene_mysql_data nettdetektivene_uploads 2>/dev/null
+	-docker volume ls --format '{{.Name}}' | grep -E '(nettdetektivene_(mysql_data|uploads))$$' | xargs -r docker volume rm -f
+	@echo "Done."
 
 logs:
 	@echo "Tailing logs..."
