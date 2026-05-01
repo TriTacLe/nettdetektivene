@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import NavigationHeader from '@/components/NavigationHeader.vue'
 import { useStopStore } from '@/stores/StopStore'
 
 const route = useRoute()
+const router = useRouter()
 const classroomId = route.params.id as string
 const stopStore = useStopStore()
 
@@ -114,6 +115,7 @@ onUnmounted(() => {
       title="Test Modus"
       :previous="`/classroom/${classroomId}`"
       class="map-header"
+      @back="router.push(`/classroom/${classroomId}`)"
     />
 
     <div class="test-mode-badge" aria-label="Test modus">TEST MODUS</div>
