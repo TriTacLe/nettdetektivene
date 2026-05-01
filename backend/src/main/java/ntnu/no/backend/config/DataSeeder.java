@@ -89,10 +89,10 @@ public class DataSeeder implements CommandLineRunner {
       seedTasks();
       seedStudents();
       seedEnrollments();
+      seedAchievementsIfMissing();
       seedTaskAttempts();
       seedNotebookEntries();
       seedMysterySubmissions();
-      seedAchievementsIfMissing();
       verifyTaskAssignments();
       verifyEnrollments();
       printSummary();
