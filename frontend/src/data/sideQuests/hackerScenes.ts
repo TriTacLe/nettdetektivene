@@ -17,13 +17,13 @@ export const hackerStage0: DialogGraph = {
     characterName: 'Hackeren',
     background: BG,
     lines: [
-      { text: 'Ssh! Hold kjeft. Du sa du var detektiv, ikke sant?', mood: 'sus' },
+      { text: 'Ssh! Du sa du var detektiv, ikke sant?', mood: 'sus' },
       { text: 'Jeg trenger hjelp. Noen jobber mot meg, og jeg vet ikke hvem.', mood: 'thinking' },
       { text: 'Hvis du hjelper meg, lover jeg... vel, jeg lover ingenting. Men det blir spennende.', mood: 'sus' },
     ],
     choices: [
       { label: 'Jeg hjelper deg.', next: 'hacker-shady', flag: 'help' },
-      { label: 'La meg vaere i fred.', next: '__end__', flag: 'decline' },
+      { label: 'La meg være i fred.', next: '__end__', flag: 'decline' },
     ],
   },
   'hacker-shady': {
@@ -32,9 +32,9 @@ export const hackerStage0: DialogGraph = {
     characterName: 'Hackeren',
     background: BG,
     lines: [
-      { text: 'Greit. Hor godt etter — dette er stort.', mood: 'sus' },
+      { text: 'Greit. Hør godt etter — dette er stort.', mood: 'sus' },
       { text: 'Jeg planlegger a snike meg inn pa Datasenteret i kveld.', mood: 'angry' },
-      { text: 'Hvis noen sporr, har du aldri sett meg. Vi snakkes.', mood: 'sus' },
+      { text: 'Hvis noen spørr, har du aldri sett meg. Vi snakkes.', mood: 'sus' },
     ],
   },
 }

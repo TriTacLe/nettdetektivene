@@ -9,8 +9,8 @@ export const introductionDialogs: DialogGraph = {
     characterName: 'Detektiv Hansen',
     lines: [
       { text: 'Hei! Jeg er Detektiv Hansen, og jeg trenger din hjelp.', mood: 'neutral' },
-      { text: 'Internettbyen er under angrep. Noen sprer løgner, stjeler passord og lurer folk med falske bilder.', mood: 'sus' },
-      { text: 'Din jobb er å bli en nettdetektiv. Du skal løse oppgaver, finne spor og tenke kritisk.', mood: 'neutral' },
+      { text: 'Internettbyen er under angrep. Noen sprer løgner,og lurer folk med falske bilder.', mood: 'sus' },
+      { text: 'Din jobb er å bli en nettdetektiv. Du skal løse oppgaver og finne spor', mood: 'neutral' },
       { text: 'Er du klar for oppdraget?', mood: 'thinking' },
     ],
     choices: [
@@ -32,7 +32,7 @@ export const introductionDialogs: DialogGraph = {
     character: '/detective.png',
     characterName: 'Detektiv Hansen',
     lines: [
-      { text: 'Du skal løse små saker rundt om i byen. Hver sak lærer deg noe nytt om svindel på nett.', mood: 'neutral' },
+      { text: 'Du skal løse små saker rundt om i byen. Hver sak lærer deg noe nytt om hvordan man kan bli lurt på nett.', mood: 'neutral' },
       { text: 'Når du har trent nok, kan vi ta hovedmistenkten sammen. Klar?', mood: 'thinking' },
     ],
     next: 'hacker-intro',
@@ -44,7 +44,7 @@ export const introductionDialogs: DialogGraph = {
     lines: [
       { text: 'Ha! Så du tror du kan stoppe meg?', mood: 'angry' },
       { text: 'Jeg har spredt falske nyheter over hele internett. Folk tror på alt jeg sier!', mood: 'angry' },
-      { text: 'Jeg stjeler passord, lager falske bilder og sender løgnaktige e-poster. Ingen aner at det er løgn.', mood: 'sus' },
+      { text: 'Jeg lager falske bilder, og ingen vet hva som er sant eller usant lenger.', mood: 'sus' },
       { text: 'La oss se om en liten nettdetektiv kan avsløre meg... Jeg tviler sterkt!', mood: 'angry' },
     ],
   },

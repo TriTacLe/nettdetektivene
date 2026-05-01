@@ -21,12 +21,12 @@ export const STOPS: Record<string, StopConfig> = {
     taskRoute: '/stops/nyhetskvartalet',
     taskHints: {
       1: {
-        description: 'Ekte eller falsk nyhet?',
-        hint: 'Les overskriften nøye og sjekk om kilden virker troverdig.',
+        description: 'Se på overskriften',
+        hint: 'Les overskriften nøye og sjekk om bildene ser troverdige ut. Er det noen åpenbare feil eller overdrivelser?',
       },
       2: {
-        description: 'Identifiser kilden',
-        hint: 'Hvem har skrevet artikkelen? Er nettsiden kjent og pålitelig?',
+        description: 'Se på bildene',
+        hint: 'Ser bildene ekte ut? Er det noe rart med bildene?',
       },
       3: {
         description: 'Dobbeltsjekk nyheten',
@@ -37,7 +37,7 @@ export const STOPS: Record<string, StopConfig> = {
   fotografen: {
     stopId: 'fotografen',
     name: 'Fotografen',
-    intro: 'På dette stoppestedet undersøker vi bilder som kan være manipulerte eller skapt av KI. Tren øyet og finn ut hva som er ekte!',
+    intro: 'På dette stoppestedet undersøker vi bilder som kan være manipulerte eller skapt av Kunstig Intelligens. Tren øyet og finn ut hva som er ekte!',
     background: '/FotografenBackground.png',
     taskRoute: '/stops/fotografen',
   },
