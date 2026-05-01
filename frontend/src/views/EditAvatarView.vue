@@ -80,7 +80,7 @@ function handleSave() {
     <div class="flex flex-col flex-1 items-center px-4 lg:px-12 pt-4 pb-6 overflow-y-auto">
       <div v-if="isLoading" class="text-white text-center py-6">Laster...</div>
 
-      <CaseFile v-else tab-label="REDIGER PROFIL" class="w-full max-w-[56rem] lg:max-h-[76vh] lg:min-h-0 lg:overflow-hidden">
+      <CaseFile v-else tab-label="REDIGER PROFIL" class="w-full max-w-[56rem] lg:max-h-[85vh] lg:min-h-0 lg:overflow-hidden">
         <template #left>
           <div class="flex flex-col items-center flex-1 p-3 lg:p-4 gap-2 min-h-0">
 
