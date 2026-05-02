@@ -77,7 +77,12 @@ function onOutroDone() {
 }
 
 onMounted(() => {
-  audio.playOneShot('/music/FunFunFunFun.mp3')
+  // Datasenteret's outro is the hacker — a celebratory jingle clashes with
+  // his angry "Hva?! Det skulle ikke være mulig..." beat. The ending
+  // cutscene that plays after the final task is where victory music lives.
+  if (stopId !== 'datasenteret') {
+    audio.playOneShot('/music/FunFunFunFun.mp3')
+  }
   // Make sure the next-task lookup has fresh data when the user clicks
   // through. In test mode we already have everything; otherwise reload.
   if (stopId && !stopStore.testModeClassroomId) {
@@ -156,20 +161,19 @@ function exit() {
 
 .actions {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: stretch;
+  width: min(20rem, 90vw);
 }
 
 .next-btn,
 .exit-btn {
-  border: none;
   border-radius: 2rem;
   padding: 0.85rem 2.5rem;
   font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   transition: transform 0.15s, box-shadow 0.15s;
   animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
   font-family: inherit;
@@ -178,13 +182,15 @@ function exit() {
 .next-btn {
   background: #ffffff;
   color: #1a0a2e;
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .exit-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(28, 28, 36, 0.9);
   color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .next-btn:hover,

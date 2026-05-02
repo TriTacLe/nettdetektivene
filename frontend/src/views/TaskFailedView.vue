@@ -135,20 +135,19 @@ function resume() {
 
 .actions {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: stretch;
+  width: min(20rem, 90vw);
 }
 
 .retry-btn,
 .resume-btn {
-  border: none;
   border-radius: 2rem;
   padding: 0.85rem 2.5rem;
   font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   transition: transform 0.15s, box-shadow 0.15s;
   animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
   font-family: inherit;
@@ -157,13 +156,15 @@ function resume() {
 .retry-btn {
   background: #ffffff;
   color: #1a1a1a;
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .resume-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(28, 28, 36, 0.9);
   color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .retry-btn:hover,
