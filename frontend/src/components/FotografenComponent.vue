@@ -92,7 +92,7 @@ function submit() {
   flex: 1;
   padding: 0.25rem 1rem 1rem;
   gap: 0.9rem;
-  overflow: hidden;
+  overflow-y: auto;
   min-height: 0;
 }
 
@@ -128,9 +128,8 @@ function submit() {
   width: 100%;
   max-width: min(1800px, 100%);
   margin: 0 auto;
-  flex: 1;
   align-items: start;
-  min-height: 0;
+  flex-shrink: 0;
 }
 
 .photo-block {
@@ -210,7 +209,8 @@ function submit() {
   display: flex;
   justify-content: center;
   flex-shrink: 0;
-  padding-top: 0.25rem;
+  padding-top: 0.5rem;
+  margin-top: auto;
 }
 
 .lever-btn {
