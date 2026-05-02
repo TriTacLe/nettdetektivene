@@ -6,6 +6,7 @@ SERVICES_PROD = mysql backend frontend
 
 # Production teardown
 PROD_HOST ?= orbit@129.241.100.67
+DEPLOY_DIR_PATH = /home/orbit/services.devops/nettdetektivene
 
 # Dev
 dev:
@@ -139,18 +140,36 @@ test-coverage:
 # Production decommission. Streams deployment/teardown.sh to PROD_HOST
 # over ssh and runs it. Removes systemd unit + symlinks, docker stack,
 # volumes, images, nginx config, and the deployment directory.
-# Destructive — guarded by CONFIRM=YES.
-#
-# Usage:
-#   make teardown CONFIRM=YES
-#   make teardown CONFIRM=YES PROD_HOST=user@host
+# Irreversible — prompts for the exact phrase TEARDOWN PRODUCTION
+# before doing anything. Override the target host with PROD_HOST.
 teardown:
-	@if [ "$(CONFIRM)" != "YES" ]; then \
-		echo "make teardown destroys the production deployment on $(PROD_HOST)."; \
-		echo "Removes the systemd unit, docker stack, volumes, images, nginx config, and repo dir."; \
-		echo "Re-run as: make teardown CONFIRM=YES"; \
+	@echo ""
+	@echo "================================================================"
+	@echo "  WARNING: this will TAKE DOWN PRODUCTION on $(PROD_HOST)."
+	@echo "================================================================"
+	@echo ""
+	@echo "  This will permanently:"
+	@echo "    - Stop and remove the systemd unit (no auto-start on boot)"
+	@echo "    - Drop the docker stack INCLUDING ALL VOLUMES"
+	@echo "        ALL DATABASE DATA WILL BE LOST"
+	@echo "        ALL UPLOADED IMAGES WILL BE LOST"
+	@echo "    - Remove project docker images"
+	@echo "    - Remove the nginx site config (domain stops serving)"
+	@echo "    - Delete the deployment directory $(DEPLOY_DIR_PATH)"
+	@echo "    - docker logout ghcr.io"
+	@echo ""
+	@echo "  This is IRREVERSIBLE. Data cannot be recovered."
+	@echo ""
+	@printf "  Type exactly 'TEARDOWN PRODUCTION' to confirm: "
+	@read confirm; \
+	if [ "$$confirm" != "TEARDOWN PRODUCTION" ]; then \
+		echo ""; \
+		echo "Aborted. Nothing was changed."; \
 		exit 1; \
-	fi
-	@echo "Tearing down $(PROD_HOST)..."
-	ssh -o StrictHostKeyChecking=no $(PROD_HOST) 'bash -s' < deployment/teardown.sh
-	@echo "Teardown finished."
+	fi; \
+	echo ""; \
+	echo "Tearing down $(PROD_HOST)..."; \
+	ssh -o StrictHostKeyChecking=no $(PROD_HOST) 'bash -s' < deployment/teardown.sh; \
+	echo "Teardown finished."
+
+DEPLOY_DIR_PATH = /home/orbit/services.devops/nettdetektivene
