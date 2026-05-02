@@ -268,11 +268,11 @@ public class DataSeeder implements CommandLineRunner {
     // ----- Nyhetskvartalet (NEWS) — 3 tasks ---------------------------------
     NewsTaskSpec[] newsSpecs = {
         new NewsTaskSpec("Ekte eller falsk nyhet (nivå 1)", "nyhetskvartalet", 1,
-            "Sjekk om kilden virker troverdig.", "fakeArticle1.png", "realArticle1.png"),
+            "Sjekk om overskrift passer bilder", "fakeArticle1.png", "realArticle1.png"),
         new NewsTaskSpec("Overskriften som lokker (nivå 2)", "nyhetskvartalet", 2,
-            "Clickbait skriker etter klikk uten å gi svar.", "fakeArticle2.png", "realArticle2.png"),
+            "Virker nyhetene troverdige?", "fakeArticle2.png", "realArticle2.png"),
         new NewsTaskSpec("Kildehenvisning eller ikke (nivå 3)", "nyhetskvartalet", 3,
-            "Reelle saker pleier å nevne navngitte kilder.", "fakeArticle3.png", "realArticle3.png"),
+            "Sjekk etter skrikende overskrifter", "fakeArticle3.png", "realArticle3.png"),
     };
     for (NewsTaskSpec spec : newsSpecs) {
       Task t = upsertNewsTask(spec, "laerer");
@@ -285,10 +285,10 @@ public class DataSeeder implements CommandLineRunner {
             "Se etter unaturlig perspektiv og rare detaljer.",
             "realPhoto1.png", "aiPhoto1.png", "psPhoto1.png"),
         new PhotoTaskSpec("Manipulert eller bare merkelig? (nivå 2)", "fotografen", 2,
-            "Studer tekstur og lys.",
+            "Studer detaljer og naturlighet.",
             "realPhoto2.png", "aiPhoto2.png", "psPhoto2.jpg"),
         new PhotoTaskSpec("Avansert bildeanalyse (nivå 3)", "fotografen", 3,
-            "Sammenlign bakgrunn, lys og perspektiv samtidig.",
+            "Sammenlign bakgrunn, lys, farger og skyer samtidig.",
             "realPhoto3.png", "aiPhoto3.png", "psPhoto3.png"),
     };
     for (PhotoTaskSpec spec : photoSpecs) {
@@ -302,9 +302,9 @@ public class DataSeeder implements CommandLineRunner {
     // don't trip "Denne oppgavetypen har ikke noe innhold å vise ennå."
     NewsTaskSpec[] bossNews = {
         new NewsTaskSpec("Datatyven sin første løgn", "datasenteret", 4,
-            "Datatyven planter falsk omtale – avslør den.", "fakeArticle4.png", "realArticle4.png"),
+            "Sjekk etter innhold med stor tekst som skriker", "fakeArticle4.png", "realArticle4.png"),
         new NewsTaskSpec("Avslør den falske rapporten", "datasenteret", 5,
-            "Sammenlign påstander mot pålitelige kilder.", "fakeArticle5.png", "realArticle5.png"),
+            "Sammenlign påstander mot pålitelighet.", "fakeArticle5.png", "realArticle5.png"),
     };
     for (NewsTaskSpec spec : bossNews) {
       Task t = upsertNewsTask(spec, "laerer");
@@ -312,13 +312,13 @@ public class DataSeeder implements CommandLineRunner {
     }
     PhotoTaskSpec[] bossPhotos = {
         new PhotoTaskSpec("Manipulert bevismateriale", "datasenteret", 4,
-            "Datatyven manipulerer bilder – fordel rolle riktig.",
+            "Sjekk etter unaturlige mønstre og handlinger.",
             "realPhoto4.png", "aiPhoto4.png", "psPhoto4.png"),
         new PhotoTaskSpec("Endelig konfrontasjon", "datasenteret", 4,
-            "Alt du har lært om skygger, perspektiv og detaljer kommer til nytte nå.",
+            "Du burde sjekke detaljer, farger og situasjon",
             "realPhoto5.png", "aiPhoto5.png", "psPhoto5.png"),
         new PhotoTaskSpec("Sannhetens øyeblikk", "datasenteret", 5,
-            "Alt du har lært om skygger, perspektiv og detaljer kommer til nytte nå.",
+            "Hvor naturlig er bildene? Sjekk etter rare detaljer som ikke gir mening.",
             "realPhoto6.png", "aiPhoto6.png", "psPhoto6.png"),
     };
     for (PhotoTaskSpec spec : bossPhotos) {
