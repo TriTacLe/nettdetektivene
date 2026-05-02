@@ -42,6 +42,7 @@ function handleSelect(item: SidePanelMenuItem) {
     title="Lærerportal"
     background="/StartBackground.jpg"
     dimOverlay
+    lockViewport
   >
     <div class="scene-split-layout">
       <div class="scene-split-grid">

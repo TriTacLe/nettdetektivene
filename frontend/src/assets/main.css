@@ -253,6 +253,21 @@ button:not(.btn-bare):disabled,
   }
 }
 
+.scene--locked .scene-split-layout {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.scene--locked .scene-split-grid {
+  min-height: 0;
+}
+
+.scene--locked .scene-split-main {
+  align-self: stretch;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Sizing helpers shared by the three teacher "overview" pages
    (ClassroomOverview, ClassroomStudentsView, ClassroomTasksView).
    Big primary "+ create" button at the top, and chunky action

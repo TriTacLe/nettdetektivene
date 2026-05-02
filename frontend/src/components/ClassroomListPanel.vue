@@ -119,10 +119,12 @@ function deleteClassroom(id: string) {
 <style scoped>
 .overview-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   width: 100%;
   margin-top: 1.5rem;
+  overflow: hidden;
 }
 
 .panel-title {
@@ -139,6 +141,8 @@ function deleteClassroom(id: string) {
 }
 
 .row-list {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -147,7 +151,6 @@ function deleteClassroom(id: string) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.875rem;
   backdrop-filter: blur(4px);
-  max-height: calc(100vh - 12rem);
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
