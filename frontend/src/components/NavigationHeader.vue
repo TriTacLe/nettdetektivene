@@ -84,6 +84,7 @@ onUnmounted(() => {
       </div>
       <div v-else class="nav-placeholder" />
       <button
+        v-if="authStore.isAuthenticated"
         class="nav-button settings-button btn-bare"
         aria-label="Åpne innstillinger"
         @click="settingsOpen = true">
@@ -194,19 +195,36 @@ onUnmounted(() => {
   padding-top: 10px;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 768px) {
+  .navigation-header {
+    padding: 12px 16px 12px 8px;
+    overflow: hidden;
+  }
+
   .nav-title {
     font-size: 1.6rem;
     margin: 0 8px 0 12px;
     padding-top: 0;
-  }
-
-  .nav-user {
-    font-size: 0.75rem;
-    max-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
+  }
+
+  .nav-right {
+    flex-shrink: 1;
+  }
+
+  .nav-user {
+    display: none;
+  }
+
+  .settings-label {
+    display: none;
+  }
+
+  .settings-button {
+    margin-right: 4px;
   }
 }
 </style>

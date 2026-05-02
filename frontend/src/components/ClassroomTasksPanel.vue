@@ -55,16 +55,16 @@ function openCreateTask() {
       Ingen oppgaver i dette klasserommet enda.
     </div>
 
-    <div class="row-list">
-      <button
-        class="btn-bare create-row"
-        @click="openCreateTask"
-        aria-label="Lag ny oppgave"
-      >
-        <Plus :size="18" aria-hidden="true" />
-        <span>Lag ny oppgave</span>
-      </button>
+    <button
+      class="btn-bare create-row"
+      @click="openCreateTask"
+      aria-label="Lag ny oppgave"
+    >
+      <Plus :size="18" aria-hidden="true" />
+      <span>Lag ny oppgave</span>
+    </button>
 
+    <div class="row-list">
       <article
         v-for="(item, i) in tasks"
         :key="item.taskId"
@@ -315,7 +315,7 @@ function openCreateTask() {
   position: absolute;
   inset: 2px;
   clip-path: var(--notch-clip);
-  background: rgba(40, 30, 20, 0.55);
+  background: rgba(20, 15, 10, 0.75);
   backdrop-filter: blur(2px);
   z-index: -1;
   transition: background 0.15s;
@@ -326,7 +326,7 @@ function openCreateTask() {
 }
 
 .create-row:hover::after {
-  background: rgba(40, 30, 20, 0.35);
+  background: rgba(20, 15, 10, 0.6);
 }
 
 .create-row:focus-visible {
@@ -341,8 +341,6 @@ function openCreateTask() {
     grid-template-columns: 1fr;
     gap: 0.35rem;
     padding: 0.75rem 1.25rem;
-    clip-path: none;
-    border-radius: 0.5rem;
   }
 
   .row-title {

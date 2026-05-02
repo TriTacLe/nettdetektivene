@@ -464,8 +464,6 @@ function statusDotClass(submission: MysteryReviewDTO) {
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
-    clip-path: none;
-    border-radius: 0.5rem;
   }
 
   .row-name {

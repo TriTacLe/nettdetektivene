@@ -76,7 +76,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <SceneComponent title="Ledertavle" previous="/teacher-home" background="/StartBackground.jpg">
+  <SceneComponent title="Ledertavle" previous="/teacher-home" background="/StartBackground.jpg" dimOverlay>
     <div class="lb-container">
       <div class="lb-card">
 

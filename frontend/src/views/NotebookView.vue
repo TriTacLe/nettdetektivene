@@ -412,7 +412,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .notebook-hint {
-  color: #d4c4a8;
+  color: #e8dcc4;
   text-align: center;
   font-size: 1.15rem;
   max-width: 42rem;
@@ -469,7 +469,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .page-indicator {
-  color: #c8c0b4;
+  color: #ddd6cc;
   font-family: 'Nunito', 'Segoe UI', sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
@@ -510,7 +510,7 @@ function saveReflection(stopLocation: string): void {
 /* Pages */
 .book-page {
   flex: 1;
-  background: #faf8f4;
+  background: #f5f0e0;
   display: flex;
   flex-direction: column;
   min-height: 560px;
@@ -534,11 +534,11 @@ function saveReflection(stopLocation: string): void {
 }
 
 .book-page--locked {
-  background: #f0eeea;
+  background: #f5f0e0;
 }
 
 .book-page--blank {
-  background: #f0eeea;
+  background: #f5f0e0;
 }
 
 /* Header */
@@ -584,7 +584,7 @@ function saveReflection(stopLocation: string): void {
 }
 
 .lock-icon {
-  color: #b8b0a8;
+  color: #7a7470;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 

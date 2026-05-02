@@ -14,6 +14,21 @@ export const useAudioStore = defineStore('audio', () => {
   const textSpeed = ref(parseInt(sessionStorage.getItem('audio_textSpeed') ?? '45', 10))
   const autoAdvance = ref(sessionStorage.getItem('audio_autoAdvance') === 'true')
 
+  function reset() {
+    musicVolume.value = 0.5
+    sfxVolume.value = 0.5
+    musicMuted.value = false
+    sfxMuted.value = false
+    textSpeed.value = 45
+    autoAdvance.value = false
+    sessionStorage.removeItem('audio_musicVolume')
+    sessionStorage.removeItem('audio_sfxVolume')
+    sessionStorage.removeItem('audio_musicMuted')
+    sessionStorage.removeItem('audio_sfxMuted')
+    sessionStorage.removeItem('audio_textSpeed')
+    sessionStorage.removeItem('audio_autoAdvance')
+  }
+
   const currentTrack = ref<string | null>(null)
   // wantPlaying = "we believe music should currently be playing". Distinct
   // from audioEl.paused, which can flip silently due to autoplay blocking,
@@ -203,6 +218,7 @@ export const useAudioStore = defineStore('audio', () => {
     toggleSfxMuted,
     setTextSpeed,
     toggleAutoAdvance,
+    reset,
     playSfx,
     playTypingTick,
   }
