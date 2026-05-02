@@ -14,5 +14,14 @@ export default defineConfig({
     environment: 'happy-dom',
     exclude: [...configDefaults.exclude, 'e2e/**'],
     root: fileURLToPath(new URL('./', import.meta.url)),
+    coverage: {
+      provider: 'v8',
+      exclude: [
+        'src/generated-client/**',
+        'src/main.ts',
+        ...(configDefaults.coverage.exclude ?? []),
+      ],
+      reporter: ['text', 'lcov'],
+    },
   },
 })
