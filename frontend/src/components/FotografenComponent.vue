@@ -151,8 +151,6 @@ function submit() {
   aspect-ratio: 4 / 3;
   max-height: min(40vh, 430px);
   border-radius: 12px;
-  background: #0a0a14;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
   overflow: hidden;
   display: flex;
   align-items: center;

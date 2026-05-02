@@ -145,8 +145,6 @@ function choose(index: number) {
   max-height: min(46vh, 560px);
   object-fit: contain;
   border-radius: 12px;
-  background: #0a0a14;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
   transition: box-shadow 0.18s ease;
   display: block;
 }

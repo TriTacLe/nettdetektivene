@@ -45,28 +45,27 @@ const audio = useAudioStore()
 const stopId = route.query.stop as string | undefined
 const taskUuid = route.query.taskId as string | undefined
 
+// Capture state BEFORE markComplete so we can tell whether this run actually
+// cleared the stop. Replaying a task that was already passed shouldn't
+// trigger the trophy screen — only the transition from "some left" to
+// "all done" should.
+const wasAlreadyPassed = stopId && taskUuid ? stopStore.isComplete(stopId, taskUuid) : false
 if (stopId && taskUuid) {
   stopStore.markComplete(stopId, taskUuid)
 }
+const justClearedStop = Boolean(
+  !wasAlreadyPassed && stopId && stopStore.isAllComplete(stopId),
+)
 
 const outroScene = computed(() => (stopId ? STOP_OUTROS[stopId]?.passed ?? null : null))
 const showOutro = ref(Boolean(outroScene.value))
 
-// "All complete" is only meaningful once we have the task list. We compute
-// it lazily on click instead of in setup so a stale store doesn't lie.
-function isStopCleared(): boolean {
-  return Boolean(stopId && stopStore.isAllComplete(stopId))
-}
-
 function onOutroDone() {
-  // The detective's "saken er løst" wraps the moment. If the player just
-  // cleared the entire stop, jump straight to the trophy/ending screen
-  // instead of stopping on an interim "Neste oppgave" page.
   if (!stopId) {
     showOutro.value = false
     return
   }
-  if (isStopCleared()) {
+  if (justClearedStop) {
     if (stopId === 'datasenteret') {
       router.push({ name: 'ending' })
     } else {
@@ -88,7 +87,7 @@ onMounted(() => {
 
 function goToNextTask() {
   const testCid = stopStore.testModeClassroomId
-  if (stopId && stopStore.isAllComplete(stopId)) {
+  if (justClearedStop) {
     if (stopId === 'datasenteret') {
       router.push({ name: 'ending' })
     } else {
