@@ -225,7 +225,7 @@ public class ClassroomStudentService {
     ClassroomStudent student = findMembership(classroomId, userId);
     student.setAllowed(true);
     unlockFirstTask(classroomId, student);
-    notificationRepository.deleteByRefTypeAndRefId("classroom_student", userId);
+    notificationRepository.markReadByRefTypeAndRefId("classroom_student", userId);
     return mapToDTO(student);
   }
 
@@ -269,7 +269,7 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     ClassroomStudent student = findMembership(classroomId, userId);
     classroomStudentRepository.delete(student);
-    notificationRepository.deleteByRefTypeAndRefId("classroom_student", userId);
+    notificationRepository.markReadByRefTypeAndRefId("classroom_student", userId);
   }
 
   /**
