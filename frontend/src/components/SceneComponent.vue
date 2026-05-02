@@ -2,6 +2,7 @@
 import { computed, useAttrs } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationHeader from './NavigationHeader.vue'
+import { useStopStore } from '@/stores/StopStore'
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +29,9 @@ const emit = defineEmits<{ back: [] }>()
 const attrs = useAttrs()
 const route = useRoute()
 const router = useRouter()
+const stopStore = useStopStore()
+
+const isTestMode = computed(() => Boolean(stopStore.testModeClassroomId))
 
 // Show the back arrow if a path is provided OR if the parent listens to @back
 const previousForHeader = computed(() => props.previous ?? (attrs.onBack ? '_' : undefined))
@@ -78,6 +82,7 @@ function handleBack() {
     <div v-if="vignette" class="scene-vignette" aria-hidden="true"></div>
     <div class="scene-content" :class="{ 'scene-content--locked': lockViewport }">
       <NavigationHeader :title="title" :previous="previousForHeader" :next="next" @back="handleBack" />
+      <div v-if="isTestMode" class="test-mode-badge" aria-label="Testmodus">TESTMODUS</div>
       <div class="scene-body" :class="{ 'scene-body--locked': lockViewport }">
         <slot />
       </div>
@@ -163,6 +168,31 @@ function handleBack() {
 
 .scene-body--locked {
   overflow: hidden;
+}
+
+.test-mode-badge {
+  position: absolute;
+  top: 2.1rem;
+  right: 12rem;
+  z-index: 30;
+  background: #ff9800;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.5rem;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .test-mode-badge {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+    top: 1.5rem;
+    right: 3.8rem;
+  }
 }
 
 @media (max-width: 800px) {

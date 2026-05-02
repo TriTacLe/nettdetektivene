@@ -112,13 +112,13 @@ onUnmounted(() => {
     </picture>
 
     <NavigationHeader
-      title="Test Modus"
+      title="Utendørs"
       :previous="`/classroom/${classroomId}`"
       class="map-header"
       @back="router.push(`/classroom/${classroomId}`)"
     />
 
-    <div class="test-mode-badge" aria-label="Test modus">TEST MODUS</div>
+    <div class="test-mode-badge" aria-label="Testmodus">TESTMODUS</div>
 
     <svg class="path-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <defs>
@@ -271,15 +271,15 @@ onUnmounted(() => {
 
 .test-mode-badge {
   position: absolute;
-  top: 5rem;
-  right: 1rem;
+  top: 2.1rem;
+  right: 12rem;
   z-index: 20;
   background: #ff9800;
   color: white;
   padding: 0.4rem 0.9rem;
   border-radius: 0.5rem;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 1.5rem;
   letter-spacing: 0.05em;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -296,8 +296,8 @@ onUnmounted(() => {
   .test-mode-badge {
     font-size: 0.72rem;
     padding: 0.25rem 0.55rem;
-    top: 3.5rem;
-    right: 0.5rem;
+    top: 1.5rem;
+    right: 3.8rem;
   }
 }
 
