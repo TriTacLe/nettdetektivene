@@ -75,12 +75,15 @@ function onKeydown(e: KeyboardEvent) {
     emit('back')
     return
   }
+  const active = document.activeElement as HTMLElement | null
+  const onChoiceButton = active?.classList.contains('dialog-choice')
   if (e.code === 'Space' || e.code === 'Enter') {
+    if (onChoiceButton) return
     e.preventDefault()
     advance()
     return
   }
-  if (showChoices.value && /^Digit[1-4]$/.test(e.code)) {
+  if (showChoices.value && /^Digit[1-9]$/.test(e.code)) {
     const idx = Number(e.code.replace('Digit', '')) - 1
     const choice = props.scene.choices?.[idx]
     if (choice && !choice.disabled) {
