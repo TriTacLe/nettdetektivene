@@ -201,6 +201,19 @@ export const useAudioStore = defineStore('audio', () => {
     playSfx(SFX_TYPING)
   }
 
+  // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
+  // playback starts on first call without waiting for a WebAudio decode pass.
+  function playOneShot(src: string) {
+    const vol = effectiveSfxVolume()
+    if (vol <= 0) return
+    const el = new Audio(src)
+    el.volume = vol
+    el.play().catch(() => {
+      // Autoplay blocked — nothing to do; the screen the jingle plays on is
+      // navigated into by a user gesture so this is rare.
+    })
+  }
+
   return {
     musicVolume,
     sfxVolume,
@@ -221,5 +234,6 @@ export const useAudioStore = defineStore('audio', () => {
     reset,
     playSfx,
     playTypingTick,
+    playOneShot,
   }
 })
