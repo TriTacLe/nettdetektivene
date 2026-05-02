@@ -383,6 +383,7 @@ class ClassroomStudentServiceTest {
 
     assertThat(result.isAllowed()).isTrue();
     assertThat(result.feideId()).isEqualTo(expectedFeideId);
+    verify(notificationRepository).markReadByRefTypeAndRefId("classroom_student", userId);
   }
 
   /**
@@ -403,6 +404,7 @@ class ClassroomStudentServiceTest {
     classroomStudentService.remove(classroomId, userId, instructor);
 
     verify(classroomStudentRepository).delete(student);
+    verify(notificationRepository).markReadByRefTypeAndRefId("classroom_student", userId);
   }
 
   /**

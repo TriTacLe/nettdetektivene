@@ -225,6 +225,7 @@ public class ClassroomStudentService {
     ClassroomStudent student = findMembership(classroomId, userId);
     student.setAllowed(true);
     unlockFirstTask(classroomId, student);
+    notificationRepository.markReadByRefTypeAndRefId("classroom_student", userId);
     return mapToDTO(student);
   }
 
@@ -268,6 +269,7 @@ public class ClassroomStudentService {
     verifyInstructor(classroomId, instructor);
     ClassroomStudent student = findMembership(classroomId, userId);
     classroomStudentRepository.delete(student);
+    notificationRepository.markReadByRefTypeAndRefId("classroom_student", userId);
   }
 
   /**
@@ -291,7 +293,7 @@ public class ClassroomStudentService {
     entityManager.flush();
     entityManager.clear();
 
-    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
+    notificationRepository.markReadByRefTypeAndRefId("name_change", userId);
 
     ClassroomStudent student = findMembership(classroomId, userId);
     UserProfile profile = userProfileRepository.findByUser(student.getUser())
@@ -319,7 +321,7 @@ public class ClassroomStudentService {
         instructor.getId().toString(), userId.toString(), "REJECTED");
     entityManager.flush();
     entityManager.clear();
-    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
+    notificationRepository.markReadByRefTypeAndRefId("name_change", userId);
     ClassroomStudent student = findMembership(classroomId, userId);
     return mapToDTO(student);
   }
