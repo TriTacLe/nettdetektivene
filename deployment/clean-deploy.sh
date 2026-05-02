@@ -1,26 +1,20 @@
 #!/bin/bash
-# Full-reset deploy. Stops the stack, drops the MySQL volume so the
-# DataSeeder reseeds on next boot, pulls fresh images, brings everything
-# back up. The uploads volume is preserved by default; set
-# WIPE_UPLOADS=true to drop that one too.
+# Full-reset deploy. Stops the stack, drops every named volume the compose
+# project owns (so DataSeeder reseeds on next boot and uploads are wiped),
+# force-removes any leftover named volumes whose names match this project,
+# pulls fresh images, brings everything back up.
 
 set -e
 
 COMPOSE_FILE="compose.prod.yaml"
-WIPE_UPLOADS="${WIPE_UPLOADS:-false}"
 
-echo "Stopping stack and removing containers + orphans..."
-docker compose -f "$COMPOSE_FILE" down --remove-orphans
+echo "Stopping stack, removing containers, volumes, and orphans..."
+docker compose -f "$COMPOSE_FILE" down -v --remove-orphans
 
-echo "Removing mysql volume (DataSeeder will reseed on boot)..."
-docker volume rm -f nettdetektivene_mysql_data 2>/dev/null || true
-
-if [ "$WIPE_UPLOADS" = "true" ]; then
-  echo "Removing uploads volume..."
-  docker volume rm -f nettdetektivene_uploads 2>/dev/null || true
-else
-  echo "Preserving uploads volume."
-fi
+echo "Removing any leftover named volumes for this project..."
+docker volume ls --format '{{.Name}}' \
+  | grep -E 'nettdetektivene_(mysql_data|uploads)$' \
+  | xargs -r docker volume rm -f
 
 echo "Pulling latest images..."
 docker compose -f "$COMPOSE_FILE" pull

@@ -9,11 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       clean:
-        description: 'Wipe MySQL volume and redeploy from scratch (DataSeeder reseeds)'
-        type: boolean
-        default: false
-      wipe_uploads:
-        description: 'Also wipe uploads volume (only with clean)'
+        description: 'Wipe all volumes (MySQL + uploads) and redeploy from scratch'
         type: boolean
         default: false
 
@@ -91,13 +87,12 @@ jobs:
       - name: Deploy to Production
         env:
           CLEAN: ${{ inputs.clean }}
-          WIPE_UPLOADS: ${{ inputs.wipe_uploads }}
         run: |
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "docker login ghcr.io -u tritacle --password-stdin" <<< "${{ secrets.PAT_TOKEN }}"
           if [ "$CLEAN" = "true" ]; then
-            echo "Running CLEAN deploy (wipe_uploads=$WIPE_UPLOADS)..."
+            echo "Running CLEAN deploy (wiping all volumes)..."
             ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 \
-              "cd ~/services.devops/nettdetektivene && WIPE_UPLOADS=$WIPE_UPLOADS bash -s" \
+              "cd ~/services.devops/nettdetektivene && bash -s" \
               < deployment/clean-deploy.sh
           else
             ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 \
