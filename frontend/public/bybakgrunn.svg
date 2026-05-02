@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2600 1615" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1530"/>
+      <stop offset="35%" stop-color="#0f1a3d"/>
+      <stop offset="70%" stop-color="#2a2350"/>
+      <stop offset="100%" stop-color="#3d2b5c"/>
+    </linearGradient>
+
+    <linearGradient id="cityFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a2d4a" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0d1a30" stop-opacity="0.85"/>
+    </linearGradient>
+
+    <linearGradient id="cityMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#13243f"/>
+      <stop offset="100%" stop-color="#091628"/>
+    </linearGradient>
+
+    <linearGradient id="hillGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a2530"/>
+      <stop offset="100%" stop-color="#0a1018"/>
+    </linearGradient>
+
+    <linearGradient id="hillGradient2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2c38"/>
+      <stop offset="100%" stop-color="#0d141d"/>
+    </linearGradient>
+
+    <linearGradient id="grassField" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a2418"/>
+      <stop offset="100%" stop-color="#0d1410"/>
+    </linearGradient>
+
+    <linearGradient id="pathLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#2f2f3d"/>
+    </linearGradient>
+
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff8d8" stop-opacity="0.45"/>
+      <stop offset="50%" stop-color="#fff8d8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#fff8d8" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="lampGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe4a8" stop-opacity="0.55"/>
+      <stop offset="40%" stop-color="#ffe4a8" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ffe4a8" stop-opacity="0"/>
+    </radialGradient>
+
+  </defs>
+
+  <!-- SKY -->
+  <rect width="2600" height="1615" fill="url(#skyGradient)"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff">
+    <circle cx="80" cy="60" r="1" opacity="0.6"/>
+    <circle cx="180" cy="120" r="1.2" opacity="0.7"/>
+    <circle cx="290" cy="80" r="1" opacity="0.5"/>
+    <circle cx="410" cy="160" r="1.5" opacity="0.8"/>
+    <circle cx="540" cy="100" r="1" opacity="0.6"/>
+    <circle cx="660" cy="200" r="1.3" opacity="0.7"/>
+    <circle cx="780" cy="60" r="1" opacity="0.5"/>
+    <circle cx="900" cy="180" r="1.4" opacity="0.8"/>
+    <circle cx="1020" cy="120" r="1" opacity="0.6"/>
+    <circle cx="1150" cy="80" r="1.2" opacity="0.7"/>
+    <circle cx="1280" cy="200" r="1" opacity="0.5"/>
+    <circle cx="1400" cy="120" r="1.3" opacity="0.8"/>
+    <circle cx="1530" cy="60" r="1" opacity="0.6"/>
+    <circle cx="1660" cy="180" r="1.4" opacity="0.9"/>
+    <circle cx="1790" cy="100" r="1" opacity="0.5"/>
+    <circle cx="1920" cy="200" r="1.2" opacity="0.7"/>
+    <circle cx="2050" cy="80" r="1" opacity="0.6"/>
+    <circle cx="2180" cy="160" r="1.3" opacity="0.8"/>
+    <circle cx="2310" cy="100" r="1" opacity="0.5"/>
+    <circle cx="2440" cy="180" r="1.4" opacity="0.7"/>
+    <circle cx="2560" cy="60" r="1" opacity="0.6"/>
+    <circle cx="120" cy="280" r="1" opacity="0.5"/>
+    <circle cx="350" cy="320" r="1.2" opacity="0.7"/>
+    <circle cx="580" cy="280" r="1" opacity="0.5"/>
+    <circle cx="820" cy="340" r="1.3" opacity="0.8"/>
+    <circle cx="1080" cy="300" r="1" opacity="0.6"/>
+    <circle cx="1340" cy="380" r="1.2" opacity="0.7"/>
+    <circle cx="1600" cy="320" r="1" opacity="0.5"/>
+    <circle cx="1860" cy="380" r="1.4" opacity="0.8"/>
+    <circle cx="2120" cy="300" r="1" opacity="0.6"/>
+    <circle cx="2380" cy="360" r="1.2" opacity="0.7"/>
+    <circle cx="240" cy="450" r="1" opacity="0.5"/>
+    <circle cx="500" cy="480" r="1.1" opacity="0.6"/>
+    <circle cx="760" cy="440" r="1" opacity="0.5"/>
+    <circle cx="1180" cy="500" r="1.2" opacity="0.7"/>
+    <circle cx="1700" cy="460" r="1" opacity="0.6"/>
+    <circle cx="2200" cy="500" r="1.1" opacity="0.7"/>
+    <circle cx="450" cy="220" r="2.2" opacity="0.95"/>
+    <circle cx="950" cy="280" r="2.4" opacity="0.9"/>
+    <circle cx="1750" cy="320" r="2.3" opacity="0.95"/>
+    <circle cx="2250" cy="240" r="2.1" opacity="0.9"/>
+    <circle cx="640" cy="420" r="2" opacity="0.85"/>
+  </g>
+
+  <!-- Moon -->
+  <circle cx="2100" cy="320" r="220" fill="url(#moonGlow)"/>
+  <g transform="translate(2100, 320)">
+    <circle cx="0" cy="0" r="62" fill="#fff8d8" opacity="0.95"/>
+    <circle cx="22" cy="-8" r="56" fill="#0f1a3d"/>
+  </g>
+
+  <!-- FAR CITY SKYLINE -->
+  <g fill="url(#cityFar)">
+    <polygon points="
+      0,800 0,720
+      40,720 40,690 80,690 80,710 120,710 120,660 170,660 170,695 210,695 210,670 260,670 260,705
+      310,705 310,675 360,675 360,640 410,640 410,680 460,680 460,705 520,705 520,665 570,665 570,635
+      630,635 630,675 690,675 690,705 750,705 750,650 810,650 810,690 870,690 870,665 940,665 940,620
+      1010,620 1010,665 1080,665 1080,700 1140,700 1140,650 1200,650 1200,610 1280,610 1280,650
+      1340,650 1340,700 1410,700 1410,640 1480,640 1480,675 1540,675 1540,620 1610,620 1610,660
+      1680,660 1680,705 1750,705 1750,640 1820,640 1820,675 1890,675 1890,630 1970,630 1970,670
+      2040,670 2040,705 2110,705 2110,650 2180,650 2180,615 2250,615 2250,660 2330,660 2330,705
+      2400,705 2400,650 2470,650 2470,690 2540,690 2540,705 2600,705 2600,800
+    "/>
+  </g>
+
+  <g fill="#5a7eb0" opacity="0.6">
+    <rect x="42" y="700" width="3" height="5"/>
+    <rect x="115" y="675" width="3" height="5"/>
+    <rect x="195" y="685" width="3" height="5"/>
+    <rect x="275" y="690" width="3" height="5"/>
+    <rect x="355" y="660" width="3" height="5"/>
+    <rect x="445" y="660" width="3" height="5"/>
+    <rect x="525" y="685" width="3" height="5"/>
+    <rect x="615" y="650" width="3" height="5"/>
+    <rect x="715" y="685" width="3" height="5"/>
+    <rect x="815" y="670" width="3" height="5"/>
+    <rect x="945" y="640" width="3" height="5"/>
+    <rect x="1085" y="685" width="3" height="5"/>
+    <rect x="1215" y="630" width="3" height="5"/>
+    <rect x="1345" y="685" width="3" height="5"/>
+    <rect x="1485" y="660" width="3" height="5"/>
+    <rect x="1615" y="640" width="3" height="5"/>
+    <rect x="1755" y="660" width="3" height="5"/>
+    <rect x="1895" y="650" width="3" height="5"/>
+    <rect x="2045" y="690" width="3" height="5"/>
+    <rect x="2185" y="635" width="3" height="5"/>
+    <rect x="2335" y="685" width="3" height="5"/>
+    <rect x="2475" y="670" width="3" height="5"/>
+  </g>
+  <g fill="#ffe488" opacity="0.75">
+    <rect x="65" y="700" width="3" height="5"/>
+    <rect x="240" y="685" width="3" height="5"/>
+    <rect x="490" y="685" width="3" height="5"/>
+    <rect x="780" y="660" width="3" height="5"/>
+    <rect x="1060" y="680" width="3" height="5"/>
+    <rect x="1390" y="660" width="3" height="5"/>
+    <rect x="1700" y="680" width="3" height="5"/>
+    <rect x="2050" y="685" width="3" height="5"/>
+    <rect x="2390" y="675" width="3" height="5"/>
+  </g>
+
+  <!-- MID CITY SKYLINE -->
+  <g fill="url(#cityMid)">
+    <polygon points="
+      0,820 0,780
+      60,780 60,730 130,730 130,770 200,770 200,720 290,720 290,760 360,760 360,710 440,710 440,750
+      510,750 510,700 600,700 600,740 680,740 680,690 770,690 770,730 850,730 850,770 940,770 940,710
+      1030,710 1030,750 1120,750 1120,690 1210,690 1210,730 1300,730 1300,770 1390,770 1390,710
+      1480,710 1480,750 1570,750 1570,700 1670,700 1670,740 1770,740 1770,770 1870,770 1870,720
+      1970,720 1970,760 2070,760 2070,710 2170,710 2170,750 2270,750 2270,770 2370,770 2370,720
+      2470,720 2470,760 2570,760 2570,780 2600,780 2600,820
+    "/>
+  </g>
+
+  <g fill="#7ea6d0" opacity="0.7">
+    <rect x="70" y="745" width="4" height="6"/>
+    <rect x="145" y="745" width="4" height="6"/>
+    <rect x="215" y="735" width="4" height="6"/>
+    <rect x="305" y="735" width="4" height="6"/>
+    <rect x="375" y="725" width="4" height="6"/>
+    <rect x="455" y="725" width="4" height="6"/>
+    <rect x="525" y="715" width="4" height="6"/>
+    <rect x="615" y="715" width="4" height="6"/>
+    <rect x="695" y="705" width="4" height="6"/>
+    <rect x="785" y="705" width="4" height="6"/>
+    <rect x="865" y="745" width="4" height="6"/>
+    <rect x="955" y="725" width="4" height="6"/>
+    <rect x="1045" y="725" width="4" height="6"/>
+    <rect x="1135" y="705" width="4" height="6"/>
+    <rect x="1225" y="705" width="4" height="6"/>
+    <rect x="1315" y="745" width="4" height="6"/>
+    <rect x="1405" y="725" width="4" height="6"/>
+    <rect x="1495" y="725" width="4" height="6"/>
+    <rect x="1585" y="715" width="4" height="6"/>
+    <rect x="1685" y="715" width="4" height="6"/>
+    <rect x="1785" y="745" width="4" height="6"/>
+    <rect x="1885" y="735" width="4" height="6"/>
+    <rect x="1985" y="735" width="4" height="6"/>
+    <rect x="2085" y="725" width="4" height="6"/>
+    <rect x="2185" y="725" width="4" height="6"/>
+    <rect x="2285" y="745" width="4" height="6"/>
+    <rect x="2385" y="735" width="4" height="6"/>
+    <rect x="2485" y="735" width="4" height="6"/>
+  </g>
+  <g fill="#ffd680" opacity="0.85">
+    <rect x="180" y="740" width="3" height="5"/>
+    <rect x="480" y="720" width="3" height="5"/>
+    <rect x="800" y="700" width="3" height="5"/>
+    <rect x="1090" y="720" width="3" height="5"/>
+    <rect x="1370" y="725" width="3" height="5"/>
+    <rect x="1640" y="710" width="3" height="5"/>
+    <rect x="1920" y="730" width="3" height="5"/>
+    <rect x="2230" y="720" width="3" height="5"/>
+    <rect x="2520" y="725" width="3" height="5"/>
+  </g>
+
+  <!-- ROLLING HILLS / TERRAIN -->
+  <path d="M 0 900
+           Q 300 850, 600 880
+           T 1200 870
+           T 1800 890
+           T 2400 870
+           L 2600 880
+           L 2600 1100
+           L 0 1100 Z"
+        fill="url(#hillGradient)" opacity="0.85"/>
+
+  <path d="M 0 1000
+           Q 400 940, 800 990
+           T 1500 970
+           T 2200 1000
+           L 2600 980
+           L 2600 1200
+           L 0 1200 Z"
+        fill="url(#hillGradient2)"/>
+
+  <g>
+    <ellipse cx="350" cy="970" rx="45" ry="50" fill="#152018"/>
+    <ellipse cx="350" cy="945" rx="35" ry="35" fill="#1f2d22"/>
+    <ellipse cx="780" cy="985" rx="40" ry="45" fill="#152018"/>
+    <ellipse cx="780" cy="965" rx="30" ry="30" fill="#1f2d22"/>
+    <ellipse cx="1320" cy="975" rx="42" ry="48" fill="#152018"/>
+    <ellipse cx="1320" cy="950" rx="32" ry="32" fill="#1f2d22"/>
+    <ellipse cx="1780" cy="990" rx="38" ry="44" fill="#152018"/>
+    <ellipse cx="1780" cy="965" rx="28" ry="28" fill="#1f2d22"/>
+    <ellipse cx="2280" cy="980" rx="44" ry="50" fill="#152018"/>
+    <ellipse cx="2280" cy="955" rx="34" ry="34" fill="#1f2d22"/>
+  </g>
+
+  <!-- GRASS FIELD -->
+  <rect x="0" y="1100" width="2600" height="515" fill="url(#grassField)"/>
+
+  <g fill="#0f1812" opacity="0.5">
+    <ellipse cx="200" cy="1300" rx="180" ry="40"/>
+    <ellipse cx="900" cy="1180" rx="200" ry="50"/>
+    <ellipse cx="1500" cy="1380" rx="220" ry="55"/>
+    <ellipse cx="2200" cy="1250" rx="200" ry="50"/>
+  </g>
+  <g fill="#1f2d20" opacity="0.4">
+    <ellipse cx="500" cy="1450" rx="240" ry="45"/>
+    <ellipse cx="1300" cy="1500" rx="280" ry="55"/>
+    <ellipse cx="2050" cy="1480" rx="260" ry="50"/>
+  </g>
+
+  <!-- General foreground grass tufts -->
+  <g fill="#2a3d28" opacity="0.7">
+    <path d="M 150 1560 l -3 -10 l 2 0 l 1 7 l 2 -8 l 2 0 l -1 9 z"/>
+    <path d="M 800 1530 l -3 -10 l 2 0 l 1 7 l 2 -8 l 2 0 l -1 9 z"/>
+    <path d="M 1450 1560 l -3 -10 l 2 0 l 1 7 l 2 -8 l 2 0 l -1 9 z"/>
+    <path d="M 2050 1540 l -3 -10 l 2 0 l 1 7 l 2 -8 l 2 0 l -1 9 z"/>
+  </g>
+
+  <!-- Vignette -->
+  <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+    <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
+  </radialGradient>
+  <rect width="2600" height="1615" fill="url(#vignette)"/>
+</svg>

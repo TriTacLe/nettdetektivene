@@ -1,0 +1,539 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nd-navy: #1a2744;
+  --color-nd-navy-light: #243460;
+  --color-nd-accent: #f5a623;
+  --color-nd-accent-hover: #e09518;
+  --color-nd-success: #22c55e;
+  --color-nd-danger: #ef4444;
+  --color-nd-muted: #6b7280;
+
+  /* Visual-novel / game-feel tokens. Used by SceneComponent overlays,
+     CutsceneDialog panel, and any future `.vn-panel`-styled card. */
+  --color-nd-glow: #f0c040;
+  --color-nd-glow-cool: #6cd1ff;
+  --color-nd-panel: rgba(10, 10, 20, 0.92);
+  --color-nd-panel-border: rgba(255, 255, 255, 0.18);
+  --color-nd-vignette: rgba(0, 0, 0, 0.55);
+
+  /* Pixel-notch button palette. White card, black outline + text.
+     Inverts on hover (black card, white text). Applied to every
+     <button> globally, except those tagged `.btn-bare`. */
+  --color-nd-button: #ffffff;
+  --color-nd-button-hover: #111111;
+  --color-nd-button-active: #000000;
+  --color-nd-button-edge: #111111;
+  --color-nd-button-text: #111111;
+  --color-nd-button-text-hover: #ffffff;
+  --color-nd-button-danger: #ffffff;
+  --color-nd-button-danger-edge: #b91c1c;
+  --color-nd-button-danger-text: #b91c1c;
+
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 0.75rem;
+
+  /* Pixel-notch silhouette: small slice off the upper-left corner and
+     a larger slice off the lower-right. Reused across student/teacher
+     buttons so the silhouette stays consistent. */
+  --notch-clip: polygon(
+    8px 0,
+    100% 0,
+    100% calc(100% - 18px),
+    calc(100% - 18px) 100%,
+    0 100%,
+    0 8px
+  );
+}
+
+/* ---------------------------------------------------------------
+ * Default <button> — pixel-notched white rectangle with black outline
+ * and black text. Inverts to black-on-white on hover/focus. Applied
+ * globally to every <button>, with `.btn-bare` as the opt-out for
+ * icon-only and fully-custom buttons.
+ *
+ * The corner-notch silhouette is cut with `clip-path: polygon(...)`.
+ * Real `border` is invisible after the clip, so the edge highlight
+ * is drawn as an inset box-shadow instead.
+ * --------------------------------------------------------------- */
+button:not(.btn-bare),
+.btn-vn {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+  color: var(--color-nd-button-text);
+  border: none;
+  border-radius: 0;
+  clip-path: var(--notch-clip);
+  padding: 0.85rem 2rem;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+button:not(.btn-bare)::before,
+.btn-vn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-nd-button-edge);
+  z-index: -2;
+}
+button:not(.btn-bare)::after,
+.btn-vn::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--color-nd-button);
+  clip-path: var(--notch-clip);
+  z-index: -1;
+}
+button:not(.btn-bare):hover:not(:disabled),
+.btn-vn:hover:not(:disabled),
+button:not(.btn-bare):focus-visible:not(:disabled),
+.btn-vn:focus-visible:not(:disabled) {
+  transform: scale(1.04);
+}
+button:not(.btn-bare):active:not(:disabled),
+.btn-vn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:not(.btn-bare):focus-visible,
+.btn-vn:focus-visible {
+  outline: none;
+}
+button:not(.btn-bare):focus-visible::before,
+.btn-vn:focus-visible::before {
+  background: #b45309;
+}
+button:not(.btn-bare):focus-visible::after,
+.btn-vn:focus-visible::after {
+  inset: 4px;
+}
+button:not(.btn-bare):disabled,
+.btn-vn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Opt-out for buttons that handle their own visuals (icon-only nav
+   arrows, modal close X, BoardNote, large task cards, quiz choices).
+   Provides a clean baseline so the component's scoped CSS — including
+   its own :hover/:active rules — works without fighting the globals. */
+.btn-bare {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.btn-bare:focus-visible {
+  outline: 2px solid var(--color-nd-glow);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+ * Menu list utilities — used by teacher pages that present a
+ * vertical list of nav buttons (TeacherHome, ClassroomDetail,
+ * ClassroomSettings, ClassroomOverview, etc.). Pair with `.btn-vn`
+ * on each `<button>` to get purple-notch fill + invert hover.
+ * --------------------------------------------------------------- */
+.menu-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+.menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+.menu-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.menu-subtitle {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
+.menu-arrow {
+  font-size: 1.4rem;
+  font-weight: 700;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.menu-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 2.5rem;
+  background: var(--color-nd-danger, #ef4444);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 999px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+}
+
+/* Two-column dashboard layout used by TeacherHome and ClassroomDetail:
+   main content on the left, side menu on the right. Collapses to a
+   single column on narrow screens with the menu above the main content. */
+.scene-split-layout {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 1rem 1.5rem 2rem;
+}
+.scene-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 65rem;
+  align-items: start;
+}
+.scene-split-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+.scene-split-side {
+  align-self: center;
+  position: sticky;
+  top: 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+@media (max-width: 950px) {
+  .scene-split-layout {
+    padding: 1rem 1.5rem 2rem;
+  }
+  .scene-split-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .scene-split-side {
+    position: static;
+    order: -1;
+    align-items: center;
+    align-self: center;
+    margin-bottom: 1rem;
+  }
+}
+
+.scene--locked .scene-split-layout {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.scene--locked .scene-split-grid {
+  min-height: 0;
+}
+
+.scene--locked .scene-split-main {
+  align-self: stretch;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sizing helpers shared by the three teacher "overview" pages
+   (ClassroomOverview, ClassroomStudentsView, ClassroomTasksView).
+   Big primary "+ create" button at the top, and chunky action
+   buttons (Åpne / Rediger / Slett) on each row. */
+.overview-primary-btn {
+  width: 100%;
+  font-size: 1.15rem;
+  padding: 1rem 1.75rem;
+}
+.overview-action-btn {
+  font-size: 0.95rem;
+  padding: 0.6rem 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Stack layout for menu-style button lists (login forms, dialog
+   choices, start screen menu). Action pairs (approve/reject etc.)
+   stay horizontal, so this is opt-in via the .btn-stack class on the
+   parent wrapper. */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 18rem;
+}
+.btn-stack > button { width: 100%; }
+
+/* Destructive variant — red outline + red text on white. Hover/active
+   keep the colour stable and just scale, matching the default. */
+.btn-vn-danger,
+button.btn-vn-danger:not(.btn-bare) {
+  color: var(--color-nd-button-danger-text);
+}
+.btn-vn-danger::before,
+button.btn-vn-danger:not(.btn-bare)::before {
+  background: var(--color-nd-button-danger-edge);
+}
+.btn-vn-danger::after,
+button.btn-vn-danger:not(.btn-bare)::after {
+  background: var(--color-nd-button-danger);
+}
+
+/* Outline / cancel variant — transparent fill, edge only. */
+.btn-vn-ghost {
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.btn-vn-ghost::after {
+  background: transparent;
+}
+.btn-vn-ghost:hover:not(:disabled)::after {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+h1, h2, h3 {
+  color: #ffffff;
+  font-weight: 700;
+  -webkit-text-stroke: 5px #000000;
+  paint-order: stroke fill;
+}
+
+h4, h5, h6 {
+  color: #ffffff;
+  font-weight: 700;
+  -webkit-text-stroke: 3px #000000;
+  paint-order: stroke fill;
+}
+
+/* VN-style glass panel — used by dialog box, task quiz cards, etc. */
+.vn-panel {
+  background: var(--color-nd-panel);
+  border: 1px solid var(--color-nd-panel-border);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Cross-route fade transition. Wraps RouterView in App.vue.
+   Opacity-only — translate caused a perceived sideways jitter when combined
+   with scrollbar appearance changes between routes. */
+.scene-fade-enter-active,
+.scene-fade-leave-active {
+  transition: opacity 220ms ease;
+}
+.scene-fade-enter-from,
+.scene-fade-leave-to { opacity: 0; }
+
+/* Reserve scrollbar gutter so route swaps don't shift content horizontally. */
+html, body { scrollbar-gutter: stable; background: #000; }
+
+
+.profile-save-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 4px 0 0;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.text-plain {
+  -webkit-text-stroke: 0 transparent;
+  paint-order: normal;
+  text-shadow: none;
+}
+
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1rem;
+}
+
+.dialog-box {
+  background: #faf7f2;
+  border-radius: 1rem;
+  border: 1px solid #d6d3d1;
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dialog-title {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #44403c;
+  margin: 0;
+  letter-spacing: 0.03em;
+  -webkit-text-stroke: 0 transparent;
+  paint-order: normal;
+  text-shadow: none;
+}
+
+.dialog-body {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: #57534e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1.5px solid #a8a29e;
+  border-radius: 0.5rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: #1c1917;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  background: white;
+}
+.dialog-input:focus { border-color: #92400e; }
+.dialog-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.dialog-feedback {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+.dialog-feedback--error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.dialog-feedback--success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.dialog-btn {
+  padding: 0.625rem 1.25rem;
+  border: 2px solid #a8a29e;
+  border-radius: 0.75rem;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  transition: background 0.15s;
+}
+.dialog-btn:focus {
+  outline: 3px solid #92400e;
+  outline-offset: 2px;
+}
+
+.dialog-btn--cancel {
+  background: #e7e5e4;
+  color: #44403c;
+}
+.dialog-btn--cancel:hover { background: #d6d3d1; }
+
+.dialog-btn--primary {
+  background: #92400e;
+  color: white;
+  border-color: #78350f;
+}
+.dialog-btn--primary:hover { background: #78350f; }
+.dialog-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.dialog-btn--danger {
+  background: #e7e5e4;
+  color: #991b1b;
+  border-color: #a8a29e;
+}
+.dialog-btn--danger:hover { background: #d6d3d1; }
+.dialog-btn--danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* CRT scanline overlay — opt-in via SceneComponent prop or route meta. */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  mix-blend-mode: multiply;
+}

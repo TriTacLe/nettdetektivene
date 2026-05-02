@@ -1,0 +1,27 @@
+import { fileURLToPath, URL } from 'node:url'
+import { defineConfig, configDefaults } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
+
+export default defineConfig({
+  plugins: [vue(), vueJsx()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'happy-dom',
+    exclude: [...configDefaults.exclude, 'e2e/**'],
+    root: fileURLToPath(new URL('./', import.meta.url)),
+    coverage: {
+      provider: 'v8',
+      exclude: [
+        'src/generated-client/**',
+        'src/main.ts',
+        ...(configDefaults.coverage.exclude ?? []),
+      ],
+      reporter: ['text', 'lcov'],
+    },
+  },
+})
