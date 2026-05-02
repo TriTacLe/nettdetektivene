@@ -161,21 +161,11 @@ function onOutroDone() {
     }
     return
   }
-  // Datasenteret skipped the jingle while the hacker scene was on screen;
-  // start it now that the buttons screen takes over.
-  if (stopId === 'datasenteret') {
-    audio.playOneShot('/music/FunFunFunFun.mp3')
-  }
   showOutro.value = false
 }
 
 onMounted(() => {
-  // Datasenteret's outro is the hacker — a celebratory jingle clashes with
-  // his angry "Hva?! Det skulle ikke være mulig..." beat. The ending
-  // cutscene that plays after the final task is where victory music lives.
-  if (stopId !== 'datasenteret') {
-    audio.playOneShot('/music/FunFunFunFun.mp3')
-  }
+  audio.playOneShot('/music/FunFunFunFun.mp3')
   // If there's no outro to play, the buttons screen is rendered immediately.
   if (!showOutro.value && confettiCanvas.value) {
     startConfetti(confettiCanvas.value)
