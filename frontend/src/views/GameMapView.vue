@@ -187,7 +187,6 @@ onMounted(async () => {
     setTimeout(() => { removedTaskBanner.value = false }, 5000)
   }
 
-  stopStore.clearSeenPickers()
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
   stopStore.loadTasks('datasenteret', true)
