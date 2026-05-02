@@ -6,6 +6,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import StudentLoginView from '../../views/StudentLoginView.vue'
 import TeacherLoginView from '../../views/TeacherLoginView.vue'
 import { useAuthStore } from '../../stores/AuthStore'
+import { UserRole } from '../../types'
 
 vi.mock('@/components/SceneComponent.vue', () => ({
   default: {
@@ -149,6 +150,14 @@ describe('TeacherLoginView', () => {
 
   it('navigates to teacher-home after successful login', async() => {
     vi.mocked(authStore.feideLogin).mockResolvedValueOnce(undefined)
+    authStore.user = {
+      id: '1',
+      displayName: 'Lars',
+      email: 'lars@skole.no',
+      isActive: true,
+      roles: [UserRole.TEACHER],
+      createdAt: '2026-01-01T00:00:00Z',
+    }
     await fillForm(wrapper, 'lars@skole.no', 'passord123')
     await submit(wrapper)
     expect(mockPush).toHaveBeenCalledWith({ name: 'teacher-home' })
