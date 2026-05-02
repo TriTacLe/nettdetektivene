@@ -61,7 +61,7 @@ function choose(index: number) {
   flex: 1;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.25rem 1.5rem 1rem;
+  padding: 0.25rem 1.5rem 3rem;
   overflow: hidden;
   min-height: 0;
 }
@@ -97,11 +97,11 @@ function choose(index: number) {
   position: relative;
   display: block;
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.9rem;
   border-radius: 18px;
-  background: rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
   overflow: visible;
   cursor: pointer;
   transition: transform 0.18s ease, opacity 0.2s ease, filter 0.12s ease;

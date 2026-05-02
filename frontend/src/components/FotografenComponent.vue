@@ -139,11 +139,11 @@ function submit() {
   gap: 0.9rem;
   align-self: start;
   min-width: 0;
-  padding: 0.75rem;
+  padding: 0.9rem;
   border-radius: 18px;
-  background: rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
 }
 
 .photo-frame {
