@@ -19,6 +19,7 @@ import {
   removeMutation,
 } from '@/generated-client/@tanstack/vue-query.gen.ts'
 import apiClient from '@/services/ApiService'
+import MysteryService from '@/services/MysteryService'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,6 +51,12 @@ const unreadCount = computed(
     (notificationsData.value?.data ?? []).filter((n) => !n.isRead && n.classroomId === classroomId)
       .length,
 )
+
+const { data: pendingMysteries } = useQuery({
+  queryKey: ['pendingMysteries', classroomId],
+  queryFn: () => MysteryService.getPendingSubmissions(classroomId),
+})
+const pendingCount = computed(() => pendingMysteries.value?.length ?? 0)
 
 // --- Leaderboard lookup by userId ---
 function getLeaderboardEntry(userId?: string) {
@@ -264,8 +271,8 @@ function onTabKeydown(e: KeyboardEvent) {
               @click="activeTab = tab.key"
             >
               <span class="tab-label">{{ tab.label }}</span>
-              <span v-if="tab.key !== 'mysteries'" class="tab-count">
-                {{ tab.key === 'students' ? allStudents.length : totalTasks }}
+              <span class="tab-count">
+                {{ tab.key === 'students' ? allStudents.length : tab.key === 'tasks' ? totalTasks : pendingCount }}
               </span>
             </button>
           </div>

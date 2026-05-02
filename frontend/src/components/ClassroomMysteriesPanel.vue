@@ -9,6 +9,7 @@ const submissions = ref<MysteryReviewDTO[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const lastAction = ref<'APPROVED' | 'REJECTED' | ''>('')
 const previewSubmission = ref<MysteryReviewDTO | null>(null)
 
 function openPreview(submission: MysteryReviewDTO) {
@@ -53,10 +54,12 @@ async function review(
 ) {
   errorMessage.value = ''
   successMessage.value = ''
+  lastAction.value = ''
   try {
     const updated = await MysteryService.reviewSubmission(submission.id, { mysStatus: status })
     submissions.value = submissions.value.map((s) => (s.id === updated.id ? updated : s))
     successMessage.value = okMessage
+    lastAction.value = status
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : 'Kunne ikke oppdatere innsendingen.'
@@ -79,7 +82,7 @@ function statusDotClass(submission: MysteryReviewDTO) {
 <template>
   <div class="mysteries-panel">
     <p v-if="errorMessage" class="message message--error">{{ errorMessage }}</p>
-    <p v-if="successMessage" class="message message--success">{{ successMessage }}</p>
+    <p v-if="successMessage" class="message" :class="lastAction === 'REJECTED' ? 'message--rejected' : 'message--success'">{{ successMessage }}</p>
 
     <div class="card-list">
       <p v-if="isLoading" class="empty-state">Laster innsendinger...</p>
@@ -109,7 +112,7 @@ function statusDotClass(submission: MysteryReviewDTO) {
             <button
               type="button"
               class="btn-bare row-btn row-btn--approve"
-              :disabled="submission.mysStatus === 'APPROVED'"
+              :disabled="submission.mysStatus !== 'PENDING'"
               @click="approve(submission)"
             >
               Godkjenn
@@ -117,7 +120,7 @@ function statusDotClass(submission: MysteryReviewDTO) {
             <button
               type="button"
               class="btn-bare row-btn row-btn--reject"
-              :disabled="submission.mysStatus === 'REJECTED'"
+              :disabled="submission.mysStatus !== 'PENDING'"
               @click="reject(submission)"
               :aria-label="`Forkast bidrag fra ${submission.submittedByName}`"
             >
@@ -351,6 +354,12 @@ function statusDotClass(submission: MysteryReviewDTO) {
   color: #15803d;
   background: #dcfce7;
   border: 1px solid #86efac;
+}
+
+.message--rejected {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
 }
 
 @keyframes slideUp {

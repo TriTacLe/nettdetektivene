@@ -290,6 +290,50 @@ class MysteryServiceTest {
   }
 
   @Test
+  void reviewSubmission_throwsIllegalArgumentException_whenAlreadyApproved() {
+    UUID submissionId = UUID.randomUUID();
+    UUID reviewerId = UUID.randomUUID();
+    MysterySubmission existing = submission(
+        submissionId,
+        Classroom.builder().id(UUID.randomUUID()).build(),
+        User.builder().id(UUID.randomUUID()).build(),
+        MysteryStatus.APPROVED
+    );
+
+    when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(User.builder().id(reviewerId).build()));
+    when(classroomInstructorRepository.existsById(any())).thenReturn(true);
+
+    assertThatThrownBy(() -> mysteryService.reviewSubmission(
+        submissionId,
+        MysteryReviewActionDTO.builder().mysStatus(MysteryStatus.REJECTED).build(),
+        reviewerId
+    )).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void reviewSubmission_throwsIllegalArgumentException_whenAlreadyRejected() {
+    UUID submissionId = UUID.randomUUID();
+    UUID reviewerId = UUID.randomUUID();
+    MysterySubmission existing = submission(
+        submissionId,
+        Classroom.builder().id(UUID.randomUUID()).build(),
+        User.builder().id(UUID.randomUUID()).build(),
+        MysteryStatus.REJECTED
+    );
+
+    when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(User.builder().id(reviewerId).build()));
+    when(classroomInstructorRepository.existsById(any())).thenReturn(true);
+
+    assertThatThrownBy(() -> mysteryService.reviewSubmission(
+        submissionId,
+        MysteryReviewActionDTO.builder().mysStatus(MysteryStatus.APPROVED).build(),
+        reviewerId
+    )).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void getMysteryForPlay_returnsPlayDTO_whenApprovedAndNotOwn() {
     UUID submissionId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
