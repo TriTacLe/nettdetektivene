@@ -68,6 +68,67 @@ export const useAudioStore = defineStore('audio', () => {
     window.addEventListener('pageshow', () => tryResume())
   }
 
+  // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
+  // playback starts on first call without waiting for a WebAudio decode pass.
+  // Only one instance plays at a time. The same-src guard keeps the jingle
+  // continuous when navigating between consecutive celebration screens
+  // (e.g. task-finished -> stop-finished) instead of restarting on each mount.
+  // Background music is ducked (volume → 0) while the jingle plays so the
+  // two don't fight. Ducking instead of pausing avoids the play()/pause()
+  // promise race that can leave the music audible mid-transition.
+  //
+  // Declared above play()/setMusicVolume()/toggleMusicMuted() because those
+  // functions read musicDuckedForJingle and call stopOneShot(); keeping the
+  // declarations co-located with the rest of the music state avoids the TDZ
+  // trap a synchronous setup-time call would otherwise spring.
+  let oneShotEl: HTMLAudioElement | null = null
+  let oneShotSrc: string | null = null
+  let musicDuckedForJingle = false
+
+  function unduckMusic() {
+    if (!musicDuckedForJingle) return
+    musicDuckedForJingle = false
+    if (audioEl) audioEl.volume = effectiveMusicVolume()
+  }
+
+  function stopOneShot() {
+    if (oneShotEl) {
+      oneShotEl.pause()
+      oneShotEl.src = ''
+      oneShotEl = null
+      oneShotSrc = null
+    }
+    unduckMusic()
+  }
+
+  function playOneShot(src: string) {
+    if (oneShotEl && oneShotSrc === src && !oneShotEl.paused) return
+    stopOneShot()
+    const vol = effectiveSfxVolume()
+    if (vol <= 0) return
+
+    if (audioEl) {
+      audioEl.volume = 0
+      musicDuckedForJingle = true
+    }
+
+    const el = new Audio(src)
+    el.volume = vol
+    const finish = () => {
+      if (oneShotEl === el) {
+        oneShotEl = null
+        oneShotSrc = null
+      }
+      unduckMusic()
+    }
+    el.addEventListener('ended', finish)
+    el.addEventListener('error', finish)
+
+    oneShotEl = el
+    oneShotSrc = src
+    el.play().catch(finish)
+  }
+
   function play(src: string) {
     wantPlaying.value = true
     installUnlockListeners()
@@ -203,62 +264,6 @@ export const useAudioStore = defineStore('audio', () => {
 
   function playTypingTick() {
     playSfx(SFX_TYPING)
-  }
-
-  // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
-  // playback starts on first call without waiting for a WebAudio decode pass.
-  // Only one instance plays at a time. The same-src guard keeps the jingle
-  // continuous when navigating between consecutive celebration screens
-  // (e.g. task-finished -> stop-finished) instead of restarting on each mount.
-  // Background music is ducked (volume → 0) while the jingle plays so the
-  // two don't fight. Ducking instead of pausing avoids the play()/pause()
-  // promise race that can leave the music audible mid-transition.
-  let oneShotEl: HTMLAudioElement | null = null
-  let oneShotSrc: string | null = null
-  let musicDuckedForJingle = false
-
-  function unduckMusic() {
-    if (!musicDuckedForJingle) return
-    musicDuckedForJingle = false
-    if (audioEl) audioEl.volume = effectiveMusicVolume()
-  }
-
-  function stopOneShot() {
-    if (oneShotEl) {
-      oneShotEl.pause()
-      oneShotEl.src = ''
-      oneShotEl = null
-      oneShotSrc = null
-    }
-    unduckMusic()
-  }
-
-  function playOneShot(src: string) {
-    if (oneShotEl && oneShotSrc === src && !oneShotEl.paused) return
-    stopOneShot()
-    const vol = effectiveSfxVolume()
-    if (vol <= 0) return
-
-    if (audioEl) {
-      audioEl.volume = 0
-      musicDuckedForJingle = true
-    }
-
-    const el = new Audio(src)
-    el.volume = vol
-    const finish = () => {
-      if (oneShotEl === el) {
-        oneShotEl = null
-        oneShotSrc = null
-      }
-      unduckMusic()
-    }
-    el.addEventListener('ended', finish)
-    el.addEventListener('error', finish)
-
-    oneShotEl = el
-    oneShotSrc = src
-    el.play().catch(finish)
   }
 
   return {

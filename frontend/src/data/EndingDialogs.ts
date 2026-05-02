@@ -25,8 +25,8 @@ export const endingDialogs: DialogGraph = {
     characterName: DETECTIVE_NAME,
     background: '/datasenteret.jpg',
     lines: [
-      { text: 'Hallo, politiet? Vi har tatt datatyven på fersken her i datasenteret.', mood: 'evil' },
-      { text: 'Send en patrulje. Jeg holder han her til dere kommer.', mood: 'evil' },
+      { text: 'Hallo, politiet? Vi har tatt datatyven på fersken her i datasenteret.', mood: 'sus' },
+      { text: 'Send en patrulje. Jeg holder han her til dere kommer.', mood: 'sus' },
     ],
     next: 'hacker-broken',
   },

@@ -227,7 +227,7 @@ export const introductionDialogs: DialogGraph = {
     characterName: DETECTIVE_NAME,
     lines: [
       { text: 'Perfekt! Du har skjønt hvordan kontoret fungerer.', mood: 'happy' },
-      { text: 'Da er du klar for ditt første ekte møte. Følg med — fienden er i nærheten.', mood: 'evil' },
+      { text: 'Da er du klar for ditt første ekte møte. Følg med — fienden er i nærheten.', mood: 'sus' },
     ],
     next: 'hacker-intro',
   },
