@@ -318,11 +318,11 @@ function onTabKeydown(e: KeyboardEvent) {
             <div v-if="studentsLoading" class="section-empty">Laster elever...</div>
 
             <div v-else-if="allStudents.length === 0" class="empty-state">
-              <p class="empty-title">Ingen elever enna</p>
+              <p class="empty-title">Ingen elever ennå</p>
               <p class="empty-hint">
                 Del klasseromskoden
                 <span class="empty-code">{{ classroom?.joinCode ?? '---' }}</span>
-                sa elevene kan bli med.
+                så elevene kan bli med.
               </p>
             </div>
 
