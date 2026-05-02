@@ -46,7 +46,7 @@ Over 70% of adults express concerns about information legitimacy, and children a
 - **Routing:** Vue Router 5
 - **Styling:** Tailwind CSS 4
 - **UI Icons:** Lucide Vue Next
-- **HTTP Client:** Axios with OpenAPI-generated type-safe client
+- **HTTP Client:** Axios (`ApiService`) and fetch-based OpenAPI-generated type-safe client
 - **Avatar System:** Dicebear
 - **Language:** TypeScript
 
@@ -68,7 +68,7 @@ Over 70% of adults express concerns about information legitimacy, and children a
 ### Required Software
 
 - **Docker** + **Docker Compose**
-- **Bash shell**, **curl**, **jq** (for the seed script)
+- **Bash shell** (for Makefile scripts)
 - **Node.js 22** and **Java 21** (only if running services outside Docker)
 
 ### Account Requirements
@@ -87,51 +87,72 @@ Over 70% of adults express concerns about information legitimacy, and children a
 ├── compose.yaml          # Development Docker Compose configuration
 ├── compose.prod.yaml     # Production Docker Compose configuration
 ├── .env                  # Root environment variables (MySQL + JWT secrets)
-├── scripts/              # Helper shell scripts (issue tooling, etc.)
+├── .env.example          # Template for root environment variables
+├── .github/              # GitHub Actions workflows and issue/PR templates
+├── scripts/              # Helper shell scripts (issue tooling)
 ├── backend/
 │   ├── Dockerfile        # Multi-stage build for Spring Boot
+│   ├── compose.yaml      # Backend-only Docker Compose for standalone dev
+│   ├── mvnw              # Maven wrapper script
 │   ├── pom.xml           # Maven dependencies and build configuration
 │   ├── CLAUDE.md         # Backend implementation guidelines
 │   ├── docs/
-│   │   └── database/     # Database schema documentation
+│   │   └── database/     # Database schema and trigger/procedure documentation
 │   └── src/
-│       ├── main/java/    # Spring Boot application
-│       │   ├── controller/    # REST endpoints
-│       │   ├── service/       # Business logic
-│       │   ├── repository/    # JPA repositories
-│       │   ├── model/         # JPA entities
-│       │   ├── dto/           # Request/Response DTOs
-│       │   ├── mapper/        # Entity ↔ DTO mapping
-│       │   ├── security/      # JWT authentication
-│       │   ├── shared/        # Shared utilities (ApiResponse)
-│       │   ├── exception/     # Global exception handling
-│       │   └── config/        # Spring configuration
-│       └── test/java/   # Comprehensive test suite
+│       ├── main/
+│       │   ├── java/     # Spring Boot application
+│       │   │   ├── controller/    # REST endpoints
+│       │   │   ├── service/       # Business logic
+│       │   │   ├── repository/    # JPA repositories
+│       │   │   ├── model/         # JPA entities
+│       │   │   ├── dto/           # Request/Response DTOs
+│       │   │   ├── mapper/        # Entity ↔ DTO mapping
+│       │   │   ├── security/      # JWT authentication filters and utilities
+│       │   │   ├── shared/        # Shared utilities (ApiResponse)
+│       │   │   ├── exception/     # Global exception handling
+│       │   │   └── config/        # Spring configuration
+│       │   └── resources/
+│       │       ├── application.properties
+│       │       ├── db/            # Flyway migration scripts
+│       │       └── seed-images/   # Task images bundled for data seeding
+│       └── test/java/             # Comprehensive test suite
 │           ├── controller/    # @WebMvcTest endpoint tests
 │           ├── service/       # Unit tests with Mockito
-│           ├── integration/   # H2 database integration tests
-│           └── util/          # Test factories
+│           ├── integration/   # Full Spring context tests with H2 in-memory database
+│           ├── security/      # JWT filter and utility tests
+│           └── util/          # Shared test factories
 ├── frontend/
-│   ├── Dockerfile        # Multi-stage build for Nginx
-│   ├── nginx.conf        # Nginx configuration (SPA routing + API proxy)
-│   ├── package.json      # Node dependencies
-│   ├── vite.config.ts    # Vite build configuration
-│   ├── CLAUDE.md         # Frontend implementation guidelines
+│   ├── Dockerfile            # Multi-stage build for Nginx
+│   ├── nginx.conf            # Nginx configuration (SPA routing + API proxy)
+│   ├── package.json          # Node dependencies
+│   ├── vite.config.ts        # Vite build configuration
+│   ├── vitest.config.ts      # Vitest unit test configuration
+│   ├── cypress.config.ts     # Cypress E2E test configuration
+│   ├── openapi-ts.config.ts  # OpenAPI TypeScript client generation config
+│   ├── CLAUDE.md             # Frontend implementation guidelines
+│   ├── cypress/              # Cypress E2E tests
+│   ├── public/               # Static assets served directly (not bundled)
 │   └── src/
-│       ├── components/    # Vue components
-│       ├── views/        # Page-level components
-│       │   └── stops/    # Game location components
-│       ├── stores/       # Pinia stores
-│       ├── services/     # API services and clients
-│       ├── router/       # Vue Router configuration
-│       ├── composables/  # Vue composables
-│       ├── layouts/      # Layout components
-│       ├── types/        # TypeScript type definitions
-│       └── utils/        # Utility functions
+│       ├── components/        # Reusable Vue components
+│       ├── views/             # Page-level components
+│       │   └── teacher/       # Teacher-facing views
+│       ├── stores/            # Pinia state stores
+│       ├── services/          # API service wrappers
+│       ├── router/            # Vue Router configuration and navigation guards
+│       ├── composables/       # Vue composables (shared reactive logic)
+│       ├── types/             # TypeScript type definitions
+│       ├── utils/             # Utility functions
+│       ├── assets/            # Global stylesheet (main.css)
+│       ├── data/              # Static game data (dialogs, stop data, side quests)
+│       ├── lib/               # API client configuration and token refresh logic
+│       ├── generated-client/  # OpenAPI-generated TypeScript client
+│       └── __tests__/         # Frontend unit tests (Vitest)
 ├── deployment/
-│   └── README.md        # Production deployment guide
-├── course_docs/         # NTNU course documentation and requirements
-└── README.md           # This file
+│   ├── deploy.sh             # Full deployment script
+│   ├── quick-deploy.sh       # Quick re-deploy without rebuild
+│   ├── nginx.conf            # Production Nginx configuration (TLS termination)
+│   └── nettdetektivene.service  # systemd service unit file
+└── README.md                 # This file
 ```
 
 ---
@@ -178,7 +199,7 @@ VITE_API_URL=http://localhost:8080/api/v1
 VITE_APP_TITLE=Nettdetektivene
 ```
 
-In Docker `prod` mode, the frontend Nginx proxies `/api` to the backend, so `VITE_API_URL` remains `http://localhost:8080/api/v1`.
+In Docker `prod` mode, the frontend Nginx proxies `/api` to the backend, so `VITE_API_URL` is set to `/api/v1` (relative) via `frontend/.env.production`.
 
 ---
 
@@ -290,7 +311,7 @@ cd backend
 make test
 
 # Backend only
- make test-backend
+make test-backend
 
 # Frontend only
 make test-frontend
@@ -382,7 +403,7 @@ The database is organized into logical groups:
 ### Profile & Institutions
 
 - `user_profile` — Game-specific profile data (XP, level, avatar config)
-- `institution` — Schools/institutions (e.g., NTNU)
+- `institution` — Schools/institutions (e.g., Flatåsen skole)
 
 ### Classrooms
 
@@ -410,7 +431,7 @@ The database is organized into logical groups:
 - `notification` — Notifications to users (especially instructors)
 - `user_task_unlocked` — Tracks which tasks each student has unlocked in a classroom
 
-**Key Design Pattern:** Tasks follow a progressive difficulty system across game stops (Nyhetskvartalet, Fotografen, Datasenteret, Postkontoret, Passordbanken, Markedsplassen, Sosiale medier).
+**Key Design Pattern:** Tasks follow a progressive difficulty system across game stops (Nyhetskvartalet, Fotografen, Datasenteret).
 
 ---
 
@@ -661,10 +682,10 @@ lsof -ti:5173 | xargs kill -9
 
 - **Backend Implementation Plan:** `backend/CLAUDE.md`
 - **Frontend Implementation Plan:** `frontend/CLAUDE.md`
-- **Deployment Guide:** `deployment/README.md`
+
 - **Database Schema:** `backend/docs/database/tables.md`
 - **Triggers & Procedures:** `backend/docs/database/triggers-and-procedures.md`
-- **Course Requirements:** `course_docs/vision-document-2026.md`
+
 - **API Usage:** `frontend/docs/API_CLIENT_GUIDE.md`
 
 ---
