@@ -59,7 +59,7 @@ Over 70% of adults express concerns about information legitimacy, and children a
 - **Web Server:** Nginx (TLS termination, reverse proxy, SPA routing)
 - **Reverse Proxy:** Nginx handling `/api` routes to backend
 - **SSL:** Let's Encrypt with certbot
-- ** orchestration:** Managed via Makefile
+- **Orchestration:** Managed via Makefile
 
 ---
 
@@ -186,27 +186,35 @@ In Docker `prod` mode, the frontend Nginx proxies `/api` to the backend, so `VIT
 
 The `Makefile` is the recommended entry point for all operations.
 
-| Command              | Description                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `make dev`           | Builds and starts MySQL + backend, waits for backend health, runs seeding script, tails logs |
-| `make prod`          | Builds and starts full stack (MySQL + backend + frontend with Nginx)                         |
-| `make status`        | Shows running containers and port usage (8080, 3307, 5173)                                   |
-| `make logs`          | Tails logs for a service: `make logs backend`                                                |
-| `make down`          | Stops containers, preserves volumes                                                          |
-| `make clean`         | Stops containers **and removes database volumes** (complete reset)                           |
-| `make test`          | Runs all unit tests (backend + frontend)                                                     |
-| `make test-backend`  | RunsBackend tests (JUnit + Mockito + H2)                                                     |
-| `make test-frontend` | Runs frontend tests (Vitest)                                                                 |
-| `make test-e2e`      | Runs E2E tests (Cypress, requires running stack)                                             |
-| `make test-coverage` | Generates JaCoCo coverage report                                                             |
+| Command              | Description                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `make dev`           | Builds and starts the full stack (MySQL + backend + frontend), waits for backend and frontend, tails logs    |
+| `make prod`          | Same services as `dev`, with the production frontend image (nginx); waits for backend, prints recent logs    |
+| `make status`        | Shows listeners on ports 8080, 3307, 5173 and the running Docker containers                                  |
+| `make logs`          | Tails logs for a service: `make logs backend` (also accepts `frontend`, `mysql`)                             |
+| `make down`          | Stops containers, preserves volumes                                                                          |
+| `make clean`         | Stops containers **and removes project images + named volumes** (complete reset)                             |
+| `make test`          | Runs `test-backend` followed by `test-frontend`                                                              |
+| `make test-backend`  | Runs backend tests (`./mvnw clean test -q`) — JUnit + Mockito + H2                                           |
+| `make test-frontend` | Runs frontend unit tests (`npm run test:unit -- --run`) — Vitest                                             |
+| `make test-e2e`      | Runs Cypress E2E tests (requires the stack to be up — `make dev` first)                                      |
+| `make test-coverage` | Runs `./mvnw clean verify -q` to produce the JaCoCo coverage report                                          |
+
+> The dev and prod variants currently start the same services. `compose.yaml` enables the `seed` Spring profile so first-startup data seeding fires automatically.
 
 #### Service URLs Once Running:
 
-- **Backend:** `http://localhost:8080` (Swagger UI: `/swagger-ui.html`)
-- **Frontend:**
-  - Production mode: `http://localhost:5173`
-  - Development mode: Run `cd frontend && npm install && npm run dev` (HMR enabled)
+- **Backend:** `http://localhost:8080` (Swagger UI: `/swagger-ui.html`, OpenAPI spec: `/api-docs`)
+- **Frontend:** `http://localhost:5173` — served by the dockerized nginx container started by `make dev` / `make prod`
 - **MySQL:** `localhost:3307` (mapped from container `:3306`)
+
+For frontend hot-module reload during UI work, run a Vite dev server alongside the dockerized stack:
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+Vite picks an available port (typically 5174 if 5173 is taken by the docker frontend) and proxies API calls per `VITE_API_URL`.
 
 ---
 
@@ -227,15 +235,15 @@ cd backend
 
 **What Gets Created:**
 
-- Institution: NTNU Trondheim
-- Teachers: `laerer@ntnu.no`, `instructor@test.no`, `admin@test.no`
-- Students: `student1..5@ntnu.no` (clean fixtures, no progress) plus `tester@ntnu.no` (demo user with all tasks completed)
-- Classroom: 5A Digital Sikkerhet — one classroom, all 6 students enrolled and approved
-- **11 tasks** in the classroom:
+- 4 institutions: Flatåsen skole, Byåsen skole, Nanset skole, Skrinhagen skole
+- 5 instructors: `laerer@flataasen.no` (Nora), `laerer2@flataasen.no` (Regine), `laerer@byaasen.no` (Lars), `laerer@nanset.no` (Gustav), `laerer@skrinhagen.no` (Silje)
+- 10 classrooms across grades 3–7 (e.g. 3A, 3B, 4A … 7B), each with a unique join code printed to the backend log on startup
+- Students enrolled across the classrooms — `student1..5@ntnu.no` are clean fixtures with no progress; `tester@ntnu.no` is the demo user with all tasks completed
+- 11 task definitions, attached to the seeded classrooms:
   - 3 NEWS tasks at Nyhetskvartalet (difficulties 1–3)
   - 3 PHOTO tasks at Fotografen (difficulties 1–3)
   - 5 mixed tasks at Datasenteret (3 NEWS + 2 PHOTO at difficulties 4–5)
-- 5 PENDING mystery submissions, one per student1..5
+- Mystery submissions in mixed PENDING / APPROVED / REJECTED states for demo
 - Achievements (incl. the secret `caught_hacker` and `quiz_perfect`)
 - Notebook entries on the tester user
 
@@ -398,7 +406,9 @@ The database is organized into logical groups:
 
 - `notebook_entry` — Student notes and reflections
 - `mystery_submission` — Weekly mystery submissions (pending/approved/rejected)
+- `mystery_completion` — Records which student solved which approved mystery (composite PK on user + submission)
 - `notification` — Notifications to users (especially instructors)
+- `user_task_unlocked` — Tracks which tasks each student has unlocked in a classroom
 
 **Key Design Pattern:** Tasks follow a progressive difficulty system across game stops (Nyhetskvartalet, Fotografen, Datasenteret, Postkontoret, Passordbanken, Markedsplassen, Sosiale medier).
 
@@ -412,7 +422,8 @@ The database uses triggers and stored procedures for automatic consistency:
 
 - `trg_classroom_auto_instructor` — Auto-assigns classroom creator as instructor
 - `trg_attempt_sync` — Updates `task_best_score`, awards XP, calculates levels on task completion
-- `trg_mystery_approved` — Creates notifications and awards achievements on mystery approval
+- `trg_mystery_approved` — Creates a notification when a mystery submission is approved
+- `trg_mystery_completion` — Awards the achievement to the solver when a `mystery_completion` row is inserted
 - `trg_notify_attempt_failed` — Notifies instructors when students fail tasks
 - `trg_notify_stop_completed_insert/update` — Notifies instructors when students complete a stop location
 
@@ -604,7 +615,7 @@ make dev
 
 **Frontend Cannot Reach Backend:**
 
-- Verify backend is running: `curl http://localhost:8080/api/v1/health`
+- Verify backend is running: `curl http://localhost:8080/swagger-ui.html` (the project does not expose `/health`; `make dev` instead waits for `http://localhost:8080` to respond)
 - Check `VITE_API_URL` in `frontend/.env`
 - Verify proxy configuration in `vite.config.ts`
 
@@ -670,6 +681,6 @@ This project is developed for the course **IDATT2106** at the Norwegian Universi
 
 ---
 
-**Last Updated:** April 2026
+**Last Updated:** May 2026
 **Version:** v26-05
 
