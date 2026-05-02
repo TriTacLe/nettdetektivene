@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ntnu.no.backend.model.*;
 import ntnu.no.backend.model.auth.*;
+import ntnu.no.backend.model.classroom.ClassroomInstructor;
+import ntnu.no.backend.model.classroom.ClassroomInstructorId;
 import ntnu.no.backend.model.classroom.ClassroomStudent;
 import ntnu.no.backend.model.classroom.ClassroomStudentId;
 import ntnu.no.backend.model.enums.MysteryStatus;
@@ -69,7 +71,6 @@ public class DataSeeder implements CommandLineRunner {
   private final ClassroomInstructorRepository classroomInstructorRepository;
   private final ClassroomTaskRepository classroomTaskRepository;
   private final TaskRepository taskRepository;
-  private final NotebookEntryRepository notebookEntryRepository;
   private final AchievementRepository achievementRepository;
   private final MysterySubmissionRepository mysterySubmissionRepository;
   private final PasswordEncoder passwordEncoder;
@@ -101,9 +102,9 @@ public class DataSeeder implements CommandLineRunner {
       seedTasks();
       seedStudents();
       seedEnrollments();
+      seedExtraInstructors();
       seedAchievementsIfMissing();
       seedTaskAttempts();
-      seedNotebookEntries();
       seedMysterySubmissions();
       verifyTaskAssignments();
       verifyInstructorAssignments();
@@ -137,6 +138,8 @@ public class DataSeeder implements CommandLineRunner {
     String[][] data = {
         { "Flatåsen skole", "flataasen" },
         { "Byåsen skole", "byaasen" },
+        { "Nanset skole", "nanset" },
+        { "Skrinhagen skole", "skrinhagen" },
     };
     for (String[] row : data) {
       Institution inst = institutionRepository.findByInstName(row[0]).orElseGet(() -> {
@@ -154,7 +157,10 @@ public class DataSeeder implements CommandLineRunner {
   private void seedInstructors() {
     Object[][] data = {
         { "laerer@flataasen.no", "Nora", "nora-t", "flataasen" },
+        { "laerer2@flataasen.no", "Regine", "regine-t", "flataasen" },
         { "laerer@byaasen.no", "Lars", "lars", "byaasen" },
+        { "laerer@nanset.no", "Gustav", "gustav-t", "nanset" },
+        { "laerer@skrinhagen.no", "Silje", "silje-t", "skinhagen" },
     };
     for (Object[] row : data) {
       User u = createUser((String) row[0], (String) row[1], List.of(instructorRole));
@@ -172,6 +178,13 @@ public class DataSeeder implements CommandLineRunner {
         { "5A", "Lær å være trygg på nettet!", "nora-t", "flataasen", "class1" },
         { "6B", "Hvem kan du stole på på internett?", "nora-t", "flataasen", "class2" },
         { "7A", "Bli en nettdetektiv og løs mysterier!", "lars", "byaasen", "class3" },
+        { "3A", "Nettvett for de yngste", "nora-t", "flataasen", "class-3a" },
+        { "3B", "Trygg på nett", "nora-t", "flataasen", "class-3b" },
+        { "4A", "Digitale fotspor", "nora-t", "flataasen", "class-4a" },
+        { "4B", "Nettdetektiver i aksjon", "nora-t", "flataasen", "class-4b" },
+        { "5B", "Kildekritikk på nett", "nora-t", "flataasen", "class-5b" },
+        { "6A", "Falske nyheter og fakta", "nora-t", "flataasen", "class-6a" },
+        { "7B", "Avansert nettsikkerhet", "nora-t", "flataasen", "class-7b" },
     };
     for (Object[] row : data) {
       Classroom c = classroomRepository.findByTitleAndDeletedAtIsNull((String) row[0]).orElseGet(() -> {
@@ -459,8 +472,14 @@ public class DataSeeder implements CommandLineRunner {
     // counterpart — all tasks completed — used to verify teacher
     // dashboards / leaderboards / level progression.
     String[][] data = {
+        { "student1@ntnu.no", "Kaptein Kim", "student1" },
+        { "student2@ntnu.no", "Sherlock Simen", "student2" },
+        { "student3@ntnu.no", "Lupe Lena", "student3" },
+        { "student4@ntnu.no", "Hacker Hilde", "student4" },
+        { "student5@ntnu.no", "Krypto Kevin", "student5" },
+        { "tester@ntnu.no", "Demo Tester", "tester" },
         { "anine@nettdetektivene.no", "Agent Anine", "anine" },
-        { "nora-s@nettdetektivene.no", "Detektiv Nora", "nora" },
+        { "nora@nettdetektivene.no", "Detektiv Nora", "nora" },
         { "gustav@nettdetektivene.no", "Guru Gustav", "gustav" },
         { "tri@nettdetektivene.no", "Tri-Tech", "tri" },
         { "silje@nettdetektivene.no", "Spion Silje", "silje" },
@@ -468,13 +487,99 @@ public class DataSeeder implements CommandLineRunner {
         { "regine@nettdetektivene.no", "Radar-Regine", "regine" },
         { "segward@nettdetektivene.no", "Sikker-Segward", "segward" },
         { "studentNoClassroomYet@flataasen.no", "Ny Elev", "no-classroom" },
-        // Old seeding hasnt removd bnecasue it wouldt hurt to have
-        { "student1@ntnu.no", "Student 1", "student1" },
-        { "student2@ntnu.no", "Student 2", "student2" },
-        { "student3@ntnu.no", "Student 3", "student3" },
-        { "student4@ntnu.no", "Student 4", "student4" },
-        { "student5@ntnu.no", "Student 5", "student5" },
-        { "tester@ntnu.no", "Demo Tester", "tester" },
+
+        // Extra students
+        { "emma@nettdetektivene.no", "Etterforskeren Emma", "emma" },
+        { "oliver@nettdetektivene.no", "Operativ Oliver", "oliver" },
+        { "sofie@nettdetektivene.no", "Skarpe Sofie", "sofie" },
+        { "noah@nettdetektivene.no", "Ninja Noah", "noah" },
+        { "ella@nettdetektivene.no", "Eagle Ella", "ella" },
+        { "william@nettdetektivene.no", "Wise William", "william" },
+        { "maja@nettdetektivene.no", "Mester Maja", "maja" },
+        { "liam@nettdetektivene.no", "Lupp Liam", "liam" },
+        { "ida@nettdetektivene.no", "Inspektør Ida", "ida" },
+        { "aksel@nettdetektivene.no", "Agent Aksel", "aksel" },
+        { "leah@nettdetektivene.no", "Lynkjappe Leah", "leah" },
+        { "filip@nettdetektivene.no", "Finn Filip", "filip" },
+        { "ingrid@nettdetektivene.no", "Info Ingrid", "ingrid" },
+        { "henrik@nettdetektivene.no", "Hacker Henrik", "henrik" },
+        { "aurora@nettdetektivene.no", "Analytiker Aurora", "aurora" },
+        { "magnus@nettdetektivene.no", "Mega Magnus", "magnus" },
+        { "thea@nettdetektivene.no", "Turbo Thea", "thea" },
+        { "jakob@nettdetektivene.no", "Jansen Jakob", "jakob" },
+        { "sara@nettdetektivene.no", "Sensor Sara", "sara" },
+        { "oskar@nettdetektivene.no", "Observant Oskar", "oskar" },
+        { "emilie@nettdetektivene.no", "Ekspert Emilie", "emilie" },
+        { "kasper@nettdetektivene.no", "Kode Kasper", "kasper" },
+        { "amalie@nettdetektivene.no", "Alias Amalie", "amalie" },
+        { "tobias@nettdetektivene.no", "Tracker Tobias", "tobias" },
+        { "nora2@nettdetektivene.no", "Nøkkel Nora", "nora2" },
+        { "erik@nettdetektivene.no", "Enigma Erik", "erik" },
+        { "julia@nettdetektivene.no", "Jeger Julia", "julia" },
+        { "mathias@nettdetektivene.no", "Matrix Mathias", "mathias" },
+        { "hanna@nettdetektivene.no", "Hjelper Hanna", "hanna" },
+        { "alexander@nettdetektivene.no", "Alpha Alexander", "alexander" },
+        { "mia@nettdetektivene.no", "Modig Mia", "mia" },
+        { "daniel@nettdetektivene.no", "Data Daniel", "daniel" },
+        { "vilde@nettdetektivene.no", "Våken Vilde", "vilde" },
+        { "jonas@nettdetektivene.no", "Jansen Jonas", "jonas" },
+        { "hedda@nettdetektivene.no", "Hemmelig Hedda", "hedda" },
+        { "martin@nettdetektivene.no", "Mega Martin", "martin" },
+        { "oline@nettdetektivene.no", "Observant Oline", "oline" },
+        { "sander@nettdetektivene.no", "Skarp Sander", "sander" },
+        { "frida@nettdetektivene.no", "Flink Frida", "frida" },
+        { "kristian@nettdetektivene.no", "Krypto Kristian", "kristian" },
+        { "linnea@nettdetektivene.no", "Lupe Linnea", "linnea" },
+        { "adrian@nettdetektivene.no", "Agent Adrian", "adrian" },
+        { "selma@nettdetektivene.no", "Signal Selma", "selma" },
+        { "elias@nettdetektivene.no", "Elite Elias", "elias" },
+        { "tuva@nettdetektivene.no", "Turbo Tuva", "tuva" },
+        { "markus@nettdetektivene.no", "Monitor Markus", "markus" },
+        { "anna@nettdetektivene.no", "Analytiker Anna", "anna" },
+        { "herman@nettdetektivene.no", "Hjelper Herman", "herman" },
+        { "karoline@nettdetektivene.no", "Kaptein Karoline", "karoline" },
+        { "eirik@nettdetektivene.no", "Ekspert Eirik", "eirik" },
+        { "marie@nettdetektivene.no", "Mester Marie", "marie" },
+        { "lars2@nettdetektivene.no", "Lynrask Lars", "lars2" },
+        { "tiril@nettdetektivene.no", "Tracker Tiril", "tiril" },
+        { "ole@nettdetektivene.no", "Operativ Ole", "ole" },
+        { "live@nettdetektivene.no", "Lupe Live", "live" },
+        { "mikkel@nettdetektivene.no", "Mega Mikkel", "mikkel" },
+        { "astrid@nettdetektivene.no", "Agent Astrid", "astrid" },
+        { "hakon@nettdetektivene.no", "Hacker Hakon", "hakon" },
+        { "ylva@nettdetektivene.no", "Ytelse Ylva", "ylva" },
+        { "sigurd@nettdetektivene.no", "Signal Sigurd", "sigurd" },
+        { "ronja@nettdetektivene.no", "Radar Ronja", "ronja" },
+        { "petter@nettdetektivene.no", "Pilot Petter", "petter" },
+        { "kaja@nettdetektivene.no", "Kode Kaja", "kaja" },
+        { "ola@nettdetektivene.no", "Operasjon Ola", "ola" },
+        { "guro@nettdetektivene.no", "Gransker Guro", "guro" },
+        { "sverre@nettdetektivene.no", "System Sverre", "sverre" },
+        { "malin@nettdetektivene.no", "Modig Malin", "malin" },
+
+        // 6A
+        { "ben@nettdetektivene.no", "Blink Ben", "extra6a-1" },
+        { "lotte@nettdetektivene.no", "Lynrask Lotte", "extra6a-2" },
+        { "even@nettdetektivene.no", "Eagle Even", "extra6a-3" },
+        { "nadia@nettdetektivene.no", "Ninja Nadia", "extra6a-4" },
+        { "theodor@nettdetektivene.no", "Turbo Theodor", "extra6a-5" },
+        { "iselin@nettdetektivene.no", "Info Iselin", "extra6a-6" },
+        { "birk@nettdetektivene.no", "Byte Birk", "extra6a-7" },
+        { "maja2@nettdetektivene.no", "Monitor Maja", "extra6a-8" },
+        { "storm@nettdetektivene.no", "System Storm", "extra6a-9" },
+        { "celine@nettdetektivene.no", "Cyber Celine", "extra6a-10" },
+
+        //  7B
+        { "ludvig@nettdetektivene.no", "Lupe Ludvig", "extra7b-1" },
+        { "alma@nettdetektivene.no", "Agent Alma", "extra7b-2" },
+        { "nikolai@nettdetektivene.no", "Nettverk Nikolai", "extra7b-3" },
+        { "victoria@nettdetektivene.no", "Våken Victoria", "extra7b-4" },
+        { "bastian@nettdetektivene.no", "Binær Bastian", "extra7b-5" },
+        { "jenny@nettdetektivene.no", "Jansen Jenny", "extra7b-6" },
+        { "konrad@nettdetektivene.no", "Krypto Konrad", "extra7b-7" },
+        { "tilde@nettdetektivene.no", "Tracker Tilde", "extra7b-8" },
+        { "ruben@nettdetektivene.no", "Radar Ruben", "extra7b-9" },
+        { "oda@nettdetektivene.no", "Operativ Oda", "extra7b-10" },
     };
     for (String[] row : data) {
       User u = createUser(row[0], row[1], List.of(studentRole));
@@ -494,8 +599,49 @@ public class DataSeeder implements CommandLineRunner {
       enroll(users.get(key), class1);
     }
     Classroom class2 = classrooms.get("class2");
-    for (String key : List.of("regine", "vetle")) {
+    for (String key : List.of("regine", "vetle",
+        "emma", "oliver", "sofie", "noah", "ella", "william", "maja", "liam")) {
       enroll(users.get(key), class2);
+    }
+
+    for (String key : List.of("ida", "aksel", "leah", "filip", "ingrid",
+        "henrik", "aurora", "magnus", "thea", "jakob")) {
+      enroll(users.get(key), classrooms.get("class3"));
+    }
+
+    for (String key : List.of("sara", "oskar", "emilie", "kasper", "amalie",
+        "tobias", "nora2", "erik", "julia", "mathias")) {
+      enroll(users.get(key), classrooms.get("class-3a"));
+    }
+
+    for (String key : List.of("hanna", "alexander", "mia", "daniel", "vilde",
+        "jonas", "hedda", "martin", "oline", "sander")) {
+      enroll(users.get(key), classrooms.get("class-3b"));
+    }
+
+    for (String key : List.of("frida", "kristian", "linnea", "adrian", "selma",
+        "elias", "tuva", "markus", "anna", "herman")) {
+      enroll(users.get(key), classrooms.get("class-4a"));
+    }
+
+    for (String key : List.of("karoline", "eirik", "marie", "lars2", "tiril",
+        "ole", "live", "mikkel", "astrid", "hakon")) {
+      enroll(users.get(key), classrooms.get("class-4b"));
+    }
+
+    for (String key : List.of("ylva", "sigurd", "ronja", "petter", "kaja",
+        "ola", "guro", "sverre", "malin")) {
+      enroll(users.get(key), classrooms.get("class-5b"));
+    }
+
+    for (String key : List.of("extra6a-1", "extra6a-2", "extra6a-3", "extra6a-4", "extra6a-5",
+        "extra6a-6", "extra6a-7", "extra6a-8", "extra6a-9", "extra6a-10")) {
+      enroll(users.get(key), classrooms.get("class-6a"));
+    }
+
+    for (String key : List.of("extra7b-1", "extra7b-2", "extra7b-3", "extra7b-4", "extra7b-5",
+        "extra7b-6", "extra7b-7", "extra7b-8", "extra7b-9", "extra7b-10")) {
+      enroll(users.get(key), classrooms.get("class-7b"));
     }
   }
 
@@ -514,6 +660,27 @@ public class DataSeeder implements CommandLineRunner {
         .build();
     classroomStudentRepository.saveAndFlush(studentMember);
     log.info("Enrolled {} in {}", student.getDisplayName(), classroom.getTitle());
+  }
+
+  // -----------------------------------------------------------------------
+  // Extra instructor assignments (beyond the auto-created one from trigger)
+  // -----------------------------------------------------------------------
+
+  private void seedExtraInstructors() {
+    addInstructor(users.get("regine-t"), classrooms.get("class1"));
+  }
+
+  private void addInstructor(User instructor, Classroom classroom) {
+    ClassroomInstructorId id = new ClassroomInstructorId(classroom.getId(), instructor.getId());
+    if (classroomInstructorRepository.existsById(id)) {
+      return;
+    }
+    classroomInstructorRepository.save(ClassroomInstructor.builder()
+        .id(id)
+        .classroom(classroom)
+        .user(instructor)
+        .build());
+    log.info("Added instructor {} to {}", instructor.getDisplayName(), classroom.getTitle());
   }
 
   // -----------------------------------------------------------------------
@@ -545,7 +712,69 @@ public class DataSeeder implements CommandLineRunner {
       }
     }
 
+    // Seed attempts for all other classrooms
+    seedClassroomAttempts("class2",
+        List.of("regine", "vetle", "emma", "oliver", "sofie", "noah", "ella", "william", "maja", "liam"));
+    seedClassroomAttempts("class3",
+        List.of("ida", "aksel", "leah", "filip", "ingrid", "henrik", "aurora", "magnus", "thea", "jakob"));
+    seedClassroomAttempts("class-3a",
+        List.of("sara", "oskar", "emilie", "kasper", "amalie", "tobias", "nora2", "erik", "julia", "mathias"));
+    seedClassroomAttempts("class-3b",
+        List.of("hanna", "alexander", "mia", "daniel", "vilde", "jonas", "hedda", "martin", "oline", "sander"));
+    seedClassroomAttempts("class-4a",
+        List.of("frida", "kristian", "linnea", "adrian", "selma", "elias", "tuva", "markus", "anna", "herman"));
+    seedClassroomAttempts("class-4b",
+        List.of("karoline", "eirik", "marie", "lars2", "tiril", "ole", "live", "mikkel", "astrid", "hakon"));
+    seedClassroomAttempts("class-5b",
+        List.of("ylva", "sigurd", "ronja", "petter", "kaja", "ola", "guro", "sverre", "malin"));
+    seedClassroomAttempts("class-6a",
+        List.of("extra6a-1", "extra6a-2", "extra6a-3", "extra6a-4", "extra6a-5",
+            "extra6a-6", "extra6a-7", "extra6a-8", "extra6a-9", "extra6a-10"));
+    seedClassroomAttempts("class-7b",
+        List.of("extra7b-1", "extra7b-2", "extra7b-3", "extra7b-4", "extra7b-5",
+            "extra7b-6", "extra7b-7", "extra7b-8", "extra7b-9", "extra7b-10"));
+
     log.info("Task attempts seeded via sp_submit_attempt");
+  }
+
+  private void seedClassroomAttempts(String classroomKey, List<String> studentKeys) {
+    Classroom classroom = classrooms.get(classroomKey);
+    if (classroom == null) return;
+    UUID cid = classroom.getId();
+    Random rng = new Random(classroomKey.hashCode());
+    int total = studentKeys.size();
+
+    int[] stopEnds = { 3, 6, allTasks.size() };
+
+    for (int idx = 0; idx < total; idx++) {
+      User u = users.get(studentKeys.get(idx));
+      if (u == null || hasAttempts(u.getId(), cid)) continue;
+
+      int stopsToComplete;
+      int baseScore;
+      if (idx < total / 4) {
+        stopsToComplete = 3;
+        baseScore = 92;
+      } else if (idx < total / 2) {
+        stopsToComplete = 2;
+        baseScore = 85;
+      } else if (idx < (total * 3) / 4) {
+        stopsToComplete = 1;
+        baseScore = 80;
+      } else {
+        stopsToComplete = 1;
+        baseScore = 80;
+      }
+
+      int tasksToComplete = stopEnds[Math.min(stopsToComplete, stopEnds.length) - 1];
+      for (int i = 0; i < tasksToComplete; i++) {
+        int score = Math.min(100, baseScore + rng.nextInt(11));
+        submitAttempt(u.getId(), allTasks.get(i).getId(), cid, score);
+      }
+      log.info("  {} -> {} stops, {} tasks (base score {})",
+          u.getDisplayName(), stopsToComplete, tasksToComplete, baseScore);
+    }
+    log.info("Attempts seeded for classroom {}", classroomKey);
   }
 
   private boolean hasAttempts(UUID userId, UUID classroomId) {
@@ -568,61 +797,7 @@ public class DataSeeder implements CommandLineRunner {
   }
 
   // -----------------------------------------------------------------------
-  // Notebook entries
-  // -----------------------------------------------------------------------
-
-  private void seedNotebookEntries() {
-    Classroom class1 = classrooms.get("class1");
-    Classroom class2 = classrooms.get("class2");
-
-    // Notebook reflections live alongside task progress, so they all
-    // belong to the demo tester. student1..5 stay empty.
-    Object[][] entries = {
-        // 5A
-        { class1, "anine", "nyhetskvartalet",
-            "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
-        { class1, "anine", "fotografen",
-            "Bildemanipulasjon er overraskende enkelt. Stoler ikke blindt på bilder lenger." },
-        { class1, "nora", "fotografen",
-            "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover." },
-        { class1, "nora", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
-        { class1, "gustav", "datasenteret", "Kryptering beskytter dataene mine. Lærte mye om digital sikkerhet!" },
-        { class1, "tri", "fotografen", "Metadata i bilder avslører mer enn jeg trodde. Alltid kritisk til bilder nå." },
-        { class1, "silje", "nyhetskvartalet", "Falske nyheter ser ekte ut. Sjekker alltid kilden!" },
-        // 6B
-        { class2, "regine", "nyhetskvartalet", "Lærte å skille mellom ekte og falske nyheter ved å sjekke kilden." },
-        { class2, "regine", "fotografen", "Bilder kan manipuleres enkelt. Ser alltid etter metadata nå." },
-        { class2, "vetle", "nyhetskvartalet", "Falske nyheter er vanskeligere å oppdage enn jeg trodde." },
-        { class2, "vetle", "datasenteret", "Sikkerhetskopiering er viktig — aldri mer miste data!" },
-        // test
-        { class1, "tester", "nyhetskvartalet",
-            "Jeg lærte at falske nyheter ofte har sensasjonelle overskrifter. Sjekker alltid kilden nå!" },
-        { class1, "tester", "fotografen", "Overraskende lett å manipulere bilder. Skal være mer kritisk fremover." },
-        { class1, "tester", "datasenteret", "Kryptering er viktig for å beskytte data. Imponerende teknologi!" },
-    };
-
-    for (Object[] row : entries) {
-      Classroom classroom = (Classroom) row[0];
-      User student = users.get((String) row[1]);
-      String stopLocation = (String) row[2];
-      boolean exists = notebookEntryRepository
-          .findByClassroom_IdAndUser_Id(classroom.getId(), student.getId())
-          .stream().anyMatch(e -> stopLocation.equals(e.getStopLocation()));
-      if (exists)
-        continue;
-      notebookEntryRepository.save(NotebookEntry.builder()
-          .user(student)
-          .classroom(classroom)
-          .stopLocation(stopLocation)
-          .studentReflection((String) row[3])
-          .autoNotes("{\"hints_used\": 1, \"time_spent\": 300}")
-          .build());
-      log.info("Notebook: {} @ {}", student.getDisplayName(), stopLocation);
-    }
-  }
-
-  // -----------------------------------------------------------------------
-  // Mystery submissions — five pending submissions in class1, one per student
+  // Mystery submissions
   // -----------------------------------------------------------------------
 
   private void seedMysterySubmissions() {
@@ -632,53 +807,81 @@ public class DataSeeder implements CommandLineRunner {
       return;
     }
 
-    // {submitterKey, sourceImage, alt0, alt1, alt2, correctIndex}
+    // {submitterKey, sourceImage, alt0, alt1, alt2, correctIndex, status}
     Object[][] data = {
+        // APPROVED
         {
-            "student1",
+            "anine",
             "seed-images/news/fakeArticle1.png",
             "Artikkelen er ekte og publisert av en kjent avis",
             "Artikkelen er en falsk nyhet med oppdiktede kilder",
             "Artikkelen er satire og ikke ment alvorlig",
-            (byte) 1,
+            (byte) 1, MysteryStatus.APPROVED,
         },
         {
-            "student2",
-            "seed-images/news/realArticle2.png",
-            "Bildet er et AI-generert portrett",
-            "Bildet er manipulert i Photoshop",
-            "Bildet er et ekte pressefoto",
-            (byte) 2,
+            "nora",
+            "seed-images/photos/aiPhoto2.png",
+            "Bildet er et ekte fotografi fra en nyhetsartikkel",
+            "Bildet er AI-generert med kunstig intelligent",
+            "Bildet er tatt med et vanlig kamera",
+            (byte) 1, MysteryStatus.APPROVED,
         },
         {
-            "student3",
-            "seed-images/photos/aiPhoto1.png",
+            "gustav",
+            "seed-images/photos/psPhoto3.png",
             "Bildet er ekte og uredigert",
             "Bildet er AI-generert",
-            "Bildet er en collage av flere bilder",
-            (byte) 1,
-        },
-        {
-            "student4",
-            "seed-images/photos/psPhoto4.png",
             "Bildet er manipulert i Photoshop",
-            "Bildet er ekte og uredigert",
-            "Bildet er AI-generert",
-            (byte) 0,
+            (byte) 2, MysteryStatus.APPROVED,
         },
         {
-            "student5",
+            "tri",
+            "seed-images/news/realArticle3.png",
+            "Nyheten er falsk og skrevet av en bot",
+            "Nyheten er ekte og bekreftet av NTB",
+            "Nyheten er satire fra en humorside",
+            (byte) 1, MysteryStatus.APPROVED,
+        },
+        // PENDING
+        {
+            "silje",
             "seed-images/news/fakeArticle3.png",
             "Saken har troverdige kilder",
             "Saken er bevisst overdrevet for klikk",
             "Saken er hentet fra en parodiside",
-            (byte) 1,
+            (byte) 1, MysteryStatus.PENDING,
+        },
+        {
+            "student1",
+            "seed-images/photos/realPhoto2.png",
+            "Bildet er AI-generert",
+            "Bildet er ekte tatt med mobilkamera",
+            "Bildet er manipulert med filter",
+            (byte) 1, MysteryStatus.PENDING,
+        },
+        {
+            "student2",
+            "seed-images/news/realArticle4.png",
+            "Artikkelen er skrevet av en journalist",
+            "Artikkelen er generert av AI",
+            "Artikkelen er en reklametekst",
+            (byte) 0, MysteryStatus.PENDING,
+        },
+        // REJECTED
+        {
+            "segward",
+            "seed-images/photos/psPhoto5.png",
+            "Bildet er ekte",
+            "Bildet er redigert",
+            "Bildet er AI-laget",
+            (byte) 1, MysteryStatus.REJECTED,
         },
     };
 
     for (Object[] row : data) {
       User submitter = users.get((String) row[0]);
       String storedPath = copySeedImageToUploads((String) row[1]);
+      MysteryStatus status = (MysteryStatus) row[6];
       MysterySubmission submission = MysterySubmission.builder()
           .classroom(class1)
           .userSubmittedBy(submitter)
@@ -687,10 +890,10 @@ public class DataSeeder implements CommandLineRunner {
           .alternative2((String) row[3])
           .alternative3((String) row[4])
           .correctIndex((byte) row[5])
-          .mysStatus(MysteryStatus.PENDING)
+          .mysStatus(status)
           .build();
       mysterySubmissionRepository.save(submission);
-      log.info("Mystery submission: {} (PENDING)", submitter.getDisplayName());
+      log.info("Mystery submission: {} ({})", submitter.getDisplayName(), status);
     }
   }
 
@@ -875,7 +1078,7 @@ public class DataSeeder implements CommandLineRunner {
 
   private void verifyInstructorAssignments() {
     log.info("Verifying instructor classroom assignments...");
-    List<String> instructorKeys = List.of("nora-t", "lars");
+    List<String> instructorKeys = List.of("nora-t", "regine-t", "lars", "gustav-t", "silje-t");
     for (String key : instructorKeys) {
       User instructor = users.get(key);
       List<ntnu.no.backend.model.classroom.ClassroomInstructor> assignments = classroomInstructorRepository
