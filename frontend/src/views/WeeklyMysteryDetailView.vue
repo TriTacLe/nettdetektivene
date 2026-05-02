@@ -86,6 +86,7 @@ function goBack() {
     title="Ukens Mysterium"
     :previous="previousPath"
     background="/CorridorBackground.jpeg"
+    :lock-viewport="true"
     @back="goBack"
   >
     <div class="mystery-task">
@@ -131,42 +132,45 @@ function goBack() {
 
 <style scoped>
 .mystery-task {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1rem 1.5rem 1.5rem;
-  overflow-y: auto;
+  padding: 0.5rem 1.5rem 1rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 .task-header {
   flex-shrink: 0;
   text-align: center;
-  padding-top: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 0.75rem;
 }
 
 .question {
   color: white;
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
   font-weight: 900;
   letter-spacing: 0.01em;
-  margin: 0 0 0.85rem;
+  margin: 0;
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85);
 }
 
 .mystery-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.85rem;
   align-items: center;
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
+  min-height: 0;
 }
 
 .photo-frame {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  flex: 1;
+  min-height: 0;
   border-radius: 12px;
   background: #0a0a14;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
@@ -188,6 +192,7 @@ function goBack() {
   flex-direction: column;
   gap: 0.65rem;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .alt-btn {
@@ -277,5 +282,16 @@ function goBack() {
 
 @media (max-width: 1100px) {
   .mystery-task { padding-inline: 1rem; }
+}
+
+@media (max-width: 800px) {
+  .mystery-task {
+    overflow: visible;
+    min-height: 0;
+  }
+  .photo-frame {
+    flex: none;
+    aspect-ratio: 4 / 3;
+  }
 }
 </style>
