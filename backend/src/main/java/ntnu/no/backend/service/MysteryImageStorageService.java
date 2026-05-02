@@ -28,7 +28,7 @@ import java.util.UUID;
 public class MysteryImageStorageService {
 
   /** Hard cap on stored mystery images. Spring's multipart limit is the outer guard. */
-  private static final long MAX_BYTES = 10L * 1024 * 1024;
+  private static final long MAX_BYTES = 50L * 1024 * 1024;
 
   private final Path uploadsRoot;
 
