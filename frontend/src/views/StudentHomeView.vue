@@ -16,7 +16,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import type { DialogChoice } from '@/types/cutscene'
 import { useToast } from '@/composables/UseToast'
 
-const mapImage = '/map.jpg'
+const mapImage = '/MapUpdated.png'
 const badgeImage = '/unlockedBadge.png'
 const questionmarkImage = '/questionmarkIcon.png'
 const notebookImage = '/notebook.jpg'
