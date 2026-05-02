@@ -20,10 +20,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
+import { useAudioStore } from '@/stores/AudioStore'
 
 const route = useRoute()
 const router = useRouter()
 const stopStore = useStopStore()
+const audio = useAudioStore()
 const confettiCanvas = ref<HTMLCanvasElement | null>(null)
 
 const stopId = route.query.stop as string | undefined
@@ -155,10 +157,12 @@ onMounted(() => {
   if (confettiCanvas.value) {
     startConfetti(confettiCanvas.value)
   }
+  audio.playOneShot('/music/FunFunFunFun.mp3')
 })
 
 onUnmounted(() => {
   if (animationId !== null) cancelAnimationFrame(animationId)
+  audio.stopOneShot()
 })
 
 // ---- Navigation ----

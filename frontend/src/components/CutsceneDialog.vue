@@ -149,6 +149,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       <p v-if="scene.featureLabel" class="cutscene-feature-label">{{ scene.featureLabel }}</p>
     </div>
 
+    <div class="cutscene-text-shade" aria-hidden="true" />
+
     <div class="cutscene-text">
       <div class="dialog-name">{{ scene.characterName }}</div>
       <div class="dialog-text">
@@ -312,6 +314,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 @keyframes portrait-idle {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-6px); }
+}
+
+/* Bottom gradient that sits above the character so dialog text meets
+   WCAG AA contrast against any background. Fades to transparent so the
+   upper half of the scene stays visually intact. */
+.cutscene-text-shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50vh;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.78) 35%,
+    rgba(0, 0, 0, 0.45) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .cutscene-text-shade { height: 65vh; }
 }
 
 /* Text + choices float bottom-center, free-floating on the scene. */
