@@ -1,8 +1,11 @@
-.PHONY: dev prod down clean logs status test test-backend test-frontend test-e2e test-coverage
+.PHONY: dev prod down clean logs status test test-backend test-frontend test-e2e test-coverage teardown
 
 # configurable
 SERVICES_DEV = mysql backend frontend
 SERVICES_PROD = mysql backend frontend
+
+# Production teardown
+PROD_HOST ?= orbit@129.241.100.67
 
 # Dev
 dev:
@@ -132,3 +135,22 @@ test-coverage:
 	@echo "Running backend tests with coverage..."
 	cd backend && ./mvnw clean verify -q
 	@echo "Coverage report: backend/target/site/jacoco/index.html"
+
+# Production decommission. Streams deployment/teardown.sh to PROD_HOST
+# over ssh and runs it. Removes systemd unit + symlinks, docker stack,
+# volumes, images, nginx config, and the deployment directory.
+# Destructive — guarded by CONFIRM=YES.
+#
+# Usage:
+#   make teardown CONFIRM=YES
+#   make teardown CONFIRM=YES PROD_HOST=user@host
+teardown:
+	@if [ "$(CONFIRM)" != "YES" ]; then \
+		echo "make teardown destroys the production deployment on $(PROD_HOST)."; \
+		echo "Removes the systemd unit, docker stack, volumes, images, nginx config, and repo dir."; \
+		echo "Re-run as: make teardown CONFIRM=YES"; \
+		exit 1; \
+	fi
+	@echo "Tearing down $(PROD_HOST)..."
+	ssh -o StrictHostKeyChecking=no $(PROD_HOST) 'bash -s' < deployment/teardown.sh
+	@echo "Teardown finished."
