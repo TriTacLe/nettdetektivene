@@ -1,0 +1,270 @@
+<template>
+  <SceneComponent title="" :previous="mapRoute" previous-label="Tilbake til kartet">
+    <canvas ref="confettiCanvas" class="confetti-canvas" />
+
+    <div class="content">
+      <div class="trophy-wrap" aria-hidden="true">
+        <svg class="trophy-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect x="38" y="82" width="24" height="7" rx="3" fill="#c8a227"/>
+          <rect x="30" y="89" width="40" height="7" rx="3.5" fill="#c8a227"/>
+          <path d="M20 18 H80 V52 C80 68 65 78 50 78 C35 78 20 68 20 52 Z" fill="#FFD700"/>
+          <path d="M20 18 H30 V52 C30 62 38 70 50 70 C38 70 20 62 20 52 Z" fill="#ffe566" opacity="0.4"/>
+          <path d="M20 24 C10 24 5 32 5 40 C5 50 12 56 22 54" stroke="#FFD700" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <path d="M80 24 C90 24 95 32 95 40 C95 50 88 56 78 54" stroke="#FFD700" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <ellipse cx="50" cy="28" rx="12" ry="5" fill="#ffe97a" opacity="0.6"/>
+        </svg>
+      </div>
+
+      <div class="message-box" aria-live="polite">
+        <p class="gratulerer">Stoppested fullfort!</p>
+        <p class="sub-text" v-if="stopName">Du klarte alle oppgavene pa {{ stopName }}!</p>
+        <p class="sub-text" v-else>Du klarte alle oppgavene!</p>
+      </div>
+
+      <button class="map-btn" @click="goToMap" aria-label="Tilbake til kartet">
+        Tilbake til kartet
+      </button>
+    </div>
+  </SceneComponent>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import SceneComponent from '@/components/SceneComponent.vue'
+import { useStopStore } from '@/stores/StopStore'
+import { useAudioStore } from '@/stores/AudioStore'
+import { STOPS } from '@/data/StopData'
+
+const route = useRoute()
+const router = useRouter()
+const stopStore = useStopStore()
+const audio = useAudioStore()
+// Teachers previewing the game land back on the test-game map, students on
+// the regular game map.
+const mapRoute = computed(() =>
+  stopStore.testModeClassroomId
+    ? `/classroom/${stopStore.testModeClassroomId}/test-game`
+    : '/game-map',
+)
+const confettiCanvas = ref<HTMLCanvasElement | null>(null)
+
+const stopId = route.query.stop as string | undefined
+const stopName = stopId ? STOPS[stopId]?.name : undefined
+
+let animationId: number | null = null
+
+interface Particle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  color: string
+  size: number
+  rotation: number
+  rotationSpeed: number
+  shape: 'rect' | 'circle' | 'ribbon'
+  ribbonLength: number
+  wave: number
+  waveSpeed: number
+  waveAmplitude: number
+}
+
+const COLORS = [
+  '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1',
+  '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8',
+  '#F7DC6F', '#BB8FCE', '#82E0AA', '#F1948A'
+]
+
+function createParticle(canvas: HTMLCanvasElement): Particle {
+  const shape = Math.random() < 0.6 ? 'ribbon' : Math.random() < 0.5 ? 'rect' : 'circle'
+  return {
+    x: Math.random() * canvas.width,
+    y: -20,
+    vx: (Math.random() - 0.5) * 3,
+    vy: Math.random() * 2 + 1.5,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)] ?? '#FFD700',
+    size: Math.random() * 8 + 5,
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: (Math.random() - 0.5) * 0.15,
+    shape,
+    ribbonLength: Math.random() * 20 + 15,
+    wave: Math.random() * Math.PI * 2,
+    waveSpeed: Math.random() * 0.05 + 0.02,
+    waveAmplitude: Math.random() * 2 + 1
+  }
+}
+
+function startConfetti(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+
+  const particles: Particle[] = []
+  for (let i = 0; i < 200; i++) {
+    const p = createParticle(canvas)
+    p.y = Math.random() * canvas.height * 0.5
+    particles.push(p)
+  }
+
+  let spawnTimer = 0
+
+  function draw() {
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    spawnTimer++
+    if (spawnTimer % 3 === 0 && particles.length < 300) {
+      particles.push(createParticle(canvas))
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i]
+      if (!p) continue
+
+      p.wave += p.waveSpeed
+      p.x += p.vx + Math.sin(p.wave) * p.waveAmplitude
+      p.y += p.vy
+      p.rotation += p.rotationSpeed
+
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rotation)
+      ctx.fillStyle = p.color
+      ctx.globalAlpha = 0.9
+
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2)
+      } else if (p.shape === 'circle') {
+        ctx.beginPath()
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.strokeStyle = p.color
+        ctx.lineWidth = 3
+        ctx.lineCap = 'round'
+        ctx.globalAlpha = 0.85
+        ctx.beginPath()
+        ctx.moveTo(0, -p.ribbonLength / 2)
+        ctx.bezierCurveTo(
+          p.size, -p.ribbonLength / 4,
+          -p.size, p.ribbonLength / 4,
+          0, p.ribbonLength / 2
+        )
+        ctx.stroke()
+      }
+
+      ctx.restore()
+
+      if (p.y > canvas.height + 30) {
+        particles.splice(i, 1)
+      }
+    }
+
+    animationId = requestAnimationFrame(draw)
+  }
+
+  draw()
+}
+
+onMounted(() => {
+  if (confettiCanvas.value) {
+    startConfetti(confettiCanvas.value)
+  }
+  audio.playOneShot('/music/FunFunFunFun.mp3')
+})
+
+onUnmounted(() => {
+  if (animationId !== null) cancelAnimationFrame(animationId)
+  audio.stopOneShot()
+})
+
+function goToMap() {
+  router.push(mapRoute.value)
+}
+</script>
+
+<style scoped>
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.trophy-wrap {
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  filter: drop-shadow(0 4px 24px rgba(255, 215, 0, 0.6));
+}
+
+.trophy-icon {
+  width: clamp(100px, 18vw, 160px);
+  height: auto;
+}
+
+.message-box {
+  text-align: center;
+  animation: popIn 0.5s 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.gratulerer {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 20px rgba(255, 215, 0, 0.5);
+  margin: 0;
+}
+
+.sub-text {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+  color: #f0e6ff;
+  margin: 0.25rem 0 0;
+}
+
+.map-btn {
+  background: #ffffff;
+  color: #1a0a2e;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.85rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: popIn 0.5s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.map-btn:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.map-btn:active {
+  transform: scale(0.98);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+</style>

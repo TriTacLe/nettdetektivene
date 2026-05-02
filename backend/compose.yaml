@@ -1,0 +1,56 @@
+# for backend dev only. parses env directly. runs services mysql + backend
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: nd-db
+    restart: unless-stopped
+    command: --log-bin-trust-function-creators=1
+    env_file:
+      - ../.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - nettdetektivene_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+    networks:
+      - nd-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nd-backend
+    restart: on-failure
+    env_file:
+      - ../.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
+      SERVER_PORT: 8080
+      APP_UPLOADS_ROOT: /app/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - nd-network
+    volumes:
+      - nettdetektivene_uploads:/app/uploads
+
+volumes:
+  nettdetektivene_mysql_data:
+  nettdetektivene_uploads:
+
+networks:
+  nd-network:
+    driver: bridge
