@@ -44,6 +44,12 @@ async function handleLogin(): Promise<void> {
       password: password.value,
     })
 
+    if (authStore.isTeacher) {
+      authStore.clearSession()
+      router.push({ name: 'teacher-login' })
+      return
+    }
+
     const headers = { Authorization: `Bearer ${authStore.token}` }
 
     const res = await fetch(`${import.meta.env.VITE_API_URL}/classrooms/me`, { headers })
