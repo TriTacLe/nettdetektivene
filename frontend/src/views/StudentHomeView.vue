@@ -13,6 +13,7 @@ import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import type { DialogChoice } from '@/types/cutscene'
 import { useToast } from '@/composables/UseToast'
 
@@ -27,7 +28,11 @@ const router = useRouter()
 const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
 const authStore = useAuthStore()
+const audio = useAudioStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
+watch(() => introRunner.currentScene.value?.id, (id) => {
+  if (id === 'detective-success') audio.playOneShot('/music/FunFunFunFun.mp3')
+})
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
 const classroomLoading = ref(true)
@@ -226,6 +231,7 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  audio.stopOneShot()
 })
 </script>
 

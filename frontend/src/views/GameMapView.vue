@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import { useSideQuestStore } from '@/stores/SideQuestStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useDialogRunner, type DialogRunner } from '@/composables/UseDialogRunner'
@@ -78,6 +79,7 @@ let mql: MediaQueryList | null = null
 const isMobile = ref(false)
 
 const sideQuestStore = useSideQuestStore()
+const audio = useAudioStore()
 const queryClient = useQueryClient()
 const activeQuest = shallowRef<{ def: SideQuestDef; stage: number; runner: DialogRunner } | null>(null)
 const activeScene = computed(() => activeQuest.value?.runner.currentScene.value ?? null)
@@ -122,6 +124,7 @@ async function applyOutcome(outcome: SideQuestOutcome): Promise<void> {
       break
     case 'complete':
       await sideQuestStore.complete(def.key, stage)
+      audio.playOneShot('/music/FunFunFunFun.mp3')
       if (outcome.achievementRef) {
         try {
           await AchievementService.awardSecret(outcome.achievementRef)
@@ -200,6 +203,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   mql?.removeEventListener('change', handleOrientationChange)
+  audio.stopOneShot()
 })
 
 function isAvailable(stopId: string | null): boolean {
