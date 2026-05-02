@@ -28,18 +28,27 @@ const classroomId = route.params.id as string
 const { data } = useQuery(getClassroomOptions({ path: { id: classroomId } }))
 const classroom = computed(() => data.value?.data ?? null)
 
-const { data: studentsData, isLoading: studentsLoading } = useQuery(getStudentsOptions({ path: { classroomId } }))
+const { data: studentsData, isLoading: studentsLoading } = useQuery(
+  getStudentsOptions({ path: { classroomId } }),
+)
 const allStudents = computed(() => studentsData.value?.data ?? [])
 
-const { data: leaderboardData } = useQuery(getClassroomLeaderboardOptions({ path: { classroomId } }))
+const { data: leaderboardData } = useQuery(
+  getClassroomLeaderboardOptions({ path: { classroomId } }),
+)
 const leaderboard = computed(() => leaderboardData.value?.data ?? [])
 
 const { data: tasksData } = useQuery(getClassroomTasksOptions({ path: { classroomId } }))
 const totalTasks = computed(() => tasksData.value?.data?.length ?? 0)
 
-const { data: notificationsData } = useQuery({ ...getMyNotificationsOptions(), refetchInterval: 5000 })
-const unreadCount = computed(() =>
-  (notificationsData.value?.data ?? []).filter((n) => !n.isRead && n.classroomId === classroomId).length
+const { data: notificationsData } = useQuery({
+  ...getMyNotificationsOptions(),
+  refetchInterval: 5000,
+})
+const unreadCount = computed(
+  () =>
+    (notificationsData.value?.data ?? []).filter((n) => !n.isRead && n.classroomId === classroomId)
+      .length,
 )
 
 // --- Leaderboard lookup by userId ---
@@ -67,10 +76,10 @@ const filteredStudents = computed(() => {
   return sortedStudents.value.filter((s) => s.displayName?.toLowerCase().includes(q))
 })
 
-
 const approve = useMutation({
   ...approveMutation(),
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: getStudentsQueryKey({ path: { classroomId } }) }),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: getStudentsQueryKey({ path: { classroomId } }) }),
 })
 
 const remove = useMutation({
@@ -88,7 +97,9 @@ function approveStudent(userId: string, event: Event) {
 
 const resetName = useMutation({
   mutationFn: async ({ userId }: { userId: string }) => {
-    const { data } = await apiClient.post(`/classrooms/${classroomId}/students/${userId}/reset-name`)
+    const { data } = await apiClient.post(
+      `/classrooms/${classroomId}/students/${userId}/reset-name`,
+    )
     return data
   },
   onSuccess: () => {
@@ -150,7 +161,11 @@ function cancelRemove() {
 const { onKeydown: onDialogKeydown } = useFocusTrap('remove-dialog', cancelRemove)
 
 // --- Helpers ---
-function studentAriaLabel(s: { displayName?: string; userId?: string; isAllowed?: boolean }): string {
+function studentAriaLabel(s: {
+  displayName?: string
+  userId?: string
+  isAllowed?: boolean
+}): string {
   if (!s.isAllowed) return `${s.displayName}, venter pa godkjenning`
   const entry = getLeaderboardEntry(s.userId)
   const score = entry ? `, poeng ${entry.totalScore}` : ''
@@ -160,12 +175,26 @@ function studentAriaLabel(s: { displayName?: string; userId?: string; isAllowed?
 
 function navigateToStudent(student: { userId?: string; isAllowed?: boolean }) {
   if (!student.isAllowed) return
-  router.push({ name: 'classroom-student-progress', params: { id: classroomId, userId: student.userId } })
+  router.push({
+    name: 'classroom-student-progress',
+    params: { id: classroomId, userId: student.userId },
+  })
 }
 
 const menuItems = computed<SidePanelMenuItem[]>(() => [
-  { key: 'notifications', title: 'Varsler', subtitle: 'Meldinger fra klassen', icon: Bell, badge: unreadCount.value },
-  { key: 'classroom-settings', title: 'Klasseromsstyring', subtitle: 'Rediger innstillinger', icon: Settings },
+  {
+    key: 'notifications',
+    title: 'Varsler',
+    subtitle: 'Meldinger fra klassen',
+    icon: Bell,
+    badge: unreadCount.value,
+  },
+  {
+    key: 'classroom-settings',
+    title: 'Klasseromsstyring',
+    subtitle: 'Rediger innstillinger',
+    icon: Settings,
+  },
   { key: 'classroom-test-game', title: 'Test Spillet', subtitle: 'Spill som elev', icon: Gamepad2 },
 ])
 
@@ -184,7 +213,11 @@ const tabs: { key: DetailTab; label: string }[] = [
   { key: 'tasks', label: 'Oppgaver' },
   { key: 'mysteries', label: 'Ukens mysterium' },
 ]
-const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({ students: null, tasks: null, mysteries: null })
+const tabRefs = ref<Record<DetailTab, HTMLButtonElement | null>>({
+  students: null,
+  tasks: null,
+  mysteries: null,
+})
 
 function setTabRef(key: DetailTab, el: Element | null) {
   tabRefs.value[key] = el as HTMLButtonElement | null
@@ -195,9 +228,10 @@ function onTabKeydown(e: KeyboardEvent) {
   e.preventDefault()
   const order: DetailTab[] = ['students', 'tasks', 'mysteries']
   const i = order.indexOf(activeTab.value)
-  const next = e.key === 'ArrowRight'
-    ? order[(i + 1) % order.length]!
-    : order[(i - 1 + order.length) % order.length]!
+  const next =
+    e.key === 'ArrowRight'
+      ? order[(i + 1) % order.length]!
+      : order[(i - 1 + order.length) % order.length]!
   activeTab.value = next
   nextTick(() => tabRefs.value[next]?.focus())
 }
@@ -209,18 +243,12 @@ function onTabKeydown(e: KeyboardEvent) {
     previous="/teacher-home"
     background="/StartBackground.jpg"
     dimOverlay
+    lockViewport
   >
     <div class="scene-split-layout">
       <div class="scene-split-grid">
-
         <section class="scene-split-main" aria-label="Klasseromsinnhold">
-
-          <div
-            class="tab-bar"
-            role="tablist"
-            aria-label="Innholdsvelger"
-            @keydown="onTabKeydown"
-          >
+          <div class="tab-bar" role="tablist" aria-label="Innholdsvelger" @keydown="onTabKeydown">
             <button
               v-for="tab in tabs"
               :key="tab.key"
@@ -247,6 +275,7 @@ function onTabKeydown(e: KeyboardEvent) {
             :id="`tab-panel-tasks`"
             role="tabpanel"
             aria-labelledby="tab-tasks"
+            class="tab-panel-content"
           >
             <ClassroomTasksPanel :classroom-id="classroomId" />
           </div>
@@ -256,6 +285,7 @@ function onTabKeydown(e: KeyboardEvent) {
             :id="`tab-panel-mysteries`"
             role="tabpanel"
             aria-labelledby="tab-mysteries"
+            class="tab-panel-content"
           >
             <ClassroomMysteriesPanel :classroom-id="classroomId" />
           </div>
@@ -265,105 +295,124 @@ function onTabKeydown(e: KeyboardEvent) {
             :id="`tab-panel-students`"
             role="tabpanel"
             aria-labelledby="tab-students"
-            class="students-panel"
+            class="students-panel tab-panel-content"
           >
+            <div v-if="showSearch" class="search-row">
+              <Search :size="14" class="search-icon" aria-hidden="true" />
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Søk etter elev..."
+                aria-label="Søk etter elev"
+              />
+            </div>
 
-          <div v-if="showSearch" class="search-row">
-            <Search :size="14" class="search-icon" aria-hidden="true" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Søk etter elev..."
-              aria-label="Søk etter elev"
-            />
-          </div>
+            <div v-if="studentsLoading" class="section-empty">Laster elever...</div>
 
-          <div v-if="studentsLoading" class="section-empty">Laster elever...</div>
+            <div v-else-if="allStudents.length === 0" class="empty-state">
+              <p class="empty-title">Ingen elever enna</p>
+              <p class="empty-hint">
+                Del klasseromskoden
+                <span class="empty-code">{{ classroom?.joinCode ?? '---' }}</span>
+                sa elevene kan bli med.
+              </p>
+            </div>
 
-          <div v-else-if="allStudents.length === 0" class="empty-state">
-            <p class="empty-title">Ingen elever enna</p>
-            <p class="empty-hint">
-              Del klasseromskoden
-              <span class="empty-code">{{ classroom?.joinCode ?? '---' }}</span>
-              sa elevene kan bli med.
-            </p>
-          </div>
-
-          <ul
-            v-else
-            class="student-list"
-            role="list"
-            aria-label="Elever i klasserommet"
-          >
-            <li
-              v-for="(student, i) in filteredStudents"
-              :key="student.userId"
-              class="student-row-wrapper"
-              :style="{ animationDelay: `${0.04 + i * 0.02}s` }"
-            >
-              <div v-if="!student.isAllowed" class="student-row student-row--pending">
-                <span class="sr-name">{{ student.displayName }}</span>
-                <span class="status-badge status-badge--pending">
-                  <span class="status-dot status-dot--amber" aria-hidden="true" />
-                  Venter
-                </span>
-                <div class="sr-actions">
-                  <button
-                    class="btn-bare sr-btn sr-btn--approve"
-                    :aria-label="`Godkjenn ${student.displayName}`"
-                    @click="student.userId && approveStudent(student.userId, $event)"
-                  >Godkjenn</button>
-                  <button
-                    class="btn-bare sr-btn sr-btn--icon"
-                    :aria-label="`Fjern ${student.displayName} fra klasserommet`"
-                    @click="student.userId && requestRemove(student.userId, student.displayName ?? 'Elev', $event)"
-                  ><X :size="18" aria-hidden="true" /></button>
-                </div>
-              </div>
-
-              <button
-                v-else
-                class="btn-bare student-row student-row--approved"
-                :aria-label="studentAriaLabel(student)"
-                @click="navigateToStudent(student)"
+            <ul v-else class="student-list" role="list" aria-label="Elever i klasserommet">
+              <li
+                v-for="(student, i) in filteredStudents"
+                :key="student.userId"
+                class="student-row-wrapper"
+                :style="{ animationDelay: `${0.04 + i * 0.02}s` }"
               >
-                <span class="sr-name">{{ student.displayName }}</span>
-
-                <span class="sr-stat">{{ getLeaderboardEntry(student.userId)?.totalScore ?? 0 }} p</span>
-                <span class="sr-stat">Lv. {{ getLeaderboardEntry(student.userId)?.xpLevel ?? 1 }}</span>
-                <span class="sr-stat">#{{ getLeaderboardEntry(student.userId)?.rank ?? '-' }}</span>
-
-                <div v-if="totalTasks > 0" class="sr-progress">
-                  <div class="sr-progress-bar">
-                    <div
-                      class="sr-progress-fill"
-                      :style="{ width: `${Math.min(100, ((getLeaderboardEntry(student.userId)?.totalScore ?? 0) / (totalTasks * 100)) * 100)}%` }"
-                    ></div>
+                <div v-if="!student.isAllowed" class="student-row student-row--pending">
+                  <span class="sr-name">{{ student.displayName }}</span>
+                  <span class="status-badge status-badge--pending">
+                    <span class="status-dot status-dot--amber" aria-hidden="true" />
+                    Venter
+                  </span>
+                  <div class="sr-actions">
+                    <button
+                      class="btn-bare sr-btn sr-btn--approve"
+                      :aria-label="`Godkjenn ${student.displayName}`"
+                      @click="student.userId && approveStudent(student.userId, $event)"
+                    >
+                      Godkjenn
+                    </button>
+                    <button
+                      class="btn-bare sr-btn sr-btn--icon"
+                      :aria-label="`Fjern ${student.displayName} fra klasserommet`"
+                      @click="
+                        student.userId &&
+                        requestRemove(student.userId, student.displayName ?? 'Elev', $event)
+                      "
+                    >
+                      <X :size="18" aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
 
-                <div class="sr-actions">
-                  <button
-                    class="btn-bare sr-btn sr-btn--reset"
-                    :aria-label="`Fjern brukernavn for ${student.displayName}`"
-                    @click="student.userId && requestReset(student.userId, student.displayName ?? 'Elev', $event)"
-                  >Fjern navn</button>
-                  <button
-                    class="btn-bare sr-btn sr-btn--icon"
-                    :aria-label="`Fjern ${student.displayName} fra klasserommet`"
-                    @click="student.userId && requestRemove(student.userId, student.displayName ?? 'Elev', $event)"
-                  ><X :size="18" aria-hidden="true" /></button>
-                </div>
+                <button
+                  v-else
+                  class="btn-bare student-row student-row--approved"
+                  :aria-label="studentAriaLabel(student)"
+                  @click="navigateToStudent(student)"
+                >
+                  <span class="sr-name">{{ student.displayName }}</span>
 
-                <span class="sr-chevron" aria-hidden="true">&rsaquo;</span>
-              </button>
-            </li>
+                  <span class="sr-stat"
+                    >{{ getLeaderboardEntry(student.userId)?.totalScore ?? 0 }} p</span
+                  >
+                  <span class="sr-stat"
+                    >Lv. {{ getLeaderboardEntry(student.userId)?.xpLevel ?? 1 }}</span
+                  >
+                  <span class="sr-stat"
+                    >#{{ getLeaderboardEntry(student.userId)?.rank ?? '-' }}</span
+                  >
 
-            <li v-if="showSearch && filteredStudents.length === 0" class="section-empty">
-              Ingen treff for &laquo;{{ searchQuery }}&raquo;
-            </li>
-          </ul>
+                  <div v-if="totalTasks > 0" class="sr-progress">
+                    <div class="sr-progress-bar">
+                      <div
+                        class="sr-progress-fill"
+                        :style="{
+                          width: `${Math.min(100, ((getLeaderboardEntry(student.userId)?.totalScore ?? 0) / (totalTasks * 100)) * 100)}%`,
+                        }"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="sr-actions">
+                    <button
+                      class="btn-bare sr-btn sr-btn--reset"
+                      :aria-label="`Fjern brukernavn for ${student.displayName}`"
+                      @click="
+                        student.userId &&
+                        requestReset(student.userId, student.displayName ?? 'Elev', $event)
+                      "
+                    >
+                      Fjern navn
+                    </button>
+                    <button
+                      class="btn-bare sr-btn sr-btn--icon"
+                      :aria-label="`Fjern ${student.displayName} fra klasserommet`"
+                      @click="
+                        student.userId &&
+                        requestRemove(student.userId, student.displayName ?? 'Elev', $event)
+                      "
+                    >
+                      <X :size="18" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <span class="sr-chevron" aria-hidden="true">&rsaquo;</span>
+                </button>
+              </li>
+
+              <li v-if="showSearch && filteredStudents.length === 0" class="section-empty">
+                Ingen treff for &laquo;{{ searchQuery }}&raquo;
+              </li>
+            </ul>
           </div>
         </section>
 
@@ -375,7 +424,6 @@ function onTabKeydown(e: KeyboardEvent) {
             @select="handleMenuItem"
           />
         </aside>
-
       </div>
     </div>
 
@@ -396,20 +444,22 @@ function onTabKeydown(e: KeyboardEvent) {
           <h3 id="remove-dialog-title" class="dialog-title">
             Fjern {{ confirmTarget.displayName }}?
           </h3>
-          <p class="dialog-body">
-            Eleven vil miste tilgang til klasserommet.
-          </p>
+          <p class="dialog-body">Eleven vil miste tilgang til klasserommet.</p>
           <div class="dialog-actions">
             <button
               data-action="cancel"
               class="btn-bare dialog-btn dialog-btn--cancel"
               @click="cancelRemove"
-            >Avbryt</button>
+            >
+              Avbryt
+            </button>
             <button
               class="btn-bare dialog-btn dialog-btn--danger"
               :disabled="remove.isPending.value"
               @click="confirmRemove"
-            >{{ remove.isPending.value ? 'Fjerner...' : 'Fjern' }}</button>
+            >
+              {{ remove.isPending.value ? 'Fjerner...' : 'Fjern' }}
+            </button>
           </div>
         </div>
       </div>
@@ -432,20 +482,22 @@ function onTabKeydown(e: KeyboardEvent) {
           <h3 id="reset-dialog-title" class="dialog-title">
             Fjern brukernavn for {{ resetTarget.displayName }}?
           </h3>
-          <p class="dialog-body">
-            Brukernavnet blir tilbakestilt til e-postprefikset.
-          </p>
+          <p class="dialog-body">Brukernavnet blir tilbakestilt til e-postprefikset.</p>
           <div class="dialog-actions">
             <button
               data-action="cancel"
               class="btn-bare dialog-btn dialog-btn--cancel"
               @click="cancelReset"
-            >Avbryt</button>
+            >
+              Avbryt
+            </button>
             <button
               class="btn-bare dialog-btn dialog-btn--danger"
               :disabled="resetName.isPending.value"
               @click="confirmReset"
-            >{{ resetName.isPending.value ? 'Tilbakestiller...' : 'Fjern Brukernavn' }}</button>
+            >
+              {{ resetName.isPending.value ? 'Tilbakestiller...' : 'Fjern Brukernavn' }}
+            </button>
           </div>
         </div>
       </div>
@@ -475,7 +527,9 @@ function onTabKeydown(e: KeyboardEvent) {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .tab-btn:hover {
@@ -516,6 +570,16 @@ function onTabKeydown(e: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .search-row {
@@ -587,7 +651,8 @@ function onTabKeydown(e: KeyboardEvent) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.875rem;
   backdrop-filter: blur(4px);
-  height: calc(100vh - 14rem);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
@@ -697,7 +762,10 @@ function onTabKeydown(e: KeyboardEvent) {
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
   min-height: 2.5rem;
   display: inline-flex;
@@ -760,7 +828,9 @@ function onTabKeydown(e: KeyboardEvent) {
   font-size: 1.5rem;
   font-weight: 700;
   flex-shrink: 0;
-  transition: transform 0.15s, color 0.15s;
+  transition:
+    transform 0.15s,
+    color 0.15s;
   margin-left: 0.25rem;
 }
 
@@ -889,7 +959,13 @@ function onTabKeydown(e: KeyboardEvent) {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
