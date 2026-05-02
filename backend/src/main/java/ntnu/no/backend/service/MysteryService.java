@@ -85,7 +85,8 @@ public class MysteryService {
   }
 
   /**
-   * Approved mysteries the given student can play (excludes own submissions).
+   * Approved mysteries the given student can play, including ones the
+   * student submitted themselves.
    */
   @Transactional(readOnly = true)
   public List<MysteryPlayDTO> getPlayList(UUID classroomId, UUID userId) {
@@ -100,15 +101,14 @@ public class MysteryService {
     }
 
     return mysterySubmissionRepository
-        .findByClassroom_IdAndMysStatusAndUserSubmittedBy_IdNot(classroomId, MysteryStatus.APPROVED, userId)
+        .findByClassroom_IdAndMysStatus(classroomId, MysteryStatus.APPROVED)
         .stream()
         .map(submission -> MysterySubmissionMapper.toPlayDto(submission, completed.contains(submission.getId())))
         .toList();
   }
 
   /**
-   * Single approved mystery for play. Verifies membership and that the
-   * student is not the submitter.
+   * Single approved mystery for play. Verifies classroom membership.
    */
   @Transactional(readOnly = true)
   public MysteryPlayDTO getMysteryForPlay(UUID submissionId, UUID userId) {
@@ -122,9 +122,6 @@ public class MysteryService {
 
     if (submission.getMysStatus() != MysteryStatus.APPROVED) {
       throw new AccessDeniedException("Mystery is not available for play");
-    }
-    if (submission.getUserSubmittedBy().getId().equals(userId)) {
-      throw new AccessDeniedException("You cannot play your own mystery");
     }
 
     boolean completed = mysteryCompletionRepository.existsByIdUserIdAndIdSubmissionId(userId, submissionId);
@@ -148,9 +145,6 @@ public class MysteryService {
 
     if (submission.getMysStatus() != MysteryStatus.APPROVED) {
       throw new AccessDeniedException("Mystery is not available for play");
-    }
-    if (submission.getUserSubmittedBy().getId().equals(userId)) {
-      throw new AccessDeniedException("You cannot play your own mystery");
     }
 
     boolean alreadyCompleted = mysteryCompletionRepository.existsByIdUserIdAndIdSubmissionId(userId, submissionId);

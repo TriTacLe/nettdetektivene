@@ -19,8 +19,4 @@ public interface MysterySubmissionRepository extends JpaRepository<MysterySubmis
   List<MysterySubmission> findByClassroom_IdAndUserSubmittedBy_Id(UUID classroomId, UUID userId);
 
   List<MysterySubmission> findByClassroom_IdAndMysStatus(UUID classroomId, MysteryStatus mysStatus);
-
-  /** Approved submissions in a classroom, excluding ones the given user submitted. */
-  List<MysterySubmission> findByClassroom_IdAndMysStatusAndUserSubmittedBy_IdNot(
-      UUID classroomId, MysteryStatus mysStatus, UUID excludedUserId);
 }

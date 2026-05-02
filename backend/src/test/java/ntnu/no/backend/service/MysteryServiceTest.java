@@ -92,7 +92,7 @@ class MysteryServiceTest {
   }
 
   @Test
-  void getPlayList_returnsApprovedExceptOwn_andMarksCompleted() {
+  void getPlayList_returnsApprovedIncludingOwn_andMarksCompleted() {
     UUID classroomId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     User user = User.builder().id(userId).build();
@@ -100,21 +100,24 @@ class MysteryServiceTest {
     User other = User.builder().id(UUID.randomUUID()).build();
     UUID s1 = UUID.randomUUID();
     UUID s2 = UUID.randomUUID();
+    UUID s3 = UUID.randomUUID();
     MysterySubmission a = submission(s1, classroom, other, MysteryStatus.APPROVED);
     MysterySubmission b = submission(s2, classroom, other, MysteryStatus.APPROVED);
+    MysterySubmission own = submission(s3, classroom, user, MysteryStatus.APPROVED);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(classroomStudentRepository.findById(any())).thenReturn(Optional.of(ClassroomStudent.builder().isAllowed(true).build()));
-    when(mysterySubmissionRepository.findByClassroom_IdAndMysStatusAndUserSubmittedBy_IdNot(classroomId, MysteryStatus.APPROVED, userId))
-        .thenReturn(List.of(a, b));
+    when(mysterySubmissionRepository.findByClassroom_IdAndMysStatus(classroomId, MysteryStatus.APPROVED))
+        .thenReturn(List.of(a, b, own));
     when(mysteryCompletionRepository.findByIdUserId(userId))
         .thenReturn(List.of(completion(userId, s1)));
 
     List<MysteryPlayDTO> result = mysteryService.getPlayList(classroomId, userId);
 
-    assertThat(result).hasSize(2);
+    assertThat(result).hasSize(3);
     assertThat(result.getFirst().completed()).isTrue();
     assertThat(result.get(1).completed()).isFalse();
+    assertThat(result.get(2).completed()).isFalse();
   }
 
   @Test
@@ -165,20 +168,25 @@ class MysteryServiceTest {
   }
 
   @Test
-  void completeMystery_throwsAccessDenied_whenSubmittersOwn() {
+  void completeMystery_correctPickOnOwnSubmission_savesCompletion() {
     UUID submissionId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     UUID classroomId = UUID.randomUUID();
     Classroom classroom = Classroom.builder().id(classroomId).build();
     User user = User.builder().id(userId).build();
     MysterySubmission existing = submission(submissionId, classroom, user, MysteryStatus.APPROVED);
+    existing.setCorrectIndex((byte) 0);
 
     when(mysterySubmissionRepository.findById(submissionId)).thenReturn(Optional.of(existing));
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(classroomStudentRepository.findById(any())).thenReturn(Optional.of(ClassroomStudent.builder().isAllowed(true).build()));
+    when(mysteryCompletionRepository.existsByIdUserIdAndIdSubmissionId(userId, submissionId)).thenReturn(false);
 
-    assertThatThrownBy(() -> mysteryService.completeMystery(submissionId, (byte) 0, userId))
-        .isInstanceOf(AccessDeniedException.class);
+    MysteryCompletionResponseDTO result = mysteryService.completeMystery(submissionId, (byte) 0, userId);
+
+    assertThat(result.correct()).isTrue();
+    assertThat(result.completed()).isTrue();
+    verify(mysteryCompletionRepository).saveAndFlush(any(MysteryCompletion.class));
   }
 
   @Test
