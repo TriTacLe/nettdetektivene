@@ -219,6 +219,10 @@ public class MysteryService {
       throw new IllegalArgumentException("Reviewed submission must be approved or rejected");
     }
 
+    if (submission.getMysStatus() != MysteryStatus.PENDING) {
+      throw new IllegalArgumentException("Only pending submissions can be reviewed");
+    }
+
     submission.setMysStatus(dto.getMysStatus());
     submission.setUserReviewedBy(reviewer);
     submission.setReviewedAt(LocalDateTime.now());
