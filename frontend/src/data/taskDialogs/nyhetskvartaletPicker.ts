@@ -1,9 +1,10 @@
 import type { DialogScene } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME } from '@/data/characters'
 
 export const nyhetskvartaletPicker: DialogScene = {
   id: 'nyhetskvartalet-picker',
-  character: '/detective.png',
-  characterName: 'Detektiv Hansen',
+  character: DETECTIVE_IMAGES,
+  characterName: DETECTIVE_NAME,
   background: '/NyhetskvartaletBackground.jpg',
   lines: [
     { text: 'Velkommen til Nyhetskvartalet, detektiv. Her er det masse det av overskrifter — og ikke alle er like ærlige.', mood: 'neutral' },

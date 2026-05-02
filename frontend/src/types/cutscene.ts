@@ -1,4 +1,6 @@
-export type DialogMood = 'neutral' | 'happy' | 'angry' | 'sus' | 'thinking'
+export type DialogMood = 'neutral' | 'happy' | 'angry' | 'sus' | 'thinking' | 'sad' | 'evil'
+
+export type CharacterImages = Partial<Record<DialogMood, string>> & { neutral: string }
 
 export interface DialogLine {
   text: string
@@ -16,7 +18,7 @@ export interface DialogChoice {
 
 export interface DialogScene {
   id: string
-  character: string
+  character: string | CharacterImages
   characterName: string
   background?: string
   music?: string

@@ -1,7 +1,8 @@
 import type { DialogGraph } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME, HACKER_IMAGE, HACKER_NAME } from '@/data/characters'
 
-const HACKER_IMG = '/hacker.png'
-const DETECTIVE_IMG = '/detective.png'
+const HACKER_IMG = HACKER_IMAGE
+const DETECTIVE_IMG = DETECTIVE_IMAGES
 const BG = '/StartBackground.jpg'
 
 /**
@@ -14,7 +15,7 @@ export const hackerStage0: DialogGraph = {
   'hacker-meet': {
     id: 'hacker-meet',
     character: HACKER_IMG,
-    characterName: 'Hackeren',
+    characterName: HACKER_NAME,
     background: BG,
     lines: [
       { text: 'Ssh! Du sa du var detektiv, ikke sant?', mood: 'sus' },
@@ -29,7 +30,7 @@ export const hackerStage0: DialogGraph = {
   'hacker-shady': {
     id: 'hacker-shady',
     character: HACKER_IMG,
-    characterName: 'Hackeren',
+    characterName: HACKER_NAME,
     background: BG,
     lines: [
       { text: 'Greit. Hør godt etter — dette er stort.', mood: 'sus' },
@@ -49,11 +50,11 @@ export const hackerStage1: DialogGraph = {
   'detective-debrief': {
     id: 'detective-debrief',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [
-      { text: 'Du ser ut som du har sett noe. Spytt ut.', mood: 'thinking' },
-      { text: 'Hva er det som plager deg?', mood: 'neutral' },
+      { text: 'Du ser ut som du har sett noe. Spytt ut.', mood: 'sus' },
+      { text: 'Hva er det som plager deg?', mood: 'thinking' },
     ],
     choices: [
       { label: 'Jeg traff hackeren. Han planlegger noe pa Datasenteret.', next: 'hacker-caught', flag: 'tell' },
@@ -63,7 +64,7 @@ export const hackerStage1: DialogGraph = {
   'hacker-caught': {
     id: 'hacker-caught',
     character: HACKER_IMG,
-    characterName: 'Hackeren',
+    characterName: HACKER_NAME,
     background: BG,
     lines: [
       { text: 'Hva?! Du... du sa det videre?', mood: 'angry' },

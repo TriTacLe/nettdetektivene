@@ -20,7 +20,7 @@ export const useStopStore = defineStore('stop', () => {
   // wiped on exitTestMode / logout.
   const testModeCompleted = ref<Set<string>>(new Set())
 
-  // Tracks which stop pickers Hansen has already monologued in this
+  // Tracks which stop pickers the detective has already monologued in this
   // session. Re-entries (back from a task, post-completion) skip his
   // intro lines and land directly on the choice list.
   const seenPicker = ref<Set<string>>(new Set())

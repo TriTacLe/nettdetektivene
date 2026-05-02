@@ -35,6 +35,11 @@ watch(() => props.scene.id, () => {
 const currentLine = computed(() => props.scene.lines[lineIndex.value])
 const currentText = computed(() => currentLine.value?.text ?? '')
 const currentMood = computed(() => currentLine.value?.mood ?? 'neutral')
+const currentCharacterImage = computed(() => {
+  const c = props.scene.character
+  if (typeof c === 'string') return c
+  return c[currentMood.value] ?? c.neutral
+})
 
 const isLastLine = computed(() => lineIndex.value === props.scene.lines.length - 1)
 const showChoices = computed(() =>
@@ -132,7 +137,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     <img
       class="cutscene-character"
       :class="`mood-${currentMood}`"
-      :src="scene.character"
+      :src="currentCharacterImage"
       :alt="scene.characterName"
     />
 

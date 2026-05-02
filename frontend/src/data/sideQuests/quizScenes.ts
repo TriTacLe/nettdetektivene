@@ -1,6 +1,7 @@
 import type { DialogGraph } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME } from '@/data/characters'
 
-const DETECTIVE_IMG = '/detective.png'
+const DETECTIVE_IMG = DETECTIVE_IMAGES
 const BG = '/StartBackground.jpg'
 
 /**
@@ -18,7 +19,7 @@ export const quizGraph: DialogGraph = {
   'quiz-intro': {
     id: 'quiz-intro',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [
       { text: 'Hei, detektiv! Klar for en mini-kviss?', mood: 'happy' },
@@ -30,7 +31,7 @@ export const quizGraph: DialogGraph = {
   'quiz-q1': {
     id: 'quiz-q1',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [{ text: 'Hva er en falsk nyhet?', mood: 'thinking' }],
     choices: [
@@ -43,7 +44,7 @@ export const quizGraph: DialogGraph = {
   'quiz-q2': {
     id: 'quiz-q2',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [{ text: 'Hva betyr at et bilde er "KI-generert"?', mood: 'thinking' }],
     choices: [
@@ -56,7 +57,7 @@ export const quizGraph: DialogGraph = {
   'quiz-q3': {
     id: 'quiz-q3',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [{ text: 'Hva bør du gjøre hvis du er usikker på om en nyhet er ekte?', mood: 'thinking' }],
     choices: [
@@ -69,10 +70,10 @@ export const quizGraph: DialogGraph = {
   'quiz-wrong': {
     id: 'quiz-wrong',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [
-      { text: 'Hmm, det stemte ikke helt.', mood: 'thinking' },
+      { text: 'Hmm, det stemte ikke helt.', mood: 'sad' },
       { text: 'Bedre lykke neste gang, detektiv!', mood: 'neutral' },
     ],
   },
@@ -80,7 +81,7 @@ export const quizGraph: DialogGraph = {
   'quiz-perfect': {
     id: 'quiz-perfect',
     character: DETECTIVE_IMG,
-    characterName: 'Detektiv Hansen',
+    characterName: DETECTIVE_NAME,
     background: BG,
     lines: [
       { text: 'Riktig på alle! Skarpe øyne, du!', mood: 'happy' },
