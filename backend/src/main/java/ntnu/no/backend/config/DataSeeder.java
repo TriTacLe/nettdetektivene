@@ -233,9 +233,9 @@ public class DataSeeder implements CommandLineRunner {
         { "Ekte eller falsk nyhet (nivå 2)", TaskType.NEWS, "nyhetskvartalet", 2, "nora-t" },
         { "Ekte eller falsk nyhet (nivå 3)", TaskType.NEWS, "nyhetskvartalet", 3, "nora-t" },
         // fotografen
-        { "Ekte, AI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora-t" },
-        { "Ekte, AI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora-t" },
-        { "Ekte, AI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora-t" },
+        { "Ekte, KI eller manipulert (nivå 1)", TaskType.PHOTO, "fotografen", 1, "nora-t" },
+        { "Ekte, KI eller manipulert (nivå 2)", TaskType.PHOTO, "fotografen", 2, "nora-t" },
+        { "Ekte, KI eller manipulert (nivå 3)", TaskType.PHOTO, "fotografen", 3, "nora-t" },
         // datasenteret — 5 tasks matching factory.sh (3 NEWS + 2 PHOTO)
         { "Datatyven sin første løgn", TaskType.NEWS, "datasenteret", 4, "nora-t" },
         { "Avslør den falske rapporten", TaskType.NEWS, "datasenteret", 5, "nora-t" },
@@ -281,7 +281,7 @@ public class DataSeeder implements CommandLineRunner {
 
     // ----- Fotografen (PHOTO) — 3 tasks -------------------------------------
     PhotoTaskSpec[] photoSpecs = {
-        new PhotoTaskSpec("Ekte, AI eller manipulert (nivå 1)", "fotografen", 1,
+        new PhotoTaskSpec("Ekte, KI eller manipulert (nivå 1)", "fotografen", 1,
             "Se etter unaturlig perspektiv og rare detaljer.",
             "realPhoto1.png", "aiPhoto1.png", "psPhoto1.png"),
         new PhotoTaskSpec("Manipulert eller bare merkelig? (nivå 2)", "fotografen", 2,
@@ -378,7 +378,7 @@ public class DataSeeder implements CommandLineRunner {
     String aiUrl = copyTaskSeedImage("seed-images/photos/" + spec.aiImage());
     String psUrl = copyTaskSeedImage("seed-images/photos/" + spec.manipulatedImage());
     Map<String, Object> content = new LinkedHashMap<>();
-    content.put("description", "Klassifiser hvert bilde: ekte, AI-generert eller manipulert.");
+    content.put("description", "Klassifiser hvert bilde: ekte, KI-generert eller manipulert.");
     content.put("hint", spec.hint());
     // Shuffle deterministically per-title so the [real, ai, manipulated]
     // order isn't fixed across tasks — players can't memorize the slot.
@@ -823,7 +823,7 @@ public class DataSeeder implements CommandLineRunner {
             "nora",
             "seed-images/photos/aiPhoto2.png",
             "Bildet er et ekte fotografi fra en nyhetsartikkel",
-            "Bildet er AI-generert med kunstig intelligent",
+            "Bildet er KI-generert",
             "Bildet er tatt med et vanlig kamera",
             (byte) 1, MysteryStatus.APPROVED,
         },
@@ -831,7 +831,7 @@ public class DataSeeder implements CommandLineRunner {
             "gustav",
             "seed-images/photos/psPhoto3.png",
             "Bildet er ekte og uredigert",
-            "Bildet er AI-generert",
+            "Bildet er KI-generert",
             "Bildet er manipulert i Photoshop",
             (byte) 2, MysteryStatus.APPROVED,
         },
@@ -847,7 +847,7 @@ public class DataSeeder implements CommandLineRunner {
         {
             "student1",
             "seed-images/photos/realPhoto2.png",
-            "Bildet er AI-generert",
+            "Bildet er KI-generert",
             "Bildet er ekte tatt med mobilkamera",
             "Bildet er manipulert med filter",
             (byte) 1, MysteryStatus.PENDING,
@@ -856,7 +856,7 @@ public class DataSeeder implements CommandLineRunner {
             "student2",
             "seed-images/news/realArticle4.png",
             "Artikkelen er skrevet av en journalist",
-            "Artikkelen er generert av AI",
+            "Artikkelen er generert av KI",
             "Artikkelen er en reklametekst",
             (byte) 0, MysteryStatus.PENDING,
         },
@@ -866,7 +866,7 @@ public class DataSeeder implements CommandLineRunner {
             "seed-images/photos/psPhoto5.png",
             "Bildet er ekte",
             "Bildet er redigert",
-            "Bildet er AI-laget",
+            "Bildet er KI-laget",
             (byte) 1, MysteryStatus.REJECTED,
         },
     };

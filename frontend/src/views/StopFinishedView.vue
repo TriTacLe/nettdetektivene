@@ -33,11 +33,13 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
 import { useStopStore } from '@/stores/StopStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import { STOPS } from '@/data/StopData'
 
 const route = useRoute()
 const router = useRouter()
 const stopStore = useStopStore()
+const audio = useAudioStore()
 // Teachers previewing the game land back on the test-game map, students on
 // the regular game map.
 const mapRoute = computed(() =>
@@ -171,10 +173,12 @@ onMounted(() => {
   if (confettiCanvas.value) {
     startConfetti(confettiCanvas.value)
   }
+  audio.playOneShot('/music/FunFunFunFun.mp3')
 })
 
 onUnmounted(() => {
   if (animationId !== null) cancelAnimationFrame(animationId)
+  audio.stopOneShot()
 })
 
 function goToMap() {
