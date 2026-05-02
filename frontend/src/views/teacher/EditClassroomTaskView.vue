@@ -314,7 +314,7 @@ function submit() {
 
 <style scoped>
 .task-create-page {
-  padding: 1.5rem;
+  padding: 1.5rem 2.5rem;
   overflow-y: auto;
 }
 
@@ -700,7 +700,15 @@ function submit() {
 
   .task-card-grid--news,
   .task-card-grid--photo {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .task-card-grid--news .task-upload-card,
+  .task-card-grid--photo .task-upload-card {
+    width: 100%;
+    max-width: 360px;
   }
 
   .task-template__actions {
