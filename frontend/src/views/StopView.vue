@@ -54,7 +54,6 @@ const choices = computed<DialogChoice[]>(() => {
     flag: task.uuid,
     disabled: !task.isUnlocked,
     done: stopStore.isComplete(stopId, task.uuid),
-    hint: taskHints.value?.[String(task.taskId)]?.hint,
   }))
 })
 

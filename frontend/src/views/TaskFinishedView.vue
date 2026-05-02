@@ -161,6 +161,11 @@ function onOutroDone() {
     }
     return
   }
+  // Datasenteret skipped the jingle while the hacker scene was on screen;
+  // start it now that the buttons screen takes over.
+  if (stopId === 'datasenteret') {
+    audio.playOneShot('/music/FunFunFunFun.mp3')
+  }
   showOutro.value = false
 }
 
