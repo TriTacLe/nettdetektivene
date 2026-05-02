@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useStopStore } from '@/stores/StopStore'
@@ -25,10 +25,7 @@ const taskHints = computed(
   () => stop.value?.taskHints as Record<string, { hint?: string }> | undefined,
 )
 
-const startAtLastLine = ref(stopStore.hasSeenPicker(stopId))
-
 onMounted(() => {
-  stopStore.markPickerSeen(stopId)
   if (testClassroomId) {
     stopStore.loadTasksTestMode(testClassroomId, stopId)
   } else {
@@ -87,7 +84,6 @@ function handleDone() {
     v-if="stop && scene"
     :key="stopId"
     :scene="scene"
-    :start-at-last-line="startAtLastLine"
     @choose="handleChoose"
     @back="handleBack"
     @done="handleDone"
