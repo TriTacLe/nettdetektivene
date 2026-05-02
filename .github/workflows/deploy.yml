@@ -103,3 +103,22 @@ jobs:
             ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 \
               "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
           fi
+
+      - name: Sync nginx config
+        run: |
+          scp -o StrictHostKeyChecking=no deployment/nginx.conf orbit@129.241.100.67:/tmp/nettdetektivene-nginx.conf
+          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 'bash -s' <<'EOF'
+          set -e
+          SRC=/tmp/nettdetektivene-nginx.conf
+          DST=/etc/nginx/conf.d/nettdetektivene.conf
+          if sudo -n cmp -s "$SRC" "$DST" 2>/dev/null; then
+            echo "nginx config unchanged, skipping reload."
+          else
+            echo "nginx config changed, applying..."
+            sudo -n cp "$SRC" "$DST"
+            sudo -n nginx -t
+            sudo -n systemctl reload nginx
+            echo "nginx reloaded."
+          fi
+          rm -f "$SRC"
+          EOF
