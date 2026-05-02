@@ -23,7 +23,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
   void deleteByRefTypeAndRefId(String refType, UUID refId);
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("UPDATE Notification n SET n.isRead = true WHERE n.refType = :refType AND n.refId = :refId AND n.isRead = false")
   void markReadByRefTypeAndRefId(@Param("refType") String refType, @Param("refId") UUID refId);
 }
