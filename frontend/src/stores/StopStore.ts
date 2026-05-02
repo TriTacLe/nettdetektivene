@@ -20,11 +20,6 @@ export const useStopStore = defineStore('stop', () => {
   // wiped on exitTestMode / logout.
   const testModeCompleted = ref<Set<string>>(new Set())
 
-  // Tracks which stop pickers the detective has already monologued in this
-  // session. Re-entries (back from a task, post-completion) skip his
-  // intro lines and land directly on the choice list.
-  const seenPicker = ref<Set<string>>(new Set())
-
   const testModeClassroomId = ref<string | null>(null)
   const inTestMode = () => testModeClassroomId.value !== null
   const activeSet = () => (inTestMode() ? testModeCompleted.value : passedTaskIds.value)
@@ -139,18 +134,6 @@ export const useStopStore = defineStore('stop', () => {
     return tasks.value[stopId]?.length ?? 0
   }
 
-  function hasSeenPicker(stopId: string): boolean {
-    return seenPicker.value.has(stopId)
-  }
-
-  function markPickerSeen(stopId: string) {
-    seenPicker.value.add(stopId)
-  }
-
-  function clearSeenPickers() {
-    seenPicker.value = new Set()
-  }
-
   return {
     tasks,
     loading,
@@ -170,9 +153,6 @@ export const useStopStore = defineStore('stop', () => {
     isAllComplete,
     countComplete,
     totalTasks,
-    hasSeenPicker,
-    markPickerSeen,
-    clearSeenPickers,
     fetchClassroomId,
   }
 })
