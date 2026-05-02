@@ -162,6 +162,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (animationId !== null) cancelAnimationFrame(animationId)
+  audio.stopOneShot()
 })
 
 // ---- Navigation ----

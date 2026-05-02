@@ -203,11 +203,27 @@ export const useAudioStore = defineStore('audio', () => {
 
   // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
   // playback starts on first call without waiting for a WebAudio decode pass.
+  // Only one instance plays at a time; calling again preempts the previous,
+  // and stopOneShot() lets a view cancel the jingle on unmount.
+  let oneShotEl: HTMLAudioElement | null = null
+
+  function stopOneShot() {
+    if (!oneShotEl) return
+    oneShotEl.pause()
+    oneShotEl.src = ''
+    oneShotEl = null
+  }
+
   function playOneShot(src: string) {
+    stopOneShot()
     const vol = effectiveSfxVolume()
     if (vol <= 0) return
     const el = new Audio(src)
     el.volume = vol
+    el.addEventListener('ended', () => {
+      if (oneShotEl === el) oneShotEl = null
+    })
+    oneShotEl = el
     el.play().catch(() => {
       // Autoplay blocked — nothing to do; the screen the jingle plays on is
       // navigated into by a user gesture so this is rare.
@@ -235,5 +251,6 @@ export const useAudioStore = defineStore('audio', () => {
     playSfx,
     playTypingTick,
     playOneShot,
+    stopOneShot,
   }
 })
