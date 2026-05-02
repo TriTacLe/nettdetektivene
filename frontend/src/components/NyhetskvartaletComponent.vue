@@ -153,8 +153,8 @@ function choose(index: number) {
 
 .tile-badge {
   position: absolute;
-  top: -14px;
-  left: -14px;
+  top: calc(0.75rem - 14px);
+  left: calc(0.75rem - 14px);
   width: 56px;
   height: 56px;
   border-radius: 999px;
