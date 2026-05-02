@@ -50,7 +50,12 @@ async function handleLogin(): Promise<void> {
       affiliation: 'instructor',
       displayName,
     })
-    router.push({ name: 'teacher-home' })
+    if (authStore.isTeacher) {
+      router.push({ name: 'teacher-home' })
+    } else {
+      authStore.clearSession()
+      router.push({ name: 'student-login' })
+    }
   } catch (e) {
     const status = (e as Error & { status?: number }).status
     serverError.value = status === 401
