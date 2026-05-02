@@ -60,7 +60,6 @@ public class AuthController {
 
   /**
    * Dev/test registration endpoint. Creates a user with local credentials via Swagger.
-   * todo note; for testing
    *
    * @param dto the registration request containing display name, email and password
    * @return {@code 201 Created} with a JWT, refresh token and roles
@@ -110,7 +109,6 @@ public class AuthController {
    * Revokes the refresh token on logout. The access token (JWT) remains valid until
    * it expires naturally, a true session invalidation would require a token blocklist
    * backed by a {@code revoked_token} table. Accepted limitation for this project as of now.
-   * TODO: possibly implement JWT blocklist or a new table
    *
    * @param dto the request containing the refresh token to be revoked
    * @return an empty response entity
