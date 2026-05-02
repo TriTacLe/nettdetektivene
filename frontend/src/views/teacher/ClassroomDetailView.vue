@@ -318,11 +318,11 @@ function onTabKeydown(e: KeyboardEvent) {
             <div v-if="studentsLoading" class="section-empty">Laster elever...</div>
 
             <div v-else-if="allStudents.length === 0" class="empty-state">
-              <p class="empty-title">Ingen elever enna</p>
+              <p class="empty-title">Ingen elever ennå</p>
               <p class="empty-hint">
                 Del klasseromskoden
                 <span class="empty-code">{{ classroom?.joinCode ?? '---' }}</span>
-                sa elevene kan bli med.
+                så elevene kan bli med.
               </p>
             </div>
 
@@ -881,14 +881,14 @@ function onTabKeydown(e: KeyboardEvent) {
 }
 
 .empty-title {
-  font-size: 0.9375rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
   margin: 0 0 0.5rem;
 }
 
 .empty-hint {
-  font-size: 0.8125rem;
+  font-size: 1.05rem;
   color: rgba(255, 255, 255, 0.65);
   margin: 0;
   line-height: 1.5;

@@ -103,19 +103,11 @@ public class FeideAuthService {
 
   /**
    * Provisions a new user, identity and (for students) profile, then issues tokens.
-   * todo IMPORTANT NOTE:
+   *
    * this method makes it possible to login for the first time
    * with any given email and password, as long as it has not been used before
-   * mirroring first login with FEIDE. Should only be used for testing purposes,
-   * since there is no way of vouching credentials for new users without a real
-   * OAuth handshake. Later on the whole of first login should be removed(?), and
-   * feide id should be seeded in test data as a way of vouching feide users supporting
-   * only login for predefined "feide" users.
-   * All the following helper methods is only called by this method. Work in progress as to
-   * how best to handle possible first logins, if handled at all, if not all the code from here
-   * on out can be safely removed and the {@link #issueTokens(User, String)} can be pulled
-   * out of helper and be implemented directly in {@link #login(FeideLoginRequestDTO, String)}
-   * :)
+   * mirroring first login with FEIDE. In practice the first login is a registration.
+   *
    *
    * @param dto the FEIDE login request
    * @param email the email address

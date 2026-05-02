@@ -47,7 +47,7 @@ public class RefreshTokenService {
    * Creates a new refresh token, encoding the random 32 bytes
    * to string with Base64. Builds refresh token, storing only hashed
    * token in db. Returns the raw token for client.
-   * TODO: populate ipAddress
+   *
    * @param user the user to generate the refresh token to
    * @return the raw token as a string
    */

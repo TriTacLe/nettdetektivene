@@ -7,9 +7,8 @@ import { useAuthStore } from '@/stores/AuthStore.ts'
 const router = useRouter()
   const authStore = useAuthStore()
 
-  // Test credentials for school project demo
-  const email = ref('laerer@flataasen.no')
-  const password = ref('password123')
+  const email = ref('')
+  const password = ref('')
   const serverError = ref('')
   const isLoading = ref(false)
 
