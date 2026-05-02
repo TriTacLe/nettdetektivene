@@ -20,11 +20,11 @@
         <p class="card-encourage">Du kan prøve så mange ganger du vil! Ikke gi opp - du klarer det.</p>
       </div>
 
-      <div class="actions">
-        <button class="retry-btn" @click="retry" aria-label="Prøv oppgaven på nytt">
+      <div class="actions btn-stack">
+        <button type="button" @click="retry" aria-label="Prøv oppgaven på nytt">
           Prøv på nytt &#x1F504;
         </button>
-        <button class="resume-btn" @click="resume" aria-label="Tilbake til stoppestedet">
+        <button type="button" @click="resume" aria-label="Tilbake til stoppestedet">
           Tilbake
         </button>
       </div>
@@ -134,48 +134,7 @@ function resume() {
 }
 
 .actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  align-items: stretch;
-  width: min(20rem, 90vw);
-}
-
-.retry-btn,
-.resume-btn {
-  border-radius: 2rem;
-  padding: 0.85rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-  font-family: inherit;
-}
-
-.retry-btn {
-  background: #ffffff;
-  color: #1a1a1a;
-  border: none;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-}
-
-.resume-btn {
-  background: rgba(28, 28, 36, 0.9);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-.retry-btn:hover,
-.resume-btn:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.retry-btn:active,
-.resume-btn:active {
-  transform: scale(0.98);
+  width: min(22rem, 90vw);
 }
 
 @keyframes popIn {

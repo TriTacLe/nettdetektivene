@@ -16,11 +16,11 @@
         <p class="klarte-oppgaven">Du klarte oppgaven</p>
       </div>
 
-      <div class="actions">
-        <button class="next-btn" @click="goToNextTask" aria-label="Gå til neste oppgave">
+      <div class="actions btn-stack">
+        <button type="button" @click="goToNextTask" aria-label="Gå til neste oppgave">
           Neste oppgave &rarr;
         </button>
-        <button class="exit-btn" @click="exit" aria-label="Avslutt og gå til kartet">
+        <button type="button" @click="exit" aria-label="Avslutt og gå til kartet">
           Avslutt
         </button>
       </div>
@@ -160,48 +160,7 @@ function exit() {
 }
 
 .actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  align-items: stretch;
-  width: min(20rem, 90vw);
-}
-
-.next-btn,
-.exit-btn {
-  border-radius: 2rem;
-  padding: 0.85rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-  font-family: inherit;
-}
-
-.next-btn {
-  background: #ffffff;
-  color: #1a0a2e;
-  border: none;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-}
-
-.exit-btn {
-  background: rgba(28, 28, 36, 0.9);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-.next-btn:hover,
-.exit-btn:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.next-btn:active,
-.exit-btn:active {
-  transform: scale(0.98);
+  width: min(22rem, 90vw);
 }
 
 @keyframes popIn {

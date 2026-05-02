@@ -86,9 +86,9 @@ function choose(index: number) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 640px));
   justify-content: center;
+  align-items: start;
   gap: 2.5rem;
   padding: 0 1%;
-  align-items: stretch;
   flex: 1;
   min-height: 0;
 }
@@ -97,11 +97,9 @@ function choose(index: number) {
   position: relative;
   display: block;
   width: 100%;
-  padding: 0.9rem;
-  border-radius: 18px;
-  background: #1c1c24;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+  padding: 0;
+  background: transparent;
+  border: none;
   overflow: visible;
   cursor: pointer;
   transition: transform 0.18s ease, opacity 0.2s ease, filter 0.12s ease;
@@ -144,15 +142,18 @@ function choose(index: number) {
   width: 100%;
   max-height: min(46vh, 560px);
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 14px;
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
   transition: box-shadow 0.18s ease;
   display: block;
 }
 
 .tile-badge {
   position: absolute;
-  top: calc(0.75rem - 14px);
-  left: calc(0.75rem - 14px);
+  top: -14px;
+  left: -14px;
   width: 56px;
   height: 56px;
   border-radius: 999px;
