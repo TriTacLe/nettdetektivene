@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import { useSideQuestStore } from '@/stores/SideQuestStore'
@@ -84,6 +84,13 @@ const queryClient = useQueryClient()
 const activeQuest = shallowRef<{ def: SideQuestDef; stage: number; runner: DialogRunner } | null>(null)
 const activeScene = computed(() => activeQuest.value?.runner.currentScene.value ?? null)
 
+// Side-quest victory jingle: play on the quiz-perfect scene, stop the moment
+// the player clicks past it so the loop doesn't bleed into the map view.
+watch(() => activeScene.value?.id, (id, prev) => {
+  if (id === 'quiz-perfect') audio.playOneShot('/music/FunFunFunFun.mp3')
+  else if (prev === 'quiz-perfect') audio.stopOneShot()
+})
+
 /**
  * Picks at most one quest to play this visit:
  *   1. Continue the user's currently ACTIVE quest, if any.
@@ -124,7 +131,6 @@ async function applyOutcome(outcome: SideQuestOutcome): Promise<void> {
       break
     case 'complete':
       await sideQuestStore.complete(def.key, stage)
-      audio.playOneShot('/music/FunFunFunFun.mp3')
       if (outcome.achievementRef) {
         try {
           await AchievementService.awardSecret(outcome.achievementRef)
