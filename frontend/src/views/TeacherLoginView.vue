@@ -197,7 +197,7 @@ async function handleLogin(): Promise<void> {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0.75rem 1rem 2rem;
+  padding: 0.5rem 1rem 0.75rem;
 }
 
 .login-card-stage {
@@ -233,12 +233,12 @@ async function handleLogin(): Promise<void> {
 .login-content {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  padding: 1.6rem 1.6rem 1.35rem;
+  gap: 1rem;
+  padding: 1.25rem 1.6rem 1rem;
 }
 
 .login-header h2 {
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.4rem;
   font-size: 1.7rem;
   font-weight: 700;
   color: #1f2937;
@@ -303,7 +303,7 @@ label {
   font-size: 1.05rem;
 }
 
-input {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
   height: 2.95rem;
   padding: 0.65rem 0.8rem;
   border: 1px solid #5f79be;
@@ -390,7 +390,7 @@ input:focus {
 }
 
 .login-footer {
-  padding: 1rem 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   background: #dbe7f7;
   text-align: center;
   font-size: 0.8rem;
