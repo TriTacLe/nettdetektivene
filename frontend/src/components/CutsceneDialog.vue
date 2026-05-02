@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import type { DialogChoice, DialogScene } from '@/types/cutscene'
 import { useTypewriter } from '@/composables/UseTypewriter'
 import { useAudioStore } from '@/stores/AudioStore'
+import { useStopStore } from '@/stores/StopStore'
 
 const props = defineProps<{
   scene: DialogScene
@@ -13,6 +14,8 @@ const props = defineProps<{
 
 const audio = useAudioStore()
 const { textSpeed } = storeToRefs(audio)
+const stopStore = useStopStore()
+const isTestMode = computed(() => Boolean(stopStore.testModeClassroomId))
 
 const emit = defineEmits<{
   done: []
@@ -109,6 +112,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :style="{ backgroundImage: `url('${scene.background}')` }"
     />
     <div class="cutscene-tint" aria-hidden="true" />
+
+    <div v-if="isTestMode" class="test-mode-badge" aria-label="Testmodus">TESTMODUS</div>
 
     <button
       v-if="showBack"
@@ -222,6 +227,31 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   background-size: cover;
   background-position: center;
   z-index: 0;
+}
+
+.test-mode-badge {
+  position: absolute;
+  top: 2.1rem;
+  right: 12rem;
+  z-index: 4;
+  background: #ff9800;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.5rem;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .test-mode-badge {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+    top: 1.5rem;
+    right: 3.8rem;
+  }
 }
 
 .cutscene-back {
