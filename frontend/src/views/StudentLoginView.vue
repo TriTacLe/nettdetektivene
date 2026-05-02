@@ -76,7 +76,10 @@ async function handleLogin(): Promise<void> {
       router.push({ name: 'join-classroom' })
     }
   } catch (e) {
-    serverError.value = e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
+    const status = (e as Error & { status?: number }).status
+    serverError.value = status === 401
+      ? 'Feil brukernavn eller passord'
+      : e instanceof Error ? e.message : 'Innlogging feilet. Prøv igjen.'
   } finally {
     isLoading.value = false
   }
