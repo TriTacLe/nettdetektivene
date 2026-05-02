@@ -49,7 +49,6 @@ const photoDraft = ref<TeacherPhotoTaskDraft>({
   alternatives: [
     makePhotoAlternative(),
     makePhotoAlternative(),
-    makePhotoAlternative(),
   ],
 })
 
@@ -162,12 +161,13 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
     :title="classroom?.title ? `Ny oppgave: ${classroom.title}` : 'Ny oppgave'"
     :previous="`/classroom/${classroomId}`"
     background="/corkboard.jpg"
+    dim-overlay
   >
     <div class="task-create-page">
       <section v-if="!selectedType" class="task-create-panel task-create-panel--picker">
         <div>
           <p class="task-create-eyebrow">Velg oppgavetype</p>
-          <h2 class="task-create-heading">Hvilken stopp skal denne oppgaven høre til?</h2>
+          <h2 class="task-create-heading">Hvilket stoppested skal denne oppgaven høre til?</h2>
         </div>
 
         <div class="task-type-grid">
@@ -208,6 +208,9 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                     @click="selectDatasenteret()">
                     Datasenteret
                   </button>
+                </div>
+                <div v-if="newsDraft.stopLocation === 'datasenteret'" class="ds-info-box">
+                  Datasenteret er den høyeste vanskelighetsgraden. Oppgaven vil kun vises på stoppestedet Datasenteret.
                 </div>
               </div>
               <label class="task-field">
@@ -265,6 +268,9 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
                     Datasenteret
                   </button>
                 </div>
+                <div v-if="photoDraft.stopLocation === 'datasenteret'" class="ds-info-box">
+                  Datasenteret er det høyeste vanskelighetssteget. Oppgaven vil kun vises på stoppestedet Datasenteret.
+                </div>
               </div>
               <label class="task-field">
                 <span>Tittel</span>
@@ -304,7 +310,8 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
               </article>
 
               <button v-if="photoDraft.alternatives.length < 4" type="button" class="task-create-add task-create-add--column" @click="addPhotoAlternative">
-                +
+                <span class="add-icon">+</span>
+                <span class="add-label">Legg til alternativ</span>
               </button>
             </div>
           </div>
@@ -325,7 +332,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 <style scoped>
 .task-create-page {
-  padding: 1rem;
+  padding: 1rem 2.5rem;
   overflow-y: auto;
 }
 
@@ -342,22 +349,25 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .task-create-panel--photo {
-  max-width: 1400px;
+  max-width: 980px;
 }
 
 .task-create-panel--picker {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 2rem;
 }
 
 .task-create-eyebrow {
-  margin: 0 0 0.35rem;
-  color: #9a3412;
+  margin: 0 0 0.75rem;
+  color: #ffffff;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.82rem;
-  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  font-weight: 900;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+  paint-order: stroke fill;
 }
 
 .task-create-heading {
@@ -365,14 +375,15 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   color: #ffffff;
   font-size: clamp(1.4rem, 2vw, 2rem);
   font-weight: 900;
+  letter-spacing: 0.06em;
   -webkit-text-stroke: 5px #000000;
   paint-order: stroke fill;
 }
 
 .task-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 .task-type-card {
@@ -433,21 +444,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-template__back,
 .task-template__save {
-  background: rgba(255, 255, 255, 0.95);
-  color: white;
-  border-color: rgba(15, 23, 42, 0.35);
+  --color-nd-button: #92400e;
+  --color-nd-button-edge: #6b2f0a;
+  color: #ffffff;
   font-weight: 900;
-  -webkit-text-stroke: 1.5px #000;
-  paint-order: stroke fill;
-  text-shadow:
-    2px 0 #000,
-    -2px 0 #000,
-    0 2px #000,
-    0 -2px #000,
-    1px 1px #000,
-    -1px -1px #000,
-    1px -1px #000,
-    -1px 1px #000;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
 }
 
 .task-template__back {
@@ -497,20 +499,12 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .task-create-switch {
-  background: white;
-  color: white;
+  --color-nd-button: #ffffff;
+  --color-nd-button-edge: #111111;
+  color: #111827;
   font-weight: 900;
-  -webkit-text-stroke: 1.5px #000;
-  paint-order: stroke fill;
-  text-shadow:
-    2px 0 #000,
-    -2px 0 #000,
-    0 2px #000,
-    0 -2px #000,
-    1px 1px #000,
-    -1px -1px #000,
-    1px -1px #000,
-    -1px 1px #000;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
 }
 
 .task-create-error {
@@ -544,13 +538,13 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .diff-btn {
   display: flex;
   align-items: center;
-  gap: 1px;
-  padding: 0.4rem 0.6rem;
+  gap: 2px;
+  padding: 0.65rem 1rem;
   border: 2px solid #111111;
   border-radius: 0;
   background: white;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #6b7280;
   transition: all 0.15s ease;
@@ -568,22 +562,38 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 }
 
 .diff-btn--ds {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.ds-info-box {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #92400e;
+  border-left: 4px solid #92400e;
+  color: #451a03;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-shadow: none;
 }
 
 .diff-btn--ds.diff-btn--active {
-  border-color: #1e40af;
-  background: #1e40af;
-}
-
-.diff-star {
-  color: #f59e0b;
-  font-size: 0.9rem;
-  line-height: 1;
-}
-
-.diff-btn--active .diff-star {
+  border-color: #92400e;
+  background: #92400e;
   color: white;
+}
+
+.diff-btn .diff-star {
+  color: #92400e;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-shadow: none;
+}
+
+.diff-btn.diff-btn--active .diff-star {
+  color: white;
+  text-shadow: none;
 }
 
 .task-field {
@@ -597,6 +607,11 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
   font-weight: 800;
   font-size: 0.95rem;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.task-upload-card .task-field span {
+  color: #111827;
+  text-shadow: none;
 }
 
 .task-field input,
@@ -628,7 +643,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-card-grid--photo {
   grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
-  align-items: start;
+  align-items: stretch;
 }
 
 .task-upload-card {
@@ -769,21 +784,33 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-create-add {
   align-self: start;
-  background: #eff6ff;
+  background: #fff7ed;
   border-color: #111111;
-  color: #1d4ed8;
+  color: #92400e;
 }
 
 .task-create-add--column {
   min-height: 220px;
-  height: auto;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   border-style: dashed;
   border-radius: 0;
-  font-size: 2rem;
+  font-size: 3.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.add-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.add-label {
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .task-create-submit {
@@ -812,12 +839,21 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
   .task-card-grid--news,
   .task-card-grid--photo {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .task-card-grid--news .task-upload-card,
+  .task-card-grid--photo .task-upload-card,
+  .task-card-grid--photo .task-create-add--column {
+    width: 100%;
+    max-width: 360px;
+    align-self: center;
   }
 
   .task-template__actions,
   .task-create-switch,
-  .task-create-add,
   .task-template__save {
     width: 100%;
   }
