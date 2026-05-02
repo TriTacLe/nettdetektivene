@@ -167,7 +167,7 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
       <section v-if="!selectedType" class="task-create-panel task-create-panel--picker">
         <div>
           <p class="task-create-eyebrow">Velg oppgavetype</p>
-          <h2 class="task-create-heading">Hvilken stopp skal denne oppgaven høre til?</h2>
+          <h2 class="task-create-heading">Hvilket stoppested skal denne oppgaven høre til?</h2>
         </div>
 
         <div class="task-type-grid">
@@ -348,16 +348,19 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 .task-create-panel--picker {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 2rem;
 }
 
 .task-create-eyebrow {
-  margin: 0 0 0.35rem;
-  color: #9a3412;
+  margin: 0 0 0.75rem;
+  color: #ffffff;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.82rem;
-  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  font-weight: 900;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+  paint-order: stroke fill;
 }
 
 .task-create-heading {
@@ -371,8 +374,8 @@ function makePhotoAlternative(): TeacherPhotoAlternativeDraft {
 
 .task-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 .task-type-card {
