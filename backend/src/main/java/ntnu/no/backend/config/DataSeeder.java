@@ -835,14 +835,6 @@ public class DataSeeder implements CommandLineRunner {
             "Bildet er manipulert i Photoshop",
             (byte) 2, MysteryStatus.APPROVED,
         },
-        {
-            "tri",
-            "seed-images/news/realArticle3.png",
-            "Nyheten er falsk og skrevet av en bot",
-            "Nyheten er ekte og bekreftet av NTB",
-            "Nyheten er satire fra en humorside",
-            (byte) 1, MysteryStatus.APPROVED,
-        },
         // PENDING
         {
             "silje",
