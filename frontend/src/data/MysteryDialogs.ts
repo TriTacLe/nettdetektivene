@@ -1,12 +1,13 @@
 import type { DialogGraph } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME } from './characters'
 
 export const mysteryStartId = 'mystery-entry'
 
 export const mysteryDialogs: DialogGraph = {
   'mystery-entry': {
     id: 'mystery-entry',
-    character: '/detective.png',
-    characterName: 'Detektiv Hansen',
+    character: DETECTIVE_IMAGES,
+    characterName: DETECTIVE_NAME,
     background: '/CorridorBackground.jpeg',
     lines: [
       { text: 'Sssh... Hold deg lavt. Vi har en ny sak på bordet.', mood: 'sus' },

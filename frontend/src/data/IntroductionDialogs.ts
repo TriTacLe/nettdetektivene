@@ -1,9 +1,9 @@
 import type { DialogGraph } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME, HACKER_IMAGE, HACKER_NAME } from './characters'
 
 export const introductionStartId = 'detective-intro'
 
-const DETECTIVE = '/detective.png'
-const DETECTIVE_NAME = 'Detektiv Hansen'
+const DETECTIVE = DETECTIVE_IMAGES
 
 const FEATURE_MAP = '/MapUpdated.png'
 const FEATURE_MYSTERY = '/mystery-magnifier.png'
@@ -16,7 +16,7 @@ export const introductionDialogs: DialogGraph = {
     character: DETECTIVE,
     characterName: DETECTIVE_NAME,
     lines: [
-      { text: 'Hei! Jeg er Detektiv Hansen, og jeg trenger din hjelp.', mood: 'neutral' },
+      { text: 'Hei! Jeg er Detektiv Hamster, og jeg trenger din hjelp.', mood: 'neutral' },
       { text: 'Internettbyen er under angrep. Noen sprer løgner, og lurer folk med falske bilder.', mood: 'sus' },
       { text: 'Jobben din blir å bli en nettdetektiv som avslører løgnene og finner sporene.', mood: 'neutral' },
       { text: 'Før vi setter i gang, vil jeg sjekke at du har skjønt oppdraget. Klar for noen raske spørsmål?', mood: 'thinking' },
@@ -55,8 +55,8 @@ export const introductionDialogs: DialogGraph = {
     character: DETECTIVE,
     characterName: DETECTIVE_NAME,
     lines: [
-      { text: 'Hmm, det stemmer ikke. En nettdetektiv lager ikke løgner selv.', mood: 'thinking' },
-      { text: 'Tenk igjen: jobben din er å se gjennom løgnene og finne sannheten.', mood: 'neutral' },
+      { text: 'Hmm, det stemmer ikke. En nettdetektiv lager ikke løgner selv.', mood: 'sad' },
+      { text: 'Tenk igjen: jobben din er å se gjennom løgnene og finne sannheten.', mood: 'thinking' },
     ],
     next: 'quiz-mission',
   },
@@ -104,7 +104,7 @@ export const introductionDialogs: DialogGraph = {
     featureImage: FEATURE_MAP,
     featureLabel: 'Kartet',
     lines: [
-      { text: 'Nesten! Husk hva jeg nettopp sa: kartet er fullt av oppdrag du kan løse.', mood: 'thinking' },
+      { text: 'Nesten! Husk hva jeg nettopp sa: kartet er fullt av oppdrag du kan løse.', mood: 'sad' },
     ],
     next: 'quiz-map',
   },
@@ -141,7 +141,7 @@ export const introductionDialogs: DialogGraph = {
     featureImage: FEATURE_MYSTERY,
     featureLabel: 'Ukens Mysterium',
     lines: [
-      { text: 'Ikke helt. Ukens Mysterium handler om at du selv leter og sender inn det du finner.', mood: 'thinking' },
+      { text: 'Ikke helt. Ukens Mysterium handler om at du selv leter og sender inn det du finner.', mood: 'sad' },
     ],
     next: 'quiz-mystery',
   },
@@ -178,7 +178,7 @@ export const introductionDialogs: DialogGraph = {
     featureImage: FEATURE_ACHIEVEMENTS,
     featureLabel: 'Medaljer',
     lines: [
-      { text: 'Nei, medaljer er noe du tjener selv ved å løse oppdrag. Prøv igjen.', mood: 'thinking' },
+      { text: 'Nei, medaljer er noe du tjener selv ved å løse oppdrag. Prøv igjen.', mood: 'sad' },
     ],
     next: 'quiz-achievements',
   },
@@ -216,7 +216,7 @@ export const introductionDialogs: DialogGraph = {
     featureImage: FEATURE_NOTEBOOK,
     featureLabel: 'Notatboka',
     lines: [
-      { text: 'Ikke helt. Notatboka er din egen logg over spor og funn.', mood: 'thinking' },
+      { text: 'Ikke helt. Notatboka er din egen logg over spor og funn.', mood: 'sad' },
     ],
     next: 'quiz-notebook',
   },
@@ -227,15 +227,15 @@ export const introductionDialogs: DialogGraph = {
     characterName: DETECTIVE_NAME,
     lines: [
       { text: 'Perfekt! Du har skjønt hvordan kontoret fungerer.', mood: 'happy' },
-      { text: 'Da er du klar for ditt første ekte møte. Følg med — fienden er i nærheten.', mood: 'neutral' },
+      { text: 'Da er du klar for ditt første ekte møte. Følg med — fienden er i nærheten.', mood: 'sus' },
     ],
     next: 'hacker-intro',
   },
 
   'hacker-intro': {
     id: 'hacker-intro',
-    character: '/hacker.png',
-    characterName: 'Hackeren',
+    character: HACKER_IMAGE,
+    characterName: HACKER_NAME,
     lines: [
       { text: 'Ha! Så du tror du kan stoppe meg?', mood: 'angry' },
       { text: 'Jeg har spredt falske nyheter over hele internett. Folk tror på alt jeg sier!', mood: 'angry' },

@@ -1,5 +1,15 @@
 <template>
-  <SceneComponent title="" :previous="stopId ? `/stops/${stopId}` : '/game-map'" previous-label="Tilbake">
+  <CutsceneDialog
+    v-if="showOutro && outroScene"
+    :scene="outroScene"
+    @done="onOutroDone"
+  />
+  <SceneComponent
+    v-else
+    title=""
+    :previous="stopId ? `/stops/${stopId}` : '/game-map'"
+    previous-label="Tilbake"
+  >
     <div class="content">
       <p class="heading">Prøv igjen! &#10060;</p>
 
@@ -10,24 +20,50 @@
         <p class="card-encourage">Du kan prøve så mange ganger du vil! Ikke gi opp - du klarer det.</p>
       </div>
 
-      <button class="retry-btn" @click="retry" aria-label="Prøv oppgaven på nytt">
-        Prøv på nytt &#x1F504;
-      </button>
+      <div class="actions btn-stack">
+        <button type="button" @click="retry" aria-label="Prøv oppgaven på nytt">
+          Prøv på nytt &#x1F504;
+        </button>
+        <button type="button" @click="resume" aria-label="Tilbake til stoppestedet">
+          Tilbake
+        </button>
+      </div>
     </div>
   </SceneComponent>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
+import { STOP_OUTROS } from '@/data/taskDialogs/outros'
 
 const route = useRoute()
 const router = useRouter()
 
 const stopId = route.query.stop as string | undefined
+const taskId = route.query.taskId as string | undefined
 const reason = (route.query.reason as string | undefined) ?? 'Sjekk svarene dine og prøv igjen.'
 
+const outroScene = computed(() => (stopId ? STOP_OUTROS[stopId]?.failed ?? null : null))
+const showOutro = ref(Boolean(outroScene.value))
+
+function onOutroDone() {
+  showOutro.value = false
+}
+
 function retry() {
+  if (stopId && taskId) {
+    router.push(`/stops/${stopId}/${taskId}`)
+  } else if (stopId) {
+    router.push(`/stops/${stopId}`)
+  } else {
+    router.push({ name: 'game-map' })
+  }
+}
+
+function resume() {
   if (stopId) {
     router.push(`/stops/${stopId}`)
   } else {
@@ -97,28 +133,8 @@ function retry() {
   margin: 0;
 }
 
-.retry-btn {
-  background: #ffffff;
-  color: #1a1a1a;
-  border: none;
-  border-radius: 2rem;
-  padding: 0.85rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s, box-shadow 0.15s;
-  animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-  font-family: inherit;
-}
-
-.retry-btn:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.retry-btn:active {
-  transform: scale(0.98);
+.actions {
+  width: min(22rem, 90vw);
 }
 
 @keyframes popIn {

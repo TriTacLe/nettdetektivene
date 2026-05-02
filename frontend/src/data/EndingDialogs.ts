@@ -1,12 +1,13 @@
 import type { DialogGraph } from '@/types/cutscene'
+import { DETECTIVE_IMAGES, DETECTIVE_NAME, HACKER_IMAGE, HACKER_NAME } from './characters'
 
 export const endingStartId = 'detective-victory'
 
 export const endingDialogs: DialogGraph = {
   'detective-victory': {
     id: 'detective-victory',
-    character: '/detective.png',
-    characterName: 'Detektiv Hansen',
+    character: DETECTIVE_IMAGES,
+    characterName: DETECTIVE_NAME,
     background: '/datasenteret.jpg',
     lines: [
       { text: 'Du klarte det! Datatyven har ingen flere triks igjen.', mood: 'happy' },
@@ -20,19 +21,19 @@ export const endingDialogs: DialogGraph = {
   },
   'detective-call': {
     id: 'detective-call',
-    character: '/detective.png',
-    characterName: 'Detektiv Hansen',
+    character: DETECTIVE_IMAGES,
+    characterName: DETECTIVE_NAME,
     background: '/datasenteret.jpg',
     lines: [
-      { text: 'Hallo, politiet? Vi har tatt datatyven på fersken her i datasenteret.', mood: 'neutral' },
-      { text: 'Send en patrulje. Jeg holder han her til dere kommer.', mood: 'neutral' },
+      { text: 'Hallo, politiet? Vi har tatt datatyven på fersken her i datasenteret.', mood: 'sus' },
+      { text: 'Send en patrulje. Jeg holder han her til dere kommer.', mood: 'sus' },
     ],
     next: 'hacker-broken',
   },
   'hacker-broken': {
     id: 'hacker-broken',
-    character: '/hacker.png',
-    characterName: 'Hackeren',
+    character: HACKER_IMAGE,
+    characterName: HACKER_NAME,
     background: '/datasenteret.jpg',
     lines: [
       { text: 'Nei... nei nei nei. Hvordan klarte du det?', mood: 'angry' },
@@ -43,8 +44,8 @@ export const endingDialogs: DialogGraph = {
   },
   'hacker-regret': {
     id: 'hacker-regret',
-    character: '/hacker.png',
-    characterName: 'Hackeren',
+    character: HACKER_IMAGE,
+    characterName: HACKER_NAME,
     background: '/datasenteret.jpg',
     lines: [
       { text: 'Kanskje... kanskje jeg har gjort feil ting.', mood: 'thinking' },
@@ -55,8 +56,8 @@ export const endingDialogs: DialogGraph = {
   },
   'detective-closing': {
     id: 'detective-closing',
-    character: '/detective.png',
-    characterName: 'Detektiv Hansen',
+    character: DETECTIVE_IMAGES,
+    characterName: DETECTIVE_NAME,
     background: '/datasenteret.jpg',
     lines: [
       { text: 'Politiet er på vei. De skal ta over herfra.', mood: 'neutral' },

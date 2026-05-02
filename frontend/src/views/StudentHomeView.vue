@@ -13,6 +13,7 @@ import { useDialogRunner } from '@/composables/UseDialogRunner'
 import { introductionDialogs, introductionStartId } from '@/data/IntroductionDialogs'
 import { useStoryProgressStore, StoryStep } from '@/stores/StoryProgressStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import type { DialogChoice } from '@/types/cutscene'
 import { useToast } from '@/composables/UseToast'
 
@@ -27,7 +28,15 @@ const router = useRouter()
 const { showToast } = useToast()
 const storyStore = useStoryProgressStore()
 const authStore = useAuthStore()
+const audio = useAudioStore()
 const introRunner = useDialogRunner(introductionDialogs, introductionStartId)
+// Play the celebratory jingle on the detective-success scene; stop it as soon
+// as the player clicks past it so the angry hacker scene (and the regular
+// home view after the intro ends) isn't underscored by a victory loop.
+watch(() => introRunner.currentScene.value?.id, (id, prev) => {
+  if (id === 'detective-success') audio.playOneShot('/music/FunFunFunFun.mp3')
+  else if (prev === 'detective-success') audio.stopOneShot()
+})
 const showIntro = ref(false)
 const classroomId = ref<string | null>(null)
 const classroomLoading = ref(true)

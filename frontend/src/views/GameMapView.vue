@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStopStore } from '@/stores/StopStore'
 import { useSideQuestStore } from '@/stores/SideQuestStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import NavigationHeader from '@/components/NavigationHeader.vue'
 import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useDialogRunner, type DialogRunner } from '@/composables/UseDialogRunner'
@@ -78,9 +79,17 @@ let mql: MediaQueryList | null = null
 const isMobile = ref(false)
 
 const sideQuestStore = useSideQuestStore()
+const audio = useAudioStore()
 const queryClient = useQueryClient()
 const activeQuest = shallowRef<{ def: SideQuestDef; stage: number; runner: DialogRunner } | null>(null)
 const activeScene = computed(() => activeQuest.value?.runner.currentScene.value ?? null)
+
+// Side-quest victory jingle: play on the quiz-perfect scene, stop the moment
+// the player clicks past it so the loop doesn't bleed into the map view.
+watch(() => activeScene.value?.id, (id, prev) => {
+  if (id === 'quiz-perfect') audio.playOneShot('/music/FunFunFunFun.mp3')
+  else if (prev === 'quiz-perfect') audio.stopOneShot()
+})
 
 /**
  * Picks at most one quest to play this visit:
@@ -184,7 +193,6 @@ onMounted(async () => {
     setTimeout(() => { removedTaskBanner.value = false }, 5000)
   }
 
-  stopStore.clearSeenPickers()
   stopStore.loadTasks('nyhetskvartalet', true)
   stopStore.loadTasks('fotografen', true)
   stopStore.loadTasks('datasenteret', true)

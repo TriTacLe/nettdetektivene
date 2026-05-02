@@ -68,18 +68,83 @@ export const useAudioStore = defineStore('audio', () => {
     window.addEventListener('pageshow', () => tryResume())
   }
 
+  // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
+  // playback starts on first call without waiting for a WebAudio decode pass.
+  // Only one instance plays at a time. The same-src guard keeps the jingle
+  // continuous when navigating between consecutive celebration screens
+  // (e.g. task-finished -> stop-finished) instead of restarting on each mount.
+  // Background music is ducked (volume → 0) while the jingle plays so the
+  // two don't fight. Ducking instead of pausing avoids the play()/pause()
+  // promise race that can leave the music audible mid-transition.
+  //
+  // Declared above play()/setMusicVolume()/toggleMusicMuted() because those
+  // functions read musicDuckedForJingle and call stopOneShot(); keeping the
+  // declarations co-located with the rest of the music state avoids the TDZ
+  // trap a synchronous setup-time call would otherwise spring.
+  let oneShotEl: HTMLAudioElement | null = null
+  let oneShotSrc: string | null = null
+  let musicDuckedForJingle = false
+
+  function unduckMusic() {
+    if (!musicDuckedForJingle) return
+    musicDuckedForJingle = false
+    if (audioEl) audioEl.volume = effectiveMusicVolume()
+  }
+
+  function stopOneShot() {
+    if (oneShotEl) {
+      oneShotEl.pause()
+      oneShotEl.src = ''
+      oneShotEl = null
+      oneShotSrc = null
+    }
+    unduckMusic()
+  }
+
+  function playOneShot(src: string) {
+    if (oneShotEl && oneShotSrc === src && !oneShotEl.paused) return
+    stopOneShot()
+    const vol = effectiveSfxVolume()
+    if (vol <= 0) return
+
+    if (audioEl) {
+      audioEl.volume = 0
+      musicDuckedForJingle = true
+    }
+
+    const el = new Audio(src)
+    el.volume = vol
+    const finish = () => {
+      if (oneShotEl === el) {
+        oneShotEl = null
+        oneShotSrc = null
+      }
+      unduckMusic()
+    }
+    el.addEventListener('ended', finish)
+    el.addEventListener('error', finish)
+
+    oneShotEl = el
+    oneShotSrc = src
+    el.play().catch(finish)
+  }
+
   function play(src: string) {
     wantPlaying.value = true
     installUnlockListeners()
 
-    // Same track already loaded — just nudge it to resume if paused.
+    // Same track already loaded — just nudge it to resume if paused. While
+    // the music is ducked for the jingle, keep volume at 0 so the two don't
+    // play on top of each other; the jingle's end handler will restore it.
     if (currentTrack.value === src && audioEl) {
-      audioEl.volume = effectiveMusicVolume()
+      audioEl.volume = musicDuckedForJingle ? 0 : effectiveMusicVolume()
       if (audioEl.paused) tryResume()
       return
     }
 
-    // Different track: tear down old, build new.
+    // Different track: tear down old, build new. The jingle (if any) is tied
+    // to the previous music context — stop it so it doesn't outlive the swap.
+    stopOneShot()
     if (audioEl) {
       audioEl.pause()
       audioEl.src = ''
@@ -113,7 +178,7 @@ export const useAudioStore = defineStore('audio', () => {
   function setMusicVolume(volume: number) {
     musicVolume.value = volume
     sessionStorage.setItem('audio_musicVolume', String(volume))
-    if (audioEl) audioEl.volume = effectiveMusicVolume()
+    if (audioEl && !musicDuckedForJingle) audioEl.volume = effectiveMusicVolume()
   }
 
   function setSfxVolume(volume: number) {
@@ -127,7 +192,7 @@ export const useAudioStore = defineStore('audio', () => {
     // Mute by zeroing volume so the audio element keeps "playing" — that way
     // unmute is instant and we don't need to re-trigger autoplay unlock.
     if (audioEl) {
-      audioEl.volume = effectiveMusicVolume()
+      if (!musicDuckedForJingle) audioEl.volume = effectiveMusicVolume()
       if (!musicMuted.value) tryResume()
     }
   }
@@ -199,35 +264,6 @@ export const useAudioStore = defineStore('audio', () => {
 
   function playTypingTick() {
     playSfx(SFX_TYPING)
-  }
-
-  // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
-  // playback starts on first call without waiting for a WebAudio decode pass.
-  // Only one instance plays at a time; calling again preempts the previous,
-  // and stopOneShot() lets a view cancel the jingle on unmount.
-  let oneShotEl: HTMLAudioElement | null = null
-
-  function stopOneShot() {
-    if (!oneShotEl) return
-    oneShotEl.pause()
-    oneShotEl.src = ''
-    oneShotEl = null
-  }
-
-  function playOneShot(src: string) {
-    stopOneShot()
-    const vol = effectiveSfxVolume()
-    if (vol <= 0) return
-    const el = new Audio(src)
-    el.volume = vol
-    el.addEventListener('ended', () => {
-      if (oneShotEl === el) oneShotEl = null
-    })
-    oneShotEl = el
-    el.play().catch(() => {
-      // Autoplay blocked — nothing to do; the screen the jingle plays on is
-      // navigated into by a user gesture so this is rare.
-    })
   }
 
   return {
