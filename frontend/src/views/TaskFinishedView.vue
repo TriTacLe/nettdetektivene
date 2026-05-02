@@ -119,6 +119,7 @@ function goToNextTask() {
 }
 
 function exit() {
+  audio.stopOneShot()
   const testCid = stopStore.testModeClassroomId
   if (testCid) {
     router.push(`/classroom/${testCid}/test-game`)

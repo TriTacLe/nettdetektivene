@@ -72,12 +72,12 @@ export const useAudioStore = defineStore('audio', () => {
     wantPlaying.value = true
     installUnlockListeners()
 
-    // Same track already loaded — just nudge it to resume if paused. If
-    // the music was paused specifically to make room for the jingle, leave
-    // it alone; the jingle's end handler will bring it back.
+    // Same track already loaded — just nudge it to resume if paused. While
+    // the music is ducked for the jingle, keep volume at 0 so the two don't
+    // play on top of each other; the jingle's end handler will restore it.
     if (currentTrack.value === src && audioEl) {
-      audioEl.volume = effectiveMusicVolume()
-      if (audioEl.paused && !musicPausedForJingle) tryResume()
+      audioEl.volume = musicDuckedForJingle ? 0 : effectiveMusicVolume()
+      if (audioEl.paused) tryResume()
       return
     }
 
@@ -117,7 +117,7 @@ export const useAudioStore = defineStore('audio', () => {
   function setMusicVolume(volume: number) {
     musicVolume.value = volume
     sessionStorage.setItem('audio_musicVolume', String(volume))
-    if (audioEl) audioEl.volume = effectiveMusicVolume()
+    if (audioEl && !musicDuckedForJingle) audioEl.volume = effectiveMusicVolume()
   }
 
   function setSfxVolume(volume: number) {
@@ -131,7 +131,7 @@ export const useAudioStore = defineStore('audio', () => {
     // Mute by zeroing volume so the audio element keeps "playing" — that way
     // unmute is instant and we don't need to re-trigger autoplay unlock.
     if (audioEl) {
-      audioEl.volume = effectiveMusicVolume()
+      if (!musicDuckedForJingle) audioEl.volume = effectiveMusicVolume()
       if (!musicMuted.value) tryResume()
     }
   }
@@ -210,17 +210,17 @@ export const useAudioStore = defineStore('audio', () => {
   // Only one instance plays at a time. The same-src guard keeps the jingle
   // continuous when navigating between consecutive celebration screens
   // (e.g. task-finished -> stop-finished) instead of restarting on each mount.
-  // Background music is paused while the jingle plays so the two don't fight.
+  // Background music is ducked (volume → 0) while the jingle plays so the
+  // two don't fight. Ducking instead of pausing avoids the play()/pause()
+  // promise race that can leave the music audible mid-transition.
   let oneShotEl: HTMLAudioElement | null = null
   let oneShotSrc: string | null = null
-  let musicPausedForJingle = false
+  let musicDuckedForJingle = false
 
-  function resumeMusicAfterJingle() {
-    if (!musicPausedForJingle) return
-    musicPausedForJingle = false
-    if (wantPlaying.value && audioEl) {
-      audioEl.play().catch(() => {})
-    }
+  function unduckMusic() {
+    if (!musicDuckedForJingle) return
+    musicDuckedForJingle = false
+    if (audioEl) audioEl.volume = effectiveMusicVolume()
   }
 
   function stopOneShot() {
@@ -230,7 +230,7 @@ export const useAudioStore = defineStore('audio', () => {
       oneShotEl = null
       oneShotSrc = null
     }
-    resumeMusicAfterJingle()
+    unduckMusic()
   }
 
   function playOneShot(src: string) {
@@ -239,9 +239,9 @@ export const useAudioStore = defineStore('audio', () => {
     const vol = effectiveSfxVolume()
     if (vol <= 0) return
 
-    if (audioEl && !audioEl.paused) {
-      audioEl.pause()
-      musicPausedForJingle = true
+    if (audioEl) {
+      audioEl.volume = 0
+      musicDuckedForJingle = true
     }
 
     const el = new Audio(src)
@@ -251,7 +251,7 @@ export const useAudioStore = defineStore('audio', () => {
         oneShotEl = null
         oneShotSrc = null
       }
-      resumeMusicAfterJingle()
+      unduckMusic()
     }
     el.addEventListener('ended', finish)
     el.addEventListener('error', finish)

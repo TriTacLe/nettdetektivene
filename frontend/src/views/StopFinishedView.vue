@@ -181,6 +181,7 @@ onUnmounted(() => {
 })
 
 function goToMap() {
+  audio.stopOneShot()
   router.push(mapRoute.value)
 }
 </script>
