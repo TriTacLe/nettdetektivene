@@ -293,7 +293,7 @@ public class ClassroomStudentService {
     entityManager.flush();
     entityManager.clear();
 
-    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
+    notificationRepository.markReadByRefTypeAndRefId("name_change", userId);
 
     ClassroomStudent student = findMembership(classroomId, userId);
     UserProfile profile = userProfileRepository.findByUser(student.getUser())
@@ -321,7 +321,7 @@ public class ClassroomStudentService {
         instructor.getId().toString(), userId.toString(), "REJECTED");
     entityManager.flush();
     entityManager.clear();
-    notificationRepository.deleteByRefTypeAndRefId("name_change", userId);
+    notificationRepository.markReadByRefTypeAndRefId("name_change", userId);
     ClassroomStudent student = findMembership(classroomId, userId);
     return mapToDTO(student);
   }
