@@ -96,6 +96,7 @@ function handleDone() {
   <div v-else-if="!stop" class="not-found">
     <p>Stoppested ikke funnet.</p>
   </div>
+
 </template>
 
 <style scoped>
@@ -107,4 +108,5 @@ function handleDone() {
   color: white;
   font-size: 1.5rem;
 }
+
 </style>

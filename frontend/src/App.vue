@@ -51,7 +51,13 @@ function pickTrack(): string {
 
 watch(
   () => route.fullPath,
-  () => audioStore.play(pickTrack()),
+  () => {
+    if (authStore.isAuthenticated) {
+      audioStore.play(pickTrack())
+    } else {
+      audioStore.stop()
+    }
+  },
   { immediate: true },
 )
 </script>

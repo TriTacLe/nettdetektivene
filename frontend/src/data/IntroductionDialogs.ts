@@ -5,7 +5,7 @@ export const introductionStartId = 'detective-intro'
 
 const DETECTIVE = DETECTIVE_IMAGES
 
-const FEATURE_MAP = '/map.jpg'
+const FEATURE_MAP = '/MapUpdated.png'
 const FEATURE_MYSTERY = '/mystery-magnifier.png'
 const FEATURE_ACHIEVEMENTS = '/unlockedBadge.png'
 const FEATURE_NOTEBOOK = '/notebook.jpg'

@@ -165,12 +165,6 @@ function onOutroDone() {
 }
 
 onMounted(() => {
-  // Reserve the celebratory jingle for the moment that ends the game —
-  // clearing datasenteret. Intermediate task passes play the cutscene
-  // beat and confetti without an audio sting on top.
-  if (stopId === 'datasenteret' && justClearedStop) {
-    audio.playOneShot('/music/FunFunFunFun.mp3')
-  }
   // If there's no outro to play, the buttons screen is rendered immediately.
   if (!showOutro.value && confettiCanvas.value) {
     startConfetti(confettiCanvas.value)
@@ -184,6 +178,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (animationId !== null) cancelAnimationFrame(animationId)
+  audio.stopOneShot()
 })
 
 function goToNextTask() {

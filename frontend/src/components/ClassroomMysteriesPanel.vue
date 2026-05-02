@@ -162,14 +162,18 @@ function statusDotClass(submission: MysteryReviewDTO) {
 <style scoped>
 .mysteries-panel {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
   margin-top: 0.5rem;
+  overflow: hidden;
 }
 
 .card-list {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -178,7 +182,6 @@ function statusDotClass(submission: MysteryReviewDTO) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
   backdrop-filter: blur(4px);
-  max-height: calc(100vh - 18rem);
   overflow-y: auto;
 }
 
