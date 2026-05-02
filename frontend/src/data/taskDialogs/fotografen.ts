@@ -6,14 +6,17 @@ export const fotografenOutro: DialogGraph = {
     id: 'passed',
     character: DETECTIVE_IMAGES,
     characterName: DETECTIVE_NAME,
+    background: '/FotografenBackground.png',
     lines: [
       { text: 'Skarpt øye, detektiv! Du så det ingen andre så.', mood: 'happy' },
+      { text: 'Klar for neste oppdrag?', mood: 'happy' },
     ],
   },
   failed: {
     id: 'failed',
     character: DETECTIVE_IMAGES,
     characterName: DETECTIVE_NAME,
+    background: '/FotografenBackground.png',
     lines: [
       { text: 'Nei, det var ikke helt. Bilder er vanskeligere enn de ser ut. Prøv igjen.', mood: 'sad' },
     ],

@@ -1,32 +1,46 @@
 <template>
-  <SceneComponent title="" :previous="stopId ? `/stops/${stopId}` : '/game-map'" previous-label="Tilbake">
-    <canvas ref="confettiCanvas" class="confetti-canvas" />
-
+  <CutsceneDialog
+    v-if="showOutro && outroScene"
+    :scene="outroScene"
+    @done="onOutroDone"
+  />
+  <SceneComponent
+    v-else
+    title=""
+    :previous="stopId ? `/stops/${stopId}` : '/game-map'"
+    previous-label="Tilbake"
+  >
     <div class="content">
       <div class="message-box" aria-live="polite">
         <p class="bra-jobbet">Bra jobbet!</p>
         <p class="klarte-oppgaven">Du klarte oppgaven</p>
       </div>
 
-      <button class="next-btn" @click="goToNextTask" aria-label="Gå til neste oppgave">
-        Neste oppgave &rarr;
-      </button>
+      <div class="actions">
+        <button class="next-btn" @click="goToNextTask" aria-label="Gå til neste oppgave">
+          Neste oppgave &rarr;
+        </button>
+        <button class="exit-btn" @click="exit" aria-label="Avslutt og gå til kartet">
+          Avslutt
+        </button>
+      </div>
     </div>
   </SceneComponent>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SceneComponent from '@/components/SceneComponent.vue'
+import CutsceneDialog from '@/components/CutsceneDialog.vue'
 import { useStopStore } from '@/stores/StopStore'
 import { useAudioStore } from '@/stores/AudioStore'
+import { STOP_OUTROS } from '@/data/taskDialogs/outros'
 
 const route = useRoute()
 const router = useRouter()
 const stopStore = useStopStore()
 const audio = useAudioStore()
-const confettiCanvas = ref<HTMLCanvasElement | null>(null)
 
 const stopId = route.query.stop as string | undefined
 const taskUuid = route.query.taskId as string | undefined
@@ -35,151 +49,74 @@ if (stopId && taskUuid) {
   stopStore.markComplete(stopId, taskUuid)
 }
 
-let animationId: number | null = null
+const outroScene = computed(() => (stopId ? STOP_OUTROS[stopId]?.passed ?? null : null))
+const showOutro = ref(Boolean(outroScene.value))
 
-// ---- Confetti logic ----
-interface Particle {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  color: string
-  size: number
-  rotation: number
-  rotationSpeed: number
-  shape: 'rect' | 'circle' | 'ribbon'
-  ribbonLength: number
-  wave: number
-  waveSpeed: number
-  waveAmplitude: number
+// "All complete" is only meaningful once we have the task list. We compute
+// it lazily on click instead of in setup so a stale store doesn't lie.
+function isStopCleared(): boolean {
+  return Boolean(stopId && stopStore.isAllComplete(stopId))
 }
 
-const COLORS = [
-  '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1',
-  '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8',
-  '#F7DC6F', '#BB8FCE', '#82E0AA', '#F1948A'
-]
-
-function createParticle(canvas: HTMLCanvasElement): Particle {
-  const shape = Math.random() < 0.6 ? 'ribbon' : Math.random() < 0.5 ? 'rect' : 'circle'
-  return {
-    x: Math.random() * canvas.width,
-    y: -20,
-    vx: (Math.random() - 0.5) * 3,
-    vy: Math.random() * 2 + 1.5,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)] ?? '#FFD700',
-    size: Math.random() * 8 + 5,
-    rotation: Math.random() * Math.PI * 2,
-    rotationSpeed: (Math.random() - 0.5) * 0.15,
-    shape,
-    ribbonLength: Math.random() * 20 + 15,
-    wave: Math.random() * Math.PI * 2,
-    waveSpeed: Math.random() * 0.05 + 0.02,
-    waveAmplitude: Math.random() * 2 + 1
+function onOutroDone() {
+  // The detective's "saken er løst" wraps the moment. If the player just
+  // cleared the entire stop, jump straight to the trophy/ending screen
+  // instead of stopping on an interim "Neste oppgave" page.
+  if (!stopId) {
+    showOutro.value = false
+    return
   }
-}
-
-function startConfetti(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
-
-  const particles: Particle[] = []
-  for (let i = 0; i < 180; i++) {
-    const p = createParticle(canvas)
-    p.y = Math.random() * canvas.height * 0.5
-    particles.push(p)
-  }
-
-  let spawnTimer = 0
-
-  function draw() {
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    spawnTimer++
-    if (spawnTimer % 3 === 0 && particles.length < 250) {
-      particles.push(createParticle(canvas))
-    }
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i]
-      if (!p) continue
-
-      p.wave += p.waveSpeed
-      p.x += p.vx + Math.sin(p.wave) * p.waveAmplitude
-      p.y += p.vy
-      p.rotation += p.rotationSpeed
-
-      ctx.save()
-      ctx.translate(p.x, p.y)
-      ctx.rotate(p.rotation)
-      ctx.fillStyle = p.color
-      ctx.globalAlpha = 0.9
-
-      if (p.shape === 'rect') {
-        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2)
-      } else if (p.shape === 'circle') {
-        ctx.beginPath()
-        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2)
-        ctx.fill()
-      } else {
-        ctx.strokeStyle = p.color
-        ctx.lineWidth = 3
-        ctx.lineCap = 'round'
-        ctx.globalAlpha = 0.85
-        ctx.beginPath()
-        ctx.moveTo(0, -p.ribbonLength / 2)
-        ctx.bezierCurveTo(
-          p.size, -p.ribbonLength / 4,
-          -p.size, p.ribbonLength / 4,
-          0, p.ribbonLength / 2
-        )
-        ctx.stroke()
-      }
-
-      ctx.restore()
-
-      if (p.y > canvas.height + 30) {
-        particles.splice(i, 1)
-      }
-    }
-
-    animationId = requestAnimationFrame(draw)
-  }
-
-  draw()
-}
-
-onMounted(() => {
-  if (confettiCanvas.value) {
-    startConfetti(confettiCanvas.value)
-  }
-  audio.playOneShot('/music/FunFunFunFun.mp3')
-})
-
-onUnmounted(() => {
-  if (animationId !== null) cancelAnimationFrame(animationId)
-})
-
-// ---- Navigation ----
-function goToNextTask() {
-  const testCid = stopStore.testModeClassroomId
-  if (stopId && stopStore.isAllComplete(stopId)) {
-    // Datasenteret is the final boss — finishing it triggers the ending
-    // cutscene before the celebration screen. Teachers in test mode get
-    // the same flow so they can preview it.
+  if (isStopCleared()) {
     if (stopId === 'datasenteret') {
       router.push({ name: 'ending' })
     } else {
       router.push({ name: 'stop-finished', query: { stop: stopId } })
     }
-  } else if (stopId) {
+    return
+  }
+  showOutro.value = false
+}
+
+onMounted(() => {
+  audio.playOneShot('/music/FunFunFunFun.mp3')
+  // Make sure the next-task lookup has fresh data when the user clicks
+  // through. In test mode we already have everything; otherwise reload.
+  if (stopId && !stopStore.testModeClassroomId) {
+    stopStore.loadTasks(stopId, true).catch(() => {})
+  }
+})
+
+function goToNextTask() {
+  const testCid = stopStore.testModeClassroomId
+  if (stopId && stopStore.isAllComplete(stopId)) {
+    if (stopId === 'datasenteret') {
+      router.push({ name: 'ending' })
+    } else {
+      router.push({ name: 'stop-finished', query: { stop: stopId } })
+    }
+    return
+  }
+  if (stopId) {
+    const tasks = stopStore.tasks[stopId] ?? []
+    const next = tasks.find((t) => t.isUnlocked && !stopStore.isComplete(stopId, t.uuid))
     const query = testCid ? `?test=true&classroomId=${testCid}` : ''
-    router.push(`/stops/${stopId}${query}`)
-  } else if (testCid) {
+    if (next) {
+      router.push(`/stops/${stopId}/${next.uuid}${query}`)
+    } else {
+      router.push(`/stops/${stopId}${query}`)
+    }
+    return
+  }
+  if (testCid) {
+    router.push(`/classroom/${testCid}/test-game`)
+  } else {
+    router.push({ name: 'game-map' })
+  }
+}
+
+function exit() {
+  const testCid = stopStore.testModeClassroomId
+  if (testCid) {
     router.push(`/classroom/${testCid}/test-game`)
   } else {
     router.push({ name: 'game-map' })
@@ -188,13 +125,6 @@ function goToNextTask() {
 </script>
 
 <style scoped>
-.confetti-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 30;
-}
-
 .content {
   flex: 1;
   display: flex;
@@ -225,9 +155,15 @@ function goToNextTask() {
   margin: 0.25rem 0 0;
 }
 
-.next-btn {
-  background: #ffffff;
-  color: #1a0a2e;
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.next-btn,
+.exit-btn {
   border: none;
   border-radius: 2rem;
   padding: 0.85rem 2.5rem;
@@ -237,14 +173,29 @@ function goToNextTask() {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   transition: transform 0.15s, box-shadow 0.15s;
   animation: popIn 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  font-family: inherit;
 }
 
-.next-btn:hover {
+.next-btn {
+  background: #ffffff;
+  color: #1a0a2e;
+}
+
+.exit-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.next-btn:hover,
+.exit-btn:hover {
   transform: scale(1.05) translateY(-2px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.next-btn:active {
+.next-btn:active,
+.exit-btn:active {
   transform: scale(0.98);
 }
 

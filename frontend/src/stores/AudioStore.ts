@@ -72,10 +72,12 @@ export const useAudioStore = defineStore('audio', () => {
     wantPlaying.value = true
     installUnlockListeners()
 
-    // Same track already loaded — just nudge it to resume if paused.
+    // Same track already loaded — just nudge it to resume if paused. If
+    // the music was paused specifically to make room for the jingle, leave
+    // it alone; the jingle's end handler will bring it back.
     if (currentTrack.value === src && audioEl) {
       audioEl.volume = effectiveMusicVolume()
-      if (audioEl.paused) tryResume()
+      if (audioEl.paused && !musicPausedForJingle) tryResume()
       return
     }
 

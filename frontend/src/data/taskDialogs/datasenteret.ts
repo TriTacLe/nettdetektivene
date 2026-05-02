@@ -6,6 +6,7 @@ export const datasenteretOutro: DialogGraph = {
     id: 'passed',
     character: HACKER_IMAGE,
     characterName: HACKER_NAME,
+    background: '/datasenteret.jpg',
     lines: [
       { text: 'Hva?! Det skulle ikke være mulig...', mood: 'angry' },
     ],
@@ -14,6 +15,7 @@ export const datasenteretOutro: DialogGraph = {
     id: 'failed',
     character: HACKER_IMAGE,
     characterName: HACKER_NAME,
+    background: '/datasenteret.jpg',
     lines: [
       { text: 'Hahaha! Ikke godt nok, detektiv.', mood: 'angry' },
     ],

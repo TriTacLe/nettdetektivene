@@ -4,7 +4,7 @@ export const DETECTIVE_NAME = 'Detektiv Hamster'
 
 export const DETECTIVE_IMAGES: CharacterImages = {
   neutral: '/Detective/DetectiveDefault.png',
-  happy: '/Detective/DetectiveFun.webp',
+  happy: '/Detective/DetectiveHappy.webp',
   thinking: '/Detective/DetectiveThink.webp',
   sus: '/Detective/DetectiveSus.webp',
   angry: '/Detective/DetectiveAngry.png',

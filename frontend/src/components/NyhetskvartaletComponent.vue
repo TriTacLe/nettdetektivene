@@ -97,7 +97,11 @@ function choose(index: number) {
   position: relative;
   display: block;
   width: 100%;
-  border-radius: 14px;
+  padding: 0.75rem;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
   overflow: visible;
   cursor: pointer;
   transition: transform 0.18s ease, opacity 0.2s ease, filter 0.12s ease;

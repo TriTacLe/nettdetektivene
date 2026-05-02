@@ -8,6 +8,7 @@ import { fetchTaskById } from '@/services/TaskService'
 import TaskAttemptService from '@/services/TaskAttemptService'
 import { fetchClassroomId } from '@/services/StopService'
 import { useStopStore } from '@/stores/StopStore'
+import { useAudioStore } from '@/stores/AudioStore'
 import type {
   TaskDTO,
   NewsChallenge,
@@ -26,6 +27,8 @@ const router = useRouter()
 const taskId = route.params.taskId as string
 const stopId = route.params.stopId as string
 const stopStore = useStopStore()
+const audio = useAudioStore()
+audio.stopOneShot()
 const testClassroomId = stopStore.testModeClassroomId
 const previousRoute = testClassroomId
   ? `/stops/${stopId}?test=true&classroomId=${testClassroomId}`
