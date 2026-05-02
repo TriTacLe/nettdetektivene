@@ -79,7 +79,9 @@ export const useAudioStore = defineStore('audio', () => {
       return
     }
 
-    // Different track: tear down old, build new.
+    // Different track: tear down old, build new. The jingle (if any) is tied
+    // to the previous music context — stop it so it doesn't outlive the swap.
+    stopOneShot()
     if (audioEl) {
       audioEl.pause()
       audioEl.src = ''
@@ -203,31 +205,58 @@ export const useAudioStore = defineStore('audio', () => {
 
   // One-shot longer audio (e.g. a victory jingle) — uses HTMLAudioElement so
   // playback starts on first call without waiting for a WebAudio decode pass.
-  // Only one instance plays at a time; calling again preempts the previous,
-  // and stopOneShot() lets a view cancel the jingle on unmount.
+  // Only one instance plays at a time. The same-src guard keeps the jingle
+  // continuous when navigating between consecutive celebration screens
+  // (e.g. task-finished -> stop-finished) instead of restarting on each mount.
+  // Background music is paused while the jingle plays so the two don't fight.
   let oneShotEl: HTMLAudioElement | null = null
+  let oneShotSrc: string | null = null
+  let musicPausedForJingle = false
+
+  function resumeMusicAfterJingle() {
+    if (!musicPausedForJingle) return
+    musicPausedForJingle = false
+    if (wantPlaying.value && audioEl) {
+      audioEl.play().catch(() => {})
+    }
+  }
 
   function stopOneShot() {
-    if (!oneShotEl) return
-    oneShotEl.pause()
-    oneShotEl.src = ''
-    oneShotEl = null
+    if (oneShotEl) {
+      oneShotEl.pause()
+      oneShotEl.src = ''
+      oneShotEl = null
+      oneShotSrc = null
+    }
+    resumeMusicAfterJingle()
   }
 
   function playOneShot(src: string) {
+    if (oneShotEl && oneShotSrc === src && !oneShotEl.paused) return
     stopOneShot()
     const vol = effectiveSfxVolume()
     if (vol <= 0) return
+
+    if (audioEl && !audioEl.paused) {
+      audioEl.pause()
+      musicPausedForJingle = true
+    }
+
     const el = new Audio(src)
     el.volume = vol
-    el.addEventListener('ended', () => {
-      if (oneShotEl === el) oneShotEl = null
-    })
+    const finish = () => {
+      if (oneShotEl === el) {
+        oneShotEl = null
+        oneShotSrc = null
+      }
+      resumeMusicAfterJingle()
+    }
+    el.addEventListener('ended', finish)
+    el.addEventListener('error', finish)
+
     oneShotEl = el
-    el.play().catch(() => {
-      // Autoplay blocked — nothing to do; the screen the jingle plays on is
-      // navigated into by a user gesture so this is rare.
-    })
+    oneShotSrc = src
+    el.play().catch(finish)
   }
 
   return {

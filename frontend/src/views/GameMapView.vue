@@ -203,7 +203,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   mql?.removeEventListener('change', handleOrientationChange)
-  audio.stopOneShot()
 })
 
 function isAvailable(stopId: string | null): boolean {

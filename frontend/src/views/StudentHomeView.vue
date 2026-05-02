@@ -231,7 +231,6 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
-  audio.stopOneShot()
 })
 </script>
 
