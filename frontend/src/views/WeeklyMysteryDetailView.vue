@@ -135,7 +135,7 @@ function goBack() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.5rem 1.5rem 1rem;
+  padding: 0.5rem 1.5rem 2.25rem;
   min-height: 0;
   overflow: hidden;
 }
