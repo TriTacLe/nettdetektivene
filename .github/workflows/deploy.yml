@@ -7,6 +7,11 @@ on:
       - dev
       - prod-test
   workflow_dispatch:
+    inputs:
+      clean:
+        description: 'Wipe all volumes (MySQL + uploads) and redeploy from scratch'
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -76,7 +81,20 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Checkout (for deploy scripts)
+        uses: actions/checkout@v4
+
       - name: Deploy to Production
+        env:
+          CLEAN: ${{ inputs.clean }}
         run: |
           ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "docker login ghcr.io -u tritacle --password-stdin" <<< "${{ secrets.PAT_TOKEN }}"
-          ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
+          if [ "$CLEAN" = "true" ]; then
+            echo "Running CLEAN deploy (wiping all volumes)..."
+            ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 \
+              "cd ~/services.devops/nettdetektivene && bash -s" \
+              < deployment/clean-deploy.sh
+          else
+            ssh -o StrictHostKeyChecking=no orbit@129.241.100.67 \
+              "cd ~/services.devops/nettdetektivene && bash deployment/quick-deploy.sh"
+          fi
