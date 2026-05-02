@@ -158,7 +158,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
     <div class="cutscene-text">
       <div class="dialog-name">{{ scene.characterName }}</div>
-      <div class="dialog-text">
+      <div class="dialog-text" translate="no">
         {{ visibleText }}<span v-if="!isComplete" class="dialog-caret">|</span>
       </div>
 
