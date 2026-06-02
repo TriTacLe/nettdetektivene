@@ -1,0 +1,18 @@
+[Unit]
+Description=Nettdetektivene
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/srv/nettdetektivene
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do getent hosts ghcr.io >/dev/null 2>&1 && exit 0; sleep 5; done; echo "DNS not ready" >&2; exit 1'
+ExecStart=/bin/sh -c 'docker compose -f compose.homelab.yaml pull && docker compose -f compose.homelab.yaml up -d'
+ExecStop=/usr/bin/docker compose -f compose.homelab.yaml down
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
