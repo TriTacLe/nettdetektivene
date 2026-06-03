@@ -4,4 +4,4 @@
 -- and DECLAREd CHAR locals inside routines end up with a collation
 -- different from the columns they are compared against.
 
-ALTER DATABASE `nd-db` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+ALTER DATABASE `nettdetektivene` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
