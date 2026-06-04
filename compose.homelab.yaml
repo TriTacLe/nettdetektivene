@@ -9,8 +9,6 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "3307:3306"
     volumes:
       - nettdetektivene_mysql_data:/var/lib/mysql
     healthcheck:
@@ -37,8 +35,6 @@ services:
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: prod,seed
-    ports:
-      - "8080:8080"
     volumes:
       - nettdetektivene_uploads:/app/uploads
     depends_on:
